@@ -15,7 +15,7 @@ from utils.console import pause_on_success
 from tasks.power.power import Power
 from module.game import cloud_game, get_game_controller
 from module.game.adb_transport import AdbError
-from module.game.cloud import CloudGameLoginTimeoutError, CloudGameZeroDurationError
+from module.game.cloud import CloudGameDisconnectedError, CloudGameLoginTimeoutError, CloudGameZeroDurationError
 from module.logger import log
 from module.screen import screen
 from module.automation import auto
@@ -25,10 +25,11 @@ from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputE
 from module.notification import notif
 from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
+from tasks.base.task_steps import GameRecoveryError
 from module.ocr import ocr
 from module.localization import tr
 from utils.console import is_gui_started
-from utils.pause import pause_ctl
+from utils.pause import RunStopRequested, pause_ctl
 from utils.runs import describe_run, idle_without_run_lock
 from utils.temporary_graphics import begin_temporary_graphics, restore_temporary_graphics
 from utils.wait import wait_until
@@ -37,6 +38,13 @@ from utils.windows_power import task_power_request
 
 class GameClientOutdatedError(RuntimeError):
     """游戏客户端版本过低（供 except 类型判断，勿用文本匹配异常消息）。"""
+
+
+class GameStartupUnavailable(InputInterrupted):
+    """启动时无法确认游戏可用，保留当前游戏现场。"""
+
+    reason = "game_startup_unavailable"
+    screenshot = None
 
 
 def start(headless=None, *, optimize_graphics=True, screen_ready=None):
@@ -287,10 +295,29 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                     log.info(f"游戏路径更新成功：{program_path}")
             time.sleep(1)
 
+    def cloud_player_ready():
+        disconnected = False
+        last_error = None
+        for attempt in range(MAX_RETRY):
+            pause_ctl.checkpoint()
+            try:
+                in_game = cloud_game.is_in_game()
+            except (CloudGameDisconnectedError, TimeoutError) as error:
+                in_game = None
+                disconnected = disconnected or isinstance(error, CloudGameDisconnectedError)
+                last_error = error
+            pause_ctl.checkpoint()
+            if in_game is not None and (in_game or not disconnected):
+                return in_game
+            if attempt + 1 < MAX_RETRY:
+                log.warning(f"暂未确认云游戏会话，等待复核：{last_error}")
+                time.sleep(1)
+        raise GameStartupUnavailable(f"云游戏连接持续不可用，已保留游戏现场：{last_error}") from last_error
+
     def start_cloud_game():
         if not cloud_game.start_game_process(headless=headless):
             raise ConnectionError("启动或连接浏览器失败")
-        if not cloud_game.is_in_game():
+        if not cloud_player_ready():
             if not cloud_game.enter_cloud_game():
                 raise ConnectionError("进入云游戏失败")
             time.sleep(10)
@@ -299,13 +326,22 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
             time.sleep(10)
 
     def task_screen_ready():
+        nonlocal readiness_error
+        pause_ctl.checkpoint()
         try:
-            return screen_ready() or screen.get_current_screen(autotry=False, max_retries=1)
-        except (InputInterrupted, GameWindowLost):
+            if screen_ready is not None:
+                # 货币战争的职级和局内页面不都在通用状态机里，不能用 Esc 探测。
+                ready = screen_ready() or screen.get_current_screen(autotry=False, max_retries=1)
+            else:
+                ready = screen.get_current_screen(max_retries=1)
+        except (GameRecoveryError, InputInterrupted, GameWindowLost, ProfileAssetNotFoundError, TouchProfileInputError):
             raise
-        except RuntimeError as error:
+        except (RuntimeError, OSError) as error:
+            readiness_error = error
             log.debug(f"任务起始画面暂不可用：{error}")
             return False
+        readiness_error = None
+        return ready
 
     for retry in range(MAX_RETRY):
         deadline = time.monotonic() + timeout
@@ -316,12 +352,14 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                 starrail = StarRailController(cfg=cfg, logger=log)
                 start_local_game(starrail)
             ready_timeout = timeout if backend == "cloud" else remaining_startup_time()
-            if screen_ready is not None:
-                # 货币战争的职级和局内页面不都在通用状态机里，进入任务前不能用 Esc 探测。
-                if not wait_until(task_screen_ready, ready_timeout):
-                    raise InputInterrupted("未能识别货币战争或通用游戏页面，已保留游戏现场")
-            elif not wait_until(lambda: screen.get_current_screen(max_retries=1), ready_timeout):
-                raise TimeoutError("获取当前界面超时")
+            readiness_error = None
+            if not wait_until(task_screen_ready, ready_timeout):
+                if screen_ready is None and readiness_error is None and retry + 1 < MAX_RETRY:
+                    raise TimeoutError("获取当前界面超时")
+                message = "未能确认游戏起始画面，已保留游戏现场"
+                if readiness_error is not None:
+                    message += f"：{readiness_error}"
+                raise GameStartupUnavailable(message) from readiness_error
             break
         except CloudGameZeroDurationError:
             # 时长为 0 时重试也无法进入游戏：关闭浏览器后交给调用方，由主循环决定等待下次运行还是按错误退出
@@ -329,9 +367,11 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
             raise
         except (CloudGameLoginTimeoutError, TouchProfileInputError, ProfileAssetNotFoundError):
             raise
-        except InputInterrupted:
+        except (GameRecoveryError, InputInterrupted, RunStopRequested):
             # 窗口持续最小化等需要用户处理的情况不能触发原有的“关闭游戏后重启”恢复路径；
             # 游戏进程退出（GameWindowLost）仍按普通错误重启游戏。
+            if backend == "cloud":
+                cloud_game.preserve_running_browser()
             raise
         except Exception as e:
             log.error(f"尝试启动游戏时发生错误：{e}")

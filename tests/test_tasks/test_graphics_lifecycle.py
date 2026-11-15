@@ -97,6 +97,21 @@ def test_task_readiness_waits_through_an_unavailable_frame(startup, monkeypatch)
     controller.stop_game.assert_not_called()
 
 
+def test_generic_readiness_keeps_startup_retries_when_the_frame_is_readable(startup, monkeypatch):
+    game, controller, _ = startup
+    controller.switch_to_game.return_value = True
+    screen = Mock()
+    screen.get_current_screen.return_value = False
+    monkeypatch.setattr(game, "screen", screen)
+    game.wait_until.side_effect = lambda condition, timeout: condition()
+
+    with pytest.raises(game.GameStartupUnavailable, match="已保留游戏现场"):
+        game.start_game()
+
+    assert screen.get_current_screen.call_count == 3
+    assert controller.stop_game.call_count == 2
+
+
 @pytest.mark.parametrize("background", [False, True])
 def test_touch_local_start_uses_clicks_and_native_resolution(startup, monkeypatch, background):
     game, controller, cfg = startup

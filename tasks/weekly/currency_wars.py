@@ -174,6 +174,8 @@ class CurrencyWars:
         self.battle_auto_retry_at = None
         self.deferred_operations = set()
         self.reward_claim_score = None
+        self.weekly_score = None
+        self.weekly_reward_pending = False
         self.supply_required = None
 
     def _check_budget(self):
@@ -641,35 +643,67 @@ class CurrencyWars:
 
     def _settle_saved_match(self, frame):
         log.info("检测到未完成对局，按设置结束并结算")
+        confirmation_sent = False
 
         def menu_ready(f):
             return (f.page == Page.MODES and not f.unfinished_match
                     and f.find(*ui.MODE_ENTRIES, area=ui.BOTTOM_RIGHT) is not None)
 
-        try:
-            frame = self._click_to(
-                frame, lambda f: ui.point(f.end_match_button()),
-                lambda f: f.page == Page.END_MATCH_CONFIRM,
-                "未确认旧对局的结束提示", seconds=10, attempts=2,
-            )
-            frame = self._click_to(
-                frame, lambda f: ui.point(f.enabled_button(
-                    f.find("放弃并结算", area=ui.END_MATCH_CONFIRM_BUTTON))),
-                lambda f: f.page in (Page.MATCH_RESULT, Page.HOME) or menu_ready(f),
-                "未确认旧对局已结束", seconds=25, attempts=1,
-            )
-            for _ in range(6):
-                if frame.page != Page.MATCH_RESULT:
-                    break
-                frame = self._result_page(frame, ending_saved_match=True)
-            if frame.page == Page.HOME:
-                frame = self._mode_menu(frame)
-            if not menu_ready(frame):
-                frame = self._expect(menu_ready, 10, "未确认旧对局结算完成和新开局入口")
-        except CurrencyWarsReconnect as error:
-            raise CurrencyWarsError("结束旧对局时出现重连提示，未开始新对局") from error
-        log.info("旧对局结算已完成，准备按设置开新局")
-        return frame
+        def settled(f):
+            return f.page in (Page.MATCH_RESULT, Page.HOME) or menu_ready(f)
+
+        def locate_confirmation(f):
+            button = f.enabled_button(f.find("放弃并结算", area=ui.END_MATCH_CONFIRM_BUTTON))
+            return (button.point,) if button else None
+
+        def confirm(f, target):
+            nonlocal confirmation_sent
+            confirmation_sent = True
+            return self._tap(f, target)
+
+        pages_left = 6
+        while True:
+            try:
+                if frame.page == Page.RECONNECT:
+                    frame = self._recover_network(frame, resume_match=False)
+                if frame.page not in {Page.MODES, Page.END_MATCH_CONFIRM} | ACTIVE_PAGES:
+                    frame = self._mode_menu(self._homepage(frame))
+                if not confirmation_sent and frame.page == Page.MODES and frame.unfinished_match:
+                    frame = self._click_to(
+                        frame, lambda f: ui.point(f.end_match_button()),
+                        lambda f: f.page == Page.END_MATCH_CONFIRM or settled(f),
+                        "未确认旧对局的结束提示", seconds=10, attempts=2,
+                    )
+                if not confirmation_sent and frame.page == Page.END_MATCH_CONFIRM:
+                    try:
+                        frame = self._action(
+                            frame, locate_confirmation, confirm, settled,
+                            "未确认旧对局已结束", seconds=25, attempts=1,
+                        )
+                    except CurrencyWarsReceiptTimeout:
+                        frame = self._expect(settled, 10, "未确认旧对局已结束")
+                if not settled(frame):
+                    frame = self._expect(settled, 10, "未确认旧对局已结束")
+                while frame.page == Page.MATCH_RESULT and pages_left > 0:
+                    frame = self._result_page(frame, ending_saved_match=True)
+                    pages_left -= 1
+                if frame.page == Page.HOME:
+                    frame = self._mode_menu(frame)
+                if not menu_ready(frame):
+                    frame = self._expect(menu_ready, 10, "未确认旧对局结算完成和新开局入口")
+                log.info("旧对局结算已完成，准备按设置开新局")
+                return frame
+            except CurrencyWarsReconnect as error:
+                frame = error.frame
+            except CurrencyWarsTerminalError:
+                raise
+            except Exception as error:
+                if frame.page == Page.RECONNECT and self.frame and self.frame.page == Page.RECONNECT:
+                    frame = self.frame
+                    continue
+                if confirmation_sent or frame.page == Page.RECONNECT or frame.page in ACTIVE_PAGES:
+                    raise CurrencyWarsUnavailable(f"旧对局结算待核对，保留当前现场：{error}") from error
+                raise
 
     def _launch(self, frame, resume):
         if frame.page == Page.END_MATCH_CONFIRM:
@@ -689,7 +723,7 @@ class CurrencyWars:
                 return self._resume_saved_match(frame)
             frame = self._rank_page(self._settle_saved_match(frame))
             if frame.page != Page.RANK:
-                return self._resume_saved_match(frame)
+                raise CurrencyWarsUnavailable("旧对局结算后仍有未完成进度，保留当前现场")
         try:
             frame = self._select_rank(frame)
         except CurrencyWarsRecoverable as error:
@@ -737,6 +771,8 @@ class CurrencyWars:
                 frame = self._observe()
         if self._can_take_over(frame, resume=resume):
             return frame
+        if frame.page in (Page.UNKNOWN, Page.CONFLICT):
+            raise CurrencyWarsUnavailable("多次复核后仍无法确认货币战争入口，保留当前现场")
         log.warning("暂未确认可进入的货币战争对局，保留当前游戏画面")
         self._save_failure()
         return None
@@ -751,7 +787,7 @@ class CurrencyWars:
         log.warning(f"游戏同步失败，尝试重连（{self.network_reconnects}/{MAX_RECONNECTS}）")
         lobby_pages = {Page.HOME, Page.MODES, Page.RANK}
         if not resume_match:
-            lobby_pages.update(REWARD_PAGES)
+            lobby_pages.update(REWARD_PAGES | {Page.END_MATCH_CONFIRM})
         previous = None
 
         def recovered(f):
@@ -1524,6 +1560,10 @@ class CurrencyWars:
         try:
             updated = self._action(frame, locate, send, receipt, "购买经验后未确认扣费及经验变化",
                                    seconds=10, attempts=1)
+        except CurrencyWarsReconnect:
+            if sent:
+                self.deferred_operations.add((board.stage, "经验"))
+            raise
         except CurrencyWarsReceiptTimeout:
             if not probe or not sent or self.frame is None or not in_budget(self.frame):
                 raise
@@ -2395,9 +2435,6 @@ class CurrencyWars:
                     and self._can_buy_exp(board, price)):
                 try:
                     frame = self._buy_exp(frame, board, price)
-                except CurrencyWarsReconnect:
-                    self.deferred_operations.add((stage, "经验"))
-                    raise
                 except CurrencyWarsRecoverable as error:
                     frame = self._recover_preparation(stage, "经验", error)
                 if frame.page != Page.BOARD or frame.stage != stage:
@@ -2511,7 +2548,7 @@ class CurrencyWars:
             else:
                 next_context = None
                 off_frames = 0
-                clear_frames += 1
+                clear_frames = clear_frames + 1 if frame.auto_off is False else 0
                 if self.battle_auto_retry_at is not None and clear_frames >= 2:
                     self.battle_auto_retry_at = None
                     log.info("开启自动战斗后左下角 C 已消失")
@@ -2795,12 +2832,17 @@ class CurrencyWars:
 
     def _choose(self, frame):
         title = frame.choice
+        supply_preferred = None
+        supply_centers = ()
         if title == "补给阶段":
             count = frame.supply_selection()
             if count is not None:
                 self.supply_required = count[1]
             if self.supply_required is not None:
                 return self._choose_supply(frame, count)
+            supply_preferred = self._choice_option(frame)
+            preferred_x = supply_preferred.point[0] if supply_preferred else 960
+            supply_centers = tuple(sorted(ui.SUPPLY_CENTERS, key=lambda x: abs(x - preferred_x)))
         else:
             self.supply_required = None
         if title == "投资环境" or title in ui.INVESTMENT_CHOICES:
@@ -2820,6 +2862,11 @@ class CurrencyWars:
         def option(f, attempt):
             if not is_single_supply(f) or title == "补给阶段" and f.supply_selection() == (1, 1):
                 return None
+            if title == "补给阶段":
+                # 计数漏读时用不同卡位推进，避免重复点优先卡而取消选择。
+                if attempt == 0 and supply_preferred is not None:
+                    return supply_preferred
+                return ui.Label("补给卡片", (supply_centers[attempt], 566))
             chosen = self._choice_option(f)
             if chosen is not None:
                 return chosen
@@ -2827,9 +2874,6 @@ class CurrencyWars:
                 details = f.matching(("查看详情",), ui.ITEM_CARD_DETAILS)
                 if details:
                     return ui.Label("详情上方的奖励", (min(details, key=lambda label: label.point[0]).point[0], 230))
-            if title == "补给阶段":
-                x = (960, 605, 1315)[attempt]
-                return ui.Label("补给卡片", (x, 566))
             if title == "遭遇节点":
                 return ui.Label("左侧遭遇", (666, 390))
             if reward_choice:
@@ -3615,6 +3659,8 @@ class CurrencyWars:
             if f.page != Page.WEEKLY:
                 return False
             score = f.ratio(ui.WEEKLY_SCORE)
+            if score is not None:
+                self.weekly_score = score
             available = f.claim_available() if score is not None else None
             return score is not None and available is not None
 
@@ -3652,6 +3698,7 @@ class CurrencyWars:
 
         frame = self._go_back(frame, Page.HOME)
         if (home_score := frame.ratio(ui.HOME_POINTS)) is not None and score != home_score:
+            self.weekly_score = None
             raise CurrencyWarsActionUnready("领奖页与首页的周积分不一致，请检查是否跨周重置")
         self.reward_claim_score = None
         claimed = receipt is not None
@@ -3668,20 +3715,35 @@ class CurrencyWars:
 
     def _check_weekly_reward(self, frame):
         """领奖故障与整局胜败分开。核对真实到账前不写完成时间。"""
+        self.weekly_score = None
+        self.weekly_reward_pending = True
         try:
             self._check_budget()
             try:
-                return self.get_reward(frame)
+                frame, score, claimed = self.get_reward(frame)
             except CurrencyWarsTerminalError:
                 raise
             except Exception as error:
-                return self._recover_weekly_reward(error)
+                frame, score, claimed = self._recover_weekly_reward(error)
         except CurrencyWarsTerminalError as error:
             self._log_pending_reward(error)
             raise
         except Exception as error:
             self._log_pending_reward(error)
-            return self.frame or frame, None, False
+            frame, score, claimed = self.frame or frame, None, False
+        if score is not None:
+            self.weekly_reward_pending = False
+        elif self.weekly_score is not None:
+            score = self.weekly_score
+            if frame.page == Page.HOME:
+                try:
+                    home_score = frame.ratio(ui.HOME_POINTS)
+                except Exception as error:
+                    log.debug(f"货币战争暂未识别首页积分：{error}")
+                else:
+                    if home_score is not None and home_score != score:
+                        score = None
+        return frame, score, claimed
 
     def _log_pending_reward(self, error):
         result = {True: "胜利", False: "战败", None: None}[self.result]
@@ -3754,6 +3816,8 @@ class CurrencyWars:
         self.deadline = started + TASK_SECONDS
         self.network_reconnects = 0
         self.reward_claim_score = None
+        self.weekly_score = None
+        self.weekly_reward_pending = False
         self.result = None
         matches = 0
         claimed = False
@@ -3789,7 +3853,9 @@ class CurrencyWars:
                         log.warning("对局已结算但周积分未增加")
                         break
                     score = latest_score
-                success = (score is not None and score[0] == score[1]) if weekly else self.result is True
+                success = self.result is True
+                if weekly:
+                    success = score is not None and score[0] == score[1] and not self.weekly_reward_pending
                 if claimed and cfg.currencywars_bonus_enable:
                     self._check_budget()
                     try:
@@ -3798,7 +3864,7 @@ class CurrencyWars:
                         log.warning(f"货币战争已结算，饰品快速提取未完成：{error}")
                 if matches:
                     message = "货币战争已完成" if success else "货币战争未完成"
-                    if score is None:
+                    if score is None or self.weekly_reward_pending:
                         result = {True: "胜利", False: "战败", None: "胜负待核对"}[self.result]
                         message = f"货币战争已结算（{result}），周奖励待核对"
                     self._notify(

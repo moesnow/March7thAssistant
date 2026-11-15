@@ -46,6 +46,10 @@ class CloudGameZeroDurationError(RuntimeError):
     """云游戏剩余时长为 0。"""
 
 
+class CloudGameDisconnectedError(ConnectionError):
+    """正在运行的浏览器显示云游戏连接中断。"""
+
+
 class CloudGamePaidTimeExhaustedError(SystemExit):
     """对局中的付费时长已耗尽，由 CLI 记录为明确的结束原因。"""
 
@@ -1250,7 +1254,7 @@ class CloudGameController(GameControllerBase):
 
     def connect_to_running_game(self) -> bool:
         """为独立运行的流程连接已有云游戏会话，不启动游戏或重新排队。"""
-        self._preserve_browser_on_exit = True
+        self.preserve_running_browser()
         try:
             if self.driver is None:
                 self._connect_or_create_browser(connect_only=True)
@@ -1259,10 +1263,17 @@ class CloudGameController(GameControllerBase):
                 self.log_error("云游戏尚未进入游戏画面，请先启动游戏")
                 return False
             return True
+        except CloudGameDisconnectedError as e:
+            self.log_warning(str(e))
+            return False
         except Exception as e:
             self.log_error(f"连接正在运行的云游戏失败: {e}")
             self._release_attached_driver()
             return False
+
+    def preserve_running_browser(self):
+        """保留游戏浏览器，退出时仅释放当前驱动。"""
+        self._preserve_browser_on_exit = True
 
     def _release_attached_driver(self):
         driver, self.driver = self.driver, None
@@ -1287,17 +1298,24 @@ class CloudGameController(GameControllerBase):
     def is_in_game(self) -> bool:
         if not self.driver:
             return False
-        # 断联后播放器节点仍然存在，不能据此跳过重新连接。
-        # 启动流程捕获 ConnectionError 后会关闭失效会话并按原有上限重试。
-        disconnected = self.driver.find_elements(
-            By.XPATH, "//*[normalize-space(text())='连接中断']")
-        exit_buttons = self.driver.find_elements(
-            By.XPATH, "//*[normalize-space(text())='退出游戏']")
-        if (any(element.is_displayed() for element in disconnected)
-                and any(element.is_displayed() for element in exit_buttons)):
-            raise ConnectionError("云游戏会话已断开，重新连接游戏")
-        return any(element.is_displayed() for element in
-                   self.driver.find_elements(By.CSS_SELECTOR, ".game-player"))
+        client_config = self.driver.command_executor._client_config
+        previous_timeout = client_config.timeout
+        client_config.timeout = min(previous_timeout, 3) if previous_timeout is not None else 3
+        try:
+            # 断联后播放器节点仍然存在，不能据此跳过重新连接。
+            disconnected = self.driver.find_elements(
+                By.XPATH, "//*[normalize-space(text())='连接中断']")
+            if any(element.is_displayed() for element in disconnected):
+                exit_buttons = self.driver.find_elements(
+                    By.XPATH, "//*[normalize-space(text())='退出游戏']")
+                if any(element.is_displayed() for element in exit_buttons):
+                    raise CloudGameDisconnectedError("云游戏会话已断开")
+            return any(element.is_displayed() for element in
+                       self.driver.find_elements(By.CSS_SELECTOR, ".game-player"))
+        except (TransportTimeoutError, TimeoutException) as error:
+            raise TimeoutError("读取云游戏会话状态超时") from error
+        finally:
+            client_config.timeout = previous_timeout
 
     def enter_cloud_game(self) -> bool:
         """进入云游戏"""
