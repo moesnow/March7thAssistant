@@ -63,7 +63,7 @@ class WindowsSystemPowerRequest:
         except (AttributeError, OSError) as error:
             log.warning(f"未能申请 Windows 防自动睡眠：{error}")
         else:
-            log.info("已申请 Windows 防自动睡眠")
+            log.debug("已申请 Windows 防自动睡眠")
 
     def release(self, log):
         request, self._request = self._request, None
@@ -75,7 +75,7 @@ class WindowsSystemPowerRequest:
                 log.warning(f"未能清除 Windows 电源请求：{ctypes.WinError(ctypes.get_last_error())}")
         finally:
             if api.CloseHandle(handle):
-                log.info("已释放 Windows 电源请求")
+                log.debug("已释放 Windows 电源请求")
             else:
                 log.warning(f"未能关闭 Windows 电源请求句柄：{ctypes.WinError(ctypes.get_last_error())}")
 
