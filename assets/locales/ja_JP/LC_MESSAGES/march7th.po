@@ -8167,3 +8167,11 @@ msgstr "戦略優先"
 #: app/setting_interface.py:660
 msgid "图鉴优先"
 msgstr "図鑑優先"
+
+#: app/setting_interface.py:615
+msgid "总时限"
+msgstr "制限時間"
+
+#: app/setting_interface.py:616
+msgid "单次运行的分钟数，0 表示不限时"
+msgstr "1 回の実行時間（分）。0 で無制限"
