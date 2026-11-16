@@ -2805,10 +2805,9 @@ def test_task_limit_minutes_map_to_seconds(minutes, expected):
     assert task.task_limit_seconds(minutes) == expected
 
 
-def test_task_limit_seconds_keeps_the_default_for_missing_or_invalid_values(monkeypatch):
-    monkeypatch.setattr(task, "TASK_SECONDS", 7200)
-    assert task.task_limit_seconds(None) == 7200
-    assert task.task_limit_seconds("bad") == 7200
+@pytest.mark.parametrize("minutes", (None, "bad", float("inf")))
+def test_task_limit_seconds_defaults_to_four_hours_for_missing_or_invalid_values(minutes):
+    assert task.task_limit_seconds(minutes) == 4 * 60 * 60
 
 
 def test_currency_wars_time_limit_zero_runs_without_a_deadline(monkeypatch, world):

@@ -27,7 +27,7 @@ from utils.pause import pause_ctl
 from utils.screenshot_util import save_error_screenshot
 
 
-TASK_SECONDS = 120 * 60
+TASK_SECONDS = 4 * 60 * 60
 MAX_WEEKLY_MATCHES = 3
 MAX_RECONNECTS = 2
 MAX_ENTRY_ESCAPES = 3
@@ -77,7 +77,7 @@ def task_limit_seconds(minutes) -> int | None:
         return TASK_SECONDS
     try:
         value = int(minutes)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return TASK_SECONDS
     return value * 60 if value > 0 else None
 

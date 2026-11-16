@@ -609,14 +609,6 @@ class SettingInterface(ScrollArea):
             '',
             texts={tr('标准博弈'): 'normal', tr('超频博弈'): 'overclock'}
         )
-        self.currencywarsTimeLimitCard = SpinBoxSettingCard1(
-            "currencywars_time_limit",
-            UiIcon.TIMER,
-            tr("总时限"),
-            tr("单次运行的分钟数，0 表示不限时"),
-            minimum=0,
-            maximum=1440,
-        )
         self.currencywarsBonusEnableCard = SwitchSettingCard1(
             UiIcon.DIAMOND,
             tr('自动执行位面饰品快速提取'),
@@ -675,6 +667,13 @@ class SettingInterface(ScrollArea):
             tr("投资选项优先级"),
             "",
             texts={tr("策略优先"): "strategy", tr("图鉴优先"): "catalog"},
+        )
+        self.currencywarsTimeLimitCard = SpinBoxSettingCard1(
+            "currencywars_time_limit",
+            UiIcon.TIMER,
+            tr("总时限"),
+            tr("单次运行的分钟数，0 表示不限时"),
+            default=240,
         )
 
         self.UniverseGroup = SettingCardGroup(tr("差分宇宙"), self.scrollWidget)
@@ -2776,7 +2775,6 @@ class SettingInterface(ScrollArea):
         self.CurrencywarsGroup.addSettingCard(self.currencywarsEnableCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsPresetCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsTypeCard)
-        self.CurrencywarsGroup.addSettingCard(self.currencywarsTimeLimitCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsBonusEnableCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsRankDifficultyCard)
         if self.currencywarsStrategyCard is not None:
@@ -2789,6 +2787,7 @@ class SettingInterface(ScrollArea):
         if self.currencywarsStrategyCard is not None:
             self.currencywarsStrategySelectCard.hide()
         self.CurrencywarsGroup.addSettingCard(self.currencywarsFastModeCard)
+        self.CurrencywarsGroup.addSettingCard(self.currencywarsTimeLimitCard)
 
         self.UniverseGroup.addSettingCard(self.weeklyDivergentEnableCard)
         self.UniverseGroup.addSettingCard(self.weeklyDivergentTypeCard)

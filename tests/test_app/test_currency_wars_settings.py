@@ -11,11 +11,15 @@ from tasks.weekly.currency_wars_strategy import (
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="原生设置界面仅在 Windows 验证")
-def test_currency_wars_time_limit_defaults_to_120_and_accepts_zero(qtbot, tmp_path, monkeypatch):
+@pytest.mark.parametrize(("saved_limit", "expected"), [(None, 240), ("bad", 240), (120, 120)])
+def test_currency_wars_time_limit_is_at_the_bottom_and_saves_minutes(qtbot, tmp_path, monkeypatch, saved_limit, expected):
     import app.setting_interface as settings
 
     path = tmp_path / "config.yaml"
-    path.write_text("currencywars_strategy: s2_anaxa\n", encoding="utf-8")
+    contents = "currencywars_strategy: s2_anaxa\n"
+    if saved_limit is not None:
+        contents += f"currencywars_time_limit: {saved_limit}\n"
+    path.write_text(contents, encoding="utf-8")
     config = Config.__new__(Config)
     Config.__init__(config, "assets/config/version.txt", "assets/config/config.example.yaml", str(path))
     monkeypatch.setattr("module.config.cfg", config)
@@ -25,16 +29,18 @@ def test_currency_wars_time_limit_defaults_to_120_and_accepts_zero(qtbot, tmp_pa
     widget = settings.SettingInterface()
     qtbot.addWidget(widget)
 
+    group = widget.CurrencywarsGroup
+    widget.stackedWidget.setCurrentWidget(group)
+    widget.show()
     card = widget.currencywarsTimeLimitCard
-    assert card.parent() is widget.CurrencywarsGroup
-    assert card.spinBox.value() == 120
+    assert card.parent() is group
+    assert card.y() > widget.currencywarsFastModeCard.geometry().bottom()
+    assert card.spinBox.value() == expected
     assert (card.spinBox.minimum(), card.spinBox.maximum()) == (0, 1440)
-    card.spinBox.setValue(240)
-    config._load_config(save=False)
-    assert config.get_value("currencywars_time_limit") == 240
+    card.spinBox.setValue(360)
+    assert config.yaml.load(path.read_text(encoding="utf-8"))["currencywars_time_limit"] == 360
     card.spinBox.setValue(0)
-    config._load_config(save=False)
-    assert config.get_value("currencywars_time_limit") == 0
+    assert config.yaml.load(path.read_text(encoding="utf-8"))["currencywars_time_limit"] == 0
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="原生设置界面仅在 Windows 验证")

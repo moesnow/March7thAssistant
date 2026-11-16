@@ -14,7 +14,7 @@ class SpinBoxSettingCard1(SettingCard):
     valueChanged = Signal(int)
 
     def __init__(self, configname: str, icon: Union[str, QIcon, FluentIconBase], title, content=None,
-                 *, minimum: int = 0, maximum: int = 1440, parent=None):
+                 *, default: int, minimum: int = 0, maximum: int = 1440, parent=None):
         super().__init__(icon, title, content, parent)
         self.configname = configname
         self.spinBox = AsciiSpinBox(self)
@@ -22,15 +22,12 @@ class SpinBoxSettingCard1(SettingCard):
         self.spinBox.setMinimumWidth(120)
         self.hBoxLayout.addWidget(self.spinBox, 0, Qt.AlignmentFlag.AlignRight)
         self.hBoxLayout.addSpacing(16)
-        self.spinBox.setValue(self.__normalize(cfg.get_value(configname)))
-        self.spinBox.valueChanged.connect(self.__onValueChanged)
-
-    def __normalize(self, value) -> int:
         try:
-            value = int(value)
-        except (TypeError, ValueError):
-            value = self.spinBox.minimum()
-        return max(self.spinBox.minimum(), min(self.spinBox.maximum(), value))
+            value = int(cfg.get_value(configname))
+        except (TypeError, ValueError, OverflowError):
+            value = default
+        self.spinBox.setValue(max(minimum, min(maximum, value)))
+        self.spinBox.valueChanged.connect(self.__onValueChanged)
 
     def __onValueChanged(self, value: int) -> None:
         cfg.set_value(self.configname, int(value))
