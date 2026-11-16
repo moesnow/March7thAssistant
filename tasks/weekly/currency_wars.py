@@ -167,6 +167,7 @@ class CurrencyWars:
         self.stage_refreshes = {}
         self.deployment_stage = None
         self.deployment_moves = ()
+        self.deployment_history = set()
         self.held_deployment = None
         self.deployment_replan_stage = None
         self.preparation_progress = 0
@@ -489,16 +490,21 @@ class CurrencyWars:
         return False
 
     def _homepage(self, frame, *, keep_weekly=False):
-        if frame.page == Page.REWARD_RECEIPT:
+        for _ in range(3):
+            page = frame.page
+            if page == Page.REWARD_LIMIT:
+                message = "助燃券容量提示未确认关闭"
+            elif page == Page.REWARD_RECEIPT:
+                message = "奖励展示未确认关闭"
+            else:
+                break
             frame = self._click_to(
-                frame, lambda f: f.reward_close(), lambda f: f.page in (Page.WEEKLY, Page.HOME),
-                "奖励展示未确认关闭", seconds=8, attempts=2,
+                frame, lambda f: f.reward_limit_close() if page == Page.REWARD_LIMIT else f.reward_close(),
+                lambda f: f.page in REWARD_PAGES and f.page != page,
+                message, seconds=8, attempts=2,
             )
-        if frame.page == Page.REWARD_LIMIT:
-            frame = self._click_to(
-                frame, lambda f: ui.point(f.reward_limit_confirm()), lambda f: f.page in (Page.WEEKLY, Page.HOME),
-                "助燃券容量提示未确认关闭", seconds=8, attempts=2,
-            )
+        if frame.page in (Page.REWARD_RECEIPT, Page.REWARD_LIMIT):
+            raise CurrencyWarsReadTimeout("多次关闭后仍显示货币战争领奖提示")
         if frame.page in (Page.RANK, Page.END_MATCH_CONFIRM):
             frame = self._go_back(frame, Page.MODES)
         if keep_weekly and frame.page == Page.WEEKLY:
@@ -1744,8 +1750,11 @@ class CurrencyWars:
         return frame
 
     def _disassemble_for_upgrade(self, frame, board):
-        if not board.has_bench_space or not frame.disassembly_tool():
+        tool_origin = frame.disassembly_tool() if board.has_bench_space else None
+        if tool_origin is None:
             return None
+        x, y = tool_origin
+        tool_area = (x - 24, y - 24, x + 28, y + 36)
         for source in board.field:
             unit = source.unit
             if unit is None or not unit.equipment or (board.stage, unit.name) in self.disassembly_attempted:
@@ -1756,40 +1765,64 @@ class CurrencyWars:
                 continue
             source_face = frame.slot_mark(source.point)
             target_face = frame.slot_mark(target.point)
-            items_before = frame.inventory_items()
+            sent_frame = None
             self.disassembly_attempted.add((board.stage, unit.name))
+
+            def loadout_unchanged(f, before, equipped):
+                target_equipment = f.card_equipment(target)
+                return (equipped > 0 and equipped == before.card_equipment(source)
+                        and target_equipment is not None and target_equipment == before.card_equipment(target)
+                        and f.inventory_items() == before.inventory_items()
+                        and not self._equipment_inventory_changed(before, f))
+
+            def tool_unchanged(f):
+                # 扳手图像包含剩余次数，消耗未核实时不能重发。
+                return np.array_equal(f.crop(tool_area), sent_frame.crop(tool_area))
 
             def positions(f):
                 tool = f.disassembly_tool()
-                if (tool and f.capacity == (board.used, board.capacity)
+                equipped = f.card_equipment(source) or 0
+                if (tool is not None and max(abs(a - b) for a, b in zip(tool, tool_origin)) <= 5
+                        and f.capacity == (board.used, board.capacity)
                         and f.slot_occupied(source.point) and f.slot_occupied(target.point)
-                        and f.card_equipment(source) > target.unit.equipment
+                        and target.point not in f.locked_bench_slots | f.black_hole_slots
+                        and equipped > target.unit.equipment
                         and self._card_stars(f, source) == unit.stars
                         and self._card_stars(f, target) == target.unit.stars
                         and f.slot_portrait_matches(source.point, source_face)
-                        and f.slot_portrait_matches(target.point, target_face)):
+                        and f.slot_portrait_matches(target.point, target_face)
+                        and (sent_frame is None or loadout_unchanged(f, sent_frame, equipped) and tool_unchanged(f))):
                     return tool, source.point
                 return None
 
+            def disassemble(f, tool, recipient):
+                nonlocal sent_frame
+                sent_frame = f
+                return self._drag(f, tool, recipient)
+
             def transferred(f):
-                return f.page in PREP_OVERLAYS or (f.page == Page.BOARD and f.stage == board.stage
+                return f.page in PREP_OVERLAYS or (sent_frame is not None
+                        and f.page == Page.BOARD and f.stage == board.stage
                         and f.slot_portrait_matches(source.point, source_face)
                         and f.card_equipment(source) == 0
-                        and (len(f.inventory_items()) > len(items_before)
-                             or self._equipment_inventory_changed(frame, f)))
+                        and (len(f.inventory_items()) > len(sent_frame.inventory_items())
+                             or self._equipment_inventory_changed(sent_frame, f)))
 
             try:
-                updated = self._action(frame, positions, lambda f, a, b: self._drag(f, a, b), transferred,
-                                       f"未确认取下{unit.name}低星版本的装备", seconds=8, attempts=1)
+                # 卡面动画会改变中心像素，连续两帧核对工具位置、星级和肖像后即可拖动。
+                updated = self._action(frame, positions, disassemble, transferred,
+                                       f"未确认取下{unit.name}低星版本的装备", seconds=8, attempts=2,
+                                       retry_after=4, track_control=False)
             except CurrencyWarsRecoverable:
                 self._check_budget()
                 current = self.frame
+                before = sent_frame if sent_frame is not None else frame
                 if (current is None or current.page != Page.BOARD or current.stage != board.stage
                         or current.capacity != (board.used, board.capacity)
                         or not current.slot_portrait_matches(source.point, source_face)
-                        or not current.card_equipment(source)
-                        or current.inventory_items() != items_before
-                        or self._equipment_inventory_changed(frame, current)):
+                        or not current.slot_portrait_matches(target.point, target_face)
+                        or not loadout_unchanged(current, before, current.card_equipment(source) or 0)
+                        or sent_frame is not None and not tool_unchanged(current)):
                     raise
                 log.warning(f"{unit.name}拆装未生效，保留原装备和阵容")
                 return current
@@ -2110,6 +2143,11 @@ class CurrencyWars:
         log.warning(f"{frame.stage}金币暂未稳定，保留本节点经济操作")
         return stable
 
+    @staticmethod
+    def _deployment_layout(board):
+        slots = frozenset((s.zone, s.index, s.occupied, s.blocked, s.unit) for s in board.slots)
+        return board.stage, board.used, board.capacity, board.hp, slots
+
     def _next_deployment(self, board):
         if self.deployment_stage != board.stage:
             self.deployment_stage = board.stage
@@ -2140,6 +2178,11 @@ class CurrencyWars:
             log.debug("部署计划的角色或卡位已变化，按当前棋盘重新规划")
             self.deployment_moves = ()
         if self.held_deployment is not None:
+            return None
+        if (board.front_count and board.used <= board.capacity
+                and self._deployment_layout(board) in self.deployment_history):
+            # 同节点已从这套阵容成功执行过部署。保留当前阵容，继续商店、经验和装备。
+            log.debug(f"{board.stage}已回到本节点部署过的阵容，暂缓重复换位")
             return None
         self.deployment_moves = strategy.deployment(board)
         return self.deployment_moves[0] if self.deployment_moves else None
@@ -2515,6 +2558,7 @@ class CurrencyWars:
                     frame = self._recover_deployment(board, error)
                 else:
                     if frame.page == Page.BOARD and frame.stage == stage:
+                        self.deployment_history.add(self._deployment_layout(board))
                         self.deployment_moves = self.deployment_moves[1:]
                         if not self.deployment_moves:
                             self.held_deployment = None
@@ -2596,7 +2640,7 @@ class CurrencyWars:
         frame = self._equip(frame, board)
         if frame.page != Page.BOARD or frame.stage != board.stage:
             return frame
-        fight = frame.find(*ui.BOARD_ADVANCE, area=ui.BOARD_FIGHT)
+        fight = frame.board_advance
         if fight is None or (fight.text == "出战" and not board.front_count):
             raise CurrencyWarsActionUnready("备战结束时未确认可推进按钮或前台角色")
         if fight.text == "出战" and board.used > board.capacity:
@@ -2609,8 +2653,8 @@ class CurrencyWars:
         stage = frame.stage
 
         def advance(f):
-            button = f.find(fight.text, area=ui.BOARD_FIGHT)
-            return ui.point(button)
+            button = f.board_advance
+            return button.point if button is not None and button.text == fight.text else None
 
         return self._click_to(
             frame, advance,
@@ -2641,7 +2685,7 @@ class CurrencyWars:
             return frame
         if frame.shop_open:
             return self._close_shop(frame)
-        fight = frame.find(*ui.BOARD_ADVANCE, area=ui.BOARD_FIGHT)
+        fight = frame.board_advance
         if fight is None:
             return self._prepare(frame)
         if fight.text == "出战" and self._deployment_blocks_fight(frame):
@@ -3823,6 +3867,7 @@ class CurrencyWars:
         self.stage_refreshes.clear()
         self.deployment_stage = None
         self.deployment_moves = ()
+        self.deployment_history.clear()
         self.held_deployment = None
         self.deployment_replan_stage = None
         self.preparation_progress = 0
@@ -4059,8 +4104,12 @@ class CurrencyWars:
 
         more_rewards_available = False
         if frame.page == Page.REWARD_RECEIPT:
-            frame = self._click_to(frame, lambda f: f.reward_close(), lambda f: f.page in (Page.WEEKLY, Page.HOME),
-                                   "领奖后未确认返回积分页", seconds=12)
+            frame = self._click_to(
+                frame, lambda f: f.reward_close(), lambda f: f.page in REWARD_PAGES - {Page.REWARD_RECEIPT},
+                "领奖后未确认返回积分页", seconds=12,
+            )
+            if frame.page == Page.REWARD_LIMIT:
+                raise CurrencyWarsReceiptTimeout("助燃券已达上限，货币战争积分奖励仍待领取")
             # 一键领取已确认到账。仅在画面明确显示还有奖励时保留本周待办。
             more_rewards_available = frame.page == Page.WEEKLY and frame.claim_button_visible()
         if frame.page != Page.HOME:
