@@ -242,6 +242,44 @@ def test_keep_awake_is_requested_before_launch_only_if_supported(entry, device, 
     }[support]
 
 
+@pytest.mark.parametrize("disconnect", [False, True])
+def test_mute_warning_allows_start_and_cleans_up_when_the_socket_survives(entry, device, monkeypatch, disconnect):
+    client = module.game.adb_transport.ServiceClient.return_value
+    controller = module.game.get_game_controller.return_value
+    bridge = Bridge()
+    client.closed = False
+    client.close.side_effect = lambda: setattr(client, "closed", True)
+    controller.close.side_effect = lambda: controller.attach_virtual_session.call_args.args[1].close()
+
+    def respond(command, **params):
+        if command == "mute" and params["on"]:
+            raise module.game.adb_transport.AdbError("unsupported", "device rejected mute")
+        return {"original_mode": "allow"}, None
+
+    client.request.side_effect = respond
+
+    def launch(*, recover_startup):
+        assert recover_startup
+        if disconnect:
+            client.closed = True
+            raise module.game.adb_transport.disconnected("watchdog/receive, EOFError")
+
+    controller.start_game_process.side_effect = launch
+    run_task = Mock(return_value=True)
+    monkeypatch.setattr(rewards, "run_daily_training", run_task)
+
+    assert start(entry, "DAILY", bridge) == ("disconnected" if disconnect else "success")
+    assert ("log", "WARNING", "未能设置游戏静音：device rejected mute") in bridge.calls
+    assert run_task.call_count == (0 if disconnect else 1)
+    recovery_states = [args[1] for args in bridge.calls if args[0] == "audioRecoveryPending"]
+    assert recovery_states == ([True] if disconnect else [True, False])
+    if disconnect:
+        assert any(call[:2] == ("log", "ERROR") and "watchdog/receive, EOFError" in call[2]
+                   for call in bridge.calls)
+    else:
+        assert [call.args[0] for call in client.request.call_args_list][-2:] == ["mute", "shutdown"]
+
+
 @pytest.mark.parametrize(("scenario", "outcome", "retry_requests"), [
     ("recovers", "success", 1),
     ("task_reappears", "success", 1),

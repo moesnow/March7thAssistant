@@ -14,6 +14,7 @@ from qfluentwidgets import (PushButton, PrimaryPushButton, LineEdit, ComboBox,
 from utils.tasks import AVAILABLE_TASKS, supported_tasks, UNSUPPORTED_TASK
 from module.localization import tr
 from app.common.style_sheet import StyleSheet
+from app.tools.adb_service import display_connection
 
 # 仅主页可用的特殊操作（不在 AVAILABLE_TASKS 中）
 HOME_EXTRA_TASKS = {
@@ -30,7 +31,7 @@ ALL_TASKS = {**AVAILABLE_TASKS, **HOME_EXTRA_TASKS}
 
 
 def home_task_choices(current=None):
-    tasks = supported_tasks()
+    tasks = supported_tasks(display_connection())
     if "fight" in tasks:
         tasks.update(HOME_EXTRA_TASKS)
     choices = {task_id: tr(name) for task_id, name in tasks.items()}

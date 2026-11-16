@@ -151,7 +151,8 @@ MODE_NAMES = {"normal": "标准博弈", "overclock": "超频博弈"}
 MODE_ENTRIES = tuple("进入" + name for name in MODE_NAMES.values())
 CONTINUE_MATCH = ("继续进度", "继续对局", "继续博弈")
 END_MATCH = ("结束并结算", "放弃并结算")
-ITEM_CHOICES = ("武装箱", "简易武装箱", "完整武装箱", "进阶武装箱", "特权武装箱", "星徽秘典", "阿哈")
+WEAPON_BOXES = ("武装箱", "简易武装箱", "完整武装箱", "进阶武装箱", "特权武装箱")
+ITEM_CHOICES = (*WEAPON_BOXES, *(f"阿哈·{box}" for box in WEAPON_BOXES), "星徽秘典", "阿哈")
 RECRUIT_CHOICES = ("员工招募书", "员工聘用书", "专家邀请函")
 INVESTMENT_CHOICES = ("请选择投资策略", "投资策略")
 CHOICES = (
@@ -480,7 +481,7 @@ class Frame:
     @cached_property
     def choice(self) -> str | None:
         label = self.find(*CHOICES, area=CHOICE_TITLE)
-        if (label and label.text in ("武装箱", "阿哈")
+        if (label and (label.text in ("武装箱", "阿哈") or label.text.startswith("阿哈·"))
                 and not self.has("请选择1个", "请选择一个", area=ITEM_SELECTION)
                 and not self.has("查看详情", area=ITEM_CARD_DETAILS)):
             return None
@@ -592,7 +593,7 @@ class Frame:
         if node_title and self.find("继续挑战", "前往结算", area=RESULT_BUTTON):
             return Page.CONFLICT if self.combat_buttons else Page.NODE_RESULT
         if self.combat_buttons:
-            if self.season or self.find(*BOARD_ADVANCE, area=BOARD_FIGHT):
+            if self.season or self.board_advance:
                 return Page.CONFLICT
             return Page.BATTLE
         if self.end_match_dialog:
@@ -699,10 +700,17 @@ class Frame:
                 return Page.BENCH_FULL
             if self.shop_open:
                 return Page.SHOP
-            if (self.find("商店", area=BOARD_SHOP) and self.find(*BOARD_ADVANCE, area=BOARD_FIGHT)
-                    and self._board_rows_visible()):
+            if self.find("商店", area=BOARD_SHOP) and self.board_advance and self._board_rows_visible():
                 return Page.BOARD
         return Page.UNKNOWN
+
+    @cached_property
+    def board_advance(self) -> Label | None:
+        buttons = tuple(
+            label for label in self.texts(BOARD_FIGHT)
+            if label.text in BOARD_ADVANCE or re.fullmatch(r"跳过\([1-9]\d*/[1-9]\d*\)", label.text)
+        )
+        return buttons[0] if len(buttons) == 1 else None
 
     def _board_rows_visible(self):
         front_area = (850, 304, 1100, 326)
@@ -1124,9 +1132,16 @@ class Frame:
             return self.match("zh_CN/base/click_close.png", REWARD_DISMISS, 0.80)
         return None
 
-    def reward_limit_confirm(self) -> Label | None:
-        if self.page == Page.REWARD_LIMIT:
-            return self.enabled_button(self.find("确认", "确定", area=(715, 560, 1210, 828)))
+    def reward_limit_close(self) -> Point | None:
+        if self.page != Page.REWARD_LIMIT:
+            return None
+        if button := self.enabled_button(self.find("确认", "确定", area=(715, 560, 1210, 828))):
+            return button.point
+        if close := self.find("X", "x", "×", area=(1425, 345, 1498, 413)):
+            return close.point
+        if (self.has("清理", area=(571, 679, 932, 738))
+                and self.has("前往使用", area=(989, 679, 1349, 738))):
+            return 1462, 379
         return None
 
     def empty_front_confirm(self) -> Label | None:

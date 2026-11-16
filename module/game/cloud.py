@@ -30,7 +30,6 @@ from selenium.webdriver.remote.command import Command
 from selenium.common.exceptions import WebDriverException
 
 from module.config import Config
-from module.config.platform import get_control_backend
 from module.game.base import FrameCapture, GameControllerBase
 from module.logger import Logger
 # from utils.encryption import wdp_encrypt, wdp_decrypt
@@ -64,6 +63,7 @@ class CloudGamePaidTimeExhaustedError(SystemExit):
 
 
 class CloudGameController(GameControllerBase):
+    _exit_cleanup_registered = False
     COOKIE_PATH = "settings/cookies.enc"          # Cookies 保存地址（仅用于调试）
     GAME_URL = "https://sr.mihoyo.com/cloud"            # 游戏地址
     BROWSER_TAG = "--march-7th-assistant-sr-cloud-game"  # 自定义浏览器参数作为标识，用于识别哪些浏览器进程属于三月七小助手
@@ -175,9 +175,6 @@ class CloudGameController(GameControllerBase):
         self._qr_notify_last_link = ""
         self._qr_notify_last_sent_ts = 0.0
         self._qr_notify_min_interval_sec = 60
-
-        if get_control_backend(cfg) != "adb":
-            atexit.register(self._clean_at_exit)
 
     def _wait_game_page_loaded(self, timeout=30) -> None:
         """等待云崩铁网页加载出来，这里以背景图是否加载出来为准"""
@@ -434,8 +431,13 @@ class CloudGameController(GameControllerBase):
         except AttributeError:
             self._driver_pid = None
 
+        if not self._exit_cleanup_registered:
+            atexit.register(self._clean_at_exit)
+            self._exit_cleanup_registered = True
+
         # 关掉 headless 不匹配的浏览器，防止端口冲突
         if not keep_existing:
+            self._preserve_browser_on_exit = False
             if self.close_all_m7a_browser(headless=not headless):
                 self.log_info(f"已关闭正在运行的{'前台' if headless else '后台'}浏览器")
             existing = self.get_m7a_browsers(headless=headless)
@@ -2036,4 +2038,5 @@ class CloudGameController(GameControllerBase):
             self.log_warning(f"检测到由小助手启动的浏览器，关闭失败: {e}")
             return False
 
+        self._preserve_browser_on_exit = True
         return True

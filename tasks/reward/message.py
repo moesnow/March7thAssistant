@@ -6,6 +6,7 @@ from module.screen import screen
 from tasks.base.list_drag import drag_list
 from .receipt import ITEM_POPUP, RewardError, close_item_reward, notify_reward
 from .rewardtemplate import RewardTemplate
+from .sms import close_sms_receipt, find_thread_title, first_unblocked_thread
 
 
 class Message(RewardTemplate):
@@ -37,7 +38,6 @@ class Message(RewardTemplate):
         while time.monotonic() < deadline:
             if auto.find_element("获得物品", "text", crop=ITEM_POPUP):
                 log.info("已领取短信奖励")
-                close_item_reward()
                 return True
             if auto.find_element(self._PENDING_THREAD, "image", 0.8, crop=pending_crop):
                 settled_frames = 0
@@ -51,20 +51,25 @@ class Message(RewardTemplate):
             time.sleep(0.7)
         return None
 
+    @staticmethod
+    def _receipt_visible():
+        auto.take_screenshot(crop=ITEM_POPUP)
+        auto.perform_ocr(raise_on_error=True)
+        return auto.find_element("获得物品", "text", take_screenshot=False, need_ocr=False)
+
     def run(self):
-        drags = completed = received = 0
-        timed_out_rows = set()
+        drags = completed = received = timed_out = 0
+        timed_out_titles = set()
         try:
             for _ in range(30):
-                pending = auto.find_element(self._PENDING_THREAD, "image", 0.8, crop=self._NOTIFY_LIST_CROP)
-                if pending and pending[0][1] not in timed_out_rows:
-                    pos = pending
-                elif timed_out_rows:
-                    unread = auto.find_element(self._UNREAD_MARK, "image_with_multiple_targets", 0.82,
-                                               crop=self._NOTIFY_LIST_CROP) or []
-                    pos = next((box for box in unread if all(abs(box[0][1] - y) > 24 for y in timed_out_rows)), None)
+                if timed_out_titles:
+                    pos = first_unblocked_thread(
+                        auto, self._LIST, self._NOTIFY_LIST_CROP,
+                        ((self._PENDING_THREAD, 0.8), (self._UNREAD_MARK, 0.82)), timed_out_titles,
+                    )
                 else:
-                    pos = auto.find_element(self._UNREAD_MARK, "image", 0.82, crop=self._NOTIFY_LIST_CROP)
+                    pos = (auto.find_element(self._PENDING_THREAD, "image", 0.8, crop=self._NOTIFY_LIST_CROP)
+                           or auto.find_element(self._UNREAD_MARK, "image", 0.82, crop=self._NOTIFY_LIST_CROP))
 
                 if not pos:
                     if drags >= 4:
@@ -80,17 +85,25 @@ class Message(RewardTemplate):
                 pending_crop = auto.calculate_crop_with_pos((left - width, top - height), (width * 4, height * 4))
                 result = self._finish(pending_crop)
                 if result is None:
+                    timed_out += 1
+                    title = find_thread_title(auto, self._LIST, pending_crop, self._PENDING_THREAD, 0.8)
                     log.warning("短信会话超时，尝试返回列表继续其他会话")
-                    timed_out_rows.add(top)
                     screen.change_to("menu", max_recursion=0)
                     screen.change_to("incoming_message", max_recursion=0)
+                    if not title:
+                        log.warning("未识别超时会话标题，停止本次短信处理")
+                        break
+                    timed_out_titles.add(title)
                 else:
                     completed += 1
                     received += result
+                    if result and not close_sms_receipt(close_item_reward, self._receipt_visible):
+                        log.warning("已确认短信奖励到账，弹窗仍未关闭，停止本次短信处理")
+                        break
                 drags = 0
         finally:
             if received:
                 notify_reward(auto, f"处理了 {completed} 个短信会话，领取 {received} 次奖励")
         log.info(f"本次已处理 {completed} 个短信会话" if completed else "本次未发现已完成会话")
-        if timed_out_rows:
-            raise RewardError(f"有 {len(timed_out_rows)} 个短信会话超时")
+        if timed_out:
+            raise RewardError(f"有 {timed_out} 个短信会话超时")

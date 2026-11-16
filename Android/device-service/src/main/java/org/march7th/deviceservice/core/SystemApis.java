@@ -37,7 +37,7 @@ final class SystemApis {
         return (IBinder) Class.forName("android.os.ServiceManager").getMethod("getService", String.class).invoke(null, name);
     }
 
-    private static Object asInterface(String interfaceName, String serviceName) throws ReflectiveOperationException {
+    static Object asInterface(String interfaceName, String serviceName) throws ReflectiveOperationException {
         IBinder binder = service(serviceName);
         if (binder == null) {
             throw new IllegalStateException("system service not found: " + serviceName);
@@ -149,11 +149,29 @@ final class SystemApis {
 
     // ---- 任务 ----
 
+    static int currentUserId() throws ReflectiveOperationException {
+        return (Integer) method("android.app.ActivityManager", "getCurrentUser").invoke(null);
+    }
+
     static int packageUidForCurrentUser(String packageName) throws ReflectiveOperationException {
-        int userId = (Integer) method("android.app.ActivityManager", "getCurrentUser").invoke(null);
+        return packageUid(packageName, currentUserId());
+    }
+
+    static int packageUid(String packageName, int userId) throws ReflectiveOperationException {
         String api = "android.content.pm.IPackageManager";
-        return (Integer) method(api, "getPackageUid", String.class, long.class, int.class)
-                .invoke(asInterface(api, "package"), packageName, 0L, userId);
+        Object manager = asInterface(api, "package");
+        if (Build.VERSION.SDK_INT >= 33) {
+            return (Integer) method(api, "getPackageUid", String.class, long.class, int.class)
+                    .invoke(manager, packageName, 0L, userId);
+        }
+        return (Integer) method(api, "getPackageUid", String.class, int.class, int.class)
+                .invoke(manager, packageName, 0, userId);
+    }
+
+    static boolean canControlPlayers(int uid) throws ReflectiveOperationException {
+        String api = "android.content.pm.IPackageManager";
+        return (Integer) method(api, "checkUidPermission", String.class, int.class)
+                .invoke(asInterface(api, "package"), "android.permission.MODIFY_AUDIO_ROUTING", uid) == 0;
     }
 
     private static synchronized Object activityTaskManager() throws ReflectiveOperationException {

@@ -1,4 +1,6 @@
 """ADB 界面的服务层：后端切换写入的配置、设备发现和环境检查。全部使用模拟数据。"""
+from types import SimpleNamespace
+
 import pytest
 
 from app.tools import adb_service as service
@@ -24,10 +26,22 @@ def adb(monkeypatch):
     ({}, "local"),
     ({"cloud_game_enable": True}, "cloud"),
     ({"control_backend": "adb", "cloud_game_enable": True}, "adb"),
-    ({"control_backend": "bogus"}, "local"),
 ])
 def test_current_backend_follows_legacy_switch_until_explicit(values, backend):
     assert service.current_backend(FakeConfig(**values)) == backend
+
+
+@pytest.mark.parametrize("platform, backend", [("win32", "local"), ("linux", "cloud"), ("darwin", "cloud")])
+def test_display_connection_falls_back_on_invalid_backend(monkeypatch, platform, backend):
+    monkeypatch.setattr(service, "sys", SimpleNamespace(platform=platform))
+    config = FakeConfig(control_backend="bogus")
+
+    connection = service.display_connection(config)
+
+    assert (connection.control_backend, connection.ui_profile) == (backend, "pc_1080")
+    assert "control_backend" in connection.error and "bogus" in connection.error
+    assert config.control_backend == "bogus"
+    assert not config.writes
 
 
 def test_untouched_config_needs_no_write():

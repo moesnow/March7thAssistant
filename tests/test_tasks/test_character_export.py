@@ -1177,6 +1177,20 @@ def test_every_template_exists():
         assert Path(path).is_file(), path
 
 
+def test_character_screen_matches_without_character_guide():
+    from module.screen.screen import Screen
+    from utils.image_utils import ImageUtils
+
+    # 实机裁剪，来自 #1375 中未显示「角色攻略」的角色详情页。
+    frame = ImageUtils.read_image(Path(__file__).parent / "fixtures/character_header_without_guide.png")
+    screens = json.loads(Path("assets/config/screens.json").read_text(encoding="utf-8"))
+    character = next(screen for screen in screens if screen["id"] == "character")
+    template = ImageUtils.read_image(character["image_path"])
+    score, _ = ImageUtils.scale_and_match_template(frame, template)
+
+    assert score >= Screen.SCREEN_MATCH_THRESHOLD
+
+
 @pytest.fixture
 def eidolon_frames():
     # 实机裁剪，每行依次是六个槽位：首次进入的空页、0 魂、6 魂、2 魂、入场动画。

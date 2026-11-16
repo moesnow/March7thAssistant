@@ -123,6 +123,28 @@ class RootAccessTest {
         assertTrue(process.stdinClosed)
     }
 
+    @Test
+    fun audioRecoveryUsesItsOwnEntryWithoutStartingATask() {
+        val process = FakeSu { line ->
+            assertTrue(line.endsWith("org.march7th.deviceservice.AppServer '$APK' --recover-audio"))
+            exit(0)
+        }
+        rootAccess(process).recoverAudio(APK)
+        assertEquals(1, process.lines.size)
+        assertTrue(process.stdinClosed)
+    }
+
+    @Test
+    fun audioRecoveryFailureIsReportedToTheCaller() {
+        val process = FakeSu {
+            emit("audio restore failed")
+            exit(3)
+        }
+        val failure = assertThrows(DeviceFailure::class.java) { rootAccess(process).recoverAudio(APK) }
+        assertEquals("cleanup_pending", failure.code)
+        assertTrue(failure.message.orEmpty().contains("audio restore failed"))
+    }
+
     private fun rootAccess(process: FakeSu) = RootAccess(startProcess = { argv ->
         assertEquals(listOf("su", "2000"), argv)
         process

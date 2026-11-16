@@ -12,7 +12,7 @@ from zipfile import BadZipFile, ZipFile
 import requests
 
 from module.config import cfg
-from module.config.platform import get_control_backend
+from module.config.platform import get_control_backend, get_ui_profile
 from module.game.adb import AdbGameController
 from module.game.adb_transport import (
     RESOLUTION, Adb, AdbError, check_adb_environment, find_managed_adb, list_adb_devices,
@@ -80,12 +80,25 @@ def adb_config(config=None, **overrides):
 
 # ---------- 设备后端 ----------
 
-def current_backend(config=None):
-    """当前生效的设备后端。配置值无效时按本地处理，交给用户重新选择。"""
+def display_connection(config=None):
+    """构建界面用的连接设置。保留原配置，等待用户修正无效值。"""
+    config = cfg if config is None else config
+    error = None
     try:
-        return get_control_backend(cfg if config is None else config)
-    except ValueError:
-        return "local"
+        backend = get_control_backend(config)
+    except ValueError as exc:
+        backend = "local" if sys.platform == "win32" else "cloud"
+        error = str(exc)
+    try:
+        profile = get_ui_profile(config).name
+    except ValueError as exc:
+        profile = "touch_720" if backend == "adb" else "pc_1080"
+        error = error or str(exc)
+    return SimpleNamespace(control_backend=backend, ui_profile=profile, error=error)
+
+
+def current_backend(config=None):
+    return display_connection(config).control_backend
 
 
 def backend_changes(backend, config=None):
@@ -104,7 +117,9 @@ def backend_changes(backend, config=None):
         changes.update(control_backend=None, cloud_game_enable=cloud)
     elif bool(config.get_value("cloud_game_enable")) != cloud:
         changes["cloud_game_enable"] = cloud
-    if (cloud or current_backend(config) == "adb") and config.get_value("ui_profile") == "touch_720":
+    profile = config.get_value("ui_profile")
+    if profile not in (None, "pc_1080", "touch_720") or (
+            (cloud or current_backend(config) == "adb") and profile == "touch_720"):
         changes["ui_profile"] = "pc_1080"
     return changes
 

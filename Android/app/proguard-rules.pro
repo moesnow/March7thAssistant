@@ -18,6 +18,7 @@
     public void reportStep(java.lang.String, java.lang.String, java.lang.String);
     public void reportProgress(java.lang.String);
     public int openDevice();
+    public void audioRecoveryPending(boolean);
     public void previewReady(int);
     public void displayReady(int);
     public void gameEvent(java.lang.String, int);

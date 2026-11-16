@@ -1,5 +1,9 @@
+import sys
+
 from module.logger import log
 from module.config import cfg
+from module.config.platform import get_control_backend
+from module.game import cloud_game
 from module.screen import screen
 from utils.date import Date
 from tasks.base.task_steps import run_steps
@@ -21,6 +25,13 @@ from tasks.weekly.echoofwar import Echoofwar
 from tasks.daily.buildtarget import BuildTarget
 from tasks.daily.redemption import Redemption
 from tasks.daily.ember_exchange import EmberExchange
+
+
+def _run_desktop_extra(name, action):
+    if sys.platform != "win32" or (get_control_backend(cfg) == "cloud" and cloud_game.is_headless()):
+        log.info(f"当前环境不支持{name}，本轮跳过")
+        return
+    return action()
 
 
 class Daily:
@@ -131,7 +142,7 @@ class Daily:
             steps.append(("差分宇宙积分奖励", Daily._run_weekly_divergent))
 
         if cfg.fight_enable and Date.is_next_x_am(cfg.fight_timestamp, cfg.refresh_hour):
-            steps.append(("锄大地", Fight.start))
+            steps.append(("锄大地", lambda: _run_desktop_extra("锄大地", Fight.start)))
 
         if cfg.universe_enable:
             due = Date.is_next_mon_x_am if cfg.universe_frequency == "weekly" else Date.is_next_x_am
@@ -139,7 +150,7 @@ class Daily:
                 if cfg.universe_category == "divergent":
                     steps.append(("差分宇宙固定次数", lambda: Daily._run_scheduled_divergent_universe(DivergentUniverse())))
                 else:
-                    steps.append(("模拟宇宙", Universe.start))
+                    steps.append(("模拟宇宙", lambda: _run_desktop_extra("模拟宇宙", Universe.start)))
 
         for name, mode, enabled, timestamp in (
             ("混沌回忆", "memoryofchaos", cfg.forgottenhall_enable, cfg.forgottenhall_timestamp),

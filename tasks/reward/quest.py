@@ -85,21 +85,30 @@ class Quest(RewardTemplate):
         if not (collect or complete):
             log.info("本轮无需补做或领取，跳过每日实训")
             return True
+        actions = tuple(actions) if complete else ()
 
         activity = None
         received = 0
         success = True
         try:
             activity, tasks, received = Quest.scan(collect, read_tasks=complete and bool(actions))
-            for name, action in actions:
+            for index, (name, action) in enumerate(actions):
                 if not complete or not needs_action(activity, tasks):
                     break
                 if tasks.get(name):
-                    if action():
-                        activity, tasks, claimed = Quest.scan(collect)
-                        received += claimed
-                    else:
+                    if not action():
                         log.info(f"实训未完成：{name}")
+                        continue
+                    read_more_actions = any(tasks.get(next_name) for next_name, _ in actions[index + 1:])
+                    if not collect and not read_more_actions:
+                        break
+                    try:
+                        activity, tasks, claimed = Quest.scan(collect, read_tasks=read_more_actions)
+                    except DailyTrainingError as error:
+                        log.warning(f"已完成实训「{name}」，后续实训处理未完成：{error}")
+                        success = False
+                        break
+                    received += claimed
         except DailyTrainingError as error:
             log.warning(f"实训任务卡片检查未完成：{error}")
             success = False

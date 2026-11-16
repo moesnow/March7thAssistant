@@ -11,6 +11,7 @@ from .common.style_sheet import StyleSheet
 from .common.theme_assets import portrait_artwork
 from .card.samplecardview1 import SampleCardView1
 from .card.card_edit_dialog import DEFAULT_CARDS, HOME_EXTRA_TASKS, CardEditDialog, display_label, migrate_home_cards
+from .tools.adb_service import display_connection
 from utils.tasks import supported_tasks
 from tasks.base.tasks import start_task
 
@@ -257,7 +258,7 @@ class HomeInterface(ScrollArea):
         self._task_cards.clear()
         self.basicInputView.clearCards()
 
-        tasks = supported_tasks(cfg)
+        tasks = supported_tasks(display_connection(cfg))
         if "fight" in tasks:
             tasks.update(HOME_EXTRA_TASKS)
 
