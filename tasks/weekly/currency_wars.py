@@ -2856,8 +2856,9 @@ class CurrencyWars:
                     EMBLEM_PREFERENCES.index(label.text)
                     if label.text in EMBLEM_PREFERENCES else len(EMBLEM_PREFERENCES), label.point[0]
                 ), default=None)
+            area = ui.ITEM_CARD_NAMES if title == ui.EQUIPMENT_REWARD else (230, 220, 1750, 839)
             for name in (*priorities, *SUPPLY_ITEMS):
-                if label := frame.find(name, area=(230, 220, 1750, 839)):
+                if label := frame.find(name, area=area):
                     return label
             if title in ui.ITEM_CHOICES:
                 return next(iter(frame.item_cards()), None)
@@ -3139,6 +3140,7 @@ class CurrencyWars:
             self._reset_supply()
         if title == "投资环境" or title in ui.INVESTMENT_CHOICES:
             return self._choose_investment(frame)
+        equipment_reward = title == ui.EQUIPMENT_REWARD
         reward_choice = title in REWARD_CHOICES or frame.priced_recruitment is not None
         confirm_area, confirm_point = {
             "补给阶段": (ui.SUPPLY_CONFIRM, (1692, 984)),
@@ -3172,7 +3174,8 @@ class CurrencyWars:
             if title == "遭遇节点":
                 return ui.Label("左侧遭遇", (666, 390))
             if reward_choice:
-                return ui.Label("奖励卡片", ((960, 1174, 746)[attempt], 230))
+                centers = ui.EQUIPMENT_REWARD_CENTERS if equipment_reward else (960, 1174, 746)
+                return ui.Label("奖励卡片", (centers[attempt], 230))
             # 其它明确标明单选的弹窗，可用正文中的可见卡片位置。
             if (f.has("请选择1个", "请选择一个", area=ui.ITEM_SELECTION)
                     or f.has("确认", "确认选择", "选定", "选择", area=confirm_area)):
@@ -3198,8 +3201,11 @@ class CurrencyWars:
                 or title == "补给阶段" and f.supply_layout not in (None, supply_layout)
             )
 
-        auto_claim = title in ui.ITEM_CHOICES or frame.priced_recruitment is not None
-        return self._choose_single(frame, option, None if auto_claim else confirm, advanced, f"「{title}」选择后未转场")
+        auto_claim = not equipment_reward and (title in ui.ITEM_CHOICES or frame.priced_recruitment is not None)
+        return self._choose_single(
+            frame, option, None if auto_claim else confirm, advanced, f"「{title}」选择后未转场",
+            ready_confirm=ui.Frame.choice_confirm if equipment_reward else None,
+        )
 
     @staticmethod
     def _supply_confirm(frame, required=None):

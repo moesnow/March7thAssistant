@@ -2218,6 +2218,65 @@ def test_item_box_chooses_a_reward_and_continues_after_returning_to_board(monkey
     assert state.clicks == [(Page.CHOICE, (1465, 336) if read_card_name else (1474, 230))]
 
 
+def test_equipment_reward_title_alone_is_not_a_choice():
+    assert Frame(CANVAS, labels(("选择装备", 1028, 40))).choice is None
+
+
+@pytest.mark.parametrize(("reward_ocr", "needs_confirm", "equipment_point"), (
+    ("names", False, (1028, 315)),
+    ("details", True, (747, 230)),
+    ("prompt", False, (1028, 230)),
+))
+def test_exclusive_endorsement_equipment_reward_resumes_preparation(monkeypatch, world, reward_ocr, needs_confirm,
+                                                                equipment_point):
+    investment_point = (960, 490)
+    confirm_point = (979, 984)
+    confirm = labels(("确认", *confirm_point))
+    bright = CANVAS.copy()
+    ImageDraw.Draw(bright).rectangle((920, 970, 1038, 999), fill=(235, 235, 235))
+    stage = labels(("备战阶段", 300, 50), ("1-3", 304, 87))
+    investment_words = stage + labels(("请选择投资策略", 960, 100), ("独家代言", *investment_point),
+                                      ("选择并获得1件进阶装备。", 960, 545))
+    investment = Frame(CANVAS, investment_words)
+    chosen = Frame(bright, investment_words + confirm)
+
+    # 用户反馈中标题位于画面顶部。重读时也可能只剩下提示或详情按钮。
+    reward_words = stage + labels(("选择装备", 1028, 36 if reward_ocr == "details" else 40),
+                                  ("火力风暴潮", 969, 616))
+    if reward_ocr != "details":
+        reward_words += labels(("请选择1个", 1028, 78))
+    if reward_ocr != "prompt":
+        reward_words += labels(("查看详情", 747, 372), ("查看详情", 1037, 370), ("查看详情", 1328, 372))
+    if reward_ocr == "names":
+        reward_words += labels(("行星钻地弹", 738, 313), ("绝对热量", 1028, 315), ("物质分解液", 1320, 315))
+    reward = Frame(CANVAS, reward_words)
+    selected = Frame(bright, reward_words + confirm)
+    ready = Frame(CANVAS, stage + labels(("前台区域", 960, 316), ("后台区域", 960, 576),
+                                        ("出战", 1818, 752), ("商店", 1621, 982)))
+    result = Frame(CANVAS, labels(("对局胜利", 960, 233), ("返回货币战争", 960, 899)))
+    lobby = home()
+    routes = {(investment, investment_point): chosen, (chosen, confirm_point): reward,
+              (reward, equipment_point): selected if needs_confirm else ready}
+    if needs_confirm:
+        routes[selected, confirm_point] = ready
+    routes[result, (960, 899)] = lobby
+    state = drive(monkeypatch, world, investment, lambda s, p: setattr(s, "frame", routes[s.frame, p]))
+
+    def prepare(frame):
+        assert frame is ready
+        state.frame = result
+        return result
+
+    monkeypatch.setattr(world.war, "_prepare", prepare)
+    monkeypatch.setattr(world.war, "_check_weekly_reward", lambda f: (f, (18000, 18000), False))
+    world.cfg.currencywars_time_limit = 1
+
+    assert world.war.start(resume=True) is True
+    assert state.frame is lobby
+    assert state.clicks == [(frame.page, point) for frame, point in routes]
+    assert state.keys == []
+
+
 @pytest.mark.parametrize("confirmed", (False, True))
 def test_purchase_needs_both_gold_delta_and_slot_change(monkeypatch, world, confirmed):
     offer = policy.Offer("那刻夏", 1, (470, 192), 0)
