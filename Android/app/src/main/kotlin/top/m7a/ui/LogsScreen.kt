@@ -355,7 +355,7 @@ private fun HelpList(current: String?, target: String?) {
                 }
                 AnimatedVisibility(open) {
                     Column {
-                        Text(tr(info.advice), Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium)
+                        Text(info.adviceText(), Modifier.padding(top = 8.dp), style = MaterialTheme.typography.bodyMedium)
                         Text(
                             tr(R.string.error_code, code), Modifier.padding(top = 6.dp),
                             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
