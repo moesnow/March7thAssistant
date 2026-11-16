@@ -15,7 +15,7 @@ from tasks.power.policy import (
     InstanceUnavailable, PowerError, RelicBagFull, parse_echo_rewards,
 )
 from tasks.power.readout import read_number
-from tasks.power.character import Character
+from tasks.power.character import CHALLENGE, Character
 from tasks.power.relicset import Relicset
 from utils.game_options import game_option_enabled
 from utils.wait import wait_until
@@ -24,7 +24,6 @@ from utils.wait import wait_until
 CATEGORY = (262 / 1920, 289 / 1080, 422 / 1920, 624 / 1080)
 ENTRY_ROWS = (686 / 1920, 287 / 1080, 980 / 1920, 650 / 1080)
 WAVE_SELECTOR = (1160 / 1920, 828 / 1080, 755 / 1920, 104 / 1080)
-CHALLENGE = (1392 / 1920, 946 / 1080, 487 / 1920, 83 / 1080)
 TEAM_TABS = (311 / 1920, 12 / 1080, 1376 / 1920, 105 / 1080)
 DIALOG = (245 / 1920, 200 / 1080, 1430 / 1920, 645 / 1080)
 INSTANCE_POPUPS = ("开拓力补充", "背包内遗器持有数量已达上限", "长时间未操作", "已处于无法战斗状态")
