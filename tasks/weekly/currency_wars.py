@@ -2780,7 +2780,8 @@ class CurrencyWars:
         priorities = () if self.default_strategy else (
             self.lineup.preferences if self.lineup else (strategy.CORE, *strategy.BACK, *strategy.FRONT[1:])
         )
-        catalog_first = (title == "投资环境" or title in ui.INVESTMENT_CHOICES) and (
+        investment = title == "投资环境" or title in ui.INVESTMENT_CHOICES
+        catalog_first = investment and (
             self.default_strategy or cfg.get_value("currencywars_investment_priority", "strategy") == "catalog"
         )
         uncollected = frame.uncollected_investment_columns if catalog_first else ()
@@ -2848,9 +2849,17 @@ class CurrencyWars:
         # 主要匹配显式收益，排除涉及放弃、支付或替换角色的效果。
         scores = []
         catalog_scores = []
-        for index, (left, right) in enumerate(((195, 700), (700, 1225), (1225, 1740))):
-            column = [label for label in labels if left <= label.point[0] < right]
-            effect = "".join(label.text for label in column)
+        catalog_fallback = None
+        columns = ((195, 700), (700, 1225), (1225, 1740))
+        groups = frame.investment_groups if investment else ((0,), (1,), (2,))
+        for group in groups:
+            if investment:
+                effect = "。".join("".join(label.text for label in frame.investment_card_texts(index))
+                                  for index in group)
+            else:
+                left, right = columns[group[0]]
+                column = [label for label in labels if left <= label.point[0] < right]
+                effect = "".join(label.text for label in column)
             cost_text = effect.replace("消耗品", "").replace("未损失小队生命值", "")
             lower_difficulty = self.lineup is not None and re.search(r"敌人难度降低[1-9]", effect)
             if lower_difficulty:
@@ -2873,41 +2882,47 @@ class CurrencyWars:
             score += bool(re.search(r"获得(?:\d+|[一二两三四五六七八九十]+)(个|件|金币)", effect))
             score += 3 * any(name in effect for name in priorities)
             if score:
-                title_label = next((label for label in column if 353 <= label.point[1] <= 559), None)
-                scores.append((score, title_label or column[0]))
-            if index in uncollected and not restricted and not re.search(
+                if investment:
+                    index = group[0]
+                    card = frame.investment_card_title(index) or ui.Label("投资卡牌", frame.investment_card_point(index))
+                else:
+                    card = next((label for label in column if 353 <= label.point[1] <= 559), column[0])
+                scores.append((score, card))
+            if restricted or not uncollected or re.search(
                     r"从商店中移除|交换[^。；]{0,24}(?:生命值|金币)|移除[^。；]{0,24}角色", effect):
+                continue
+            for index in group:
+                if index not in uncollected:
+                    continue
                 if card := frame.investment_card_title(index):
                     rank = len(environments) - environments.index(card.text) if card.text in environments else 0
                     catalog_scores.append((rank, score, card))
+                elif self.default_strategy and catalog_fallback is None and not any(word in effect for word in EVENT_RISKS):
+                    # 新图鉴图标已定位卡片。漏读标题时仍可选择同组内的固定卡位。
+                    catalog_fallback = ui.Label("未收录投资", frame.investment_card_point(index))
         if catalog_scores:
             return max(catalog_scores, key=lambda option: option[:2])[2]
-        if self.default_strategy and uncollected:
-            for index in sorted(uncollected):
-                # 新图鉴图标已定位卡片，标题漏读时仍可选择，排除读到的高风险效果。
-                x, y = frame.investment_card_point(index)
-                text = "".join(label.text for label in frame.texts((x - 195, y, x + 195, 829)))
-                if not any(word in text for word in EVENT_RISKS + INVESTMENT_RESTRICTIONS):
-                    return ui.Label("未收录投资", (x, y))
-        return preferred_environment or max(scores, key=lambda option: option[0], default=(0, None))[1]
+        return catalog_fallback or preferred_environment or max(scores, key=lambda option: option[0], default=(0, None))[1]
 
     def _refresh_unusable_investments(self, frame):
         kind = frame.choice
         key = frame.stage or self.last_result_stage, "投资刷新"
         if key in self.deferred_operations:
             return frame
-        for column, point in enumerate(ui.INVESTMENT_REFRESH):
-            if self._choice_option(frame) or frame.choice_confirm():
+        refresh_points = frame.investment_refresh_points
+        for group, point in zip(frame.investment_groups, refresh_points):
+            if (frame.investment_refresh_points != refresh_points
+                    or frame.investment_confirm(enabled_only=True) or self._choice_option(frame)):
                 break
             titles = frame.investment_titles()
-            if not all(titles) or frame.investment_refresh_count(column) != 1:
+            if not all(titles) or frame.investment_refresh_count(point) != 1:
                 continue
             issued = False
 
             def available(f):
-                if (f.choice == kind and f.investment_titles() == titles
-                        and f.investment_refresh_count(column) == 1
-                        and not f.choice_confirm() and not self._choice_option(f)):
+                if (f.choice == kind and f.investment_refresh_points == refresh_points
+                        and f.investment_titles() == titles and f.investment_refresh_count(point) == 1
+                        and not f.investment_confirm(enabled_only=True) and not self._choice_option(f)):
                     return (point,)
                 return None
 
@@ -2920,9 +2935,11 @@ class CurrencyWars:
                 if f.page != Page.CHOICE or f.choice != kind:
                     return False
                 if not issued:
-                    return bool(self._choice_option(f) or f.choice_confirm())
-                new = f.investment_titles()[column]
-                return f.investment_refresh_count(column) == 0 and new not in (None, titles[column])
+                    return bool(f.investment_confirm(enabled_only=True) or self._choice_option(f))
+                if f.investment_refresh_points != refresh_points or f.investment_refresh_count(point) != 0:
+                    return False
+                current = f.investment_titles()
+                return any(current[index] not in (None, titles[index]) for index in group)
 
             try:
                 frame = self._action(frame, available, send, changed, "未确认投资策略免费刷新生效",
@@ -2939,12 +2956,15 @@ class CurrencyWars:
                 log.warning(f"暂停投资刷新，按当前选项推进：{error}")
                 return frame
             if issued:
-                log.info(f"已确认投资卡免费刷新：{titles[column]} → {frame.investment_titles()[column]}")
+                current = frame.investment_titles()
+                before = "、".join(titles[index] for index in group)
+                after = "、".join(current[index] for index in group if current[index])
+                log.info(f"已确认投资卡免费刷新：{before} → {after}")
         return frame
 
     def _choose_single(self, frame, option, confirm, advanced, message, *, seconds=8, retry_after=2.2,
-                       can_confirm=None):
-        """同一单选页先点选，再尝试确认，以游戏转场为准。"""
+                       can_confirm=None, ready_confirm=None):
+        """点选并尝试确认，已有可提交的选项时直接确认，以游戏转场为准。"""
         page, stage, dialog = frame.action_context
         attempts = 3
         attempted = 0
@@ -2955,12 +2975,19 @@ class CurrencyWars:
                     and (stage is None or current_stage is None or current_stage == stage))
 
         def locate(f):
-            candidate = option(f, attempted) if attempted < attempts else None
+            if attempted >= attempts:
+                return None
+            if ready_confirm is not None and ready_confirm(f):
+                # 用空候选表示此轮直接点击确认。
+                return (None,)
+            candidate = option(f, attempted)
             return (candidate,) if candidate else None
 
         def send(f, candidate):
             nonlocal attempted
             attempted += 1
+            if candidate is None:
+                return self._tap(f, confirm(f))
             log.info(f"{dialog or page.value}：选择「{candidate.text}」")
             if dialog == "补给阶段":
                 self.supply_attempted[candidate.point[0]] = f.supply_selection()
@@ -2990,27 +3017,33 @@ class CurrencyWars:
             frame = self._refresh_unusable_investments(frame)
             if frame.page != Page.CHOICE or frame.choice != title:
                 return frame
-        fallback = ui.Label("中间卡片", (960, 393) if title == "投资环境" else (960, 490))
+        stage = frame.stage
         submitted_frame = None
         submitted_titles = ()
         previous_titles = None
 
-        def option(f, _):
-            return self._choice_option(f) or fallback
+        def same_investment(f):
+            return f.page == Page.CHOICE and f.choice == title and (stage is None or f.stage in (None, stage))
 
-        def confirm(f):
+        def option(f, _):
+            if previous_titles is None:
+                return self._choice_option(f) or ui.Label("中间卡片", f.investment_card_point(1))
+            return None
+
+        def remember_confirmation(f, point):
             nonlocal submitted_frame, submitted_titles
-            button = f.find("确认", area=ui.INVESTMENT_CONFIRM)
             submitted_frame = f
             submitted_titles = f.investment_titles()
-            # 此区域覆盖两种确认布局，避开左侧的环境刷新按钮。
-            return ui.point(button) or (960, 984)
+            return point
+
+        def confirm(f):
+            return remember_confirmation(f, f.investment_confirm().point)
 
         def advanced(f):
             nonlocal previous_titles
             if f.page not in PLAY_PAGES:
                 return False
-            if f.page != Page.CHOICE or f.choice != title:
+            if not same_investment(f):
                 return True
             if submitted_frame is not None:
                 titles = f.investment_titles()
@@ -3023,9 +3056,46 @@ class CurrencyWars:
             previous_titles = None
             return False
 
-        return self._choose_single(
-            frame, option, confirm, advanced, f"「{title}」点选并确认后未转场", seconds=10, retry_after=4,
-        )
+        message = f"「{title}」点选并确认后未转场"
+        try:
+            return self._choose_single(
+                frame, option, confirm, advanced, message, seconds=10, retry_after=4,
+                ready_confirm=lambda f: previous_titles is None and f.investment_confirm(enabled_only=True),
+            )
+        except (CurrencyWarsActionUnready, CurrencyWarsReceiptTimeout):
+            frame = self.frame
+            if frame is None or not same_investment(frame):
+                raise
+
+        log.warning(f"「{title}」常规点选未推进，改用固定卡位")
+        next_column = 0
+
+        def locate_fixed(f):
+            if previous_titles is not None:
+                return None
+            if button := f.investment_confirm(enabled_only=True):
+                return button.point, True
+            if next_column < len(ui.INVESTMENT_CENTERS):
+                return f.investment_card_point(next_column), False
+            return None
+
+        def send_fixed(f, point, is_confirm):
+            nonlocal next_column
+            if is_confirm:
+                return self._tap(f, remember_confirmation(f, point))
+            next_column += 1
+            log.info(f"「{title}」尝试第 {next_column} 张卡的固定位置")
+            return self._tap(f, point)
+
+        try:
+            return self._action(
+                frame, locate_fixed, send_fixed, advanced, message, seconds=10,
+                attempts=len(ui.INVESTMENT_CENTERS) + 3, track_control=False, same_view=same_investment,
+            )
+        except (CurrencyWarsActionUnready, CurrencyWarsReceiptTimeout) as error:
+            if self.frame is not None and same_investment(self.frame):
+                raise CurrencyWarsUnavailable(f"「{title}」多次尝试后仍无法提交，已保留当前现场") from error
+            raise
 
     def _choose(self, frame):
         title = frame.choice

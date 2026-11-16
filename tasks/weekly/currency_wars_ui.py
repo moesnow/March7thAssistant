@@ -86,12 +86,15 @@ RECONNECT_CONFIRM = (1050, 631, 1310, 711)
 CHOICE_TITLE = (555, 38, 1370, 215)
 CHOICE_CONFIRM = (615, 775, 1900, 1045)
 INVESTMENT_CONFIRM = (850, 945, 1310, 1024)
+INVESTMENT_CONFIRM_POINT = (960, 984)
 ITEM_SELECTION = (835, 65, 1230, 125)
 ITEM_CARD_DETAILS = (450, 354, 1590, 410)
 SUPPLY_CONFIRM = (1495, 949, 1890, 1021)
 ENCOUNTER_CONFIRM = (895, 866, 1280, 936)
 INVESTMENT_CENTERS = (460, 960, 1460)
 INVESTMENT_REFRESH = ((389, 856), (888, 856), (1388, 856))
+PAIRED_INVESTMENT_CENTERS = (514, 1005, 1409)
+PAIRED_INVESTMENT_REFRESH = ((441, 841), (1135, 841))
 EMPLOYEE_EVENT_TITLE = (600, 43, 1465, 102)
 EMPLOYEE_EVENT_SUBTITLE = (636, 103, 1485, 161)
 EMPLOYEE_EVENT_DETAILS = (440, 385, 1650, 436)
@@ -1271,32 +1274,65 @@ class Frame:
     def choice_confirm(self) -> Label | None:
         return self.enabled_button(self.find("确认", "确认选择", "选定", "选择", area=CHOICE_CONFIRM))
 
+    def investment_confirm(self, *, enabled_only=False) -> Label | None:
+        button = self.find("确认", area=INVESTMENT_CONFIRM) or Label("确认", INVESTMENT_CONFIRM_POINT)
+        return self.enabled_button(button) if enabled_only else button
+
+    @cached_property
+    def paired_investment(self) -> bool:
+        return self.choice in INVESTMENT_CHOICES and (
+            self.has("选择一个", area=(300, 225, 725, 272))
+            or self.has("两个都带走", area=(795, 225, 1620, 272))
+        )
+
+    @property
+    def investment_groups(self) -> tuple[tuple[int, ...], ...]:
+        return ((0,), (1, 2)) if self.paired_investment else ((0,), (1,), (2,))
+
+    def investment_card_point(self, column: int) -> Point:
+        if self.paired_investment:
+            return PAIRED_INVESTMENT_CENTERS[column], 420
+        return INVESTMENT_CENTERS[column], 393 if self.choice == "投资环境" else 490
+
+    def investment_card_texts(self, column: int) -> tuple[Label, ...]:
+        x, _ = self.investment_card_point(column)
+        top = 360 if self.choice == "投资环境" else (537 if self.paired_investment else 353)
+        return self.texts((x - 195, top, x + 195, 829))
+
     def investment_card_title(self, column: int) -> Label | None:
-        x = INVESTMENT_CENTERS[column]
-        title_top, title_bottom, effect_top = (360, 420, 421) if self.choice == "投资环境" else (459, 516, 520)
-        labels = self.texts((x - 195, title_top, x + 195, title_bottom))
-        effect = self.texts((x - 195, effect_top, x + 195, 829))
-        return labels[0] if len(labels) == 1 and effect else None
+        texts = self.investment_card_texts(column)
+        title = min(texts, key=lambda label: label.point[1], default=None)
+        bottom = 420 if self.choice == "投资环境" else (597 if self.paired_investment else 560)
+        if title and title.point[1] < bottom and any(label.point[1] >= title.point[1] + 24 for label in texts):
+            return title
+        return None
 
     def investment_titles(self) -> tuple[str | None, ...]:
         return tuple(label.text if label else None
                      for label in map(self.investment_card_title, range(len(INVESTMENT_CENTERS))))
 
-    def investment_card_point(self, column: int) -> Point:
-        return INVESTMENT_CENTERS[column], 393 if self.choice == "投资环境" else 490
-
     @cached_property
     def uncollected_investment_columns(self) -> frozenset[int]:
         # 环境和策略的卡宽不同，书本标记都在各自卡片的右上角。
-        return frozenset(index for index, x in enumerate(INVESTMENT_CENTERS)
-                         if self.match("screen/currency_wars/new.png", (x + 125, 178, x + 265, 294)))
+        if self.paired_investment:
+            areas = ((x + 117, 278, x + 176, 343) for x in PAIRED_INVESTMENT_CENTERS)
+        else:
+            areas = ((x + 125, 178, x + 265, 294) for x in INVESTMENT_CENTERS)
+        return frozenset(index for index, area in enumerate(areas)
+                         if self.match("screen/currency_wars/new.png", area))
 
     def investment_layout_changed(self, before) -> bool:
-        areas = ((x - 145, 177, x + 145, 375) for x in INVESTMENT_CENTERS)
+        centers, top, bottom = (PAIRED_INVESTMENT_CENTERS, 300, 500) if self.paired_investment else (
+            INVESTMENT_CENTERS, 177, 375)
+        areas = ((x - 145, top, x + 145, bottom) for x in centers)
         return sum(cv2.absdiff(self.crop(area), before.crop(area)).mean() > 30 for area in areas) >= 2
 
-    def investment_refresh_count(self, column: int) -> int | None:
-        x, y = INVESTMENT_REFRESH[column]
+    @property
+    def investment_refresh_points(self) -> tuple[Point, ...]:
+        return PAIRED_INVESTMENT_REFRESH if self.paired_investment else INVESTMENT_REFRESH
+
+    def investment_refresh_count(self, point: Point) -> int | None:
+        x, y = point
         value = self.value(r"刷新次数[01]", (x + 18, y - 31, x + 176, y + 31))
         return int(value[-1]) if value else None
 

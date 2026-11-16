@@ -4411,6 +4411,38 @@ def test_investment_scores_speed_and_does_not_treat_consumables_as_a_charge(worl
     assert world.war._choice_option(frame).text == preferred
 
 
+@pytest.mark.parametrize("right_effect, preferred", (
+    ("获得进阶装备，并提升伤害。", "人才大礼包+"),
+    ("消耗5金币，获得进阶装备。", "黄金大饭店星徽套组"),
+))
+def test_bubble_wolf_investment_reads_the_card_row_and_scores_both_gold_cards(world, right_effect, preferred):
+    frame = Frame(CANVAS, labels(
+        ("请选择投资策略", 960, 100), ("选择一个", 515, 248), ("两个都带走", 1184, 248),
+        ("黄金大饭店星徽套组", 514, 570), ("获得1个黄金大饭店星徽", 500, 614),
+        ("人才大礼包+", 1006, 570), ("获得2金币。", 1000, 614),
+        ("前段发力", 1408, 570), (right_effect, 1401, 614),
+    ))
+
+    assert frame.page == Page.CHOICE
+    assert frame.investment_titles() == ("黄金大饭店星徽套组", "人才大礼包+", "前段发力")
+    option = world.war._choice_option(frame)
+    assert option.text == preferred
+    assert option.point[1] == 570
+
+
+def test_bubble_wolf_refreshes_both_gold_cards_with_the_shared_button(monkeypatch, world):
+    common = (("请选择投资策略", 960, 100), ("两个都带走", 1184, 248),
+              ("彩卡", 514, 570), ("消耗金币", 514, 615), ("刷新次数0", 526, 841))
+    before = Frame(CANVAS, labels(*common, ("金卡甲", 1006, 570), ("扣除金币", 1000, 614),
+                                  ("金卡乙", 1408, 570), ("损失生命值", 1400, 614), ("刷新次数1", 1218, 841)))
+    after = Frame(CANVAS, labels(*common, ("获得装备", 1006, 570), ("获得2件简易装备", 1000, 614),
+                                 ("前段发力", 1408, 570), ("后台强度提高", 1400, 614), ("刷新次数0", 1218, 841)))
+    state = drive(monkeypatch, world, before, lambda s, _: setattr(s, "frame", after))
+
+    assert world.war._refresh_unusable_investments(before) is after
+    assert state.clicks == [(Page.CHOICE, (1135, 841))]
+
+
 @pytest.mark.parametrize(("title", "title_y", "effect_y", "marker_x", "preferred", "preferred_effect"), (
     ("投资环境", 393, 433, 1160, "连击概念股", "开局时获得连击角色和初始简易装备"),
     ("请选择投资策略", 490, 540, 1122, "全速推进", "速度增幅提高10%，并获得额外金币"),
@@ -4859,6 +4891,21 @@ def test_investment_confirmation_requires_an_enabled_button():
     draw.rectangle((770, 270, 1150, 590), fill=(110, 135, 205))
     after = Frame(chosen, text)
     assert after.choice_confirm() is not None
+
+
+@pytest.mark.parametrize("confirm_x, read_button", ((979, True), (960, False)))
+def test_investment_submits_an_enabled_confirm_before_clicking_a_card(monkeypatch, world, confirm_x, read_button):
+    bright = CANVAS.copy()
+    ImageDraw.Draw(bright).rectangle((914, 970, 1044, 999), fill=(235, 235, 235))
+    words = labels(("请选择投资策略", 960, 100), ("全速推进", 460, 490), ("获得5金币。", 460, 535))
+    if read_button:
+        words += labels(("确认", confirm_x, 984))
+    frame = Frame(bright, words)
+    ready = page(Page.BOARD, stage="2-2")
+    state = drive(monkeypatch, world, frame, lambda s, _: setattr(s, "frame", ready))
+
+    assert world.war._play_step(frame) is ready
+    assert state.clicks == [(Page.CHOICE, (confirm_x, 984))]
 
 
 def test_investment_replans_when_the_rest_of_the_cards_slide_in(monkeypatch, world):
@@ -6515,10 +6562,86 @@ def test_investment_uses_layout_when_ocr_misses_cards_and_bounds_retries(
     state = drive(monkeypatch, world, frame, click)
     if successful_attempt:
         assert world.war._choose(frame) is after
+        expected = [(Page.CHOICE, fallback), (Page.CHOICE, (960, 984))] * successful_attempt
     else:
-        with pytest.raises(task.CurrencyWarsReceiptTimeout, match="点选并确认后未转场"):
+        with pytest.raises(task.CurrencyWarsUnavailable, match="多次尝试后仍无法提交"):
             world.war._choose(frame)
-    assert state.clicks == [(Page.CHOICE, fallback), (Page.CHOICE, (960, 984))] * (successful_attempt or 3)
+        expected = [(Page.CHOICE, fallback), (Page.CHOICE, (960, 984))] * 3
+        expected.extend((Page.CHOICE, (x, fallback[1])) for x in (460, 960, 1460))
+    assert state.clicks == expected
+
+
+@pytest.mark.parametrize("entry", ("single", "loop", "takeover", "daily"))
+def test_investment_fixed_card_recovers_in_the_same_run_after_delayed_enable(monkeypatch, world, entry):
+    texts = labels(("请选择投资策略", 960, 100), ("选择一个", 515, 248),
+                   ("黄金大饭店星徽套组", 515, 570), ("获得1个星徽。", 500, 614))
+    frame = Frame(CANVAS, texts)
+    bright = CANVAS.copy()
+    ImageDraw.Draw(bright).rectangle((904, 973, 1016, 995), fill=(235, 235, 235))
+    selected = Frame(bright, texts)
+    result = page(Page.MATCH_RESULT, ("对局胜利", 962, 241), ("返回货币战争", 962, 893))
+    lobby = home()
+    modes = mode(("进入标准博弈", 1638, 960))
+    ready = rank()
+    routes = {(lobby, (1600, 972)): modes, (modes, (1638, 960)): ready,
+              (ready, (1680, 965)): frame, (selected, (960, 984)): result, (result, (962, 893)): lobby}
+    enabled_at = None
+
+    def click(state, point):
+        nonlocal enabled_at
+        if state.frame is frame:
+            if point == (1409, 420):
+                enabled_at = world.now[0] + 0.5
+        else:
+            state.frame = routes[state.frame, point]
+
+    def capture(state):
+        if enabled_at is not None and state.frame is frame and world.now[0] >= enabled_at:
+            state.frame = selected
+
+    state = drive(monkeypatch, world, frame if entry == "takeover" else lobby, click, capture)
+    monkeypatch.setattr(world.war, "get_reward", lambda f: (
+        f, (18000 if world.war.result else 15000, 18000), False))
+
+    if entry == "daily":
+        from tasks.daily import daily
+
+        monkeypatch.setattr(daily, "CurrencyWars", lambda: world.war)
+        assert daily.Daily._run_currency_wars()
+    else:
+        assert world.war.start(resume=entry == "takeover", loop=entry == "loop")
+    expected = [(515, 570), (960, 984)] * 3 + [(514, 420), (1005, 420), (1409, 420), (960, 984)]
+    assert [point for page_, point in state.clicks if page_ == Page.CHOICE] == expected
+    assert world.war.result is True and state.frame is lobby
+    assert world.war._loop_matches == (1 if entry == "loop" else 0)
+    task.save_error_screenshot.assert_not_called()
+
+
+@pytest.mark.parametrize("outcome, exception", (
+    ("unavailable", task.CurrencyWarsUnavailable), ("budget", task.CurrencyWarsBudgetExceeded),
+    ("stop", RunStopRequested),
+))
+def test_investment_fixed_card_recovery_preserves_terminal_states(monkeypatch, world, outcome, exception):
+    frame = Frame(CANVAS, labels(("请选择投资策略", 960, 100), ("选择一个", 515, 248)))
+    world.cfg.currencywars_time_limit = 1
+
+    def click(state, point):
+        if point != (514, 420):
+            return
+        if outcome == "budget":
+            world.now[0] = world.war.deadline
+        elif outcome == "stop":
+            task.pause_ctl.checkpoint.side_effect = RunStopRequested
+
+    state = drive(monkeypatch, world, frame, click)
+    with pytest.raises(exception):
+        world.war.start(resume=True)
+    expected = [(1005, 420), (960, 984)] * 3 + [(514, 420)]
+    if outcome == "unavailable":
+        expected.extend(((1005, 420), (1409, 420)))
+    assert state.clicks == [(Page.CHOICE, point) for point in expected]
+    assert state.frame is frame
+    assert task.save_error_screenshot.call_count == (0 if outcome == "stop" else 1)
 
 
 @pytest.mark.parametrize("late_receipt", (False, True))
