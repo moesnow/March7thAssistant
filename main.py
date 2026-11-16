@@ -479,6 +479,9 @@ def run_main_actions(no_run_immediately=False):
                 success = Daily.start()
             telemetry.track_task_complete("main", success is not False, time.time() - main_start_time)
             if success is False:
+                if cfg.after_finish == "Loop" and not is_gui_started():
+                    game.after_finish_is_loop()
+                    continue
                 notif.flush_batch()
                 if cfg.after_finish == "Exit":
                     game.get_game_controller().stop_game()

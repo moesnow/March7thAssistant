@@ -83,11 +83,13 @@ def test_sleep_resume_uses_wall_clock(loop):
     assert loop.events[-1] == "reload"
 
 
-@pytest.mark.parametrize("trigger", ["startup", "finished", "zero_duration"])
+@pytest.mark.parametrize("trigger", ["startup", "finished", "failed", "zero_duration"])
 def test_main_loop_waits_then_starts_next_run(loop, trigger):
     game = loop.game
     real_stop = game.stop
     starts = []
+    if trigger == "failed":
+        loop.cfg.cloud_game_enable = True
 
     def start():
         starts.append(loop.clock.now)
@@ -106,8 +108,10 @@ def test_main_loop_waits_then_starts_next_run(loop, trigger):
                  cfg=loop.cfg, version=MagicMock(), Daily=MagicMock(), reward=MagicMock(),
                  notif=game.notif, telemetry=MagicMock(), time=game.time,
                  CloudGameZeroDurationError=game.CloudGameZeroDurationError,
-                 get_ui_profile=lambda cfg: SimpleNamespace(name="pc_1080"))
+                 get_ui_profile=lambda cfg: SimpleNamespace(name="pc_1080"),
+                 is_gui_started=game.is_gui_started)
     scope["Daily"].currency_wars_due.return_value = False
+    scope["Daily"].start.return_value = trigger != "failed"
     exec(compile(ast.Module(body=[run], type_ignores=[]), str(source), "exec"), scope)
     with pytest.raises(EndRun):
         scope["run_main_actions"](no_run_immediately=trigger == "startup")
@@ -117,3 +121,6 @@ def test_main_loop_waits_then_starts_next_run(loop, trigger):
     if trigger == "finished":
         scope["Daily"].start.assert_called_once_with()
         scope["reward"].start.assert_not_called()
+    if trigger == "failed":
+        scope["telemetry"].track_task_complete.assert_called_once_with("main", False, 0)
+        game.get_game_controller.return_value.stop_game.assert_called_once_with()
