@@ -7,15 +7,15 @@ from module.localization import get_raw_instance_names
 from module.logger import log
 from module.screen import screen
 from tasks.base.list_drag import drag_list
+from tasks.base.task_steps import FATAL_GAME_ERRORS
 from tasks.base.team import Team
-from tasks.power.battle import ensure_double_speed
+from tasks.power.battle import battle_speed_visible, ensure_double_speed
 from tasks.power.policy import (
-    BATTLE_TIMEOUT, ENTRY_TIMEOUT, CRIMSON_CALYX, ECHO, INSTANCE_LIMITS, ORNAMENT,
-    PowerError, RelicBagFull, parse_challenge_cost, parse_echo_rewards, parse_ornament_payment,
-    parse_power, parse_wave_count,
+    BATTLE_TIMEOUT, ENTRY_TIMEOUT, CRIMSON_CALYX, ECHO, ORNAMENT,
+    InstanceUnavailable, PowerError, RelicBagFull, parse_echo_rewards,
 )
 from tasks.power.readout import read_number
-from tasks.power.character import Character
+from tasks.power.character import CHALLENGE, Character
 from tasks.power.relicset import Relicset
 from utils.game_options import game_option_enabled
 from utils.wait import wait_until
@@ -24,9 +24,6 @@ from utils.wait import wait_until
 CATEGORY = (262 / 1920, 289 / 1080, 422 / 1920, 624 / 1080)
 ENTRY_ROWS = (686 / 1920, 287 / 1080, 980 / 1920, 650 / 1080)
 WAVE_SELECTOR = (1160 / 1920, 828 / 1080, 755 / 1920, 104 / 1080)
-CHALLENGE_COST = (1210 / 1920, 947 / 1080, 262 / 1920, 78 / 1080)
-REPEAT_COST = (1011 / 1920, 923 / 1080, 174 / 1920, 78 / 1080)
-CHALLENGE = (1392 / 1920, 946 / 1080, 487 / 1920, 83 / 1080)
 TEAM_TABS = (311 / 1920, 12 / 1080, 1376 / 1920, 105 / 1080)
 DIALOG = (245 / 1920, 200 / 1080, 1430 / 1920, 645 / 1080)
 INSTANCE_POPUPS = ("开拓力补充", "背包内遗器持有数量已达上限", "长时间未操作", "已处于无法战斗状态")
@@ -71,7 +68,7 @@ class Instance:
             )
             if entry:
                 if auto.matched_text == "追踪":
-                    raise PowerError(f"指定副本未解锁：{instance_name}")
+                    raise InstanceUnavailable(f"指定副本未解锁：{instance_name}")
                 if not auto.click_element_with_pos(entry):
                     raise PowerError(f"无法点击副本入口：{instance_name}")
                 break
@@ -105,81 +102,21 @@ class Instance:
         return quota
 
     @staticmethod
-    def read_balance(instance_type, *, result=False):
-        if instance_type == ORNAMENT:
-            crop = (1496 / 1920, 35 / 1080, 123 / 1920, 54 / 1080)
-            if result:
-                crop = (1481 / 1920, 35 / 1080, 127 / 1920, 55 / 1080)
-        else:
-            crop = (1588 / 1920, 22 / 1080, 198 / 1920, 60 / 1080)
-        return read_number(auto, crop, parse_power, "未能确认副本界面的开拓力余额")
-
-    @staticmethod
-    def _select_waves(instance_type, requested):
-        count_crop = ((1490 / 1920, 819 / 1080, 240 / 1920, 65 / 1080) if instance_type == ORNAMENT
-                      else (1476 / 1920, 837 / 1080, 156 / 1920, 43 / 1080))
-
-        def parse(text):
-            return parse_wave_count(text, "挑战次数", INSTANCE_LIMITS[instance_type][1])
-
-        if not auto.find_element("挑战次数", "text", crop=count_crop, include=True, max_retries=3, retry_delay=0.3):
+    def select_waves(instance_type, requested):
+        # 从生存索引重新进入副本时，游戏默认选择一场。
+        if requested == 1:
+            return 1
+        plus = auto.find_element("./assets/images/screen/guide/plus.png", "image", 0.82,
+                                 crop=WAVE_SELECTOR, max_retries=3, retry_delay=0.3)
+        if not plus:
             if instance_type == ECHO:
                 return 1
-            if requested == 1:
-                return 1
-            raise PowerError("未能确认连续挑战次数")
-        selected = read_number(auto, count_crop, parse, "未识别当前挑战次数")
-        for _ in range(abs(requested - selected)):
-            if selected < requested:
-                changed = auto.click_element("./assets/images/screen/guide/plus.png", "image", 0.82, crop=WAVE_SELECTOR)
-            else:
-                point = (1359 / 1920, 875 / 1080, 0, 0) if instance_type == ORNAMENT else (1250 / 1920, 888 / 1080, 0, 0)
-                changed = auto.click_element(point, "crop")
-            if not changed:
+            raise PowerError("未找到增加连续挑战次数的按钮")
+        for _ in range(requested - 1):
+            if not auto.click_element_with_pos(plus):
                 raise PowerError("无法调整连续挑战次数")
             time.sleep(0.2)
-        read_number(auto, count_crop, lambda text: requested if parse(text) == requested else None,
-                    f"未确认已选中 {requested} 次挑战")
         return requested
-
-    @staticmethod
-    def _read_payment(instance_type, waves, *, repeat=False):
-        if instance_type == ORNAMENT:
-            crop = REPEAT_COST if repeat else (1350 / 1920, 944 / 1080, 226 / 1920, 76 / 1080)
-            return read_number(auto, crop, lambda text: parse_ornament_payment(text, waves),
-                               "未能确认饰品提取按钮的费用", retries=3)[0]
-        crop = REPEAT_COST if repeat else CHALLENGE_COST
-
-        return read_number(auto, crop, parse_challenge_cost, "未能确认挑战按钮的开拓力费用", retries=3)
-
-    @staticmethod
-    def prepare_payment(instance_type, requested, available, *, practice, immersifier_only):
-        while requested:
-            waves = Instance._select_waves(instance_type, requested)
-            if practice:
-                # 无奖励提示会在点击挑战后再次确认，绝不代付额外开拓力。
-                return 1, 0
-            cost = Instance._read_payment(instance_type, waves)
-            if instance_type != ORNAMENT and cost != waves * INSTANCE_LIMITS[instance_type][0]:
-                raise PowerError(f"挑战费用 {cost} 与已选择的 {waves} 次挑战不符")
-            if cost <= (0 if immersifier_only else available):
-                return waves, cost
-            if instance_type != ORNAMENT:
-                return 0, 0
-            requested = waves - (cost - (0 if immersifier_only else available) + 39) // 40
-        return 0, 0
-
-    @staticmethod
-    def repeat_payment(instance_type, waves, practice):
-        if practice:
-            return None  # 重新进本核对无奖励提示。
-        try:
-            cost = Instance._read_payment(instance_type, waves, repeat=True)
-        except PowerError:
-            return None
-        if instance_type == ORNAMENT or cost == waves * INSTANCE_LIMITS[instance_type][0]:
-            return cost
-        return None
 
     @staticmethod
     def select_world_team(instance_type, name):
@@ -237,6 +174,7 @@ class Instance:
     @staticmethod
     def start_instance(instance_type, name, support, *, practice, world_team):
         ornament = instance_type == ORNAMENT
+        start_button = None
         if ornament:
             if cfg.instance_team_enable:
                 team = Instance.get_target_team(instance_type, name)
@@ -252,23 +190,29 @@ class Instance:
                 raise PowerError("未找到副本的挑战按钮")
             if practice:
                 Instance._confirm_practice()
-            if not auto.find_element("开始挑战", "text", crop=CHALLENGE, max_retries=12, retry_delay=0.3):
+            start_button = auto.find_element("开始挑战", "text", crop=CHALLENGE, max_retries=12, retry_delay=0.3)
+            if not start_button:
                 Instance.check_popup()
                 raise PowerError("未进入副本编队")
             if cfg.instance_team_enable and not world_team:
                 if not Instance._select_instance_team(Instance.get_target_team(instance_type, name)):
                     # 有些 PC 编队页只给临时队伍。退出后沿用主世界切队，重进并重新核算费用。
                     raise TeamPresetUnavailable("编队页未找到配置的预设队伍")
+                start_button = None
 
-        borrowed = support.should_borrow(cfg) and Character.borrow("ornament" if ornament else "standard", for_training=support.pending)
-        Instance._click_start_challenge(ornament=ornament)
+        borrowed = False
+        if support.should_borrow(cfg):
+            borrowed = Character.borrow("ornament" if ornament else "standard", for_training=support.pending)
+            start_button = None
+        Instance._click_start_challenge(ornament=ornament, button=start_button)
         if ornament:
             Instance._engage_ornament_boss()
         return borrowed
 
     @staticmethod
-    def _click_start_challenge(*, ornament):
-        button = auto.find_element("开始挑战", "text", crop=CHALLENGE, max_retries=5, retry_delay=0.35)
+    def _click_start_challenge(*, ornament, button=None):
+        if button is None:
+            button = auto.find_element("开始挑战", "text", crop=CHALLENGE, max_retries=5, retry_delay=0.35)
         if not button:
             Instance.check_popup()
             raise PowerError("无法开始挑战")
@@ -363,14 +307,17 @@ class Instance:
     def wait_fight(*, repeated=False):
         deadline = time.monotonic() + ENTRY_TIMEOUT
         in_battle = False
-        left_result = not repeated
         next_popup_check = 0.0
         next_controls = 0.0
         reconnects = 0
         while time.monotonic() < deadline:
             victory = auto.find_element(FIGHT_AGAIN, "image", 0.88)
-            if victory and left_result:
+            if victory and (not repeated or in_battle):
                 return True
+            awaiting_repeat = repeated and not in_battle
+            result_visible = victory or (awaiting_repeat and auto.find_element(
+                FIGHT_EXIT, "image", 0.9, take_screenshot=False,
+            ))
             if auto.find_element(FIGHT_FAIL, "image", 0.9, take_screenshot=False):
                 return False
             now = time.monotonic()
@@ -386,8 +333,16 @@ class Instance:
                         auto.click_element(CONFIRM, "image", 0.9, take_screenshot=False)
                     time.sleep(5)
                     continue
-            if auto.find_element(PAUSE, "image", 0.88, crop=(0.95, 0, 0.05, 0.09), scale_range=(0.65, 1.05)):
-                left_result = True
+            pause = auto.find_element(PAUSE, "image", 0.88, crop=(0.95, 0, 0.05, 0.09), scale_range=(0.65, 1.05))
+            speed_visible = False
+            if awaiting_repeat and not result_visible and not pause:
+                try:
+                    speed_visible = battle_speed_visible(auto)
+                except FATAL_GAME_ERRORS:
+                    raise
+                except RuntimeError as error:
+                    log.warning(f"暂时无法识别战斗倍速控件：{error}")
+            if pause or speed_visible:
                 if not in_battle:
                     log.info("进入战斗")
                     in_battle = True
@@ -396,9 +351,17 @@ class Instance:
                     if auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9,
                                          crop=(0, 903 / 1080, 144 / 1920, 120 / 1080)):
                         auto.press_key(cfg.get_value("hotkey_auto_battle", "v"))
-                    ensure_double_speed(auto)
+                    if not speed_visible:
+                        try:
+                            ensure_double_speed(auto)
+                        except FATAL_GAME_ERRORS:
+                            raise
+                        except RuntimeError as error:
+                            log.warning(f"暂时无法检测战斗倍速，继续等待本场结算：{error}")
                     next_controls = now + 3
             time.sleep(0.55)
+        if repeated and not in_battle:
+            raise PowerError("等待进入新战斗超时，未确认再来一次的结算")
         raise PowerError("战斗结算超时" if in_battle else "等待进入战斗超时")
 
     @staticmethod

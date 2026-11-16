@@ -118,6 +118,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         usage.appOpened()
         controller.refreshPermission()
+        controller.recover()
         refreshNotifications()
     }
 

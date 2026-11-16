@@ -135,6 +135,7 @@ class TaskController private constructor(private val context: Context) {
         if (privilege == Privilege.ROOT && !prefs.contains(KEY_ROOT_VERIFIED)) edit.putBoolean(KEY_ROOT_VERIFIED, false)
         edit.apply()
         stateData.update { it.copy(privilege = privilege, permission = permissionFor(privilege)) }
+        recover()
         return true
     }
 
@@ -157,7 +158,10 @@ class TaskController private constructor(private val context: Context) {
                 prefs.edit().putBoolean(KEY_ROOT_VERIFIED, access.state(Privilege.ROOT) == PermissionState.READY).apply()
             } finally {
                 rootProbeInFlight.set(false)
-                refreshPermission()
+                main.post {
+                    refreshPermission()
+                    recover()
+                }
             }
         }
     }
@@ -178,7 +182,6 @@ class TaskController private constructor(private val context: Context) {
 
     fun start(): Boolean {
         refreshPermission()
-        recover()
         val snapshot = state.value
         if (snapshot.busy || snapshot.permission == PermissionState.CHECKING) return false
         if (snapshot.permission != PermissionState.READY) {
@@ -261,18 +264,19 @@ class TaskController private constructor(private val context: Context) {
         return false
     }
 
-    private fun recover() {
+    internal fun recover() {
         if (!marker.baseFile.exists() || state.value.busy) return
-        val stale = runCatching { marker.readFully().decodeToString() }.getOrNull()
-        if (stale == Privilege.SHIZUKU.name && access.state(Privilege.SHIZUKU) != PermissionState.READY) return
+        val saved = runCatching { Privilege.valueOf(marker.readFully().decodeToString()) }.getOrNull()
+        val privilege = listOfNotNull(saved, state.value.privilege)
+            .firstOrNull { access.state(it) == PermissionState.READY } ?: return
         stateData.update { it.copy(service = ServiceState.RECOVERING) }
         worker.execute {
             try {
-                if (stale == Privilege.SHIZUKU.name) access.recoverShizuku()
+                access.recoverAudio(privilege)
                 marker.delete()
-                appLog(LogLevel.INFO, "已检查上次异常结束的设备端租约")
+                appLog(LogLevel.INFO, "已完成上次运行的音频恢复检查")
             } catch (error: Exception) {
-                appLog(LogLevel.WARNING, "上次运行的清理仍待确认：${error.javaClass.simpleName}")
+                appLog(LogLevel.WARNING, "上次运行的音频恢复仍待确认：${error.message}")
             } finally {
                 stateData.update { it.copy(service = ServiceState.IDLE) }
             }
@@ -302,6 +306,7 @@ class TaskController private constructor(private val context: Context) {
         internal val stopTimeout = Runnable { if (active === this) Process.killProcess(Process.myPid()) }
         private var device: DeviceLease? = null
         private var deviceError: String? = null
+        private var audioPending = marker.baseFile.exists()
         private var movingBack = false
         private var usageRun: UsageTelemetry.Run? = null
         private var usageStage = UsageStage.PREPARING
@@ -369,7 +374,7 @@ class TaskController private constructor(private val context: Context) {
                         usageRun, outcome, if (cleanupConfirmed) usageStage else UsageStage.CLEANUP,
                         result, steps.firstOrNull { it.status == StepStatus.FAILED }?.step, timings,
                     )
-                    if (cleanupConfirmed) marker.delete()
+                    if (cleanupConfirmed && !audioPending) marker.delete()
                 }
                 val level = if (result == "success" || result == "stopped") LogLevel.INFO else LogLevel.ERROR
                 appLog(level, "本轮结束：$result")
@@ -468,6 +473,10 @@ class TaskController private constructor(private val context: Context) {
                 deviceError = error.code
                 throw error
             }
+        }
+
+        fun audioRecoveryPending(pending: Boolean) {
+            audioPending = pending
         }
 
         fun previewReady(port: Int) {

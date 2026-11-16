@@ -85,6 +85,25 @@ def test_input_blocked_while_paused_and_resumes(automation, blocking_controller)
     assert events == [("press_key", "x")]
 
 
+@pytest.mark.parametrize(("backend", "profile"), [("invalid", "pc_1080"), ("local", "invalid")])
+def test_invalid_connection_allows_initialization_but_not_input(automation, monkeypatch, backend, profile):
+    from module.config.platform import InvalidGameConnection
+
+    _, events = automation
+    config = SimpleNamespace(control_backend=backend, ui_profile=profile)
+    monkeypatch.setattr("module.automation.automation.cfg", config)
+    auto = object.__new__(Automation)
+    auto.__init__("test")
+    assert auto.input_handler is None
+    with pytest.raises(InvalidGameConnection):
+        auto.mouse_click(1, 2)
+    assert not events
+
+    config.control_backend, config.ui_profile = "local", "pc_1080"
+    auto.mouse_click(1, 2)
+    assert events == [("mouse_click", 1, 2)]
+
+
 def test_all_input_aliases_go_through_checkpoint(automation, blocking_controller):
     auto, events = automation
     blocking_controller.resume.clear()

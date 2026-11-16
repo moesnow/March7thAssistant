@@ -50,9 +50,6 @@ class Synthesis:
 
     @staticmethod
     def _verify_training_recipe():
-        if not auto.find_element("微光原核", "text", crop=(0.49, 0.08, 0.43, 0.16), max_retries=4, retry_delay=0.3):
-            log.error("未确认微光原核配方")
-            return False
         auto.take_screenshot(crop=(0.51, 0.63, 0.41, 0.23))
         auto.perform_ocr()
         text = "\n".join(normalize(value) for _, (value, _) in auto.ocr_result)
@@ -192,11 +189,13 @@ class Synthesis:
                     "./assets/images/zh_CN/lc/rarity.png", "image", 0.9
                 ):
                     log.info("升序排序光锥")
-                    auto.click_element(
+                    descending = auto.find_element(
                         "./assets/images/share/synthesis/descend.png",
                         "image",
                         0.9,
                     )
+                    if descending and not auto.click_element_with_pos(descending):
+                        raise RuntimeError("无法切换光锥排序顺序")
                     log.hr("开始叠加3星光锥")
                     not_find_times = 0
                     while not_find_times < 5:
@@ -211,7 +210,8 @@ class Synthesis:
                             t = None
                             for tgt in targets:
                                 log.info(f"检测到光锥位置: {tgt}")
-                                auto.click_element_with_pos(tgt)
+                                if not auto.click_element_with_pos(tgt):
+                                    raise RuntimeError("无法选中检测到的光锥")
                                 ((left, top), (right, bottom)) = tgt
                                 left_new = left
                                 top_new = bottom + 30
@@ -252,51 +252,13 @@ class Synthesis:
                             if t is not None:
                                 find_target = True
                                 log.info(f"找到3星光锥位置: {t}")
-                                auto.click_element_with_pos(t)
-                                if auto.click_element(
-                                    "./assets/images/zh_CN/lc/detail.png",
-                                    "image",
-                                    0.9,
-                                ):
-                                    time.sleep(3)
-                                    if auto.click_element(
-                                        "./assets/images/share/lc/superimpose.png",
-                                        "image",
-                                        0.9,
-                                    ):
-                                        time.sleep(2)
-                                        if auto.click_element(
-                                            "./assets/images/zh_CN/lc/auto_superimpose.png",
-                                            "image",
-                                            0.9,
-                                        ):
-                                            time.sleep(2)
-                                            if auto.click_element(
-                                                "./assets/images/zh_CN/lc/superimpose.png",
-                                                "image",
-                                                0.9,
-                                            ):
-                                                time.sleep(2)
-                                                is_superimposed = auto.click_element(
-                                                    "./assets/images/zh_CN/lc/close.png",
-                                                    "image",
-                                                    0.9,
-                                                )
-                                                time.sleep(2)
-                                                auto.press_key("esc", wait_time=3)
-                                                if not is_superimposed:
-                                                    log.info("没有进行叠加")
-                                                    if not drag_list(auto, (1280 / 1920, 810 / 1080), (1280 / 1920, 650 / 1080),
-                                                                     crop=(140 / 1920, 150 / 1080, 1110 / 1920, 760 / 1080), duration=1.0):
-                                                        return False
-                                                log.info("3星光锥叠加完成，继续查找")
-                                                break
-                                        else:
-                                            time.sleep(2)
-                                            auto.press_key("esc", wait_time=3)
-                                            if not drag_list(auto, (1280 / 1920, 810 / 1080), (1280 / 1920, 650 / 1080),
-                                                             crop=(140 / 1920, 150 / 1080, 1110 / 1920, 760 / 1080), duration=1.0):
-                                                return False
+                                if Synthesis._superimpose_selected_light_cone():
+                                    log.info("3星光锥叠加完成，继续查找")
+                                    break
+                                log.info("本光锥未出现叠加结果，继续查找")
+                                if not drag_list(auto, (1280 / 1920, 810 / 1080), (1280 / 1920, 650 / 1080),
+                                                 crop=(140 / 1920, 150 / 1080, 1110 / 1920, 760 / 1080), duration=1.0):
+                                    return False
 
                         if not find_target:
                             if not drag_list(auto, (1280 / 1920, 810 / 1080), (1280 / 1920, 410 / 1080),
@@ -306,9 +268,41 @@ class Synthesis:
                         else:
                             not_find_times = 0
 
+                    return True
         except Exception as e:
             log.error(f"3星光锥自动叠加失败: {e}")
         return False
+
+    @staticmethod
+    def _superimpose_selected_light_cone():
+        if not auto.click_element("./assets/images/zh_CN/lc/detail.png", "image", 0.9):
+            raise RuntimeError("无法打开三星光锥详情")
+        time.sleep(3)
+        if not auto.click_element("./assets/images/share/lc/superimpose.png", "image", 0.9):
+            raise RuntimeError("无法打开三星光锥叠影页")
+        time.sleep(2)
+
+        result = False
+        auto_place = auto.find_element("./assets/images/zh_CN/lc/auto_superimpose.png", "image", 0.9)
+        if auto_place:
+            if not auto.click_element_with_pos(auto_place):
+                raise RuntimeError("无法点击自动置入")
+            time.sleep(2)
+            apply = auto.find_element("./assets/images/zh_CN/lc/superimpose.png", "image", 0.9)
+            if apply:
+                if not auto.click_element_with_pos(apply):
+                    raise RuntimeError("无法点击叠影")
+                time.sleep(2)
+                receipt = auto.find_element("./assets/images/zh_CN/lc/close.png", "image", 0.9)
+                if receipt:
+                    if not auto.click_element_with_pos(receipt):
+                        raise RuntimeError("三星光锥叠加完成后无法关闭结果")
+                    result = True
+
+        time.sleep(2)
+        if auto.press_key("esc", wait_time=3) is False:
+            raise RuntimeError("无法返回光锥列表")
+        return result
 
     # @staticmethod
     # def asset_special_pass_exchange():

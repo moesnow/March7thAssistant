@@ -53,7 +53,7 @@ class LocalGameController(GameControllerBase):
 
         game_path = Path(self.game_path).resolve()
         if not game_path.is_file():
-            raise FileNotFoundError(tr("请在“设置”→“程序”中配置正确的游戏路径"))
+            raise FileNotFoundError(tr("请在“设置”→“游戏连接”中配置正确的游戏路径"))
         directory = Path(self._config.genshin_starRail_fps_unlocker_path).resolve()
         unlocker = directory / "unlocker.exe"
         if not unlocker.is_file():

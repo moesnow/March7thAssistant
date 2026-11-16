@@ -8,6 +8,7 @@ import pytest
 from module.localization import tr
 from tasks.touch import ornament, power, rewards
 from tasks.power import readout, supplement
+from tasks.power.policy import plan_paid_batch
 
 
 @pytest.mark.parametrize(("text", "expected"), [
@@ -28,10 +29,12 @@ def _line(text, x, y):
     return ([(x, y), (x + 40, y), (x + 40, y + 18), (x, y + 18)], (text, 0.98))
 
 
-def test_repeat_cost_combines_split_ocr_in_screen_order(monkeypatch):
+def test_ornament_inventory_combines_split_ocr_in_screen_order(monkeypatch):
     monkeypatch.setattr(power.auto, "take_screenshot", Mock(return_value=(Image.new("RGB", (40, 20)), None, 1)))
-    monkeypatch.setattr(readout.ocr, "recognize_multi_lines", Mock(return_value=[_line("240", 32, 0), _line("×", 0, 4)]))
-    assert power._read_cost(power.REPEAT_COST) == 240
+    ocr = Mock(return_value=[_line("／１２", 32, 0), _line("１０", 0, 4)])
+    monkeypatch.setattr(readout.ocr, "recognize_multi_lines", ocr)
+    assert readout.read_immersifier_stock(power.auto, ornament.INDEX_IMMERSIFIERS) == 10
+    ocr.assert_called_once()
 
 
 def test_crimson_calyx_uses_location_when_buds_have_the_same_name():
@@ -63,28 +66,15 @@ def test_echo_entry_uses_button_below_title():
     assert power.find_instance_entry([unrelated, title, entry], "毁灭的开端", power.ECHO) == (entry[0], "进入")
 
 
-@pytest.mark.parametrize(("text", "waves", "payment"), [
-    ("×１", 1, (0, 1)),
-    ("2 米 40", 3, (40, 2)),
-    ("×240", 6, (240, 0)),
-    ("2 米 80", 3, None),
-    ("未知", 1, None),
+@pytest.mark.parametrize(("requested", "available", "stock", "batch"), [
+    (6, 174, 10, (6, 0, 6)),
+    (6, 174, 4, (6, 80, 4)),
+    (6, 94, 0, (2, 80, 0)),
+    (6, 39, 0, (0, 0, 0)),
+    (2, 0, 6, (2, 0, 2)),
 ])
-def test_ornament_payment_requires_amounts_matching_the_wave_count(text, waves, payment):
-    assert ornament.parse_payment(text, waves) == payment
-
-
-def test_ornament_reduces_waves_from_the_displayed_payment_without_reading_stock(monkeypatch):
-    select_waves = Mock()
-    amounts = iter(("2 米 80", "2 米 40"))
-    read_number = Mock(side_effect=lambda crop, parse, error: parse(next(amounts)))
-    monkeypatch.setattr(ornament.auto, "find_element", Mock(return_value=True))
-    monkeypatch.setattr(power, "_set_challenge_waves", select_waves)
-    monkeypatch.setattr(power, "_read_number", read_number)
-
-    assert ornament._prepare_payment(4, 47) == (3, 40, 2)
-    assert [item.args[0] for item in select_waves.call_args_list] == [4, 3]
-    assert [item.args[0] for item in read_number.call_args_list] == [ornament.PAYMENT] * 2
+def test_ornament_batch_uses_immersifiers_first_and_fits_the_budget(requested, available, stock, batch):
+    assert plan_paid_batch(requested, available, 40, immersifiers=stock) == batch
 
 
 def test_ornament_confirms_known_no_save_prompt(monkeypatch):
@@ -115,9 +105,11 @@ def test_ornament_final_batch_skips_result_balance_and_exits(monkeypatch, waves)
     monkeypatch.setattr(power, "_enter_instance", Mock())
     monkeypatch.setattr(power, "_wait_battle", Mock())
     read_waves = Mock(side_effect=power.PowerError("结算波次 OCR 不可用"))
-    monkeypatch.setattr(power, "_read_waves", read_waves)
+    monkeypatch.setattr(power, "read_number", read_waves)
     monkeypatch.setattr(ornament, "_start_challenge", Mock())
-    monkeypatch.setattr(ornament, "_prepare_payment", Mock(return_value=(waves, 40, waves - 1)))
+    monkeypatch.setattr(power, "_set_challenge_waves", Mock())
+    stock = Mock(return_value=waves - 1)
+    monkeypatch.setattr(ornament, "read_immersifier_stock", stock)
     balance = Mock(side_effect=[181, power.PowerError("读数失败")])
     monkeypatch.setattr(power, "read_power", balance)
     exit_result = Mock(return_value="main")
@@ -127,7 +119,8 @@ def test_ornament_final_batch_skips_result_balance_and_exits(monkeypatch, waves)
     assert power.run()
     ornament.screen.change_to.assert_not_called()
     read_waves.assert_not_called()
-    balance.assert_called_once_with(ornament.DETAIL_POWER)
+    stock.assert_called_once_with(ornament.auto, ornament.INDEX_IMMERSIFIERS)
+    balance.assert_called_once_with(ornament.INDEX_POWER)
     exit_result.assert_called_once_with(power.INSTANCES[power.ORNAMENT][0])
     config.set_value.assert_called_once_with("power_plan", [])
 
@@ -138,7 +131,7 @@ def test_touch_power_plan_records_the_selected_batch_on_victory(monkeypatch):
         power_plan_continue=False, instance_names_challenge_count={}, set_value=Mock(),
     )
     read_waves = Mock(side_effect=power.PowerError("结算波次 OCR 不可用"))
-    start = Mock(return_value=False)
+    start = Mock(return_value=(4, False))
     monkeypatch.setattr(power, "cfg", cfg)
     monkeypatch.setattr(power, "screen", Mock())
     monkeypatch.setattr(power, "_select_category", Mock())
@@ -148,7 +141,7 @@ def test_touch_power_plan_records_the_selected_batch_on_victory(monkeypatch):
     monkeypatch.setattr(power, "_wait_battle", Mock())
     monkeypatch.setattr(power, "_exit_result", Mock(return_value="main"))
     power.screen.change_to.side_effect = RuntimeError("重复截图失败")
-    monkeypatch.setattr(power, "_read_waves", read_waves)
+    monkeypatch.setattr(power, "read_number", read_waves)
     balance = Mock(side_effect=[86, power.PowerError("余额读数失败")])
     monkeypatch.setattr(power, "read_power", balance)
 
@@ -163,15 +156,14 @@ def test_touch_power_plan_records_the_selected_batch_on_victory(monkeypatch):
     read_waves.assert_not_called()
 
 
-@pytest.mark.parametrize("instance_type", [power.GOLDEN_CALYX, power.ORNAMENT])
-@pytest.mark.parametrize("readable", [True, False])
-def test_touch_power_recovers_result_balance_before_another_paid_batch(monkeypatch, instance_type, readable):
-    is_ornament = instance_type == power.ORNAMENT
-    name, cost = ("浴火钢心", 40) if is_ornament else ("回忆之蕾", 10)
+@pytest.mark.parametrize("use_fuel", [False, True])
+def test_touch_ornament_repeats_mixed_payment_and_keeps_unfunded_plan(monkeypatch, use_fuel):
+    instance_type, name = power.ORNAMENT, "浴火钢心"
+    next_item = [power.GOLDEN_CALYX, "回忆之蕾", 1]
     config = SimpleNamespace(
-        borrow_enable=False, instance_team_enable=False, use_reserved_trailblaze_power=False, use_fuel=False,
-        power_plan=[[instance_type, name, 2]], power_plan_keep=False, power_plan_continue=False,
-        instance_names_challenge_count={instance_type: 1}, set_value=Mock(),
+        borrow_enable=False, instance_team_enable=False, use_reserved_trailblaze_power=False, use_fuel=use_fuel,
+        power_plan=[[instance_type, name, 15], next_item], power_plan_keep=False, power_plan_continue=False,
+        instance_names_challenge_count={instance_type: 6}, set_value=Mock(),
     )
     for module in (power, ornament):
         monkeypatch.setattr(module, "cfg", config)
@@ -181,26 +173,66 @@ def test_touch_power_recovers_result_balance_before_another_paid_batch(monkeypat
     monkeypatch.setattr(power, "_wait_battle", Mock())
     exit_result = Mock()
     monkeypatch.setattr(power, "_exit_result", exit_result)
-    after = 86 - cost if readable else power.PowerError("副本余额读数失败")
-    balance = Mock(side_effect=[86, power.PowerError("结算页余额读数失败"), after])
+    initial_power = 114 if use_fuel else 174
+    balance = Mock(side_effect=[initial_power, power.PowerError("重复读余额")])
+    stock = Mock(side_effect=[10, power.PowerError("重复读库存")])
+    fill = Mock(return_value=174)
+    click = Mock(return_value=True)
+    select = Mock()
+    plan_batch = Mock(wraps=plan_paid_batch)
     monkeypatch.setattr(power, "read_power", balance)
-    start = Mock(return_value=True if is_ornament else False)
-    if is_ornament:
-        monkeypatch.setattr(ornament, "_start_challenge", start)
-        monkeypatch.setattr(ornament, "_prepare_payment", Mock(return_value=(1, cost, 0)))
-    else:
-        monkeypatch.setattr(power, "_start_challenge", start)
+    monkeypatch.setattr(power, "_supplement", fill)
+    monkeypatch.setattr(power, "_click_text", click)
+    monkeypatch.setattr(power, "_set_challenge_waves", select)
+    monkeypatch.setattr(ornament, "read_immersifier_stock", stock)
+    monkeypatch.setattr(ornament, "_start_challenge", Mock(return_value=True))
+    monkeypatch.setattr(ornament, "plan_paid_batch", plan_batch)
 
-    assert power.run() is readable
-    expected_saves = [call("power_plan", [[instance_type, name, 1]])]
-    if readable:
-        expected_saves.append(call("power_plan", []))
-    assert config.set_value.call_args_list == expected_saves
-    assert balance.call_args_list == (
-        [call(ornament.DETAIL_POWER), call(ornament.INDEX_POWER), call(ornament.DETAIL_POWER)]
-        if is_ornament else [call()] * 3
+    assert power.run()
+    assert config.set_value.call_args_list == [
+        call("power_plan", [[instance_type, name, remaining], next_item]) for remaining in (9, 3, 1)
+    ]
+    assert plan_batch.call_args_list == [
+        call(6, 174, 40, immersifiers=10),
+        call(6, 174, 40, immersifiers=4),
+        call(3, 94, 40, immersifiers=0),
+        call(1, 14, 40, immersifiers=0),
+    ]
+    assert [args.args[0] for args in select.call_args_list] == [6, 2]
+    click.assert_called_once_with("再来一次", power.REPEAT)
+    balance.assert_called_once_with(ornament.INDEX_POWER)
+    stock.assert_called_once_with(ornament.auto, ornament.INDEX_IMMERSIFIERS)
+    assert exit_result.call_count == 2
+    assert fill.call_args_list == ([call(114, plus=(1510, 55), power_crop=ornament.INDEX_POWER)] if use_fuel else [])
+
+
+@pytest.mark.parametrize("ocr_error", [False, True])
+def test_unreadable_ornament_stock_uses_power_and_keeps_running_the_plan(monkeypatch, ocr_error):
+    next_item = [power.GOLDEN_CALYX, "回忆之蕾", 1]
+    config = SimpleNamespace(
+        borrow_enable=False, instance_team_enable=False, use_reserved_trailblaze_power=False, use_fuel=False,
+        power_plan=[[power.ORNAMENT, "浴火钢心", 1], next_item], power_plan_keep=False, power_plan_continue=False,
+        instance_names_challenge_count={}, set_value=Mock(),
     )
-    assert start.call_count == exit_result.call_count == (2 if readable else 1)
+    for module in (power, ornament):
+        monkeypatch.setattr(module, "cfg", config)
+    monkeypatch.setattr(ornament.auto, "take_screenshot", Mock(return_value=(Image.new("RGB", (70, 35)), None, 1)))
+    recognition = Mock(return_value=[_line("174/300", 0, 0)],
+                       side_effect=RuntimeError("OCR 执行失败") if ocr_error else None)
+    monkeypatch.setattr(readout.ocr, "recognize_multi_lines", recognition)
+    monkeypatch.setattr(readout.time, "sleep", Mock())
+    monkeypatch.setattr(power, "_select_category", Mock())
+    monkeypatch.setattr(power, "_enter_instance", Mock())
+    monkeypatch.setattr(power, "_exit_result", Mock(return_value="main"))
+    monkeypatch.setattr(power, "_set_challenge_waves", Mock())
+    monkeypatch.setattr(power, "_wait_battle", Mock())
+    monkeypatch.setattr(power, "read_power", Mock(side_effect=[45, 10]))
+    monkeypatch.setattr(power, "_start_challenge", Mock(return_value=(1, False)))
+    monkeypatch.setattr(ornament, "_start_challenge", Mock(return_value=True))
+
+    assert power.run()
+    assert recognition.call_count == (1 if ocr_error else 3)
+    assert config.set_value.call_args_list == [call("power_plan", [next_item]), call("power_plan", [])]
 
 
 @pytest.mark.parametrize(("foreground", "background", "expected"), [
@@ -219,9 +251,10 @@ def test_auto_state_checks_glyph_against_scene(foreground, background, expected)
     assert power.classify_auto_button(pixels, glyph) is expected
 
 
-def test_battle_waits_for_comparable_frame_without_replaying_input(monkeypatch):
+@pytest.mark.parametrize("code", ["frame_clock_unavailable", "frame_timeout"])
+def test_battle_resumes_after_temporary_frame_failure(monkeypatch, code):
     monkeypatch.setattr(power, "ensure_double_speed", Mock(return_value=True))
-    poll = Mock(side_effect=[power.AdbError("frame_clock_unavailable", "clock"),
+    poll = Mock(side_effect=[power.AdbError(code, "frame"),
                              ("battle", True), ("victory", None)])
     tap = Mock()
     monkeypatch.setattr(power, "_observe_battle", poll)
@@ -230,6 +263,84 @@ def test_battle_waits_for_comparable_frame_without_replaying_input(monkeypatch):
     power._wait_battle()
     assert poll.call_count == 3
     tap.assert_not_called()
+
+
+@pytest.mark.parametrize("code,polls", [("frame_timeout", 16), ("disconnected", 1), ("invalid_response", 1)])
+def test_battle_reports_persistent_or_fatal_frame_failure(monkeypatch, code, polls):
+    now = 0.0
+
+    def sleep(_seconds):
+        nonlocal now
+        now += 1
+
+    failure = power.AdbError(code, "frame")
+    poll = Mock(side_effect=failure)
+    tap = Mock()
+    monkeypatch.setattr(power, "_observe_battle", poll)
+    monkeypatch.setattr(power, "_tap", tap)
+    monkeypatch.setattr(power.time, "monotonic", lambda: now)
+    monkeypatch.setattr(power.time, "sleep", sleep)
+
+    with pytest.raises(power.AdbError) as error:
+        power._wait_battle(repeated=True)
+    assert error.value is failure
+    assert poll.call_count == polls
+    tap.assert_not_called()
+
+
+@pytest.mark.parametrize("code,recovered", [("frame_clock_unavailable", True), ("frame_timeout", True),
+                                               ("disconnected", False)])
+def test_speed_probe_recovers_transient_frame_errors(monkeypatch, code, recovered):
+    speed = Mock(side_effect=power.AdbError(code, "frame"))
+    observe = Mock(side_effect=[("battle", True), ("victory", None)])
+    monkeypatch.setattr(power, "ensure_double_speed", speed)
+    monkeypatch.setattr(power, "_observe_battle", observe)
+    monkeypatch.setattr(power, "game_option_enabled", lambda *_: True)
+    monkeypatch.setattr(power.time, "sleep", Mock())
+    if recovered:
+        power._wait_battle()
+    else:
+        with pytest.raises(power.AdbError) as error:
+            power._wait_battle()
+        assert error.value.code == code
+    speed.assert_called_once_with(power.auto)
+    assert observe.call_count == (2 if recovered else 1)
+
+
+@pytest.mark.parametrize("saw_speed", [False, True])
+def test_touch_repeat_requires_battle_evidence_without_observing_pause(monkeypatch, saw_speed):
+    now = 0.0
+    stale_results = ["victory", *(["occluded"] * 4), "victory"]
+    next_battle = ["battle", "victory"] if saw_speed else []
+    frames = iter(stale_results + next_battle)
+    frame = None
+
+    def sleep(seconds):
+        nonlocal now
+        now += seconds
+
+    def find(target, *_args, **_kwargs):
+        nonlocal frame
+        if target == f"{power.IMAGES}/victory.png":
+            frame = next(frames, "victory")
+            return frame == "victory"
+        return False
+
+    auto = Mock(find_element=Mock(side_effect=find))
+    monkeypatch.setattr(power, "auto", auto)
+    monkeypatch.setattr(power, "_check_popup", Mock())
+    monkeypatch.setattr(power, "battle_speed_visible", lambda _: frame == "battle")
+    monkeypatch.setattr(power, "game_option_enabled", lambda *_args: False)
+    monkeypatch.setattr(power, "ENTRY_TIMEOUT", 6)
+    monkeypatch.setattr(power.time, "monotonic", lambda: now)
+    monkeypatch.setattr(power.time, "sleep", sleep)
+    if saw_speed:
+        power._wait_battle(repeated=True)
+        assert sum(check.args[0] == f"{power.IMAGES}/victory.png" for check in auto.find_element.call_args_list) == 8
+    else:
+        with pytest.raises(power.PowerError, match="未确认再来一次的结算"):
+            power._wait_battle(repeated=True)
+    auto.click_element.assert_not_called()
 
 
 def test_battle_retries_start_only_after_team_page_persists(monkeypatch):
@@ -294,30 +405,36 @@ def test_zero_power_returns_to_main_without_entering_calyx(monkeypatch):
     navigate.change_to.assert_called_once_with("main", max_recursion=1)
 
 
-def test_repeat_stops_at_configured_count(monkeypatch):
+@pytest.mark.parametrize("planned,available", [(2, 53), (None, 23)])
+@pytest.mark.parametrize("first_defeat", [False, True])
+def test_repeat_stops_at_plan_count_or_calculated_budget(monkeypatch, planned, available, first_defeat):
     navigate = Mock()
-    start = Mock()
-    wait = Mock()
+    start = Mock(return_value=(1, False))
+    wait = Mock(side_effect=([power.BattleDefeat("挑战失败")] if first_defeat else []) + [None, None])
     click = Mock(return_value=True)
     exit_result = Mock()
     monkeypatch.setattr(power, "screen", navigate)
     monkeypatch.setattr(power, "_select_category", Mock())
     monkeypatch.setattr(power, "cfg", SimpleNamespace(use_reserved_trailblaze_power=False, use_fuel=False,
                                                        instance_names_challenge_count={power.GOLDEN_CALYX: 1}))
-    monkeypatch.setattr(power, "read_power", Mock(side_effect=[53, 43, power.PowerError("余额读数失败")]))
+    balance = Mock(side_effect=[available, power.PowerError("重复读余额")])
+    monkeypatch.setattr(power, "read_power", balance)
     monkeypatch.setattr(power, "_enter_instance", Mock())
     monkeypatch.setattr(power, "_start_challenge", start)
     monkeypatch.setattr(power, "_wait_battle", wait)
-    monkeypatch.setattr(power, "_read_waves", Mock(return_value=1))
-    monkeypatch.setattr(power, "_read_cost", Mock(return_value=10))
     monkeypatch.setattr(power, "_click_text", click)
     monkeypatch.setattr(power, "_exit_result", exit_result)
 
     settlements = Mock()
-    assert list(power._run_instance(power.GOLDEN_CALYX, "回忆之蕾", 2, on_settlement=settlements)) == [1, 1]
-    assert settlements.call_args_list == [call(1, 43), call(1, None)]
-    start.assert_called_once_with(power.GOLDEN_CALYX, "回忆之蕾", 1, borrow_for_daily=False, practice=False)
-    assert wait.call_args_list == [call(repeated=False, instance_screen="calyx"), call(repeated=True, instance_screen="calyx")]
+    assert list(power._run_instance(power.GOLDEN_CALYX, "回忆之蕾", planned, on_settlement=settlements)) == [1, 1]
+    assert settlements.call_args_list == [call(1, None)] * 2
+    balance.assert_called_once_with()
+    assert start.call_args_list == [
+        call(power.GOLDEN_CALYX, "回忆之蕾", 1, borrow_for_daily=False, practice=False),
+    ] * (1 + first_defeat)
+    assert wait.call_args_list == [call(repeated=False, instance_screen="calyx")] * (1 + first_defeat) + [
+        call(repeated=True, instance_screen="calyx"),
+    ]
     click.assert_called_once_with("再来一次", power.REPEAT)
     exit_result.assert_called_once_with("calyx")
     navigate.change_to.assert_called_once_with("main", max_recursion=1)
@@ -326,7 +443,7 @@ def test_repeat_stops_at_configured_count(monkeypatch):
 @pytest.mark.parametrize("planned", [None, 1])
 def test_echo_without_weekly_rewards_only_fights_for_an_explicit_plan(monkeypatch, planned):
     enter = Mock()
-    start = Mock()
+    start = Mock(return_value=(1, False))
     supplement = Mock()
     config = SimpleNamespace(instance_names_challenge_count={}, save_timestamp=Mock())
     monkeypatch.setattr(power, "cfg", config)
@@ -353,30 +470,34 @@ def test_echo_without_weekly_rewards_only_fights_for_an_explicit_plan(monkeypatc
         config.save_timestamp.assert_called_once_with("echo_of_war_timestamp")
 
 
-def test_echo_paid_runs_are_capped_by_the_remaining_weekly_rewards(monkeypatch):
-    config = SimpleNamespace(instance_names_challenge_count={}, save_timestamp=Mock())
-    start = Mock()
+@pytest.mark.parametrize("planned", [None, 3])
+def test_echo_single_challenge_deducts_one_paid_wave_and_respects_weekly_rewards(monkeypatch, planned):
+    config = SimpleNamespace(instance_names_challenge_count={}, save_timestamp=Mock(),
+                             instance_team_enable=False, borrow_enable=False)
     confirm_practice = Mock()
+    auto = Mock()
+    auto.find_element.side_effect = lambda target, *_args, **_kwargs: None if target == "挑战次数" else ((1700, 970), (1780, 1010))
     monkeypatch.setattr(power, "cfg", config)
+    monkeypatch.setattr(power, "auto", auto)
     monkeypatch.setattr(power, "screen", Mock())
+    monkeypatch.setattr(power.time, "sleep", Mock())
     monkeypatch.setattr(power, "_select_category", Mock())
-    monkeypatch.setattr(power, "_read_echo_rewards", Mock(side_effect=[2, 1, 0]))
-    monkeypatch.setattr(power.auto, "find_element", Mock(return_value=False))
+    quota = Mock(side_effect=[2, power.PowerError("结算后不应再识别额度")])
+    monkeypatch.setattr(power, "_read_echo_rewards", quota)
     monkeypatch.setattr(power, "_supplement", lambda value: value)
-    balance = Mock(side_effect=[91, 61, power.PowerError("余额读数失败")])
+    balance = Mock(side_effect=[60, power.PowerError("重复读余额")])
     monkeypatch.setattr(power, "read_power", balance)
     monkeypatch.setattr(power, "_enter_instance", Mock())
-    monkeypatch.setattr(power, "_start_challenge", start)
     monkeypatch.setattr(power, "_wait_battle", Mock())
-    monkeypatch.setattr(power, "_read_cost", Mock(return_value=30))
     monkeypatch.setattr(power, "_click_text", Mock(return_value=True))
     monkeypatch.setattr(power, "_exit_result", Mock())
     monkeypatch.setattr(power, "_confirm_echo_practice", confirm_practice)
 
-    assert list(power._run_instance(power.ECHO, "毁灭的开端", None)) == [1, 1]
-    assert balance.call_count == 2
-    assert start.call_args_list == [call(power.ECHO, "毁灭的开端", 1, borrow_for_daily=False, practice=False)] * 2
-    confirm_practice.assert_not_called()
+    assert list(power._run_instance(power.ECHO, "毁灭的开端", planned)) == [1] * (planned or 2)
+    balance.assert_called_once_with()
+    quota.assert_called_once_with()
+    assert [lookup.args[0] for lookup in auto.find_element.call_args_list] == ["挑战次数"] + ["开始挑战"] * (planned or 2)
+    assert confirm_practice.call_args_list == ([call(required=True)] if planned else [])
     config.save_timestamp.assert_called_once_with("echo_of_war_timestamp")
 
 
@@ -492,6 +613,14 @@ def test_routine_reports_steps_with_their_own_summaries_and_continues_after_a_fa
     summary.assert_called_once_with(tr("；").join(("power", "daily")))
 
 
+def test_routine_returns_final_failure_without_extra_navigation(monkeypatch):
+    routine_steps(monkeypatch, claim=True)
+    monkeypatch.setattr(rewards.daily, "run", Mock(return_value=False))
+    rewards.screen.change_to.side_effect = RuntimeError("不应回主界面")
+    assert rewards.routine(full_run=True) is False
+    rewards.screen.change_to.assert_not_called()
+
+
 def test_routine_step_summaries_do_not_need_the_joined_summary(monkeypatch):
     routine_steps(monkeypatch)
     events = []
@@ -586,7 +715,9 @@ def test_message_timeout_recovers_then_collects_next_reward(monkeypatch):
     monkeypatch.setattr(rewards, "screen", Mock())
     monkeypatch.setattr(rewards, "auto", Mock(screenshot=frame, take_screenshot=Mock(return_value=(frame, None, 1))))
     monkeypatch.setattr(rewards, "_message_pending", Mock(return_value=pending))
+    monkeypatch.setattr(rewards, "find_thread_title", Mock(return_value="超时会话"))
     monkeypatch.setattr(rewards, "_open_unread_message", Mock(side_effect=[True, False]))
+    rewards.auto.find_element.return_value = None
     monkeypatch.setattr(rewards, "drag_list", Mock(return_value=True))
     finish = Mock(side_effect=[rewards.MessageTimeout("超时"), True])
     monkeypatch.setattr(rewards, "_finish_message", finish)
@@ -614,23 +745,33 @@ def test_red_dot_requires_the_round_marker_on_different_wallpapers(theme):
     assert red_dot_present(np.asarray(frame))
 
 
-@pytest.mark.parametrize("balance, starts", [(301, True), (8, False)])
-def test_challenge_checks_cost_without_toggling_quick_refill(monkeypatch, balance, starts):
-    monkeypatch.setattr(power, "cfg", SimpleNamespace(instance_team_enable=False, borrow_enable=False))
+@pytest.mark.parametrize("select_team", [False, True])
+def test_fixed_challenge_reuses_start_button_until_the_team_changes(monkeypatch, select_team):
+    monkeypatch.setattr(power, "cfg", SimpleNamespace(instance_team_enable=select_team, borrow_enable=False))
     auto = Mock()
+    button = ((1700, 970), (1780, 1010))
+    auto.find_element.return_value = button
+    auto.take_screenshot.return_value = (Image.new("RGB", (110, 40)), None, 1)
     monkeypatch.setattr(power, "auto", auto)
-    monkeypatch.setattr(power, "_set_challenge_waves", Mock())
-    monkeypatch.setattr(power, "_read_cost", Mock(return_value=10))
-    monkeypatch.setattr(power, "read_power", Mock(return_value=balance))
+    monkeypatch.setattr(power.time, "sleep", Mock())
+    read_ocr = Mock(side_effect=[[_line("挑战次数5", 0, 0)], [_line("来", 0, 0), _line("×50", 40, 0)]])
+    monkeypatch.setattr(readout.ocr, "recognize_multi_lines", read_ocr)
+    monkeypatch.setattr(power, "_select_team", Mock())
     click = Mock(return_value=True)
     monkeypatch.setattr(power, "_click_text", click)
-    if starts:
-        power._start_challenge(power.GOLDEN_CALYX, "回忆之蕾", 1)
-        assert [c.args[0] for c in click.call_args_list] == ["挑战", "开始挑战"]
+
+    assert power._start_challenge(power.GOLDEN_CALYX, "回忆之蕾", 5) == (5, False)
+    auto.take_screenshot.assert_not_called()
+    read_ocr.assert_not_called()
+    assert sum(args.args[0] == (1821 / 1920, 866 / 1080, 0, 0)
+               for args in auto.click_element.call_args_list) == 4
+    assert [lookup.args[0] for lookup in auto.find_element.call_args_list] == ["开始挑战"]
+    if select_team:
+        assert click.call_args_list == [call("挑战", power.CHALLENGE), call("开始挑战", power.START_CHALLENGE)]
+        auto.click_element_with_pos.assert_not_called()
     else:
-        with pytest.raises(power.PowerError, match="开拓力不符"):
-            power._start_challenge(power.GOLDEN_CALYX, "回忆之蕾", 1)
-        click.assert_not_called()
+        click.assert_called_once_with("挑战", power.CHALLENGE)
+        auto.click_element_with_pos.assert_called_once_with(button)
 
 
 def test_sms_pending_thread_accepts_sticker_reply(monkeypatch):

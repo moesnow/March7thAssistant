@@ -11,7 +11,7 @@ from tasks.daily import daily, ember_exchange, redemption, synthesis
 from tasks.daily.ember_exchange import EmberExchange
 from tasks.daily.training import DailyTrainingError
 from tasks.power import instance, power, readout, supplement
-from tasks.power.policy import GOLDEN_CALYX, ORNAMENT, PowerError, SupportDemand
+from tasks.power.policy import ECHO, GOLDEN_CALYX, ORNAMENT, PowerError, SupportDemand
 from tasks.reward import message, receipt
 
 
@@ -81,10 +81,12 @@ def meter_ocr(monkeypatch):
     (["5", "25/300"], 25),
     (["410", "／300", "十"], 410),
     (["0/300"], 0),
+    (["?2301300十"], 230),
 ])
-def test_pc_power_meter_reads_balance_without_gluing_adjacent_digits(meter_ocr, texts, expected):
+def test_pc_power_meter_reads_balance_without_gluing_adjacent_digits(monkeypatch, meter_ocr, texts, expected):
     meter_ocr.return_value = ocr_lines(texts)
-    assert instance.Instance.read_balance(GOLDEN_CALYX) == expected
+    monkeypatch.setattr(power, "screen", Mock())
+    assert power.Power.get() == expected
 
 
 def test_map_uses_same_meter_with_plus_read_as_cross(monkeypatch, meter_ocr):
@@ -99,16 +101,24 @@ def test_pc_echo_quota_ignores_neighboring_numbers(monkeypatch, meter_ocr):
     assert instance.Instance.read_echo_rewards() == 2
 
 
-def test_challenge_payment_does_not_accept_the_prefix_of_an_invalid_number(monkeypatch, meter_ocr):
-    meter_ocr.return_value = ocr_lines(["×1200"])
-    monkeypatch.setattr(instance.Instance, "_select_waves", Mock(return_value=12))
-    with pytest.raises(PowerError):
-        instance.Instance.prepare_payment(GOLDEN_CALYX, 12, 121, practice=False, immersifier_only=False)
+@pytest.mark.parametrize("waves", [1, 5, 21])
+def test_fixed_challenge_starts_at_one_without_reading_wave_or_payment(monkeypatch, meter_ocr, waves):
+    plus = ((1810, 875), (1840, 905))
+    find = Mock(return_value=plus)
+    click = Mock(return_value=True)
+    monkeypatch.setattr(instance.auto, "find_element", find)
+    monkeypatch.setattr(instance.auto, "click_element_with_pos", click)
+
+    assert instance.Instance.select_waves(GOLDEN_CALYX, waves) == waves
+    meter_ocr.assert_not_called()
+    assert find.call_count == (0 if waves == 1 else 1)
+    assert click.call_args_list == [call(plus)] * (waves - 1)
 
 
-def test_challenge_payment_ignores_the_power_icon_read_as_text(meter_ocr):
-    meter_ocr.return_value = ocr_lines(["米", "×10"])
-    assert instance.Instance._read_payment(GOLDEN_CALYX, 1) == 10
+def test_single_challenge_without_wave_selector_does_not_read_ocr(monkeypatch, meter_ocr):
+    monkeypatch.setattr(instance.auto, "find_element", Mock(return_value=None))
+    assert instance.Instance.select_waves(ECHO, 3) == 1
+    meter_ocr.assert_not_called()
 
 
 @pytest.mark.parametrize("codes,expected", [([], True), (["USED"], True), (OSError("offline"), False)])
@@ -218,11 +228,13 @@ def test_reward_receipt_can_see_the_full_title(monkeypatch):
     assert find.call_args.args == ("获得物品", "text")
 
 
-def test_power_supplement_closes_visible_reward_before_checking_balance(monkeypatch):
+@pytest.mark.parametrize("dropped_dismissal", [False, True])
+def test_power_supplement_closes_visible_reward_and_reuses_confirmed_amount(monkeypatch, dropped_dismissal):
     original = SimpleNamespace(use_reserved_trailblaze_power=True, use_fuel=False)
     auto = Mock()
     screen = Mock()
     closed = False
+    dismissals = 0
 
     def find(text, kind, *, crop, **kwargs):
         if text == "获得物品":
@@ -232,12 +244,15 @@ def test_power_supplement_closes_visible_reward_before_checking_balance(monkeypa
         return True
 
     def click(target, kind, **kwargs):
-        nonlocal closed
+        nonlocal closed, dismissals
         if kind == "crop" and target == supplement._crop((640, 569, 0, 0)):
-            closed = True
+            dismissals += 1
+            closed = not dropped_dismissal or dismissals == 2
         return True
 
-    def wait_for_map(*args, **kwargs):
+    def wait_for_map(*args, on_timeout=None, **kwargs):
+        if not closed:
+            assert on_timeout()
         assert closed, "获得物品仍遮挡地图"
 
     auto.find_element.side_effect = find
@@ -246,8 +261,12 @@ def test_power_supplement_closes_visible_reward_before_checking_balance(monkeypa
     monkeypatch.setattr(supplement, "read_number", Mock(side_effect=[20, 20, 20]))
     monkeypatch.setattr(supplement.time, "sleep", Mock())
 
+    read_balance = Mock(side_effect=PowerError("补充后不应再次读取余额"))
     assert supplement.supplement(auto, screen, original, 300, Mock(return_value=True),
-                                 Mock(return_value=320), return_screen="map") == 320
+                                 read_balance, return_screen="map") == 320
+    assert dismissals == (2 if dropped_dismissal else 1)
+    assert [click.args[0] for click in auto.click_element.call_args_list].count("确认") == 2
+    read_balance.assert_not_called()
 
 
 @pytest.mark.parametrize("remaining_checks,attempts", [([False], 1), ([True, False], 2), ([True, True, True], 3)])

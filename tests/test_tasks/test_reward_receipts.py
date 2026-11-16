@@ -9,7 +9,8 @@ from module.game.adb_transport import AdbError
 from module.notification.notification import NotificationLevel
 from tasks import reward
 from tasks.base import task_steps
-from tasks.reward import assist, quest, receipt, rewardtemplate
+from tasks.daily import daily as pc_daily, redemption, synthesis as pc_synthesis
+from tasks.reward import assist, mail, message, quest, receipt, rewardtemplate, sms
 from tasks.touch import daily, rewards, synthesis
 
 
@@ -78,7 +79,7 @@ def test_touch_srpass_keeps_the_claim_when_the_popup_is_only_read_once(monkeypat
 
 def test_touch_sms_counts_reward_from_the_first_detected_popup(monkeypatch):
     pending = iter((BUTTON, None))
-    popup = Mock(side_effect=(BUTTON, None))
+    popup = Mock(side_effect=(BUTTON, None, None))
     frame = Image.new("RGB", (64, 48))
 
     def find_element(target, *_args, **_kwargs):
@@ -98,9 +99,252 @@ def test_touch_sms_counts_reward_from_the_first_detected_popup(monkeypatch):
 
     rewards.claim_messages()
 
-    popup.assert_called_once()
+    assert popup.call_count == 3  # 到账一次，点关闭后确认已离开弹窗。
     auto.click_element.assert_called_once_with(daily.REWARD_CLOSE_CROP, "crop")
     notify.assert_called_once_with(auto, "处理了 1 个短信会话，领取 1 次奖励")
+
+
+@pytest.mark.parametrize("touch", [False, True])
+def test_sms_does_not_count_an_unclosed_popup_again(monkeypatch, touch):
+    module = rewards if touch else message
+    auto = Mock(find_element=Mock(return_value=BUTTON), click_element=Mock(return_value=False))
+    notify = Mock()
+    monkeypatch.setattr(module, "auto", auto)
+    monkeypatch.setattr(module, "screen", Mock())
+    monkeypatch.setattr(module, "notify_reward", notify)
+    if touch:
+        rewards.claim_messages()
+        auto.click_element.assert_called_once_with(daily.REWARD_CLOSE_CROP, "crop")
+    else:
+        close = Mock(return_value=False)
+        monkeypatch.setattr(message, "close_item_reward", close)
+        message.Message("短信", True, "incoming_message").run()
+        close.assert_called_once()
+    notify.assert_called_once_with(auto, "处理了 1 个短信会话，领取 1 次奖励")
+
+
+@pytest.mark.parametrize("miss_first", [False, True])
+def test_touch_sms_keeps_thread_identity_after_the_list_moves(monkeypatch, miss_first):
+    old_row = ((67, 100), (89, 120))
+    moved_row = ((67, 210), (89, 230))
+    outside_marker_column = ((160, 100), (182, 120))
+    frame = Image.new("RGB", (371, 516))
+    auto = Mock()
+    auto.take_screenshot.return_value = (frame, (40, 92, *frame.size), 1)
+    marker_matches = [outside_marker_column, moved_row, old_row]
+    attempts = 2 if miss_first else 1
+    auto.find_element.side_effect = [marker_matches] * attempts + [old_row]
+
+    def recognize():
+        auto.ocr_result = [] if miss_first and auto.perform_ocr.call_count == 1 else [
+            ("different", ("正常会话", 1)), ("timeout", ("超时会话", 1)),
+        ]
+
+    auto.perform_ocr.side_effect = recognize
+    auto.calculate_text_position.side_effect = [((104, 100), (158, 120)), ((104, 210), (158, 230))]
+    monkeypatch.setattr(rewards, "auto", auto)
+    monkeypatch.setattr(sms, "time", SimpleNamespace(sleep=Mock()))
+
+    assert rewards._open_unread_message({"超时会话"})
+    auto.click_element_with_pos.assert_called_once_with(old_row, offset=(24, 0))
+    assert auto.take_screenshot.call_args_list == [call(crop=rewards.MESSAGE_LIST)] * attempts
+    assert all(item.kwargs["take_screenshot"] is False for item in auto.find_element.call_args_list[:attempts])
+    assert auto.perform_ocr.call_count == attempts
+
+
+@pytest.mark.parametrize("has_blocked_marker", [False, True])
+def test_sms_does_not_rescan_when_visible_threads_are_known_blocked_or_absent(monkeypatch, has_blocked_marker):
+    markers = Mock(return_value=[BUTTON] if has_blocked_marker else [])
+    titles = Mock(return_value=[(((35, 20), (75, 40)), "超时会话")])
+    monkeypatch.setattr(sms, "find_thread_markers", markers)
+    monkeypatch.setattr(sms, "read_thread_titles", titles)
+
+    assert sms.first_unblocked_thread(Mock(), rewards.MESSAGE_LIST, rewards.MESSAGE_PENDING,
+                                      (("message_thread.png", 0.89),), {"超时会话"}) is None
+
+    markers.assert_called_once()
+    assert titles.call_count == int(has_blocked_marker)
+
+
+@pytest.mark.parametrize("touch", [False, True])
+@pytest.mark.parametrize("miss_first", [False, True])
+def test_sms_recovers_timeout_identity_on_a_fresh_frame(monkeypatch, touch, miss_first):
+    module = rewards if touch else message
+    row = ((100, 160), (124, 181)) if touch else ((335, 285), (360, 306))
+    crop = rewards.MESSAGE_LIST if touch else message.Message._LIST
+    bounds = rewards.MESSAGE_PENDING if touch else (325 / 1920, 275 / 1080, 90 / 1920, 40 / 1080)
+    frame = Image.new("RGB", (round(crop[2] * 1920), round(crop[3] * 1080)))
+    origin = (round(crop[0] * 1920), round(crop[1] * 1080), *frame.size)
+    events = []
+    auto = Mock(calculate_crop_with_pos=Mock(return_value=bounds))
+
+    def capture(**_kwargs):
+        events.append("capture")
+        return frame.copy(), origin, 1
+
+    def find(_target, mode, *_args, **kwargs):
+        if mode == "image_with_multiple_targets":
+            assert kwargs["take_screenshot"] is False
+            events.append("marker")
+            return [row]
+        return row
+
+    def recognize():
+        events.append("ocr")
+        auto.ocr_result = [] if miss_first and events.count("ocr") == 1 else [(None, ("超时会话", 1))]
+
+    auto.take_screenshot.side_effect = capture
+    auto.find_element.side_effect = find
+    auto.perform_ocr.side_effect = recognize
+    auto.calculate_text_position.return_value = ((row[1][0] + 5, row[0][1]), (row[1][0] + 45, row[1][1]))
+    monkeypatch.setattr(module, "auto", auto)
+    monkeypatch.setattr(module, "screen", Mock())
+    monkeypatch.setattr(module, "notify_reward", Mock())
+    monkeypatch.setattr(module, "close_sms_receipt", Mock(return_value=False))
+    monkeypatch.setattr(sms, "time", SimpleNamespace(sleep=Mock()))
+
+    if touch:
+        finish = Mock(side_effect=[rewards.MessageTimeout("超时"), True])
+        next_thread = Mock(return_value=True)
+        monkeypatch.setattr(rewards, "_finish_message", finish)
+        monkeypatch.setattr(rewards, "_message_pending", Mock(return_value=row))
+        monkeypatch.setattr(rewards, "_open_unread_message", next_thread)
+        run = rewards.claim_messages
+    else:
+        session = message.Message("短信", True, "incoming_message")
+        finish = Mock(side_effect=[None, True])
+        next_thread = Mock(return_value=row)
+        monkeypatch.setattr(session, "_finish", finish)
+        monkeypatch.setattr(message, "first_unblocked_thread", next_thread)
+        run = session.run
+
+    with pytest.raises(receipt.RewardError, match="1 个短信会话超时"):
+        run()
+
+    assert events == ["capture", "marker", "ocr"] * (2 if miss_first else 1)
+    assert next_thread.call_args.args[-1] == {"超时会话"}
+    assert finish.call_count == 2
+    module.notify_reward.assert_called_once_with(auto, "处理了 1 个短信会话，领取 1 次奖励")
+
+
+def test_sms_timeout_identity_propagates_disconnect():
+    auto = Mock(take_screenshot=Mock(side_effect=AdbError("disconnected", "连接断开")))
+
+    with pytest.raises(AdbError, match="连接断开"):
+        sms.find_thread_title(auto, rewards.MESSAGE_LIST, rewards.MESSAGE_PENDING, "message_pending.png", 0.9)
+
+    auto.take_screenshot.assert_called_once_with(crop=rewards.MESSAGE_LIST)
+    auto.perform_ocr.assert_not_called()
+
+
+@pytest.mark.parametrize("template_matches", [False, True])
+@pytest.mark.parametrize("color, expected", [((255, 208, 130), True), ((100, 100, 100), False)])
+def test_pc_mail_distinguishes_enabled_and_disabled_button(monkeypatch, template_matches, color, expected):
+    image = Image.new("RGB", (80, 60), color)
+    if not expected:
+        image.paste((185, 185, 185), (10, 20, 24, 40))
+    matches = [BUTTON] if template_matches else [None, BUTTON]
+    auto = Mock(screenshot=image, screenshot_pos=(0, 0, 80, 60),
+                screenshot_scale_factor=1, find_element=Mock(side_effect=matches))
+    confirm = Mock()
+    monkeypatch.setattr(mail, "auto", auto)
+    monkeypatch.setattr(mail, "confirm_item_reward", confirm)
+    monkeypatch.setattr(mail, "close_item_reward", Mock())
+
+    assert mail.Mail("邮件", True, "mail").run() is expected
+    assert auto.find_element.call_args_list[0].args[2] == 0.8
+    assert auto.find_element.call_count == len(matches)
+    auto.take_screenshot.assert_not_called()
+    if expected:
+        auto.click_element_with_pos.assert_called_once_with(BUTTON)
+        confirm.assert_called_once_with("邮件奖励", notify=True)
+    else:
+        auto.click_element_with_pos.assert_not_called()
+        confirm.assert_not_called()
+
+
+def test_pc_mail_fallback_does_not_treat_unknown_color_as_no_attachments(monkeypatch):
+    auto = Mock(screenshot=Image.new("RGB", (80, 60), (210, 68, 73)), screenshot_pos=(0, 0, 80, 60),
+                screenshot_scale_factor=1, find_element=Mock(side_effect=[None, BUTTON]))
+    monkeypatch.setattr(mail, "auto", auto)
+
+    with pytest.raises(receipt.RewardError, match="未确认邮箱的全部领取按钮状态"):
+        mail.Mail("邮件", True, "mail").run()
+    auto.click_element_with_pos.assert_not_called()
+
+
+def test_sms_can_stop_after_receipt_if_popup_visibility_check_fails():
+    close = Mock(return_value=True)
+    visible = Mock(side_effect=RuntimeError("截图或 OCR 失败"))
+    assert sms.close_sms_receipt(close, visible) is False
+    close.assert_called_once_with()
+    visible.assert_called_once_with()
+
+
+def test_pc_sms_rejects_an_ocr_error_as_confirmation_of_popup_close(monkeypatch):
+    auto = Mock(perform_ocr=Mock(side_effect=RuntimeError("OCR 不可用")))
+    close = Mock(return_value=True)
+    monkeypatch.setattr(message, "auto", auto)
+
+    assert sms.close_sms_receipt(close, message.Message._receipt_visible) is False
+    auto.take_screenshot.assert_called_once_with(crop=receipt.ITEM_POPUP)
+    auto.perform_ocr.assert_called_once_with(raise_on_error=True)
+    auto.find_element.assert_not_called()
+
+
+def test_pc_training_does_not_rescan_after_the_last_action_when_collection_is_disabled(monkeypatch):
+    monkeypatch.setattr(quest, "cfg", SimpleNamespace(reward_enable=False, reward_quest_enable=False))
+    scan = Mock(return_value=(400, {"拍照1次": True}, 0))
+    monkeypatch.setattr(quest.Quest, "scan", scan)
+    photo = Mock(return_value=True)
+
+    assert quest.Quest.settle(complete=True, actions=(("拍照1次", photo),))
+    photo.assert_called_once()
+    scan.assert_called_once_with(False, read_tasks=True)
+
+
+def test_pc_training_reports_pending_claim_failure_without_repeating_the_completed_action(monkeypatch):
+    monkeypatch.setattr(quest, "cfg", SimpleNamespace(reward_enable=True, reward_quest_enable=True))
+    monkeypatch.setattr(quest, "auto", Mock(click_element=Mock(return_value=False)))
+    scan = Mock(side_effect=[(400, {"拍照1次": True}, 0), quest.DailyTrainingError("任务卡片领取按钮无法点击")])
+    monkeypatch.setattr(quest.Quest, "scan", scan)
+    photo = Mock(return_value=True)
+
+    assert quest.Quest.settle(complete=True, actions=(("拍照1次", photo),)) is False
+    photo.assert_called_once()
+    assert scan.call_args_list == [call(True, read_tasks=True), call(True, read_tasks=False)]
+
+
+def test_pc_training_recipe_checks_amount_without_reading_the_already_selected_title(monkeypatch):
+    auto = Mock(ocr_result=[(None, ("合成数量:1", 1)), (None, ("30/3", 1))])
+    monkeypatch.setattr(pc_synthesis, "auto", auto)
+
+    assert pc_synthesis.Synthesis._verify_training_recipe()
+    auto.find_element.assert_not_called()
+
+
+def test_redemption_keeps_confirmed_success_when_mail_fails(monkeypatch):
+    auto = Mock(matched_text="兑换成功")
+    cfg = Mock(already_used_codes=[])
+    monkeypatch.setattr(redemption, "cfg", cfg)
+    monkeypatch.setattr(redemption, "auto", auto)
+    monkeypatch.setattr(redemption, "get_game_controller", Mock())
+    monkeypatch.setattr(redemption, "screen", Mock())
+    monkeypatch.setattr(redemption, "time", SimpleNamespace(sleep=Mock()))
+    monkeypatch.setattr(redemption.reward, "start_specific", Mock(side_effect=receipt.RewardError("邮件待领取")))
+
+    assert redemption.Redemption.start(codes=["TEST_REDEMPTION"])
+    cfg.set_value.assert_called_once_with("already_used_codes", ["TEST_REDEMPTION"])
+
+
+def test_headless_desktop_extra_is_skipped_in_full_run(monkeypatch):
+    monkeypatch.setattr(pc_daily, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.setattr(pc_daily, "cfg", SimpleNamespace(control_backend="cloud"))
+    monkeypatch.setattr(pc_daily, "cloud_game", Mock(is_headless=Mock(return_value=True)))
+    action = Mock()
+
+    assert task_steps.run_steps((("锄大地", lambda: pc_daily._run_desktop_extra("锄大地", action)),))
+    action.assert_not_called()
 
 
 @pytest.mark.parametrize("touch", [False, True])

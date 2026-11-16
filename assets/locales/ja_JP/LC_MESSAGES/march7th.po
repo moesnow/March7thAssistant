@@ -8179,3 +8179,11 @@ msgstr "記憶の精霊「長夜」"
 #: app/home_interface.py:123
 msgid "长夜月小助手"
 msgstr "長夜月アシスタント"
+
+#: app/setting_interface.py:615
+msgid "总时限"
+msgstr "制限時間"
+
+#: app/setting_interface.py:616
+msgid "单次运行的分钟数，0 表示不限时"
+msgstr "1 回の実行時間（分）。0 で無制限"

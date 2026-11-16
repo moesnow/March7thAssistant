@@ -2,6 +2,7 @@
 import ast
 import sys
 from collections import deque
+from contextlib import contextmanager, nullcontext
 from importlib import import_module
 from pathlib import Path
 from types import SimpleNamespace
@@ -11,7 +12,9 @@ from PIL import Image, ImageDraw
 import pytest
 from selenium.common.exceptions import StaleElementReferenceException, TimeoutException, WebDriverException
 
-from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend, get_ui_profile
+from module.config.platform import (
+    ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend, get_ui_profile, pin_game_connection,
+)
 from module.game import cloud
 from module.game.adb_transport import AdbError
 from module.game.cloud import CloudGameController, CloudGamePaidTimeExhaustedError
@@ -34,7 +37,7 @@ def runner():
     source = Path(__file__).resolve().parents[2] / "main.py"
     tree = ast.parse(source.read_text(encoding="utf-8-sig"))
     functions = [node for node in tree.body if isinstance(node, ast.FunctionDef)
-                 and node.name in {"run_main_actions", "run_sub_task", "run_sub_task_gui", "run_sub_task_update",
+                 and node.name in {"_game_connection", "run_main_actions", "run_sub_task", "run_sub_task_gui", "run_sub_task_update",
                                    "run_notify_action", "run_workflow_action", "main", "_run_action"}]
     entrypoint = next(node for node in tree.body if isinstance(node, ast.If)
                       and isinstance(node.test, ast.Compare)
@@ -65,7 +68,8 @@ def runner():
                  CurrencyWarsUnavailable=currency_wars.CurrencyWarsUnavailable,
                  GameStartupUnavailable=GameStartupUnavailable,
                  CloudGamePaidTimeExhaustedError=CloudGamePaidTimeExhaustedError)
-    scope.update(sys=sys, time=SimpleNamespace(time=lambda: 0))
+    scope.update(sys=sys, contextmanager=contextmanager, nullcontext=nullcontext,
+                 pin_game_connection=pin_game_connection, time=SimpleNamespace(time=lambda: 0))
     scope["EXCLUSIVE_ACTIONS"] = PAUSABLE_TASKS | {"game", "game_update", "game_pre_download", "app_update", "adb_check"}
     # 仅加载入口函数，避免导入 CLI 时触发权限检查或游戏操作。
     exec(compile(ast.Module(body=functions, type_ignores=[]), str(source), "exec"), scope)
@@ -339,7 +343,7 @@ def currency_wars_game(runner, monkeypatch):
     return state
 
 
-def run_currency_wars_cli(runner, action):
+def run_currency_wars_cli(runner, action, *, screenshot=None):
     session = RunSession({"run_id": "20261115-120000-abcd"})
     session._save = MagicMock()
     session.release_lock = MagicMock()
@@ -351,7 +355,7 @@ def run_currency_wars_cli(runner, action):
         args=SimpleNamespace(task=action, workflow_name=None, no_run_immediately=False),
         run_session=session, RunStopRequested=RunStopRequested, STATUS_STOPPED=STATUS_STOPPED,
         EXIT_FAILED=EXIT_FAILED, EXIT_OK=EXIT_OK, EXIT_STOPPED=EXIT_STOPPED, exit_code_of=exit_code_of,
-        release_input=MagicMock(), pause_on_error=MagicMock(), save_error_screenshot=MagicMock(),
+        release_input=MagicMock(), pause_on_error=MagicMock(), save_error_screenshot=MagicMock(side_effect=screenshot),
         NotificationLevel=currency_wars.NotificationLevel,
     )
     try:
@@ -360,6 +364,34 @@ def run_currency_wars_cli(runner, action):
         assert error.code == session.record["exit_code"]
     session.release_lock.assert_called_once()
     return session.record
+
+
+@pytest.mark.parametrize("error_type", [RunStopRequested, GameStartupUnavailable, RuntimeError])
+def test_full_run_handles_exit_using_the_connection_it_actually_used(runner, error_type):
+    runner.cfg.control_backend = "cloud"
+    runner.cfg.ui_profile = "pc_1080"
+
+    def fail_after_config_save():
+        runner.cfg.control_backend = "local"
+        runner.cfg.ui_profile = "touch_720"
+        assert get_control_backend(runner.cfg) == "cloud"
+        raise error_type("本轮结束")
+
+    def capture_error(_logger):
+        assert get_control_backend(runner.cfg) == "cloud"
+        assert get_ui_profile(runner.cfg).name == "pc_1080"
+        return "cloud-error.png"
+
+    runner.Daily.start.side_effect = fail_after_config_save
+    record = run_currency_wars_cli(runner, "main", screenshot=capture_error)
+
+    assert get_control_backend(runner.cfg) == "local"
+    assert get_ui_profile(runner.cfg).name == "touch_720"
+    if error_type is RuntimeError:
+        assert record["screenshot"] == "cloud-error.png"
+    else:
+        runner.cloud_game.preserve_running_browser.assert_called_once_with()
+        assert record["exit_code"] == (EXIT_STOPPED if error_type is RunStopRequested else EXIT_FAILED)
 
 
 @pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))

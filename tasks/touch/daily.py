@@ -189,7 +189,8 @@ def run(*, complete_training=False, on_summary=None, full_run=False):
                     log.error(f"实训材料合成未确认：{error}")
                     synthesized = False
                     success = False
-                screen.change_to("guide2", max_recursion=1)
+                if collect:
+                    screen.change_to("guide2", max_recursion=1)
                 if synthesized and collect:
                     # 合成已经到账。这里继续查待领奖励，不再用卡片文字判定合成结果。
                     activity, card_available, extra_claims, _ = scan_cards(read_activity(), collect, read_tasks=False)

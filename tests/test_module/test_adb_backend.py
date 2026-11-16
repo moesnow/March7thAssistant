@@ -238,6 +238,7 @@ def test_authentication_and_protocol(s1):
     with pytest.raises(transport.AdbError) as error:
         transport.ServiceClient(port, "incorrect")
     assert error.value.code == "disconnected"
+    assert "hello/receive" in str(error.value)
     s1.protocol += 1
     with pytest.raises(transport.AdbError) as error:
         transport.ServiceClient(port, s1.token)

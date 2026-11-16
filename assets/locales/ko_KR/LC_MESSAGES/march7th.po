@@ -8178,3 +8178,11 @@ msgstr "기억 정령 Evey"
 #: app/home_interface.py:123
 msgid "长夜月小助手"
 msgstr "Evernight 도우미"
+
+#: app/setting_interface.py:615
+msgid "总时限"
+msgstr "총 제한 시간"
+
+#: app/setting_interface.py:616
+msgid "单次运行的分钟数，0 表示不限时"
+msgstr "1회 실행 시간(분). 0이면 제한 없음"

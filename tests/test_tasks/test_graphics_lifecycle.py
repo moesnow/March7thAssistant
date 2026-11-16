@@ -1,5 +1,5 @@
 import ast
-from contextlib import nullcontext
+from contextlib import contextmanager, nullcontext
 from pathlib import Path
 from types import MethodType, SimpleNamespace
 from unittest.mock import ANY, Mock, call
@@ -310,6 +310,28 @@ def test_adb_start_uses_adb_bootstrap(startup, monkeypatch):
     game.wait_until.assert_not_called()
 
 
+@pytest.mark.parametrize("code", ["frame_timeout", "frame_clock_unavailable", "disconnected"])
+def test_adb_start_keeps_waiting_after_a_transient_recovery_probe(startup, monkeypatch, code):
+    from module.game import adb_ready
+
+    game, _, cfg = startup
+    cfg.control_backend = "adb"
+    adb = Mock(capture_frame=Mock(side_effect=[("loading",), ("main",)]))
+    monkeypatch.setattr(game, "get_game_controller", Mock(return_value=adb))
+    monkeypatch.setattr(adb_ready, "_load_template", lambda name: None)
+    monkeypatch.setattr(adb_ready, "_match", lambda frame, name, template: (1, 1) if frame == name else None)
+    game.auto.find_element.side_effect = game.AdbError(code, "测试截图失败")
+
+    if code == "disconnected":
+        with pytest.raises(game.AdbError) as error:
+            game.start_game()
+        assert error.value.code == code
+        assert adb.capture_frame.call_count == 1
+    else:
+        game.start_game()
+        assert adb.capture_frame.call_count == 2
+
+
 @pytest.mark.parametrize("mode", ["master-off", "child-off", "already-running", "manual", "cloud"])
 def test_no_quality_change_for_excluded_launches(startup, monkeypatch, mode):
     game, controller, cfg = startup
@@ -352,15 +374,20 @@ def test_failed_launch_restores_each_attempt(startup):
 
 @pytest.mark.parametrize("failure", [RuntimeError("fail"), KeyboardInterrupt(), SystemExit(0)])
 def test_main_finally_restores_before_outer_error_handling(failure):
+    from module.config.platform import pin_game_connection
+
     tree = ast.parse(Path("main.py").read_text(encoding="utf-8"))
-    node = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "main")
+    nodes = [n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name in {"main", "_game_connection"}]
     action = Mock(side_effect=failure)
     events = Mock()
     restore, recover = events.restore, Mock()
     namespace = {"_run_action": action, "restore_temporary_graphics": restore,
                  "recover_temporary_graphics": recover, "log": Mock(), "task_power_request": events.power}
-    namespace.update(cfg=None, get_control_backend=lambda cfg: "local", task_is_supported=lambda action, cfg: True)
-    exec(compile(ast.Module(body=[node], type_ignores=[]), "main.py", "exec"), namespace)
+    namespace.update(cfg=SimpleNamespace(control_backend="local"), game=Mock(), HOST_TASKS=set(),
+                     get_control_backend=lambda cfg: "local", task_is_supported=lambda action, cfg: True,
+                     contextmanager=contextmanager, pin_game_connection=pin_game_connection,
+                     run_session=SimpleNamespace(record={}))
+    exec(compile(ast.Module(body=nodes, type_ignores=[]), "main.py", "exec"), namespace)
     with pytest.raises(type(failure)):
         namespace["main"](action="daily")
     restore.assert_called_once_with(final=True)
@@ -369,13 +396,18 @@ def test_main_finally_restores_before_outer_error_handling(failure):
 
 
 def test_main_normal_return_restores():
+    from module.config.platform import pin_game_connection
+
     tree = ast.parse(Path("main.py").read_text(encoding="utf-8"))
-    node = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "main")
+    nodes = [n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name in {"main", "_game_connection"}]
     restore = Mock()
     namespace = {"_run_action": Mock(return_value=True), "restore_temporary_graphics": restore,
                  "recover_temporary_graphics": Mock(), "log": Mock(), "task_power_request": Mock()}
-    namespace.update(cfg=None, get_control_backend=lambda cfg: "local", task_is_supported=lambda action, cfg: True)
-    exec(compile(ast.Module(body=[node], type_ignores=[]), "main.py", "exec"), namespace)
+    namespace.update(cfg=SimpleNamespace(control_backend="local"), game=Mock(), HOST_TASKS=set(),
+                     get_control_backend=lambda cfg: "local", task_is_supported=lambda action, cfg: True,
+                     contextmanager=contextmanager, pin_game_connection=pin_game_connection,
+                     run_session=SimpleNamespace(record={}))
+    exec(compile(ast.Module(body=nodes, type_ignores=[]), "main.py", "exec"), namespace)
     assert namespace["main"](action="daily") is True
     restore.assert_called_once_with(final=True)
 

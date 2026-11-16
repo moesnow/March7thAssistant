@@ -72,6 +72,20 @@ internal class DeviceAccess(private val context: Context) {
         Privilege.ROOT -> root.open(context.applicationInfo.sourceDir, token)
     }
 
+    fun recoverAudio(privilege: Privilege) {
+        if (privilege == Privilege.ROOT) {
+            root.recoverAudio(context.applicationInfo.sourceDir)
+            return
+        }
+        recoverShizuku()
+        UserBinding().use { binding ->
+            val remote = bindUserService(binding)
+            if (IDeviceBootstrap.Stub.asInterface(remote).recoverAudio() != 0) {
+                throw DeviceFailure("cleanup_pending")
+            }
+        }
+    }
+
     /** 只尝试回收本应用同一 tag 的残留 UserService。 */
     fun recoverShizuku() {
         if (state(Privilege.SHIZUKU) != PermissionState.READY) return
@@ -88,9 +102,7 @@ internal class DeviceAccess(private val context: Context) {
     private fun openUserService(token: String): DeviceLease {
         val binding = UserBinding()
         try {
-            Shizuku.bindUserService(userService, binding)
-            if (!binding.connected.await(12, TimeUnit.SECONDS)) throw DeviceFailure("service_start")
-            val remote = binding.remote ?: throw DeviceFailure("service_start")
+            val remote = bindUserService(binding)
             binding.port = IDeviceBootstrap.Stub.asInterface(remote).start(token, binding.owner)
             if (binding.port == GameUserService.BUSY) throw DeviceFailure(AppServer.BUSY)
             if (binding.port !in 1..65535) throw DeviceFailure("service_start")
@@ -99,6 +111,12 @@ internal class DeviceAccess(private val context: Context) {
             binding.close()
             throw if (error is DeviceFailure) error else DeviceFailure("service_start")
         }
+    }
+
+    private fun bindUserService(binding: UserBinding): IBinder {
+        Shizuku.bindUserService(userService, binding)
+        if (!binding.connected.await(12, TimeUnit.SECONDS)) throw DeviceFailure("service_start")
+        return binding.remote ?: throw DeviceFailure("service_start")
     }
 
     private inner class UserBinding : ServiceConnection, DeviceLease {

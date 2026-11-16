@@ -24,7 +24,16 @@ def run_steps(steps, on_step=None):
             on_step(name, state)
 
     success = True
+    failed_step = None
     for name, action in steps:
+        if failed_step is not None:
+            try:
+                screen.change_to("main", max_recursion=1)
+            except FATAL_GAME_ERRORS:
+                raise
+            except Exception as error:
+                raise GameRecoveryError(f"{failed_step}失败后无法回到可操作界面：{error}") from error
+            failed_step = None
         report(name, "started")
         try:
             done = action() is not False
@@ -41,10 +50,5 @@ def run_steps(steps, on_step=None):
         success = False
         # 先写错误日志再报失败，界面才能取到原因。
         report(name, "failed")
-        try:
-            screen.change_to("main", max_recursion=1)
-        except FATAL_GAME_ERRORS:
-            raise
-        except Exception as error:
-            raise GameRecoveryError(f"{name}失败后无法回到可操作界面：{error}") from error
+        failed_step = name
     return success

@@ -4,6 +4,24 @@ import pytest
 from app.card.pushsettingcard1 import get_key_from_value, PushSettingCardKey
 
 
+def test_power_plan_preserves_yaml_integer_counts_and_uneditable_rows(qtbot):
+    from PySide6.QtWidgets import QWidget
+    from ruamel.yaml import YAML
+    from app.card.messagebox_custom import MessageBoxPowerPlan
+
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    plans = YAML().load(
+        "[[拟造花萼（金）, 回忆之蕾, 03], [旧副本, 遗留名称, 1], [拟造花萼（金）, 遗留名称, 1], [历战余响, 毁灭的开端, 0x2]]"
+    )
+    dialog = MessageBoxPowerPlan("体力计划", plans, parent)
+    assert dialog.validate_inputs()
+    assert dialog.get_plans() == [["拟造花萼（金）", "回忆之蕾", 3], plans[1], plans[2], ["历战余响", "毁灭的开端", 2]]
+
+    dialog.plan_rows[1]["delete_button"].click()
+    assert dialog.get_plans() == [["拟造花萼（金）", "回忆之蕾", 3], plans[2], ["历战余响", "毁灭的开端", 2]]
+
+
 @pytest.mark.parametrize("stored", [{}, {"power_plan_continue": False}])
 @pytest.mark.parametrize("accepted", [True, False])
 def test_power_plan_dialog_saves_continue_option_only_on_confirmation(qtbot, monkeypatch, stored, accepted):

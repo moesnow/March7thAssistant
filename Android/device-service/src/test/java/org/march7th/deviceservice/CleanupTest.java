@@ -38,33 +38,30 @@ public class CleanupTest {
         try (BufferedReader incoming = new BufferedReader(new PipedReader(commands));
              PrintWriter outgoing = new PrintWriter(new PipedWriter(replyPipe), true)) {
             FutureTask<Void> cleanup = new FutureTask<>(() -> {
-                Cleanup.run(incoming, outgoing, () -> { }, (pkg, mode) -> {
-                    if ("ignore".equals(mode)) {
-                        writingMute.countDown();
-                        assertTrue(completeMute.await(2, TimeUnit.SECONDS));
-                    }
-                    writes.add(mode);
-                }, (message, error) -> { throw new AssertionError(message, error); });
+                Cleanup.run(incoming, outgoing, () -> { }, (pkg, on) -> {
+                    assertTrue(on);
+                    writingMute.countDown();
+                    assertTrue(completeMute.await(2, TimeUnit.SECONDS));
+                    writes.add("ignore");
+                    return "allow";
+                }, () -> writes.add("allow"), (message, error) -> { throw new AssertionError(message, error); });
                 return null;
             });
             Thread worker = new Thread(cleanup, "cleanup-test");
             worker.setDaemon(true);
             worker.start();
 
-            try (PipedWriter requestPipe = commands; BufferedReader replies = new BufferedReader(replyPipe)) {
-                requestPipe.write("mute example.game default\n");
-                requestPipe.flush();
-                assertEquals("M7A_CLEANUP_OK mute example.game default", replies.readLine());
-                assertTrue(writes.isEmpty());
-                requestPipe.write("apply_mute example.game\n");
+            try (PipedWriter requestPipe = commands) {
+                requestPipe.write("mute example.game\n");
                 requestPipe.flush();
                 assertTrue(writingMute.await(2, TimeUnit.SECONDS));
                 // 主进程在 cmd 尚未返回时退出，收发两条管道都断开。
+                replyPipe.close();
             }
             assertTrue(writes.isEmpty());
             completeMute.countDown();
             cleanup.get(2, TimeUnit.SECONDS);
-            assertEquals(List.of("ignore", "default"), writes);
+            assertEquals(List.of("ignore", "allow"), writes);
         } finally {
             completeMute.countDown();
         }
@@ -75,41 +72,37 @@ public class CleanupTest {
         StringWriter replies = new StringWriter();
         List<String> writes = new ArrayList<>();
         List<Exception> failures = new ArrayList<>();
-        Cleanup.run(new BufferedReader(new StringReader("mute example.game default\napply_mute example.game\n")),
-                new PrintWriter(replies), () -> { }, (pkg, mode) -> {
-                    writes.add(mode);
-                    if ("ignore".equals(mode)) {
-                        throw new IOException("rejected");
-                    }
-                }, (message, error) -> failures.add(error));
+        Cleanup.run(new BufferedReader(new StringReader("mute example.game\n")),
+                new PrintWriter(replies), () -> { }, (pkg, on) -> {
+                    writes.add("ignore");
+                    throw new IOException("rejected");
+                }, () -> writes.add("allow"), (message, error) -> failures.add(error));
 
-        assertEquals(List.of("M7A_CLEANUP_OK mute example.game default", "M7A_CLEANUP_FAILED apply_mute example.game"),
+        assertEquals(List.of("M7A_CLEANUP_FAILED mute example.game IOException: rejected"),
                 replies.toString().lines().collect(java.util.stream.Collectors.toList()));
-        assertEquals(List.of("ignore", "default"), writes);
+        assertEquals(List.of("ignore", "allow"), writes);
         assertEquals(1, failures.size());
     }
 
     @Test(timeout = 8000)
     public void replacementWaitsForOldWriteAndEofRestoreBeforeReadingOriginalMode() throws Exception {
         Path lock = folder.getRoot().toPath().resolve("cleanup.lock");
-        AtomicReference<String> mode = new AtomicReference<>("default");
+        AtomicReference<String> mode = new AtomicReference<>("allow");
         CountDownLatch applying = new CountDownLatch(1);
         CountDownLatch finishApply = new CountDownLatch(1);
         CountDownLatch restoring = new CountDownLatch(1);
         CountDownLatch finishRestore = new CountDownLatch(1);
         FutureTask<Void> oldCleanup = new FutureTask<>(() -> {
             CleanupHandoff.runWorker(lock, () -> {
-                // 读完 apply_mute 后即 EOF，模拟旧主进程已退出。
-                Cleanup.run(new BufferedReader(new StringReader("mute example.game default\napply_mute example.game\n")),
-                        new PrintWriter(new StringWriter()), () -> { }, (pkg, next) -> {
-                            if ("ignore".equals(next)) {
-                                applying.countDown();
-                                assertTrue(finishApply.await(3, TimeUnit.SECONDS));
-                            } else {
-                                restoring.countDown();
-                                assertTrue(finishRestore.await(3, TimeUnit.SECONDS));
-                            }
-                            mode.set(next);
+                Cleanup.run(new BufferedReader(new StringReader("mute example.game\n")),
+                        new PrintWriter(new StringWriter()), () -> { }, (pkg, on) -> {
+                            applying.countDown();
+                            assertTrue(finishApply.await(3, TimeUnit.SECONDS));
+                            return mode.getAndSet("ignore");
+                        }, () -> {
+                            restoring.countDown();
+                            assertTrue(finishRestore.await(3, TimeUnit.SECONDS));
+                            mode.set("allow");
                         }, (message, error) -> { throw new AssertionError(message, error); });
             });
             return null;
@@ -135,7 +128,7 @@ public class CleanupTest {
             assertFalse(replacement.isDone());
             finishRestore.countDown();
             oldCleanup.get(2, TimeUnit.SECONDS);
-            assertEquals("default", replacement.get(2, TimeUnit.SECONDS));
+            assertEquals("allow", replacement.get(2, TimeUnit.SECONDS));
             assertEquals("ignore", mode.get());
         } finally {
             finishApply.countDown();
@@ -144,12 +137,14 @@ public class CleanupTest {
     }
 
     @Test
-    public void successfulExplicitRestoreClearsTheEofRecord() {
-        List<String> writes = new ArrayList<>();
+    public void repliesWithOriginalModeAfterExplicitRestore() {
+        StringWriter replies = new StringWriter();
         Cleanup.run(new BufferedReader(new StringReader(
-                        "mute example.game default\napply_mute example.game\nrestore_audio example.game default\n")),
-                new PrintWriter(new StringWriter()), () -> { }, (pkg, mode) -> writes.add(mode),
-                (message, error) -> { throw new AssertionError(message, error); });
-        assertEquals(List.of("ignore", "default"), writes);
+                        "mute example.game\nrestore_audio example.game\n")),
+                new PrintWriter(replies), () -> { }, (pkg, on) -> "allow",
+                () -> { }, (message, error) -> { throw new AssertionError(message, error); });
+        assertEquals(List.of("M7A_CLEANUP_OK mute example.game allow",
+                        "M7A_CLEANUP_OK restore_audio example.game allow"),
+                replies.toString().lines().collect(java.util.stream.Collectors.toList()));
     }
 }

@@ -15,6 +15,7 @@ from .card.uac_free_setting_card import UacFreeSettingCard
 from .card.game_path_setting_card import GamePathSettingCard
 from .card.adb_setting_cards import AdbBackendSettingCard, AdbDeviceCard, AdbEnvironmentCard, AdbStatusCard, AdbAdvancedCard
 from .card.rangesettingcard1 import RangeSettingCard1
+from .card.spinboxsettingcard1 import SpinBoxSettingCard1
 from .card.pushsettingcard1 import CustomPushSettingCard, DualPushSettingCard, TriplePushSettingCard, PushSettingCardAction, PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan, InstanceTeamSettingCard
 from .card.timepickersettingcard1 import TimePickerSettingCard1
 from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard, ExpandableWeeklyRelicSettingCard, ExpandableTimestampSwitchSettingCard, ExpandableComboBoxSettingCardUpdateSource, ExpandableComboBoxSettingCard, ExpandableComboBoxSettingCardInstanceType, ExpandableSwitchSettingCardEchoofwar
@@ -22,7 +23,6 @@ from .card.messagebox_custom import MessageBoxEdit
 from .challenge_config_dialog import ChallengeConfigCard
 from .card.stationprioritysettingcard import StationPrioritySettingCard
 from module.config import cfg
-from module.config.platform import get_ui_profile
 from utils.runs import read_active_run
 from module.notification import init_notifiers
 from module.localization import tr, tn
@@ -37,6 +37,7 @@ from tasks.weekly.currency_wars_strategy import (
 from tasks.weekly.divergent_universe import DivergentUniverse
 from tasks.base.tasks import start_task
 from .tools.check_update import checkUpdate
+from .tools.adb_service import display_connection
 from .tools.agent_prompt import build_agent_prompt
 from utils import clipboard
 import os
@@ -666,6 +667,13 @@ class SettingInterface(ScrollArea):
             tr("投资选项优先级"),
             "",
             texts={tr("策略优先"): "strategy", tr("图鉴优先"): "catalog"},
+        )
+        self.currencywarsTimeLimitCard = SpinBoxSettingCard1(
+            "currencywars_time_limit",
+            UiIcon.TIMER,
+            tr("总时限"),
+            tr("单次运行的分钟数，0 表示不限时"),
+            default=240,
         )
 
         self.UniverseGroup = SettingCardGroup(tr("差分宇宙"), self.scrollWidget)
@@ -2779,6 +2787,7 @@ class SettingInterface(ScrollArea):
         if self.currencywarsStrategyCard is not None:
             self.currencywarsStrategySelectCard.hide()
         self.CurrencywarsGroup.addSettingCard(self.currencywarsFastModeCard)
+        self.CurrencywarsGroup.addSettingCard(self.currencywarsTimeLimitCard)
 
         self.UniverseGroup.addSettingCard(self.weeklyDivergentEnableCard)
         self.UniverseGroup.addSettingCard(self.weeklyDivergentTypeCard)
@@ -3116,7 +3125,7 @@ class SettingInterface(ScrollArea):
             for card in cards:
                 card.setVisible(mode == backend and (mode != "local" or sys.platform == "win32"))
         self.adbStatusCard.refresh()
-        touch = get_ui_profile(cfg).name == "touch_720"
+        touch = display_connection(cfg).ui_profile == "touch_720"
         for key in ("CurrencywarsInterface", "UniverseInterface", "FightInterface", "ImmortalGameInterface", "AccountsInterface"):
             if key in self.pivot.items:
                 self.pivot.items[key].setVisible(not touch)

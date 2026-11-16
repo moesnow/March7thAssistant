@@ -33,11 +33,11 @@ def test_reports_each_step_and_continues_after_failures(journal):
     ]
 
 
-def test_without_callback_behaves_as_before(journal):
+def test_failure_in_final_step_does_not_navigate_before_returning(journal):
     steps = [("委托", lambda: None), ("邮件", broken), ("支援", lambda: False)]
 
     assert task_steps.run_steps(steps) is False
-    assert journal == [("log", "邮件失败：未确认邮箱附件状态"), ("main",), ("log", "支援未完成"), ("main",)]
+    assert journal == [("log", "邮件失败：未确认邮箱附件状态"), ("main",), ("log", "支援未完成")]
     assert task_steps.run_steps([("委托", lambda: None)]) is True
 
 

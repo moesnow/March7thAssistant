@@ -185,6 +185,8 @@ Usually the default `Brief` level is enough. If you encounter issues, switch to 
 
 #### Game Path / Launcher Path
 
+In Settings → Game connection, set Game location to Local game to configure the game and launcher paths.
+
 If you start the game before launching the assistant, the `Game Path` is usually detected automatically. If you set it manually,
 
 do not accidentally choose the launcher `miHoYo Launcher\launcher.exe`. The actual game executable is `Star Rail Game\StarRail.exe`.
@@ -299,7 +301,7 @@ It is recommended to configure your teams first, then let the full workflow hand
 
 ### Cloud Honkai: Star Rail
 
-After enabling `Use Cloud Honkai: Star Rail`, the assistant will control the cloud game in a browser to run tasks such as spending Trailblaze Power.
+In Settings → Game connection, set Game location to Cloud Honkai: Star Rail. The assistant will control the cloud game in a browser to run tasks such as spending Trailblaze Power.
 
 Common options include:
 

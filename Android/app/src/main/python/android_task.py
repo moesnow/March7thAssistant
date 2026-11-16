@@ -128,9 +128,12 @@ class _TaskLog(logging.Handler):
 
 
 class _AppSession:
+    _AUDIO_TIMEOUT = 7
+
     def __init__(self, client, bridge):
         self.client = client
         self.bridge = bridge
+        self._muted_package = None
 
     def request(self, command, **params):
         from utils.pause import RunStopRequested
@@ -138,6 +141,15 @@ class _AppSession:
         if self.bridge.isCancelled() and params.get("action") != "up":
             raise RunStopRequested()
         return self.client.request(command, **params)
+
+    def set_game_mute(self, package, on):
+        if on:
+            self._muted_package = package
+        self.bridge.audioRecoveryPending(True)
+        result, _ = self.request("mute", timeout=self._AUDIO_TIMEOUT, package=package, on=on)
+        if not on:
+            self.bridge.audioRecoveryPending(False)
+        return result
 
     def record_event(self, event):
         name = event["event"]
@@ -162,7 +174,16 @@ class _AppSession:
         return status["watchdog"].get("pid", -1) > 0
 
     def close(self):
+        from module.game.adb_transport import AdbError
+
         try:
+            if self._muted_package is not None and not self.client.closed:
+                package, self._muted_package = self._muted_package, None
+                try:
+                    self.client.request("mute", timeout=self._AUDIO_TIMEOUT, package=package, on=False)
+                    self.bridge.audioRecoveryPending(False)
+                except AdbError as error:
+                    log.warning(f"游戏音频恢复仍待确认：{error}")
             if not self.client.closed:
                 self.client.request("shutdown", timeout=2)
         finally:
@@ -258,7 +279,7 @@ def run(workdir, token, sdk, version, model, is_emulator, task, settings, panel_
             log.warning("设备端服务不支持保持系统唤醒")
         # 关闭时也发一次，让设备端修复旧版本留下的静音记录。静音失败不影响任务。
         try:
-            result, _ = session.request("mute", package=GAME_PACKAGE, on=mute_game)
+            result = session.set_game_mute(GAME_PACKAGE, mute_game)
             if mute_game:
                 log.info("已静音游戏，任务结束后恢复")
             elif result["original_mode"] == "ignore":
@@ -318,6 +339,8 @@ def run(workdir, token, sdk, version, model, is_emulator, task, settings, panel_
     except Exception as error:
         if bridge.isCancelled():
             return "stopped"
+        if getattr(error, "code", None) == "disconnected":
+            log.error(str(error))
         log.error(traceback.format_exc())
         return getattr(error, "code", "runtime_error")
     finally:

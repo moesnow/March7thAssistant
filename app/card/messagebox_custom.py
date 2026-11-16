@@ -1088,8 +1088,19 @@ class MessageBoxPowerPlan(MessageBox):
 
         # 根据已有内容添加计划行
         for plan in self.content:
-            if isinstance(plan, (list, tuple)) and len(plan) == 3 and type(plan[2]) is int:
-                self.add_plan_row(tr(plan[0]), tr(plan[1]), plan[2])
+            if (isinstance(plan, (list, tuple)) and len(plan) == 3
+                    and isinstance(plan[0], str) and isinstance(plan[1], str)
+                    and tr(plan[1]) in self._valid_instance_names(tr(plan[0]))
+                    and isinstance(plan[2], int) and not isinstance(plan[2], bool)
+                    and 1 <= plan[2] <= 999):
+                self.add_plan_row(tr(plan[0]), tr(plan[1]), int(plan[2]), loading=True)
+            else:
+                layout = QHBoxLayout()
+                label = QLabel(str(plan), self)
+                label.setTextFormat(Qt.TextFormat.PlainText)
+                label.setWordWrap(True)
+                layout.addWidget(label, 1)
+                self._append_plan_row(layout, {"raw_plan": plan})
 
         # 添加按钮
         addButtonLayout = QHBoxLayout()
@@ -1127,10 +1138,10 @@ class MessageBoxPowerPlan(MessageBox):
         self.planLayout.insertLayout(current_index - 1, row["layout"])
         self._update_plan_row_actions()
 
-    def add_plan_row(self, instance_type=None, instance_name=None, count=1):
+    def add_plan_row(self, instance_type=None, instance_name=None, count=1, *, loading=False):
         """添加一行体力计划配置"""
         # 检查是否已达到最大数量限制
-        if len(self.plan_rows) >= 8:
+        if not loading and len(self.plan_rows) >= 8:
             InfoBar.warning(
                 title=tr('无法添加'),
                 content=tr('已达到最大计划数量'),
@@ -1164,16 +1175,6 @@ class MessageBoxPowerPlan(MessageBox):
         countSpinBox.setValue(count if count else 1)
         countSpinBox.setMinimumWidth(120)
 
-        # 删除按钮
-        deleteButton = PushButton(tr("删除"), self)
-        deleteButton.setMaximumWidth(60)
-
-        # 上移按钮
-        moveUpButton = PushButton(tr("上移"), self)
-        moveUpButton.setMaximumWidth(60)
-
-        row = {}
-
         # 更新副本名称选项的函数
         def update_instance_names(selected_type):
             nameComboBox.clear()
@@ -1204,47 +1205,39 @@ class MessageBoxPowerPlan(MessageBox):
         # 连接副本类型改变信号
         typeComboBox.currentTextChanged.connect(update_instance_names)
 
-        # 删除按钮功能
-        def delete_row():
-            self._remove_plan_layout(horizontalLayout)
-
-            # 从界面移除
-            horizontalLayout.setParent(None)
-            for i in reversed(range(horizontalLayout.count())):
-                widget = horizontalLayout.itemAt(i).widget()
-                if widget:
-                    widget.setParent(None)
-                    widget.deleteLater()
-
-            # 从列表中移除
-            if row in self.plan_rows:
-                self.plan_rows.remove(row)
-                self._update_plan_row_actions()
-
-        moveUpButton.clicked.connect(lambda: self._move_plan_row_up(row))
-        deleteButton.clicked.connect(delete_row)
-
-        # 添加到布局
         horizontalLayout.addWidget(QLabel(tr("类型：")))
         horizontalLayout.addWidget(typeComboBox)
         horizontalLayout.addWidget(QLabel(tr("名称：")))
         horizontalLayout.addWidget(nameComboBox)
         horizontalLayout.addWidget(QLabel(tr("次数：")))
         horizontalLayout.addWidget(countSpinBox)
-        horizontalLayout.addWidget(moveUpButton)
-        horizontalLayout.addWidget(deleteButton)
-
-        self.planLayout.addLayout(horizontalLayout)
-
-        # 保存到列表
-        row.update({
-            "layout": horizontalLayout,
-            "type_combo": typeComboBox,
-            "name_combo": nameComboBox,
-            "count_spin": countSpinBox,
-            "move_up_button": moveUpButton,
-            "delete_button": deleteButton,
+        self._append_plan_row(horizontalLayout, {
+            "type_combo": typeComboBox, "name_combo": nameComboBox, "count_spin": countSpinBox,
         })
+
+    def _append_plan_row(self, layout, row):
+        delete_button = PushButton(tr("删除"), self)
+        delete_button.setMaximumWidth(60)
+        move_up_button = PushButton(tr("上移"), self)
+        move_up_button.setMaximumWidth(60)
+
+        def delete_row():
+            self._remove_plan_layout(layout)
+            for i in reversed(range(layout.count())):
+                widget = layout.itemAt(i).widget()
+                if widget:
+                    widget.setParent(None)
+                    widget.deleteLater()
+            layout.deleteLater()
+            self.plan_rows.remove(row)
+            self._update_plan_row_actions()
+
+        move_up_button.clicked.connect(lambda: self._move_plan_row_up(row))
+        delete_button.clicked.connect(delete_row)
+        layout.addWidget(move_up_button)
+        layout.addWidget(delete_button)
+        self.planLayout.addLayout(layout)
+        row.update(layout=layout, move_up_button=move_up_button, delete_button=delete_button)
         self.plan_rows.append(row)
         self._update_plan_row_actions()
 
@@ -1252,6 +1245,9 @@ class MessageBoxPowerPlan(MessageBox):
         """获取所有计划，并把显示文本还原为中文原始值"""
         plans = []
         for row in self.plan_rows:
+            if "raw_plan" in row:
+                plans.append(row["raw_plan"])
+                continue
             typeCombo = row["type_combo"]
             nameCombo = row["name_combo"]
             countSpin = row["count_spin"]
@@ -1273,9 +1269,19 @@ class MessageBoxPowerPlan(MessageBox):
     def should_continue_after_plan(self):
         return self.continueAfterPlanCheckBox.isChecked()
 
+    def _valid_instance_names(self, instance_type):
+        options = set()
+        skip_name = tr("无")
+        for name, info in self.template.get(instance_type, {}).items():
+            if name != skip_name:
+                options.update((name, f"{name}（{info}）"))
+        return options
+
     def validate_inputs(self):
         """验证所有输入是否匹配可选项"""
         for i, row in enumerate(self.plan_rows, 1):
+            if "raw_plan" in row:
+                continue
             typeCombo = row["type_combo"]
             nameCombo = row["name_combo"]
             instance_type = typeCombo.currentText()
@@ -1293,16 +1299,8 @@ class MessageBoxPowerPlan(MessageBox):
                 )
                 return False
 
-            # 构建有效选项列表
-            valid_options = set()
-            for name, info in self.template[instance_type].items():
-                valid_options.add(f"{name}（{info}）")
-                valid_options.add(name)
-            valid_options.remove(f"{tr('无')}（{tr('跳过')}）")  # 移除“无（跳过）”选项
-            valid_options.remove(tr("无"))  # 移除“无”选项
-
             # 检查输入是否匹配任一有效选项
-            if input_text not in valid_options:
+            if input_text not in self._valid_instance_names(instance_type):
                 InfoBar.error(
                     title=tr('输入错误'),
                     content=tr('第{i}个计划的副本名称"{input_text}"不在可选项中，请重新选择').format(i=i, input_text=input_text),

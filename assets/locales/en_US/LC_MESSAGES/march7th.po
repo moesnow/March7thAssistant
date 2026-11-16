@@ -8507,3 +8507,11 @@ msgstr "Memosprite: Evey"
 #: app/home_interface.py:123
 msgid "长夜月小助手"
 msgstr "Evernight Assistant"
+
+#: app/setting_interface.py:615
+msgid "总时限"
+msgstr "Time limit"
+
+#: app/setting_interface.py:616
+msgid "单次运行的分钟数，0 表示不限时"
+msgstr "Minutes per run; 0 means no limit"

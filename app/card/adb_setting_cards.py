@@ -97,8 +97,10 @@ class AdbBackendSettingCard(SettingCard):
     def setBackend(self, backend):
         """只更新显示，不写配置。"""
         self._backend = backend
-        index = self.comboBox.findData(backend)
-        if index >= 0 and index != self.comboBox.currentIndex():
+        error = adb_service.display_connection().error
+        self.setContent(error or "")
+        index = -1 if error else self.comboBox.findData(backend)
+        if index != self.comboBox.currentIndex():
             self.comboBox.blockSignals(True)
             try:
                 self.comboBox.setCurrentIndex(index)
@@ -107,7 +109,7 @@ class AdbBackendSettingCard(SettingCard):
 
     def _onCurrentIndexChanged(self, index):
         backend = self.comboBox.itemData(index)
-        if backend == self._backend:
+        if backend is None or backend == self._backend and not adb_service.display_connection().error:
             return
         if self._blocker is not None and self._blocker(backend):
             self.setBackend(self._backend)

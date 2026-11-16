@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -11,6 +12,10 @@ ControlBackend = Literal["local", "cloud", "adb"]
 
 class ProfileAssetNotFoundError(FileNotFoundError):
     """所选 UI 形态缺少所需文件。"""
+
+
+class InvalidGameConnection(ValueError):
+    """配置中的游戏后端或界面形态无效。"""
 
 
 class TouchProfileInputError(RuntimeError):
@@ -44,20 +49,43 @@ _UI_PROFILES = {
     "pc_1080": UIProfile("pc_1080", (1920, 1080), Path("assets/config/screens.json"), Path("assets/images")),
     "touch_720": UIProfile("touch_720", (1280, 720), Path("assets/touch_720/screens.json"), Path("assets/touch_720/images")),
 }
+_pinned_connection = None
+
+
+@contextmanager
+def pin_game_connection(config, *, connection=None):
+    """本轮完成前固定实际使用的游戏连接，配置保存仍可合并外部改动。"""
+    global _pinned_connection
+    previous = _pinned_connection
+    if connection is None:
+        connection = get_control_backend(config), get_ui_profile(config)
+    _pinned_connection = (config, *connection)
+    try:
+        yield connection
+    except BaseException as error:
+        # 退出连接后，最外层的错误处理仍须使用本轮实际连接。
+        error.game_connection = connection
+        raise
+    finally:
+        _pinned_connection = previous
 
 
 def get_control_backend(config=None) -> ControlBackend:
     config = cfg if config is None else config
+    if _pinned_connection is not None and _pinned_connection[0] is config:
+        return _pinned_connection[1]
     backend = getattr(config, "control_backend", None)
     if backend is None:
         return "cloud" if getattr(config, "cloud_game_enable", False) else "local"
     if backend in ("local", "cloud", "adb"):
         return backend
-    raise ValueError(tr("无效的 control_backend：{value}，可选值为 local、cloud、adb").format(value=backend))
+    raise InvalidGameConnection(tr("无效的 control_backend：{value}，可选值为 local、cloud、adb").format(value=backend))
 
 
 def get_ui_profile(config=None) -> UIProfile:
     config = cfg if config is None else config
+    if _pinned_connection is not None and _pinned_connection[0] is config:
+        return _pinned_connection[2]
     name = getattr(config, "ui_profile", None)
     if getattr(config, "control_backend", None) == "adb" and name in (None, "pc_1080"):
         return _UI_PROFILES["touch_720"]
@@ -65,4 +93,4 @@ def get_ui_profile(config=None) -> UIProfile:
         name = "pc_1080"
     if isinstance(name, str) and name in _UI_PROFILES:
         return _UI_PROFILES[name]
-    raise ValueError(tr("无效的 ui_profile：{value}，可选值为 pc_1080、touch_720").format(value=name))
+    raise InvalidGameConnection(tr("无效的 ui_profile：{value}，可选值为 pc_1080、touch_720").format(value=name))

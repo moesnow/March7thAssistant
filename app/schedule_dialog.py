@@ -13,6 +13,7 @@ from app.components.ascii_spin_box import AsciiSpinBox
 from qfluentwidgets import InfoBar, InfoBarPosition
 from qfluentwidgets import FluentIcon as FIF
 from utils.tasks import TASK_NAMES, supported_tasks, task_is_supported, UNSUPPORTED_TASK
+from app.tools.adb_service import display_connection
 from module.workflow import load_workflows
 import uuid
 import os
@@ -142,7 +143,8 @@ class AddEditScheduleDialog(MessageBox):
         self.program_type_combo = ComboBox(self)
         # 程序类型：本体、流程编排、外部程序，以及来自配置的特殊程序
         self.program_type_combo.addItem(tr('本体'), userData='self')
-        if task_is_supported('workflow', cfg):
+        connection = display_connection(cfg)
+        if task_is_supported('workflow', connection):
             self.program_type_combo.addItem(tr('流程编排'), userData='workflow')
         elif str((task or {}).get('program', '')).strip().lower() == 'workflow':
             self.program_type_combo.addItem(f"{tr('流程编排')}（{tr(UNSUPPORTED_TASK)}）", userData='workflow')
@@ -168,7 +170,7 @@ class AddEditScheduleDialog(MessageBox):
         self.args_combo = ComboBox(self)
         # 显示本地化任务名，但保存时保留对应的任务ID（TASK_NAMES 存的是中文原文）
         # 保持 TASK_NAMES 的原始顺序（插入顺序）
-        task_items = list(supported_tasks(cfg).items())
+        task_items = list(supported_tasks(connection).items())
         self._task_keys = [k for k, v in task_items]
         self._task_labels = [tr(v) for k, v in task_items]
         self.args_combo.addItems(self._task_labels)
