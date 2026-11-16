@@ -5,7 +5,7 @@ import time
 from contextlib import contextmanager
 from contextvars import ContextVar
 
-from .input_base import InputBase
+from .input_base import InputBase, input_deadline, input_deadline_reached
 from .windows_input import (WINDOW_EMPTY, WINDOW_EXITED, WINDOW_HIDDEN, WINDOW_MINIMIZED, WINDOW_MISSING,
                             CursorUnavailable, WindowGoneError)
 from utils.pause import pause_ctl
@@ -111,12 +111,17 @@ _input_wait_limit = ContextVar('background_input_wait_limit', default=None)
 
 
 @contextmanager
-def input_wait_limit(seconds):
-    """临时限制后台输入的阻塞等待：图形界面线程里的调用不能长时间阻塞，超时按未完成返回或报告原因。"""
+def input_wait_limit(seconds, *, deadline=None):
+    """限制后台输入的阻塞等待，并按可选的单调时钟截止时间检查输入。"""
     token = _input_wait_limit.set(max(0.0, float(seconds)))
+    previous = input_deadline.get()
+    if previous is not None:
+        deadline = previous if deadline is None else min(previous, deadline)
+    deadline_token = input_deadline.set(deadline)
     try:
         yield
     finally:
+        input_deadline.reset(deadline_token)
         _input_wait_limit.reset(token)
 
 
@@ -236,6 +241,8 @@ class BackgroundInput(InputBase):
 
     def _check(self):
         self._pause.check_stop()
+        if input_deadline_reached(time.monotonic()):
+            raise InputInterrupted('后台输入等待已达到任务总时限')
         if self._closed:
             raise InputInterrupted('后台输入已取消')
         if self._pause.is_paused():
