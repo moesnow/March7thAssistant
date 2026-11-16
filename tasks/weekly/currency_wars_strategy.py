@@ -602,11 +602,14 @@ def deployment(board: Board, *, overflow=False) -> tuple[Move, ...]:
     return positioning
 
 
-def shop_purchase(board: Board, offers: tuple[Offer, ...], *, experience_price: int | None = None) -> Offer | None:
+def shop_purchase(board: Board, offers: tuple[Offer, ...], *, experience_price: int | None = None,
+                  skipped: dict[Offer, str] | None = None) -> Offer | None:
     if board.gold is None:
+        if skipped is not None:
+            skipped.update((offer, "金币未确认") for offer in offers)
         return None
     if board.lineup:
-        return _high_purchase(board, offers, experience_price)
+        return _high_purchase(board, offers, experience_price, skipped)
     if not board.has_bench_space:
         return None
 
@@ -748,14 +751,20 @@ def _high_target(board: Board, name: str, stars: int, copies: tuple[Slot, ...]) 
     return min(stars, 2)
 
 
-def _needs_copy(board: Board, name: str, target: int, copies: tuple[Slot, ...]) -> bool:
+def _copy_block_reason(board: Board, name: str, target: int, copies: tuple[Slot, ...]) -> str | None:
     if any(slot.blocked and slot.unit and slot.unit.name == name for slot in board.slots):
-        return False
+        return "已有同名卡锁定"
     if not copies:
-        return True
+        return None
     if any(slot.unit.stars is None for slot in copies):
-        return False
-    return max(slot.unit.stars for slot in copies) < _high_target(board, name, target, copies)
+        return "已有同名卡星级未确认"
+    if max(slot.unit.stars for slot in copies) >= _high_target(board, name, target, copies):
+        return "已达到当前阶段星级目标"
+    return None
+
+
+def _needs_copy(board: Board, name: str, target: int, copies: tuple[Slot, ...]) -> bool:
+    return _copy_block_reason(board, name, target, copies) is None
 
 
 def _quality_pressure(board: Board) -> int:
@@ -794,7 +803,12 @@ def _valuable_expansion(board: Board) -> bool:
     return max(options, default=0) >= 60
 
 
-def _high_purchase(board: Board, offers: tuple[Offer, ...], experience_price: int | None) -> Offer | None:
+def _high_purchase(board: Board, offers: tuple[Offer, ...], experience_price: int | None,
+                   skipped: dict[Offer, str] | None) -> Offer | None:
+    def skip(offer: Offer, reason: str):
+        if skipped is not None:
+            skipped[offer] = reason
+
     lineup = board.lineup
     plane, _, final = _progress(board)
     field = {slot.unit.name for slot in board.field if slot.unit}
@@ -816,12 +830,20 @@ def _high_purchase(board: Board, offers: tuple[Offer, ...], experience_price: in
         name = offer.name
         base_cost = COSTS.get(name)
         expected = base_cost * 3 if base_cost is not None and offer.stars == 2 else base_cost
-        if name in SPECIAL or expected is not None and offer.cost != expected or not 0 < offer.cost <= board.gold:
+        if name in SPECIAL:
+            skip(offer, "特殊角色")
+            continue
+        if expected is not None and offer.cost != expected or offer.cost <= 0:
+            skip(offer, "报价不符合购买规则")
+            continue
+        if offer.cost > board.gold:
+            skip(offer, "金币不足")
             continue
         copies = _owned(board, name)
         merging = offer.stars == 1 and _merge_ready(copies)
         best_star = max((slot.unit.stars or 0 for slot in copies), default=0)
         if not open_bench and not merging:
+            skip(offer, "备战席已满且买入无法立即合成")
             continue
         preferred = name in preferences
         unit = _potential_offer(board, offer)
@@ -829,14 +851,18 @@ def _high_purchase(board: Board, offers: tuple[Offer, ...], experience_price: in
             value = 139 if name == board.core else 105
         elif copies:
             target = targets.get(name, 2 if name in field and (preferred or name in board.sustain) else 1)
-            if not _needs_copy(board, name, target, copies):
+            if reason := _copy_block_reason(board, name, target, copies):
+                skip(offer, reason)
                 continue
             core_two = name == board.core and not board.core_upgraded
             if not merging and open_bench < 2 and not (core_two and _spare_to_sell(board)):
+                skip(offer, "保留最后一格供调位，买入无法立即合成")
                 continue
             if final and not merging:
+                skip(offer, "终局暂缓购入不能立即合成的同名卡")
                 continue
             if offer.cost >= 4 and not merging and (plane == 1 or name not in field and not board.core_ready):
+                skip(offer, "当前阶段暂缓购入不能立即合成的高费同名卡")
                 continue
             # 最优先核对能立即到账的升星。高费辅助的对子和单张仍留出人口预算。
             if merging:
@@ -846,6 +872,7 @@ def _high_purchase(board: Board, offers: tuple[Offer, ...], experience_price: in
                 value = 94 if core_two else 80 if name == board.core else 58 if name in field else 43
         else:
             if not can_deploy:
+                skip(offer, "已满编，留一格供调位")
                 continue
             first_output = (not board.front_output_count and _can_deploy_to(board, unit, "front")
                             and (offer.front or name == board.core))
@@ -859,8 +886,10 @@ def _high_purchase(board: Board, offers: tuple[Offer, ...], experience_price: in
                 value = 97
             elif preferred:
                 if holds >= 5 and board.used == board.capacity and name not in targets:
+                    skip(offer, "已满编且候补较多，暂缓未设追星目标的角色")
                     continue
                 if offer.cost >= 4 and not board.core_ready and board.level is not None and board.level < 5:
+                    skip(offer, "主力未成型且人口等级较低，暂缓高费角色")
                     continue
                 value = 78 - preferences.index(name)
                 if name in lineup.dot and len(field & lineup.dot) < 3:
@@ -871,14 +900,21 @@ def _high_purchase(board: Board, offers: tuple[Offer, ...], experience_price: in
                 # 优先用可上场的过渡位补人数，避免反复占用已满的一侧。
                 if not any(not slot.occupied and not slot.blocked and _can_deploy_to(board, unit, slot.zone)
                            for slot in board.slots if slot.zone != "bench"):
+                    skip(offer, "过渡角色没有可部署的空位")
                     continue
                 value = 52 if name in board.sustain else 34
             else:
+                skip(offer, "本轮无需该角色补阵")
                 continue
         reserve = 0 if value >= 90 else economy
         if offer.cost <= board.gold - reserve:
             choices.append((value, -offer.cost, -offer.column, offer))
-    return max(choices, key=lambda option: option[:3], default=(0, 0, 0, None))[3]
+        else:
+            skip(offer, f"需预留 {reserve} 金币")
+    chosen = max(choices, key=lambda option: option[:3], default=(0, 0, 0, None))[3]
+    if skipped is not None:
+        skipped.update((offer, "本轮优先购买另一张牌") for _, _, _, offer in choices if offer != chosen)
+    return chosen
 
 
 def _spare_to_sell(board: Board) -> bool:
@@ -935,28 +971,57 @@ def _high_refresh(board: Board, price: int, refreshes: int, experience_price: in
     return board.gold >= price + reserve
 
 
-def disposable_bench(board: Board) -> tuple[Slot, ...]:
-    preferred = board.lineup.preferences if board.lineup else (*FRONT, *BACK)
-    protected = set(preferred) | board.sustain | SPECIAL | {"昔涟", "砂金·戏浪"}
-    reserve = tuple(slot for slot in board.slots if slot.zone == "bench" and not slot.blocked and slot.unit
-                    and slot.unit.stars == 1 and slot.unit.name not in protected)
+def disposable_bench(board: Board, *, kept: dict[Slot, str] | None = None) -> tuple[Slot, ...]:
     if board.lineup is None:
-        return reserve
+        protected = {*FRONT, *BACK} | board.sustain | SPECIAL | {"昔涟", "砂金·戏浪"}
+        return tuple(slot for slot in board.slots if slot.zone == "bench" and not slot.blocked and slot.unit
+                     and slot.unit.stars == 1 and slot.unit.name not in protected)
+    preferred = set(board.lineup.preferences)
+    special = SPECIAL | {"昔涟", "砂金·戏浪"}
     field = {slot.unit.name for slot in board.field if slot.unit}
     # 两名场上保护都在时，备战席里未装备、非目标阵容的一星过渡治疗可用于腾位。
-    if len(field & board.sustain) < 2 or not field & board.healers:
-        return reserve
-    redundant = tuple(slot for slot in board.slots if slot.zone == "bench" and not slot.blocked and slot.unit
-                      and slot.unit.stars == 1 and slot.unit.equipment == 0
-                      and slot.unit.name in board.sustain - set(preferred))
+    redundant_sustain = len(field & board.sustain) >= 2 and bool(field & board.healers)
+    reserve, redundant = [], []
+    for slot in board.slots:
+        if slot.zone != "bench":
+            continue
+        unit = slot.unit
+        if slot.blocked:
+            reason = "卡位不可用"
+        elif unit is None:
+            if not slot.occupied:
+                continue
+            reason = "占用对象未确认"
+        elif unit.stars != 1:
+            reason = "星级未确认" if unit.stars is None else "常规清理仅考虑一星卡"
+        elif unit.name in preferred:
+            reason = "阵容偏好保护"
+        elif unit.name in board.sustain:
+            if redundant_sustain and unit.equipment == 0:
+                redundant.append(slot)
+                continue
+            reason = "装备未确认为空" if redundant_sustain else "保留生存候补"
+        elif unit.name in special:
+            reason = "特殊角色保护"
+        else:
+            reserve.append(slot)
+            continue
+        if kept is not None:
+            kept[slot] = reason
     return (*reserve, *sorted(redundant, key=lambda slot: slot_priority(board, slot.unit, "back")))
 
 
-def should_make_shop_space(board: Board) -> bool:
+def should_make_shop_space(board: Board, *, kept: dict[Slot, str] | None = None) -> bool:
     if not board.lineup or not board.front_count or board.gold is None:
         return False
     empty = len(board.empty_bench)
-    if empty >= 2 or not _spare_to_sell(board):
+    if empty >= 2:
+        return False
+    candidates = disposable_bench(board, kept=kept)
+    if kept is not None:
+        kept.update((slot, "装备未确认为空") for slot in candidates if slot.unit.equipment != 0)
+    spare = next((slot for slot in candidates if slot.unit.equipment == 0), None)
+    if spare is None:
         return False
     if not board.core_ready and empty == 0:
         return board.gold >= COSTS.get(board.core, 1)
@@ -969,7 +1034,6 @@ def should_make_shop_space(board: Board) -> bool:
             return True
     # 满席也可能挡住已买到的关键辅助，先留出一次安全调位所需的空格。
     if empty == 0:
-        spare = next(slot for slot in disposable_bench(board) if slot.unit.equipment == 0)
         freed = replace(board, slots=tuple(_empty(slot) if slot == spare else slot for slot in board.slots))
         return bool(deployment(freed))
     return False

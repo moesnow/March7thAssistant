@@ -1,7 +1,9 @@
 from dataclasses import dataclass, replace
 from datetime import datetime
+from logging import DEBUG
 import re
 import time
+from time import perf_counter
 
 import cv2
 import numpy as np
@@ -1444,7 +1446,8 @@ class CurrencyWars:
                     raise
                 log.warning(f"{board.stage}经验暂未确认，重新读取可腾出的格子：{error}")
                 return fresh
-        usual = strategy.disposable_bench(board)
+        kept = {} if board.lineup and log.logger.isEnabledFor(DEBUG) else None
+        usual = strategy.disposable_bench(board, kept=kept)
         if board.lineup and board.stage == board.final_node and board.front_count > 0:
             # 终局已满编时，不能上阵的无装候补可以释放格子给强制安放。
             names = {slot.unit.name for slot in board.field if slot.unit}
@@ -1456,6 +1459,12 @@ class CurrencyWars:
         reserves = strategy.overflow_reserves(board) if overflow else ()
         candidates = (*usual, *(slot for slot in reserves if slot not in usual))
         saleable = self._reserve_sale_candidates(frame, candidates)
+        if kept is not None:
+            for slot in candidates:
+                kept.pop(slot, None)
+                if slot not in saleable:
+                    kept[slot] = "本节点暂未确认可再次尝试出售"
+            self._log_bench_holds(board.stage, "出售候选", kept)
         if saleable:
             return self._sell_for_space(frame, saleable[0], identified=True)
         if optional:
@@ -1692,8 +1701,20 @@ class CurrencyWars:
             if frame.page != Page.SHOP or frame.stage not in (None, board.stage):
                 break
             shop_board = replace(board, gold=frame.gold)
-            offer = (strategy.default_front_offer(shop_board, frame.offers) if self.default_strategy
-                     else strategy.shop_purchase(shop_board, frame.offers, experience_price=experience_price))
+            offers = frame.offers
+            if self.default_strategy:
+                offer = strategy.default_front_offer(shop_board, offers)
+            else:
+                skipped = {} if board.lineup and log.logger.isEnabledFor(DEBUG) else None
+                offer = strategy.shop_purchase(shop_board, offers, experience_price=experience_price, skipped=skipped)
+                if skipped is not None:
+                    selected = f"本轮选中{offer.name}（第 {offer.column + 1} 栏）" if offer else "本轮没有购买计划"
+                    details = [f"第 {card.column + 1} 栏 {card.name}（{card.stars} 星，{card.cost} 金）{skipped[card]}"
+                               for card in offers if card in skipped]
+                    if not offers:
+                        details.append("未识别到商品")
+                    mode_name = ui.MODE_NAMES.get(self.mode, "模式未确认")
+                    log.debug(f"货币战争 {mode_name} {board.stage} 商店，" + "；".join([selected, *details]))
             if offer:
                 before = frame
                 minimum_gold = before.gold - offer.cost
@@ -2023,45 +2044,55 @@ class CurrencyWars:
         return cv2.absdiff(before_inventory, after_inventory).mean() > 1.8
 
     def _equip_team(self, frame, board):
-        candidates = [slot for slot in board.field if slot.unit and slot.unit.name not in strategy.SPECIAL]
-        candidates.sort(key=lambda slot: strategy.slot_priority(board, slot.unit, slot.zone), reverse=True)
-        for _ in range(12):
-            inventory = frame.inventory_equipment()
-            if not inventory:
-                break
-            # 单独的简易材料留给后续奖励配对。终局交给游戏推荐的可穿戴项。
-            if (board.stage != board.final_node and len(inventory) == 1 and inventory[0][1] in ui.ITEMS[:8]):
-                break
-            options = []
-            for slot in candidates:
-                if not frame.slot_occupied(slot.point) or frame.card_equipment(slot) == 3:
-                    continue
-                original = frame
-                frame = self._open_equipment(frame, slot)
-                if frame.page != Page.EQUIPMENT:
-                    if frame.page != Page.BOARD:
-                        return frame
-                    continue
-                worn = frame.equipped_names()
-                options.extend(EquipmentOption(slot, frame.equipment_option(button), worn)
-                               for button in frame.equipment_actions() if not frame.equipment_refused())
-                frame = self._return_from_equipment(frame)
-                if frame.page != Page.BOARD or frame.stage != original.stage:
-                    return frame
-            choices = equipment_order(board, tuple(options))
-            if not choices:
-                break
-            applied = False
-            for choice in choices:
-                # 能执行的选择随材料变化。每次有回执后重新读取全队可合成项。
-                frame, applied = self._equip_once(frame, choice.slot, preferred=choice.action)
-                if frame.page != Page.BOARD or self.equipment_deferred_stage == board.stage:
-                    return frame
-                if applied:
+        started = perf_counter()
+        rounds = opened_menus = confirmed = 0
+        try:
+            candidates = [slot for slot in board.field if slot.unit and slot.unit.name not in strategy.SPECIAL]
+            candidates.sort(key=lambda slot: strategy.slot_priority(board, slot.unit, slot.zone), reverse=True)
+            for _ in range(12):
+                inventory = frame.inventory_equipment()
+                if not inventory:
                     break
-            if not applied:
-                break
-        return frame
+                # 单独的简易材料留给后续奖励配对。终局交给游戏推荐的可穿戴项。
+                if (board.stage != board.final_node and len(inventory) == 1 and inventory[0][1] in ui.ITEMS[:8]):
+                    break
+                rounds += 1
+                options = []
+                for slot in candidates:
+                    if not frame.slot_occupied(slot.point) or frame.card_equipment(slot) == 3:
+                        continue
+                    original = frame
+                    frame = self._open_equipment(frame, slot)
+                    if frame.page != Page.EQUIPMENT:
+                        if frame.page != Page.BOARD:
+                            return frame
+                        continue
+                    opened_menus += 1
+                    worn = frame.equipped_names()
+                    options.extend(EquipmentOption(slot, frame.equipment_option(button), worn)
+                                   for button in frame.equipment_actions() if not frame.equipment_refused())
+                    frame = self._return_from_equipment(frame)
+                    if frame.page != Page.BOARD or frame.stage != original.stage:
+                        return frame
+                choices = equipment_order(board, tuple(options))
+                if not choices:
+                    break
+                applied = False
+                for choice in choices:
+                    # 能执行的选择随材料变化。每次有回执后重新读取全队可合成项。
+                    frame, applied = self._equip_once(frame, choice.slot, preferred=choice.action)
+                    confirmed += int(applied)
+                    if frame.page != Page.BOARD or self.equipment_deferred_stage == board.stage:
+                        return frame
+                    if applied:
+                        break
+                if not applied:
+                    break
+            return frame
+        finally:
+            mode_name = ui.MODE_NAMES.get(self.mode, "模式未确认")
+            log.debug(f"货币战争 {mode_name} {board.stage} 全队配装扫描 {rounds} 轮（打开推荐页 {opened_menus} 次），"
+                      f"确认装备更新或扣料 {confirmed} 次，用时 {perf_counter() - started:.2f} 秒")
 
     def _return_from_equipment(self, frame):
         if frame.page == Page.EQUIPMENT:
@@ -2733,6 +2764,22 @@ class CurrencyWars:
                 self.preparation_progress += 1
         return frame
 
+    def _should_make_shop_space(self, board):
+        kept = {} if board.lineup and log.logger.isEnabledFor(DEBUG) else None
+        needed = strategy.should_make_shop_space(board, kept=kept)
+        if kept and not needed:
+            self._log_bench_holds(board.stage, "商店腾位筛选", kept)
+        return needed
+
+    def _log_bench_holds(self, stage, context, kept):
+        if kept:
+            mode_name = ui.MODE_NAMES.get(self.mode, "模式未确认")
+            details = []
+            for slot, reason in kept.items():
+                name = f" {slot.unit.name}" if slot.unit else ""
+                details.append(f"第 {slot.index + 1} 格{name}（{reason}）")
+            log.debug(f"货币战争 {mode_name} {stage} 备战席{context}，" + "；".join(details))
+
     def _prepare(self, frame):
         stage = frame.stage
         frame = self._settle_board(frame)
@@ -2809,7 +2856,7 @@ class CurrencyWars:
             price = frame.experience_cost
             can_merge = board.lineup and strategy.has_merge_pair(board)
             if ((stage, "备战腾位") not in self.deferred_operations and shop_space_checks < 2
-                    and (not shop_needed or not can_merge) and strategy.should_make_shop_space(board)):
+                    and (not shop_needed or not can_merge) and self._should_make_shop_space(board)):
                 shop_space_checks += 1
                 empty = len(board.empty_bench)
                 try:

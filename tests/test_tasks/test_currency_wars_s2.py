@@ -4082,6 +4082,54 @@ def test_team_equipment_compares_recipe_pixels_and_only_recovers_before_input(mo
     assert state.clicks == ([(Page.EQUIPMENT, action[1:])] if same_recipe else [])
 
 
+def test_high_equipment_summary_counts_rescans_and_confirmed_updates(monkeypatch, world, high_lineup):
+    stage = "2-4"
+    target = slot("front", 0, CORE)
+    team = board(target, stage=stage, used=1, lineup=high_lineup)
+    fight = ("出战", 1818, 750)
+    employee = ("那刻夏", 1538, 230)
+    recommendation = ("推荐", 1512, 818)
+    action = ("合成", 1170, 720)
+    ready = page(Page.BOARD, fight, stage=stage)
+    rescanning = page(Page.BOARD, fight, stage=stage)
+    detail = page(Page.DETAIL, employee, recommendation, stage=stage)
+    other_detail = page(Page.DETAIL, employee, recommendation, stage=stage)
+    menu = page(Page.EQUIPMENT, employee, action, stage=stage)
+    equipped = page(Page.EQUIPMENT, employee, stage=stage)
+    no_options = page(Page.EQUIPMENT, employee, stage=stage)
+    battle = page(Page.BATTLE)
+    for frame in (ready, rescanning):
+        monkeypatch.setattr(frame, "inventory_equipment", lambda: (((1844, 248), "生命之环"),))
+        monkeypatch.setattr(frame, "slot_occupied", lambda point: point == target.point)
+    monkeypatch.setattr(equipped, "equipment_changed", lambda before: before is menu)
+    monkeypatch.setattr(task, "perf_counter", Mock(side_effect=(10, 12.5)))
+    debug = Mock()
+    monkeypatch.setattr(task.log, "debug", debug)
+    routes = {
+        (ready, target.point): detail,
+        (detail, recommendation[1:]): menu,
+        (menu, (12, 12)): ready,
+        (menu, action[1:]): equipped,
+        (equipped, (12, 12)): rescanning,
+        (rescanning, target.point): other_detail,
+        (other_detail, recommendation[1:]): no_options,
+        (no_options, (12, 12)): rescanning,
+        (rescanning, fight[1:]): battle,
+    }
+    state = drive(monkeypatch, world, ready, lambda s, p: setattr(s, "frame", routes[s.frame, p]))
+
+    assert world.war._finish_preparation(ready, team) is battle
+    assert state.clicks == [
+        (Page.BOARD, target.point), (Page.DETAIL, recommendation[1:]), (Page.EQUIPMENT, (12, 12)),
+        (Page.BOARD, target.point), (Page.DETAIL, recommendation[1:]), (Page.EQUIPMENT, action[1:]),
+        (Page.EQUIPMENT, (12, 12)), (Page.BOARD, target.point), (Page.DETAIL, recommendation[1:]),
+        (Page.EQUIPMENT, (12, 12)), (Page.BOARD, fight[1:]),
+    ]
+    assert [call.args[0] for call in debug.call_args_list if "全队配装" in call.args[0]] == [
+        "货币战争 标准博弈 2-4 全队配装扫描 2 轮（打开推荐页 2 次），确认装备更新或扣料 1 次，用时 2.50 秒",
+    ]
+
+
 
 @pytest.mark.parametrize(("same_employee", "worn"), ((True, False), (True, True), (False, False)))
 def test_equipment_receipt_timeout_rechecks_the_board_without_repeating_input(monkeypatch, world, same_employee, worn):
@@ -7182,6 +7230,50 @@ def test_core_pair_can_use_the_last_bench_slot_when_an_ungeared_filler_can_make_
     assert policy.shop_purchase(b, (copy,)) == copy
     geared = replace(b, slots=(*b.slots[:2], replace(b.slots[2], unit=replace(filler, equipment=1)), b.slots[3]))
     assert policy.shop_purchase(geared, (copy,)) is None
+
+
+@pytest.mark.parametrize("debug_enabled", (False, True))
+def test_high_preparation_diagnoses_skipped_purchase_and_retained_bench(
+    monkeypatch, world, high_lineup, debug_enabled,
+):
+    stage, shop_button, fight_button = "2-4", (1624, 983), (1818, 751)
+    team = board(slot("front", 0, CORE), slot("back", 0, BAILU),
+                 slot("bench", 0, replace(CORE, stars=1)),
+                 slot("bench", 1, policy.Unit("雪衣", True, True, 2, equipment=0)),
+                 slot("bench", 2), replace(slot("bench", 3, occupied=True), blocked=True),
+                 slot("bench", 4, occupied=True),
+                 lineup=high_lineup, stage=stage, gold=2, used=2, capacity=2)
+    initial = page(Page.BOARD, ("商店", *shop_button), ("出战", *fight_button), stage=stage, gold=2)
+    shop = page(Page.SHOP, ("收起", *shop_button), ("那刻夏1", 470, 310), ("花火4", 730, 310),
+                ("真珠3", 990, 310), stage=stage, gold=2, shop_refresh_price=None)
+    fighting = battle(True)
+    routes = {(initial, shop_button): shop, (shop, shop_button): initial, (initial, fight_button): fighting}
+    world.war.lineup = high_lineup
+    monkeypatch.setattr(world.war, "_read_board", lambda f: (f, team))
+    monkeypatch.setattr(world.war, "_next_deployment", lambda _: None)
+    monkeypatch.setattr(task.log.logger, "isEnabledFor", lambda _: debug_enabled)
+    debug = Mock()
+    monkeypatch.setattr(task.log, "debug", debug)
+
+    def click(state, point):
+        state.frame = routes[state.frame, point]
+
+    state = drive(monkeypatch, world, initial, click)
+    assert world.war._prepare(initial) is fighting
+    assert state.clicks == [(Page.BOARD, shop_button), (Page.SHOP, shop_button), (Page.BOARD, fight_button)]
+    messages = [call.args[0] for call in debug.call_args_list]
+    shop_logs = [msg for msg in messages if "商店，本轮" in msg]
+    bench_logs = [msg for msg in messages if "备战席商店腾位筛选" in msg]
+    if debug_enabled:
+        assert len(shop_logs) == 1
+        assert "那刻夏（1 星，1 金）保留最后一格" in shop_logs[0]
+        assert "花火（1 星，4 金）报价不符合购买规则" in shop_logs[0]
+        assert "真珠（1 星，3 金）金币不足" in shop_logs[0]
+        assert bench_logs and "雪衣（常规清理仅考虑一星卡）" in bench_logs[0]
+        assert "第 4 格（卡位不可用）" in bench_logs[0]
+        assert "第 5 格（占用对象未确认）" in bench_logs[0]
+    else:
+        assert not shop_logs and not bench_logs
 
 
 def test_high_star_count_ignores_the_glow_joining_two_stars():
