@@ -81,6 +81,10 @@ msgstr "任務完成"
 msgid "任务已停止"
 msgstr "任務已停止"
 
+#: app/main_window.py:377
+msgid "主题"
+msgstr "主題"
+
 #: app/main_window.py:326
 msgid "赞赏"
 msgstr "贊助"

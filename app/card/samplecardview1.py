@@ -4,6 +4,7 @@ from PySide6.QtGui import QAction, QPixmap
 
 from qfluentwidgets import RoundMenu, IconWidget, FlowLayout, CardWidget, InfoBarIcon, TeachingTip, TeachingTipTailPosition, InfoBar, InfoBarPosition
 from ..common.style_sheet import StyleSheet
+from ..components.portrait_label import PortraitLabel
 from module.config import cfg
 from module.localization import tr
 from module.logger import log
@@ -21,7 +22,7 @@ class SampleCard(CardWidget):
 
         self.action = action
 
-        self.iconWidget = QLabel(parent)
+        self.iconWidget = PortraitLabel(self)
         self.iconWidget.setPixmap(QPixmap(icon))
         self.iconWidget.setScaledContents(True)
 
@@ -158,6 +159,7 @@ class SampleCardView1(QWidget):
         """ add sample card """
         card = SampleCard(icon, title, action, self)
         self.flowLayout.addWidget(card)
+        return card
 
     def clearCards(self):
         """ remove all sample cards """

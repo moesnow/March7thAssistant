@@ -1,10 +1,10 @@
 from utils.game_options import game_option_enabled
 from utils.desktop_twin import in_desktop_twin
 from PySide6.QtCore import Qt, QSize, QPoint, QFileSystemWatcher, Signal, QObject, QTimer, QThread, QSignalBlocker
-from PySide6.QtGui import QIcon, QAction
+from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QLabel, QHBoxLayout, QVBoxLayout
 
-from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, setTheme, Theme, themeColor, qconfig
+from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, setTheme, toggleTheme, Theme, themeColor, qconfig, isDarkTheme
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import InfoBar, InfoBarIcon, InfoBarPosition, PrimaryPushButton, SystemTrayMenu, ToolTipFilter, ToolTipPosition
 from app.tools.game_starter import GameStartStatus, GameLaunchThread
@@ -18,6 +18,8 @@ from .workflow_interface import WorkflowInterface
 from .setting_interface import SettingInterface
 from .log_interface import LogInterface
 from .common.signal_bus import signalBus
+from .common.theme_assets import application_icon_path
+from .common.window_icon import set_application_icon
 
 from .card.messagebox_custom import MessageBoxSupport
 from .tools.check_update import checkUpdate
@@ -140,13 +142,13 @@ class MainWindow(MSFluentWindow):
         self._defer_startup_checks = False  # 静默启动时推迟的启动检查（检查更新/公告）
         self.detected_update_version = None
         self.updateVersionBadge = None
-        qconfig.themeChanged.connect(self._on_theme_changed)
 
         self.initWindow()
 
         self.initInterface()
         self.initNavigation()
         self.initSystemTray()
+        qconfig.themeChanged.connect(self._on_theme_changed)
 
         if self.start_minimized_to_tray:
             self.hide()
@@ -195,19 +197,20 @@ class MainWindow(MSFluentWindow):
         min_height = 640
         self.setMinimumWidth(min_width)
         self.setMinimumHeight(min_height)
+        default_height = 720
 
         window_memory = cfg.get_value('window_memory', 'size')
         # 从配置文件读取窗口尺寸，确保不低于最小值
         if window_memory in ('size', 'size_and_position'):
             saved_width = cfg.get_value('window_width', min_width)
-            saved_height = cfg.get_value('window_height', min_height)
+            saved_height = cfg.get_value('window_height', default_height)
             window_width = max(saved_width, min_width)
             window_height = max(saved_height, min_height)
             self.resize(window_width, window_height)
         else:
-            self.resize(min_width, min_height)
+            self.resize(min_width, default_height)
 
-        self.setWindowIcon(QIcon('./assets/logo/March7th.ico'))
+        set_application_icon(self, application_icon_path(isDarkTheme()), 'March7th Assistant')
         self.setWindowTitle("March7th Assistant")
         # 分离系统窗口标题与应用内标题栏文本
         self._refreshWindowTitleBar()
@@ -321,6 +324,8 @@ class MainWindow(MSFluentWindow):
                 pass
 
     def _on_theme_changed(self):
+        set_application_icon(self, application_icon_path(isDarkTheme()), 'March7th Assistant')
+        self.homeInterface.refreshTheme()
         self._refreshWindowTitleBar()
 
     def _on_update_version_badge_clicked(self):
@@ -350,12 +355,13 @@ class MainWindow(MSFluentWindow):
         self.logInterface.autoplotToggleRequested.connect(self._onAutoplotToggleRequested)
 
     def initNavigation(self):
-        self.addSubInterface(self.homeInterface, FIF.HOME, tr('主页'))
-        self.addSubInterface(self.helpInterface, FIF.BOOK_SHELF, tr('帮助'))
+        # 页面入口可滚动，为最小窗口尺寸下的底部固定按钮保留空间。
+        self.addSubInterface(self.homeInterface, FIF.HOME, tr('主页'), position=NavigationItemPosition.SCROLL)
+        self.addSubInterface(self.helpInterface, FIF.BOOK_SHELF, tr('帮助'), position=NavigationItemPosition.SCROLL)
         # self.addSubInterface(self.changelogInterface, FIF.UPDATE, '更新日志')
-        self.addSubInterface(self.warpInterface, FIF.SHARE, tr('抽卡记录'))
-        self.addSubInterface(self.toolsInterface, FIF.DEVELOPER_TOOLS, tr('工具箱'))
-        self.addSubInterface(self.workflowInterface, FIF.CODE, tr('流程编排'))
+        self.addSubInterface(self.warpInterface, FIF.SHARE, tr('抽卡记录'), position=NavigationItemPosition.SCROLL)
+        self.addSubInterface(self.toolsInterface, FIF.DEVELOPER_TOOLS, tr('工具箱'), position=NavigationItemPosition.SCROLL)
+        self.addSubInterface(self.workflowInterface, FIF.CODE, tr('流程编排'), position=NavigationItemPosition.SCROLL)
 
         self.navigationInterface.addWidget(
             'startGameButton',
@@ -371,11 +377,11 @@ class MainWindow(MSFluentWindow):
         #     self._on_config_file_changed,
         #     NavigationItemPosition.BOTTOM)
 
-        # self.navigationInterface.addWidget(
-        #     'themeButton',
-        #     NavigationBarPushButton(FIF.BRUSH, '主题', isSelectable=False),
-        #     lambda: toggleTheme(lazy=True),
-        #     NavigationItemPosition.BOTTOM)
+        self.navigationInterface.addWidget(
+            'themeButton',
+            NavigationBarPushButton(FIF.BRUSH, tr('主题'), isSelectable=False),
+            lambda: toggleTheme(lazy=True),
+            NavigationItemPosition.BOTTOM)
 
         self.navigationInterface.addWidget(
             'avatar',
@@ -408,7 +414,7 @@ class MainWindow(MSFluentWindow):
     def initSystemTray(self):
         """初始化系统托盘"""
         self.tray_icon = QSystemTrayIcon(self)
-        self.tray_icon.setIcon(QIcon('./assets/logo/March7th.ico'))
+        self.tray_icon.setIcon(self.windowIcon())
         self.tray_icon.setToolTip('March7th Assistant')
 
         # 创建托盘菜单
@@ -699,7 +705,8 @@ class MainWindow(MSFluentWindow):
             'homeInterface': tr('主页'), 'helpInterface': tr('帮助'),
             'warpInterface': tr('抽卡记录'), 'toolsInterface': tr('工具箱'),
             'workflowInterface': tr('流程编排'), 'logInterface': tr('日志'),
-            'settingInterface': tr('设置'), 'startGameButton': tr('启动游戏'), 'avatar': tr('赞赏'),
+            'settingInterface': tr('设置'), 'startGameButton': tr('启动游戏'),
+            'themeButton': tr('主题'), 'avatar': tr('赞赏'),
         }
         for route, text in labels.items():
             self.navigationInterface.widget(route).setText(text)
