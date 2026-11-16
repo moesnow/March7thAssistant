@@ -4,6 +4,7 @@ from pathlib import Path
 
 from PySide6.QtGui import QImage, QPainter, QPixmap
 
+from .evernight import EVERNIGHT_AVATAR
 
 
 _IMAGE_ROOT = Path('./assets/app/images')
@@ -11,6 +12,7 @@ _DARK_PORTRAITS = {
     str((_IMAGE_ROOT / f'{name}.jpg').resolve()): str(_IMAGE_ROOT / 'dark' / f'{name}.png')
     for name in ('March7th', 'JingYuan', 'Yanqing', 'Herta', 'SilverWolf', 'Bronya')
 }
+_DARK_PORTRAITS[str(Path(EVERNIGHT_AVATAR).resolve())] = str(_IMAGE_ROOT / 'dark/Evernight.png')
 
 
 def themed_icon_path(path, dark):
@@ -30,7 +32,7 @@ def portrait_texture(reference):
     return QPixmap.fromImage(pattern)
 
 
-@lru_cache(maxsize=12)  # Six bundled portraits, each with a light/dark variant.
+@lru_cache(maxsize=14)  # Seven bundled portraits, each with a light/dark variant.
 def _builtin_portrait_artwork(source, dark):
     foreground = QPixmap(themed_icon_path(source, dark))
     texture = portrait_texture(QPixmap(source)) if dark else QPixmap()
@@ -45,8 +47,8 @@ def portrait_artwork(path, dark):
     return QPixmap(path), QPixmap()
 
 
-def application_icon_path(dark):
+def application_icon_path(dark, evernight=False):
     """Use bean-eyed artwork for window, tray and taskbar, never a task portrait."""
     if not dark:
         return './assets/logo/March7th.ico'
-    return str(_IMAGE_ROOT / 'dark/March7th-icon.ico')
+    return str(_IMAGE_ROOT / ('evernight/icon.ico' if evernight else 'dark/March7th-icon.ico'))

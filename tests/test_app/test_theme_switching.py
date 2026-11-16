@@ -139,9 +139,9 @@ def test_shell_group_rebuilds_for_each_icon_and_restores_original_identity(qtbot
     owner.tray_icon = QSystemTrayIcon(owner)
     identities = {}
     native_id = int(owner.winId())
-    for dark in (False, True, False):
-        path = application_icon_path(dark)
-        name = 'March7th Assistant'
+    for dark, active in ((False, False), (True, False), (True, True), (False, False)):
+        path = application_icon_path(dark, active)
+        name = 'Evernight Assistant' if active else 'March7th Assistant'
         set_application_icon(owner, path, name)
         expected = QIcon(path).pixmap(32, 32).toImage()
         assert owner.windowIcon().pixmap(32, 32).toImage() == expected
@@ -159,7 +159,7 @@ def test_shell_group_rebuilds_for_each_icon_and_restores_original_identity(qtbot
         else:
             assert current_id not in identities.values()  # invalidate cached group tile
             identities[path] = current_id
-    assert len(identities) == 2
+    assert len(identities) == 3
     owner._taskbar_properties.clear()
     for key in (pscon.PKEY_AppUserModel_RelaunchCommand,
                 pscon.PKEY_AppUserModel_RelaunchDisplayNameResource,
@@ -169,6 +169,7 @@ def test_shell_group_rebuilds_for_each_icon_and_restores_original_identity(qtbot
     set_application_icon(owner, application_icon_path(False), 'March7th Assistant')
     owner.destroy()  # Surface teardown must release shell properties first.
     assert owner._taskbar_properties.store is None
+
 
 
 

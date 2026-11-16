@@ -7839,3 +7839,11 @@ msgstr ""
 #: app/setting_interface.py:660
 msgid "图鉴优先"
 msgstr ""
+
+#: app/components/evey_animation.py:28
+msgid "忆灵「长夜」"
+msgstr ""
+
+#: app/home_interface.py:123
+msgid "长夜月小助手"
+msgstr ""

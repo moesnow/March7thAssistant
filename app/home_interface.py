@@ -8,6 +8,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowE
 from qfluentwidgets import ScrollArea, FluentIcon, RoundMenu, PushButton, isDarkTheme
 
 from .common.style_sheet import StyleSheet
+from .common.evernight import EVERNIGHT_BANNER, EVERNIGHT_AVATAR
 from .common.theme_assets import portrait_artwork
 from .card.samplecardview1 import SampleCardView1
 from .card.card_edit_dialog import DEFAULT_CARDS, HOME_EXTRA_TASKS, CardEditDialog, display_label, migrate_home_cards
@@ -15,7 +16,7 @@ from utils.tasks import supported_tasks
 from tasks.base.tasks import start_task
 
 from module.config import cfg
-from module.localization import tr
+from module.localization import get_current_language, tr
 
 from PIL import Image
 import numpy as np
@@ -26,6 +27,9 @@ import sys
 class BannerWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
+        self._evernight_active = False
+        with Image.open(EVERNIGHT_BANNER) as image:
+            self._evernight_banner_image = image.convert('RGB')
         self.menu = RoundMenu(parent=self)
         self.menu.addAction(QAction(tr("更换背景图片"), self, triggered=lambda: on_change_banner_image()))
 
@@ -35,15 +39,15 @@ class BannerWidget(QWidget):
             banner_path = self.default_banner_path
         if os.path.abspath(banner_path) != os.path.abspath(self.default_banner_path):
             self.menu.addAction(QAction(tr("恢复默认图片"), self, triggered=lambda: on_restore_default_banner_image()))
-        self.banner_image = Image.open(banner_path)
+        with Image.open(banner_path) as image:
+            self._regular_banner_image = image.convert('RGB')
+        self.banner_image = self._regular_banner_image
         min_height = min(self.parent().parent().height() - 271 - 49, (self.parent().parent().width() - 73) * self.banner_image.height // self.banner_image.width)
         self.setFixedHeight(min_height)
 
         self.vBoxLayout = QVBoxLayout(self)
-        if hasattr(cfg, 'ui_language_now') and cfg.ui_language_now not in ['zh_CN', 'zh_TW']:
-            self.galleryLabel = QLabel(f'{tr("三月七小助手")}', self)
-        else:
-            self.galleryLabel = QLabel(f'{tr("三月七小助手")}\nMarch7thAssistant', self)
+        self.galleryLabel = QLabel(self)
+        self.retranslateTitle()
         self.galleryLabel.setStyleSheet("color: white;font-size: 30px; font-weight: 600;")
 
         # 创建阴影效果
@@ -77,7 +81,10 @@ class BannerWidget(QWidget):
                     if not has_restore_action:
                         self.menu.addAction(QAction(tr("恢复默认图片"), self, triggered=lambda: on_restore_default_banner_image()))
                 try:
-                    self.banner_image = Image.open(file_path)
+                    with Image.open(file_path) as image:
+                        self._regular_banner_image = image.convert('RGB')
+                    if not self._evernight_active:
+                        self.banner_image = self._regular_banner_image
                     cfg.set_value("banner_path", file_path)
                 except Exception:
                     return
@@ -87,7 +94,10 @@ class BannerWidget(QWidget):
 
         def on_restore_default_banner_image():
             try:
-                self.banner_image = Image.open(self.default_banner_path)
+                with Image.open(self.default_banner_path) as image:
+                    self._regular_banner_image = image.convert('RGB')
+                if not self._evernight_active:
+                    self.banner_image = self._regular_banner_image
                 cfg.set_value("banner_path", self.default_banner_path)
             except Exception:
                 return
@@ -110,6 +120,20 @@ class BannerWidget(QWidget):
         self.vBoxLayout.addWidget(self.galleryLabel)
         self.vBoxLayout.addStretch(1)  # 添加弹性空间，将下方任务卡片推到底部
 
+    def retranslateTitle(self):
+        title = tr('长夜月小助手') if self._evernight_active else tr('三月七小助手')
+        if get_current_language() in ('zh_CN', 'zh_TW'):
+            title += '\nEvernightAssistant' if self._evernight_active else '\nMarch7thAssistant'
+        self.galleryLabel.setText(title)
+
+    def setEvernightMode(self, active):
+        self._evernight_active = active
+        self.banner_image = self._evernight_banner_image if active else self._regular_banner_image
+        self.retranslateTitle()
+        self.banner = None
+        self.path = None
+        self.update()
+
     def paintEvent(self, e):
         super().paintEvent(e)
         painter = QPainter(self)
@@ -126,7 +150,8 @@ class BannerWidget(QWidget):
             img_data = np.array(cropped_img)  # Convert PIL Image to numpy array
             height, width, channels = img_data.shape
             bytes_per_line = channels * width
-            self.banner = QImage(img_data.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
+            # The cached QImage must own its pixels after the temporary numpy array is released.
+            self.banner = QImage(img_data.data, width, height, bytes_per_line, QImage.Format.Format_RGB888).copy()
 
             path = QPainterPath()
             path.addRoundedRect(0, 0, width + 50, height + 50, 10, 10)  # 10 is the radius for corners
@@ -141,6 +166,7 @@ class HomeInterface(ScrollArea):
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
+        self._evernight_active = False
         self._task_cards = []
         self.banner = BannerWidget(self)
         self.view = QWidget(self)
@@ -148,6 +174,8 @@ class HomeInterface(ScrollArea):
 
         self.__initWidget()
         self.loadSamples()
+        # Prepare the reveal before the animation starts, not at its midpoint.
+        portrait_artwork(EVERNIGHT_AVATAR, True)
 
     def __initWidget(self):
         self.view.setObjectName('view')
@@ -178,10 +206,7 @@ class HomeInterface(ScrollArea):
 
     def retranslateUi(self):
         StyleSheet.HOME_INTERFACE.apply(self)
-        title = tr('三月七小助手')
-        if cfg.ui_language_now in ('zh_CN', 'zh_TW'):
-            title += '\nMarch7thAssistant'
-        self.banner.galleryLabel.setText(title)
+        self.banner.retranslateTitle()
         actions = self.banner.menu.actions()
         actions[0].setText(tr('更换背景图片'))
         if len(actions) > 1:
@@ -190,9 +215,16 @@ class HomeInterface(ScrollArea):
         self.editButton.setText(tr('编辑'))
         self.refreshBackendTasks()
 
-    def refreshTheme(self):
-        for widget, original_icon in self._task_cards:
-            widget.iconWidget.setArtwork(*portrait_artwork(original_icon, isDarkTheme()))
+    def setEvernightMode(self, active):
+        if active != self._evernight_active:
+            self._evernight_active = active
+            self.banner.setEvernightMode(active)
+        self._refresh_task_icons()
+
+    def _refresh_task_icons(self):
+        for widget, original_icon, full_run in self._task_cards:
+            source = EVERNIGHT_AVATAR if self._evernight_active and full_run else original_icon
+            widget.iconWidget.setArtwork(*portrait_artwork(source, isDarkTheme()))
 
     def _build_card_action(self, card_data):
         """根据卡片配置数据构建动作"""
@@ -277,5 +309,6 @@ class HomeInterface(ScrollArea):
                 title=display_label(card.get("title", "")),
                 action=action
             )
-            self._task_cards.append((widget, card.get('icon', '')))
-        self.refreshTheme()
+            full_run = card.get('action_type') == 'single' and card.get('task_id', 'main') == 'main'
+            self._task_cards.append((widget, card.get('icon', ''), full_run))
+        self._refresh_task_icons()

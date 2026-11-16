@@ -8090,3 +8090,11 @@ msgstr "策略優先"
 #: app/setting_interface.py:660
 msgid "图鉴优先"
 msgstr "圖鑑優先"
+
+#: app/components/evey_animation.py:28
+msgid "忆灵「长夜」"
+msgstr "憶靈「長夜」"
+
+#: app/home_interface.py:123
+msgid "长夜月小助手"
+msgstr "長夜月小助手"

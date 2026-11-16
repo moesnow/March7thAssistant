@@ -18,8 +18,10 @@ from .workflow_interface import WorkflowInterface
 from .setting_interface import SettingInterface
 from .log_interface import LogInterface
 from .common.signal_bus import signalBus
+from .common.evernight import EvernightEasterEgg
 from .common.theme_assets import application_icon_path
 from .common.window_icon import set_application_icon
+from .components.evey_animation import EveyAnimation
 
 from .card.messagebox_custom import MessageBoxSupport
 from .tools.check_update import checkUpdate
@@ -142,6 +144,9 @@ class MainWindow(MSFluentWindow):
         self._defer_startup_checks = False  # 静默启动时推迟的启动检查（检查更新/公告）
         self.detected_update_version = None
         self.updateVersionBadge = None
+        self._evernight = EvernightEasterEgg()
+        self._evernight_active = False
+        self._evey_animation = None
 
         self.initWindow()
 
@@ -259,7 +264,10 @@ class MainWindow(MSFluentWindow):
             self.setGeometry(target_geometry)
 
     def _baseTitleBarText(self):
-        return f"March7th Assistant {cfg.version}"
+        return f"{self._assistant_name()} {cfg.version}"
+
+    def _assistant_name(self):
+        return 'Evernight Assistant' if self._evernight_active else 'March7th Assistant'
 
     def _refreshDesktopTwinBadge(self):
         """分身内的小助手在标题栏标出身份，透过分身画面也能和主桌面的小助手区分开。"""
@@ -324,9 +332,44 @@ class MainWindow(MSFluentWindow):
                 pass
 
     def _on_theme_changed(self):
-        set_application_icon(self, application_icon_path(isDarkTheme()), 'March7th Assistant')
-        self.homeInterface.refreshTheme()
+        dark = isDarkTheme()
+        if not dark and self._evey_animation is not None:
+            self._evey_animation.close()  # closed 回调按当前主题统一刷新。
+            return
+        # 首次动画到中点时替换角色，动画继续；之后随主题即时切换。
+        active = (self._evernight.unlocked and dark and self._evernight.animation_played
+                  and (self._evey_animation is None
+                       or self._evey_animation.timeline.currentValue() >= 0.5))
+        if active != self._evernight_active:
+            self._evernight_active = active
+            self.setWindowTitle(self._assistant_name())
+            self._refreshDesktopTwinIndicators()
+        set_application_icon(self, application_icon_path(dark, active), self._assistant_name())
+        self.homeInterface.setEvernightMode(active)
         self._refreshWindowTitleBar()
+        # 先让深色三月七界面重绘，再播放首次替换动画。
+        if self._evernight.unlocked and dark and not self._evernight.animation_played:
+            QTimer.singleShot(0, self._play_evey_animation)
+
+    def _on_manual_theme_toggle(self):
+        self._evernight.record_manual_toggle()
+        toggleTheme(lazy=True)
+
+    def _play_evey_animation(self):
+        if not self.isVisible() or self.isMinimized():
+            return
+        if not self._evernight.consume_animation(isDarkTheme()):
+            return
+        animation = EveyAnimation(self)
+        self._evey_animation = animation
+        animation.midpointReached.connect(self._on_theme_changed)
+        animation.closed.connect(self._on_evey_animation_closed)
+        animation.play()
+
+    def _on_evey_animation_closed(self):
+        self._evey_animation = None
+        if not self._evernight_active or not isDarkTheme():
+            self._on_theme_changed()
 
     def _on_update_version_badge_clicked(self):
         if self.detected_update_version:
@@ -380,7 +423,7 @@ class MainWindow(MSFluentWindow):
         self.navigationInterface.addWidget(
             'themeButton',
             NavigationBarPushButton(FIF.BRUSH, tr('主题'), isSelectable=False),
-            lambda: toggleTheme(lazy=True),
+            self._on_manual_theme_toggle,
             NavigationItemPosition.BOTTOM)
 
         self.navigationInterface.addWidget(
@@ -477,6 +520,8 @@ class MainWindow(MSFluentWindow):
             self._defer_startup_checks = False
             checkUpdate(self, flag=True)
             checkAnnouncement(self)
+        if self._evernight.unlocked and not self._evernight.animation_played:
+            QTimer.singleShot(0, self._play_evey_animation)
 
     def _show_main_window(self):
         """显示主界面，macOS 下确保窗口置顶"""
@@ -642,7 +687,7 @@ class MainWindow(MSFluentWindow):
             self._desktop_twin_tray_action.setText(tr("桌面分身（运行中）") if hosting else tr("桌面分身"))
         if hasattr(self, 'tray_icon'):
             self.tray_icon.setToolTip(
-                f"March7th Assistant\n{tr('桌面分身运行中')}" if hosting else 'March7th Assistant')
+                f"{self._assistant_name()}\n{tr('桌面分身运行中')}" if hosting else self._assistant_name())
             fit_menu_width(self.tray_icon.contextMenu())
         notice = self._desktop_twin_notice
         if notice is not None:
