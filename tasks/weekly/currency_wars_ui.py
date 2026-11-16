@@ -144,6 +144,10 @@ HALO_RISKS = ("熄火", "只能造成1", "变为", "无法", "献祭", "离场",
 HALO_TARGET_FACE = (930, 412, 989, 468)
 HALO_DETAIL_BUTTON = (27, 919, 262, 994)
 HALO_DETAIL_NAME = (813, 180, 1088, 225)
+MENTOR_TITLE = (780, 40, 1250, 145)
+MENTOR_PROMPT = (590, 78, 1460, 201)
+MENTOR_CONFIRM = (1250, 451, 1760, 650)
+MENTOR_CONFIRM_POINT = (1492, 493)
 TEA_RETURN = (1600, 20, 1919, 115)
 AUTO_CONTROLS = (1592, 17, 1912, 98)
 AUTO_HINT = (0, 903, 144, 1023)
@@ -212,6 +216,7 @@ class Page(Enum):
     HALO = "主角光环"
     HALO_DETAIL = "主角光环角色详情"
     HALO_REPLACE = "替换已有光环提示"
+    HALO_MENTOR = "从师"
     HALO_TIP = "重选光环提示"
     HALO_INFO = "主角光环与奇遇详情"
     TEA = "幕后茶歇"
@@ -271,7 +276,7 @@ class Frame:
     def action_context(self):
         """输入必须始终属于同一节点和同一层界面。"""
         # 独立弹层的操作只依赖弹层本身。背景节点号漏读或跳变不代表弹层已关闭。
-        if self.page in (Page.RECONNECT, Page.SVAROG_MODIFICATION):
+        if self.page in (Page.RECONNECT, Page.SVAROG_MODIFICATION, Page.HALO_MENTOR):
             return self.page, None, None
         dialog = {Page.CHOICE: "choice", Page.REVEAL: "reveal_kind"}.get(self.page)
         return self.page, self.stage, getattr(self, dialog) if dialog else None
@@ -605,6 +610,9 @@ class Frame:
             return Page.END_MATCH_CONFIRM
         if self.empty_front_confirm():
             return Page.EMPTY_FRONT
+        if self.mentor_prompt or (self.has("从师", area=MENTOR_TITLE)
+                                  and (self.mentor_confirm_label or self.mentor_needs_selection)):
+            return Page.HALO_MENTOR
         if self.svarog_modification:
             return Page.SVAROG_MODIFICATION
 
@@ -1683,6 +1691,52 @@ class Frame:
                 or self.has("尚未选择主角光环", area=(740, 864, 1170, 918))
                 or any(self.halo_effect_selected(index) for index in range(2))
         )
+
+    @cached_property
+    def mentor_prompt(self) -> Label | None:
+        return self.find("角色作为师父", area=MENTOR_PROMPT, contains=True)
+
+    @cached_property
+    def mentor_confirm_label(self) -> Label | None:
+        return self.find("确认选择", area=MENTOR_CONFIRM)
+
+    @cached_property
+    def mentor_needs_selection(self) -> bool:
+        return self.has("请选择一名角色", "请选择1名角色", area=(1230, 413, 1760, 599))
+
+    def mentor_confirm(self) -> Label | None:
+        if self.mentor_needs_selection:
+            return None
+        button = self.mentor_confirm_label or Label("确认选择", MENTOR_CONFIRM_POINT)
+        x, y = button.point
+        # 未选中时按钮也有白字，取文字两侧的底色来判断是否点亮。
+        sides = (self.crop((x - 125, y - 8, x - 57, y + 9)), self.crop((x + 57, y - 8, x + 125, y + 9)))
+        return button if all((cv2.cvtColor(side, cv2.COLOR_RGB2GRAY) >= 178).mean() > 0.55 for side in sides) else None
+
+    @cached_property
+    def mentor_candidates(self) -> tuple[Label, ...]:
+        # 候选会随名单和横向滚动移动。用名字行上方的青色卡面定位可见卡片。
+        confirm_y = (point(self.mentor_confirm_label) or MENTOR_CONFIRM_POINT)[1]
+        prompt_y = self.mentor_prompt.point[1] if self.mentor_prompt else 104
+        row = round(0.42 * prompt_y + 0.58 * confirm_y)
+        left, right = 190, 1755
+        r, g, b = self.crop((left, row - 31, right, row - 22)).astype(np.int16).transpose(2, 0, 1)
+        colored = (b > 108) & (g - r > 27) & (b - r > 40) & (10 * g > 7 * b)
+        columns = (colored.mean(axis=0) > 0.6).astype(np.uint8)
+        columns = cv2.morphologyEx(columns[None, :], cv2.MORPH_CLOSE, np.ones((1, 7), np.uint8))[0]
+        edges = np.flatnonzero(np.diff(np.r_[0, columns, 0])) + left
+        names = tuple(label for label in self.texts((left, row - 18, right, row + 18))
+                      if re.fullmatch(EMPLOYEE_NAME, label.text))
+        cards = []
+        for start, end in zip(edges[::2], edges[1::2]):
+            if end - start < 70:
+                continue
+            name = next((label.text for label in names if start <= label.point[0] < end), "候选角色")
+            cards.append(Label(name, (int((start + end) // 2), row - 68)))
+        if cards:
+            return tuple(cards)
+        return tuple(Label(label.text, (label.point[0], row - 68))
+                     for label in sorted(names, key=lambda label: label.point[0]))
 
     def tea_signature(self):
         return tuple(label.text for label in self.texts((1120, 175, 1850, 855)))

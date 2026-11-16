@@ -5754,6 +5754,160 @@ def test_halo_recovers_from_an_ambiguous_portrait_in_the_same_run(monkeypatch, w
     assert task.save_error_screenshot.call_count == (outcome in ("unavailable", "budget"))
 
 
+def mentor_dialog(candidates, *, selected=False, read_names=True, read_confirm=True):
+    image = CANVAS.copy()
+    draw = ImageDraw.Draw(image)
+    entries = [("从师", 960, 66), ("请选择1名角色作为师父，受益于其羁绊效果", 960, 103),
+               ("备战阶段", 291, 75), ("1-9", 291, 108), ("商店", 1620, 982), ("出战", 1818, 750)]
+    for name, x in candidates:
+        draw.rectangle((x - 78, 294, x + 77, 316), fill=(37, 151, 170))
+        if read_names:
+            entries.append((name, x, 331))
+    if read_confirm:
+        entries.append(("确认选择", 1492, 493))
+    draw.rectangle((1359, 477, 1625, 515), fill=(233, 227, 206) if selected else (111, 111, 111))
+    if read_confirm and not selected:
+        # 未选中时仍显示白色按钮文案，点亮与否由文字两侧的底色决定。
+        draw.rectangle((1450, 485, 1534, 501), fill=(235, 235, 235))
+    return Frame(image, labels(*entries))
+
+
+@pytest.mark.parametrize(("names", "centers", "read_names"), (
+    (("忘归人", "大丽花", "火花", "罗刹"), (605, 836, 1065, 1299), False),
+    (("火花", "绯英", "星神★阿哈", "真珠", "星期日"), (383, 637, 890, 1143, 1394), True),
+))
+def test_halo_mentor_reads_the_visible_cards_and_the_enabled_confirm(names, centers, read_names):
+    candidates = tuple(zip(names, centers))
+    frame = mentor_dialog(candidates, read_names=read_names)
+    assert frame.page == Page.HALO_MENTOR
+    assert frame.action_context == (Page.HALO_MENTOR, None, None)
+    assert tuple(card.point[0] for card in frame.mentor_candidates) == centers
+    assert tuple(card.text for card in frame.mentor_candidates) == (names if read_names else ("候选角色",) * len(names))
+    assert frame.mentor_confirm() is None
+
+    selected = mentor_dialog(candidates, selected=True, read_confirm=False)
+    assert selected.page == Page.HALO_MENTOR
+    assert ui.point(selected.mentor_confirm()) == (1492, 493)
+
+    effect = Frame(CANVAS, labels(("选择一个角色获得主角光环", 960, 90), ("从师", 420, 436),
+                                 ("使角色受益于师父的非独立羁绊效果", 420, 536)))
+    assert effect.page == Page.HALO
+
+
+@pytest.mark.parametrize("entry", ("single", "loop", "daily"))
+def test_halo_mentor_waits_through_intermediate_board_and_recovers_missing_inputs(monkeypatch, world, entry):
+    stage = "1-9"
+    choose, effect, submit, fight = (1818, 750), (420, 436), (969, 954), (1818, 750)
+    before = page(Page.BOARD, ("选择主角", *choose), stage=stage)
+    team = board(slot("front", 0, CORE), stage=stage)
+    halo = page(Page.HALO, ("从师", *effect), ("受益于其羁绊效果", 420, 537), ("乱披风拳法", 1490, 436))
+    match_halo_at(monkeypatch, (halo,), ui.HALO_TARGET)
+    transient = page(Page.BOARD, ("出战", *fight), stage=stage)
+    names = (("火花", 383), ("绯英", 637), ("星神★阿哈", 890), ("真珠", 1143), ("星期日", 1394))
+    mentor = mentor_dialog(names, read_names=False)
+    selected = mentor_dialog(names, selected=True, read_confirm=False)
+    ready = page(Page.BOARD, ("出战", *fight), stage=stage)
+    result = page(Page.MATCH_RESULT, ("对局胜利", 962, 241), ("返回货币战争", 962, 893))
+    lobby, modes, rank_page = home(), mode(("进入标准博弈", 1638, 960)), rank()
+    routes = {(lobby, (1600, 972)): modes, (modes, (1638, 960)): rank_page,
+              (rank_page, (1680, 965)): before, (before, choose): halo, (halo, effect): halo,
+              (halo, submit): transient, (ready, fight): result, (result, (962, 893)): lobby}
+    first, second = (card.point for card in mentor.mentor_candidates[:2])
+    confirm = (1492, 493)
+    reveal_at = None
+    misses = []
+    prepared = []
+
+    def prepare(frame):
+        prepared.append(frame)
+        if frame is before:
+            return world.war._enter_halo(frame, team)
+        assert frame is ready
+        return world.war._advance_board(frame, frame.board_advance)
+
+    def click(state, point):
+        nonlocal reveal_at
+        if state.frame is mentor:
+            if point == first:
+                misses.append(point)
+                return False
+            assert point == second
+            state.frame = selected
+        elif state.frame is selected:
+            assert point == confirm
+            if point not in misses:
+                misses.append(point)
+                return False
+            state.frame = ready
+        else:
+            state.frame = routes[state.frame, point]
+            if state.frame is transient:
+                reveal_at = world.now[0] + 1.2
+
+    def capture(state):
+        if state.frame is transient and world.now[0] >= reveal_at:
+            state.frame = mentor
+
+    state = drive(monkeypatch, world, lobby, click, capture)
+    monkeypatch.setattr(world.war, "_prepare", prepare)
+    monkeypatch.setattr(world.war, "get_reward", lambda f: (
+        f, (18000 if world.war.result else 15000, 18000), False))
+
+    if entry == "daily":
+        from tasks.daily import daily
+
+        monkeypatch.setattr(daily, "CurrencyWars", lambda: world.war)
+        assert daily.Daily._run_currency_wars()
+    else:
+        assert world.war.start(loop=entry == "loop")
+    assert prepared == [before, ready]
+    assert state.clicks[3:] == [(Page.BOARD, choose), (Page.HALO, effect), (Page.HALO, submit),
+                                (Page.HALO_MENTOR, first), (Page.HALO_MENTOR, second),
+                                (Page.HALO_MENTOR, confirm), (Page.HALO_MENTOR, confirm),
+                                (Page.BOARD, fight), (Page.MATCH_RESULT, (962, 893))]
+    assert state.frame is lobby and world.war.result is True
+    assert world.war._loop_matches == (1 if entry == "loop" else 0)
+
+
+def test_halo_mentor_takeover_confirms_an_existing_selection(monkeypatch, world):
+    frame = mentor_dialog((), selected=True, read_confirm=False)
+    ready = page(Page.BOARD, ("出战", 1818, 750), stage="1-9")
+    result = page(Page.MATCH_RESULT, ("对局胜利", 962, 241), ("返回货币战争", 962, 893))
+    lobby = home()
+    routes = {(frame, (1492, 493)): ready, (ready, (1818, 750)): result, (result, (962, 893)): lobby}
+    state = drive(monkeypatch, world, frame, lambda s, p: setattr(s, "frame", routes[s.frame, p]))
+    monkeypatch.setattr(world.war, "_prepare", lambda f: world.war._advance_board(f, f.board_advance))
+    monkeypatch.setattr(world.war, "get_reward", lambda f: (f, (18000, 18000), False))
+
+    assert world.war.start(resume=True)
+    assert state.clicks == [(Page.HALO_MENTOR, (1492, 493)), (Page.BOARD, (1818, 750)),
+                            (Page.MATCH_RESULT, (962, 893))]
+
+
+@pytest.mark.parametrize(("outcome", "error"), (("unavailable", task.CurrencyWarsUnavailable),
+                                                ("budget", task.CurrencyWarsBudgetExceeded),
+                                                ("stopped", RunStopRequested)))
+def test_halo_mentor_preserves_terminal_states(monkeypatch, world, outcome, error):
+    frame = mentor_dialog((("忘归人", 605), ("大丽花", 836), ("火花", 1065), ("罗刹", 1299)))
+    world.cfg.currencywars_time_limit = 1
+
+    def click(_, point):
+        assert point[0] in (605, 836, 1065)
+        if outcome == "budget":
+            world.now[0] = world.war.deadline
+        elif outcome == "stopped":
+            task.pause_ctl.checkpoint.side_effect = RunStopRequested
+        return False
+
+    state = drive(monkeypatch, world, frame, click)
+    with pytest.raises(error):
+        world.war.start(resume=True)
+    count = 3 if outcome == "unavailable" else 1
+    assert state.clicks == [(Page.HALO_MENTOR, card.point) for card in frame.mentor_candidates[:count]]
+    assert state.frame is frame
+    assert task.save_error_screenshot.call_count == (outcome != "stopped")
+
+
 @pytest.mark.parametrize("returned_gold", (13, 17))
 def test_full_bench_sale_requires_identity_price_and_empty_slot(monkeypatch, world, returned_gold):
     spare = slot("bench", 0, FILLER)

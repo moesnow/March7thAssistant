@@ -42,6 +42,7 @@ MAX_PREPARATION_FALLBACKS = 3
 DEFAULT_PREPARE_LIMIT = 30
 DEFAULT_HALO_REFRESHES = 2
 MAX_HALO_IDENTITY_RETRIES = 2
+HALO_FOLLOWUP_SECONDS = 3
 ACTION_POLL = 0.22
 CLICK_HOLD = 0.075
 BOX_HOLD = 0.20
@@ -50,7 +51,7 @@ RANK_CLICK_HOLD = 0.03
 PROMOTION_CAP_ENEMY_RANK = 28  # 入画奇航超频博弈 A4 冰钛 6
 PREP_OVERLAYS = frozenset((Page.SHOP, Page.TIMED_SHOP, Page.RAIL_SHOP, Page.BLACK_MARKET, Page.REVEAL, Page.CHOICE,
                            Page.DANCE, Page.RANGER, Page.SVAROG_MODIFICATION, Page.GARDEN, Page.HACK,
-                           Page.BENCH_FULL, Page.HALO_TIP, Page.HALO_INFO, Page.EMPTY_FRONT))
+                           Page.BENCH_FULL, Page.HALO_TIP, Page.HALO_INFO, Page.HALO_MENTOR, Page.EMPTY_FRONT))
 PLAY_PAGES = PREP_OVERLAYS | {Page.BOARD, Page.BATTLE, Page.NODE_RESULT, Page.MATCH_RESULT,
                              Page.HALO, Page.HALO_DETAIL, Page.HALO_REPLACE, Page.TEA}
 ACTIVE_PAGES = PLAY_PAGES | {Page.DETAIL, Page.PARTNER_DETAIL, Page.EQUIPMENT, Page.CONFIRM_FIGHT}
@@ -3584,9 +3585,34 @@ class CurrencyWars:
             frame, option, confirm, advanced, "主角光环点选并确认后未转场",
             can_confirm=lambda f, _: selection.same_face(f),
         )
-        if updated.page != Page.HALO_REPLACE:
+        return self._settle_halo_confirmation(updated)
+
+    def _settle_halo_confirmation(self, frame):
+        if frame.page != Page.HALO_REPLACE:
             self.halo_candidate = None
-        return updated
+        if frame.page == Page.BOARD:
+            # 授予光环后的备战画面可能只是过渡。确认已生效，静候「从师」等后续页面。
+            return self._wait(lambda f: f.page in HALO_EXIT_PAGES - {Page.BOARD},
+                              HALO_FOLLOWUP_SECONDS) or self.frame
+        return frame
+
+    def _halo_mentor(self, frame):
+        def option(f, attempt):
+            cards = f.mentor_candidates
+            return cards[attempt % len(cards)] if cards else None
+
+        def confirm(f):
+            return ui.point(f.mentor_confirm())
+
+        try:
+            return self._choose_single(
+                frame, option, confirm, lambda f: f.page == Page.BOARD and not f.halo_preview(),
+                "从师选择后未确认返回备战", seconds=6, ready_confirm=confirm,
+            )
+        except (CurrencyWarsActionUnready, CurrencyWarsReceiptTimeout) as error:
+            if self.frame.page in (Page.HALO_MENTOR, Page.UNKNOWN, Page.CONFLICT):
+                raise CurrencyWarsUnavailable(f"{error}，已保留当前现场") from error
+            raise
 
     def _inspect_halo_target(self, frame, name):
         detail = self._click_to(
@@ -4049,6 +4075,8 @@ class CurrencyWars:
         current = self._wait(advanced, 10)
         if current is not None:
             log.warning(f"操作回执延迟，已确认转到{current.page.value}：{error}")
+            if before.page == Page.HALO:
+                return self._settle_halo_confirmation(current)
         return current
 
     def _recover_play_step(self, before, error):
@@ -4232,6 +4260,8 @@ class CurrencyWars:
             return self._close_halo_detail(frame)
         if page == Page.HALO_REPLACE:
             return self._cancel_halo_replacement(frame)
+        if page == Page.HALO_MENTOR:
+            return self._halo_mentor(frame)
         if page == Page.TEA:
             return self._tea(frame)
         if page in (Page.NODE_RESULT, Page.MATCH_RESULT):
