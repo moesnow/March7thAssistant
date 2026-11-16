@@ -24,10 +24,20 @@ def adb(monkeypatch):
     ({}, "local"),
     ({"cloud_game_enable": True}, "cloud"),
     ({"control_backend": "adb", "cloud_game_enable": True}, "adb"),
-    ({"control_backend": "bogus"}, "local"),
 ])
 def test_current_backend_follows_legacy_switch_until_explicit(values, backend):
     assert service.current_backend(FakeConfig(**values)) == backend
+
+
+@pytest.mark.parametrize(("platform", "backend"), [
+    ("win32", "local"),
+    ("linux", "cloud"),
+    ("darwin", "cloud"),
+])
+def test_invalid_backend_falls_back_to_the_platform_default(monkeypatch, platform, backend):
+    """无效后端保留原配置；回退值按平台决定，非 Windows 没有本地后端。"""
+    monkeypatch.setattr(service.sys, "platform", platform)
+    assert service.current_backend(FakeConfig(control_backend="bogus")) == backend
 
 
 def test_untouched_config_needs_no_write():
