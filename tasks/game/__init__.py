@@ -54,6 +54,14 @@ class GameStartupUnavailable(InputInterrupted):
     screenshot = None
 
 
+class _LocalResolutionMismatch(RuntimeError):
+    """复核后仍读到与目标不符的窗口尺寸。"""
+
+    def __init__(self, message, resolution):
+        super().__init__(message)
+        self.resolution = resolution
+
+
 def start(headless=None, *, optimize_graphics=True, screen_ready=None):
     task_power_request.acquire(log)
     log.hr("开始运行", 0)
@@ -98,11 +106,14 @@ def _wait_for_local_foreground(controller, timeout):
 
 def _wait_for_local_resolution(controller, target, timeout):
     resolution = None
+    previous_resolution = None
     read_error = None
+    warned = False
 
     def matches():
-        nonlocal resolution, read_error
+        nonlocal resolution, previous_resolution, read_error, warned
         pause_ctl.checkpoint()
+        previous_resolution = resolution
         try:
             resolution = controller.get_resolution()
             read_error = None
@@ -114,14 +125,22 @@ def _wait_for_local_resolution(controller, target, timeout):
             return True
         if _local_game_process_running(controller) is False:
             raise GameWindowLost("检查窗口分辨率时游戏进程已退出")
+        if not warned and resolution and all(value > 0 for value in resolution):
+            log.warning(f"游戏窗口分辨率为 {resolution[0]}x{resolution[1]}，等待调整为 {target[0]}x{target[1]}")
+            warned = True
         return False
 
     ready = wait_until(matches, min(WINDOW_WAIT_SECONDS, timeout))
+    # 等待结束时再确认持续不符的尺寸，兼容用户刚刚完成的手动调整。
+    if not ready and resolution and resolution == previous_resolution:
+        ready = matches()
     pause_ctl.checkpoint()
     if ready:
         return
     if resolution and all(value > 0 for value in resolution):
         message = f"游戏窗口分辨率为 {resolution[0]}x{resolution[1]}，请在游戏设置内调整为 {target[0]}x{target[1]}"
+        if resolution == previous_resolution:
+            raise _LocalResolutionMismatch(message, resolution)
     else:
         message = "持续无法读取游戏窗口分辨率"
         if read_error is not None:
@@ -236,6 +255,7 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
         return
 
     MAX_RETRY = 3
+    resolution_restart_attempted = False
     login_attempts = 0
     credentials_started = False
     login_error = None
@@ -371,6 +391,11 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                 return process.exe()
         return None
 
+    def update_game_path(program_path):
+        if program_path and program_path != cfg.game_path:
+            cfg.set_value("game_path", program_path)
+            log.info(f"游戏路径更新成功：{program_path}")
+
     def start_local_game(starrail):
         resolution = get_ui_profile(cfg).resolution
 
@@ -455,10 +480,7 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
         else:
             check_resolution()
             if cfg.auto_set_game_path_enable:
-                program_path = get_process_path(cfg.game_process_name)
-                if program_path is not None and program_path != cfg.game_path:
-                    cfg.set_value("game_path", program_path)
-                    log.info(f"游戏路径更新成功：{program_path}")
+                update_game_path(get_process_path(cfg.game_process_name))
             time.sleep(1)
 
     cloud_disconnected = False
@@ -568,6 +590,40 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
             raise
         except (CloudGameLoginTimeoutError, TouchProfileInputError, ProfileAssetNotFoundError):
             raise
+        except _LocalResolutionMismatch as error:
+            if resolution_restart_attempted:
+                raise GameStartupUnavailable(f"尝试自动重启后，{error}，已保留游戏现场") from error
+            if retry == MAX_RETRY - 1 or not game_option_enabled(cfg, "auto_set_resolution_enable"):
+                raise GameStartupUnavailable(f"{error}，已保留游戏现场") from error
+
+            # 分辨率等待期间窗口可能已退出或最小化，关闭进程前确认当前窗口仍可操作。
+            pause_ctl.checkpoint()
+            try:
+                windows = WindowsInputApi()
+                window, problem = windows.inspect(starrail.window_name, starrail.process_name)
+                if problem is None and windows.size(window) != error.resolution:
+                    continue
+            except Exception as window_error:
+                raise GameStartupUnavailable(f"无法确认游戏窗口状态，已保留游戏现场。{window_error}") from window_error
+            pause_ctl.check_stop()
+            if problem is not None:
+                if _local_game_process_running(starrail) is False:
+                    continue
+                raise GameStartupUnavailable("重新检查分辨率时游戏窗口已不可操作，已保留游戏现场") from error
+            if cfg.auto_set_game_path_enable:
+                try:
+                    update_game_path(psutil.Process(window.pid).exe())
+                except (psutil.Error, OSError) as path_error:
+                    log.warning(f"暂未读取到当前游戏路径，沿用已配置的路径。{path_error}")
+                starrail.game_path = os.path.normpath(cfg.game_path)
+            if not os.path.isfile(starrail.game_path):
+                raise GameStartupUnavailable(f"{error}，未找到可重新启动的游戏路径，已保留游戏现场") from error
+
+            resolution_restart_attempted = True
+            log.warning(f"{error}。尝试重启游戏并自动调整分辨率")
+            pause_ctl.check_stop()
+            if starrail.stop_game() is False:
+                raise GameStartupUnavailable(f"{error}，自动调整分辨率时无法关闭游戏") from error
         except (GameRecoveryError, InputInterrupted, RunStopRequested):
             # 窗口持续最小化等需要用户处理的情况不能触发原有的“关闭游戏后重启”恢复路径；
             # 游戏进程退出（GameWindowLost）仍按普通错误重启游戏。

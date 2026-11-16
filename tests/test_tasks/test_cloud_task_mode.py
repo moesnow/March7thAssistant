@@ -1749,7 +1749,7 @@ def test_currency_wars_background_waits_for_the_existing_game_window(
     for module in (game, background_input, wait):
         monkeypatch.setattr(module, "time", clock)
     controller = MagicMock(launch_method="direct", process_name="StarRail.exe")
-    controller.get_resolution.return_value = (1920, 1080)
+    controller.get_resolution.return_value = (2560, 1440) if action == "currencywarstemp" else (1920, 1080)
     windows = MagicMock()
     windows.return_value.process_running.return_value = True
 
@@ -1806,6 +1806,8 @@ def test_currency_wars_background_waits_for_the_existing_game_window(
         state.factory.assert_not_called()
     if action != "currencywarstemp":
         windows.return_value.process_running.assert_called_with("StarRail.exe", session_id=4)
+    else:
+        controller.get_resolution.assert_not_called()
     controller.start_game_process.assert_not_called()
     controller.stop_game.assert_not_called()
     auto.click_element.assert_not_called()
@@ -1839,22 +1841,38 @@ def bind_currency_wars_local_startup(runner, state, monkeypatch, action):
 
 
 @pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "main"))
-@pytest.mark.parametrize("outcome", ("missing_once", "read_error_once", "bad_size", "unavailable", "stopped"))
+@pytest.mark.parametrize("outcome", (
+    "missing_once", "read_error_once", "manual_adjustment", "auto_resolution_disabled",
+    "optimization_disabled", "single_bad_read", "unavailable", "stopped",
+))
 def test_currency_wars_startup_rechecks_resolution_without_closing_the_window(
         runner, currency_wars_game, monkeypatch, action, outcome):
     from module.game.base import GameControllerBase
 
     state = currency_wars_game
     state.page = "board"
-    _, controller = bind_currency_wars_local_startup(runner, state, monkeypatch, action)
+    game, controller = bind_currency_wars_local_startup(runner, state, monkeypatch, action)
     controller.get_window_handle.return_value = 12
     if outcome == "missing_once":
         controller.get_window_handle.side_effect = [0, 12]
     get_rect = MagicMock(return_value=(0, 0, 1920, 1080))
     if outcome == "read_error_once":
         get_rect.side_effect = [OSError("窗口尺寸读取失败"), (0, 0, 1920, 1080)]
-    elif outcome == "bad_size":
-        get_rect.return_value = (0, 0, 1600, 900)
+    elif outcome == "manual_adjustment":
+        game.cfg.start_game_timeout = 2
+
+        def change_at_deadline(_):
+            return (0, 0, 2560, 1440) if state.now < game.WINDOW_WAIT_SECONDS else (0, 0, 1920, 1080)
+
+        get_rect.side_effect = change_at_deadline
+    elif outcome in ("auto_resolution_disabled", "optimization_disabled", "single_bad_read"):
+        get_rect.return_value = (0, 0, 2560, 1440)
+        if outcome == "auto_resolution_disabled":
+            game.cfg.auto_set_resolution_enable = False
+        elif outcome == "optimization_disabled":
+            game.cfg.game_optimization_enable = False
+        else:
+            game.cfg.start_game_timeout = 1 / 60
     elif outcome == "unavailable":
         get_rect.side_effect = OSError("窗口尺寸读取失败")
     elif outcome == "stopped":
@@ -1870,11 +1888,13 @@ def test_currency_wars_startup_rechecks_resolution_without_closing_the_window(
 
     controller.start_game_process.assert_not_called()
     controller.stop_game.assert_not_called()
-    if outcome in ("missing_once", "read_error_once"):
+    if outcome in ("missing_once", "read_error_once", "manual_adjustment"):
         assert record["status"] == (STATUS_STOPPED if action == "currencywarsloop" else "success"), record
         assert state.completed == 1
         assert state.clicks[0] == ("board", (1818, 750))
-        assert controller.get_resolution.call_count == 2
+        assert controller.get_resolution.call_count == (
+            game.WINDOW_WAIT_SECONDS + 1 if outcome == "manual_adjustment" else 2
+        )
     else:
         assert state.clicks == []
         state.factory.assert_not_called()
@@ -1884,8 +1904,131 @@ def test_currency_wars_startup_rechecks_resolution_without_closing_the_window(
         else:
             assert record["reason"] == "game_startup_unavailable"
             assert "已保留游戏现场" in record["error"]
-            assert ("1600x900" if outcome == "bad_size" else "持续无法读取游戏窗口分辨率") in record["error"]
-            assert controller.get_resolution.call_count > 1
+            expected_error = "持续无法读取游戏窗口分辨率" if outcome == "unavailable" else "2560x1440"
+            assert expected_error in record["error"]
+            if outcome == "single_bad_read":
+                controller.get_resolution.assert_called_once()
+            else:
+                assert controller.get_resolution.call_count > 1
+
+
+@pytest.mark.parametrize(("action", "outcome"), (
+    ("currencywars", "applied"),
+    ("currencywarsloop", "applied"),
+    ("main", "applied"),
+    ("currencywarsloop", "detected_path"),
+    ("currencywarsloop", "resized_before_restart"),
+    ("currencywarsloop", "still_wrong"),
+    ("currencywarsloop", "minimized"),
+    ("currencywarsloop", "missing_path"),
+    ("currencywarsloop", "stop_failed"),
+    ("currencywarsloop", "user_stop"),
+))
+def test_currency_wars_startup_restarts_once_to_apply_resolution(
+        runner, currency_wars_game, monkeypatch, tmp_path, action, outcome):
+    from tasks.game import starrailcontroller as local
+
+    state = currency_wars_game
+    game, controller = bind_currency_wars_local_startup(runner, state, monkeypatch, action)
+    game.cfg.start_game_timeout = 1
+    currency_wars.auto.input_handler.is_background = action == "currencywarsloop"
+    game_path = tmp_path / "StarRail.exe"
+    if outcome != "missing_path":
+        game_path.touch()
+    controller.game_path = str(game_path)
+    original_resolution = (2560, 1440, False)
+    registry = SimpleNamespace(resolution=original_resolution)
+    controller.screen_resolution = original_resolution[:2]
+    controller.get_resolution.return_value = original_resolution[:2]
+    monkeypatch.setattr(local, "get_game_resolution", lambda: registry.resolution, raising=False)
+    monkeypatch.setattr(local, "set_game_resolution",
+                        lambda *resolution: setattr(registry, "resolution", resolution), raising=False)
+    controller.change_resolution.side_effect = lambda *size: local.StarRailController.change_resolution(controller, *size)
+    controller.restore_resolution.side_effect = lambda: local.StarRailController.restore_resolution(controller)
+
+    if outcome == "detected_path":
+        game.cfg.auto_set_game_path_enable = True
+        game.cfg.game_path = controller.game_path = str(tmp_path / "missing.exe")
+        game.cfg.set_value = MagicMock(side_effect=lambda key, value: setattr(game.cfg, key, value))
+        process = MagicMock(return_value=SimpleNamespace(exe=lambda: str(game_path)))
+        monkeypatch.setattr(game, "psutil", SimpleNamespace(Process=process, Error=game.psutil.Error))
+
+    windows = MagicMock()
+    monkeypatch.setattr(game, "WindowsInputApi", windows)
+    monkeypatch.setattr(game, "process_session_id", lambda: 4)
+    windows.return_value.process_running.return_value = False
+
+    def inspect_window(*_):
+        if outcome == "user_stop":
+            state.stop = True
+        return SimpleNamespace(pid=123), "minimized" if outcome == "minimized" else None
+
+    def read_current_size(_):
+        if outcome == "resized_before_restart":
+            controller.get_resolution.return_value = (1920, 1080)
+        return controller.get_resolution.return_value
+
+    def stop_game():
+        if outcome == "stop_failed":
+            return False
+        controller.switch_to_game.return_value = False
+        controller.is_game_running.return_value = False
+        return True
+
+    def start_game_process():
+        assert registry.resolution == (1920, 1080, False)
+        controller.switch_to_game.return_value = True
+        controller.is_game_running.return_value = True
+        if outcome != "still_wrong":
+            controller.get_resolution.return_value = registry.resolution[:2]
+        return True
+
+    windows.return_value.inspect.side_effect = inspect_window
+    windows.return_value.size.side_effect = read_current_size
+    controller.stop_game.side_effect = stop_game
+    controller.start_game_process.side_effect = start_game_process
+
+    record = run_currency_wars_cli(runner, action)
+
+    applied = outcome in ("applied", "detected_path")
+    if applied or outcome in ("still_wrong", "stop_failed"):
+        controller.stop_game.assert_called_once_with()
+    else:
+        controller.stop_game.assert_not_called()
+    if applied or outcome == "still_wrong":
+        controller.start_game_process.assert_called_once_with()
+        controller.restore_resolution.assert_called_once_with()
+        controller.restore_auto_hdr.assert_called_once_with()
+        assert registry.resolution == original_resolution
+    else:
+        controller.start_game_process.assert_not_called()
+        controller.change_resolution.assert_not_called()
+
+    if applied or outcome == "resized_before_restart":
+        assert record["status"] == (STATUS_STOPPED if action == "currencywarsloop" else "success"), record
+        assert state.completed == 1
+        if applied:
+            currency_wars.auto.click_element.assert_called_once_with("./assets/images/screen/click_enter.png", "image", 0.9)
+        else:
+            currency_wars.auto.click_element.assert_not_called()
+        if outcome == "detected_path":
+            process.assert_called_once_with(123)
+            game.cfg.set_value.assert_called_once_with("game_path", str(game_path))
+    else:
+        assert state.clicks == []
+        state.factory.assert_not_called()
+        currency_wars.auto.click_element.assert_not_called()
+        currency_wars.auto.press_mouse.assert_not_called()
+        if outcome == "user_stop":
+            assert (record["status"], record["exit_code"]) == (STATUS_STOPPED, EXIT_STOPPED)
+        else:
+            assert (record["status"], record["reason"]) == ("failed", "game_startup_unavailable")
+            assert {
+                "still_wrong": "尝试自动重启后，游戏窗口分辨率为 2560x1440",
+                "minimized": "游戏窗口已不可操作",
+                "missing_path": "未找到可重新启动的游戏路径",
+                "stop_failed": "无法关闭游戏",
+            }[outcome] in record["error"]
 
 
 @pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "main"))
