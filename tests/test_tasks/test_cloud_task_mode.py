@@ -13,7 +13,8 @@ import pytest
 from selenium.common.exceptions import StaleElementReferenceException, TimeoutException, WebDriverException
 
 from module.config.platform import (
-    ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend, get_ui_profile, pin_game_connection,
+    InvalidGameConnection, ProfileAssetNotFoundError, TouchProfileInputError,
+    get_control_backend, get_ui_profile, pin_game_connection,
 )
 from module.game import cloud
 from module.game.adb_transport import AdbError
@@ -28,7 +29,7 @@ from tasks.weekly import currency_wars
 from tasks.weekly.currency_wars_strategy import Slot
 from tasks.weekly.currency_wars_ui import BENCH_POINTS, FRONT_Y, Frame, Label, Page
 from utils.pause import RunStopRequested
-from utils.runs import EXIT_FAILED, EXIT_OK, EXIT_STOPPED, STATUS_STOPPED, RunSession, exit_code_of
+from utils.runs import EXIT_FAILED, EXIT_OK, EXIT_STOPPED, STATUS_BLOCKED, STATUS_STOPPED, RunSession, exit_code_of
 from utils.tasks import AVAILABLE_TASKS, CLI_ONLY_TASKS, HOST_TASKS, PAUSABLE_TASKS, UNSUPPORTED_TASK, task_is_supported
 
 
@@ -38,7 +39,7 @@ def runner():
     tree = ast.parse(source.read_text(encoding="utf-8-sig"))
     functions = [node for node in tree.body if isinstance(node, ast.FunctionDef)
                  and node.name in {"_game_connection", "run_main_actions", "run_sub_task", "run_sub_task_gui", "run_sub_task_update",
-                                   "run_notify_action", "run_workflow_action", "main", "_run_action"}]
+                                   "run_notify_action", "run_workflow_action", "main", "_run_action", "_report_invalid_connection"}]
     entrypoint = next(node for node in tree.body if isinstance(node, ast.If)
                       and isinstance(node.test, ast.Compare)
                       and isinstance(node.test.left, ast.Name)
@@ -62,6 +63,7 @@ def runner():
     scope.update(get_control_backend=get_control_backend, get_ui_profile=get_ui_profile,
                  AVAILABLE_TASKS=AVAILABLE_TASKS, CLI_ONLY_TASKS=CLI_ONLY_TASKS, HOST_TASKS=HOST_TASKS,
                  UNSUPPORTED_TASK=UNSUPPORTED_TASK, task_is_supported=task_is_supported, tr=tr, AdbError=AdbError,
+                 InvalidGameConnection=InvalidGameConnection, STATUS_BLOCKED=STATUS_BLOCKED,
                  ProfileAssetNotFoundError=ProfileAssetNotFoundError,
                  TouchProfileInputError=TouchProfileInputError,
                  CurrencyWarsTerminalError=currency_wars.CurrencyWarsTerminalError,

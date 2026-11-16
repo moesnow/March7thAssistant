@@ -486,6 +486,7 @@ def settings_page(qtbot, tmp_path, monkeypatch, adb):
     for module in (settings, cards, service, switch_card):
         monkeypatch.setattr(module, "cfg", config)
     monkeypatch.setattr("module.config.cfg", config)
+    monkeypatch.setattr(settings, "read_active_run", lambda: None)
     monkeypatch.setattr(cards, "read_adb_run_status", lambda: None)
     interface = settings.SettingInterface()
     qtbot.addWidget(interface)
@@ -544,7 +545,7 @@ def test_settings_page_walks_through_adb_setup(settings_page, qtbot, adb):
     assert interface.adbStatusCard.rows["game"].value.text() == "被登录界面带回了实体屏"
 
 
-def test_connection_switch_preserves_legacy_cloud_config(settings_page, qtbot):
+def test_connection_switch_preserves_legacy_cloud_config(settings_page, qtbot, adb):
     interface, config, path = settings_page
     combo = interface.adbBackendCard.comboBox
     for mode in ("cloud", "adb", "local"):
@@ -560,6 +561,24 @@ def test_connection_switch_preserves_legacy_cloud_config(settings_page, qtbot):
         else:
             assert saved(path)["cloud_game_enable"] is False
             assert saved(path)["ui_profile"] == "pc_1080"
+
+
+def test_connection_switch_restores_local_touch_settings(settings_page):
+    from app.tools.adb_service import display_connection
+
+    interface, config, path = settings_page
+    config.set_values({"ui_profile": "touch_720"})
+    combo = interface.adbBackendCard.comboBox
+
+    combo.setCurrentIndex(combo.findData("cloud"))
+    assert saved(path)["ui_profile"] == "touch_720"
+    assert display_connection(config).ui_profile == "pc_1080"
+    assert not interface.activityEnableCard.isHidden()
+
+    combo.setCurrentIndex(combo.findData("local"))
+    assert saved(path)["ui_profile"] == "touch_720"
+    assert display_connection(config).ui_profile == "touch_720"
+    assert interface.activityEnableCard.isHidden()
 
 
 def test_opening_old_echo_plan_does_not_change_instance_type(settings_page, qtbot):

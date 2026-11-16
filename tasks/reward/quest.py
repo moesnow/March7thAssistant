@@ -6,6 +6,7 @@ from module.logger import log
 from module.ocr import ocr
 from module.screen import screen
 from tasks.base.list_drag import changed_ratio, drag_list, drag_to_edge
+from tasks.base.task_steps import FATAL_GAME_ERRORS
 from tasks.daily.tasks import Tasks
 from tasks.daily.training import (
     TARGET_ACTIVITY, DailyTrainingError, TrainingCards, can_collect, claimable_milestones, needs_action, record_progress,
@@ -90,16 +91,37 @@ class Quest(RewardTemplate):
         activity = None
         received = 0
         success = True
+        action_failed = False
+        can_claim_milestones = collect
         try:
             activity, tasks, received = Quest.scan(collect, read_tasks=complete and bool(actions))
             for index, (name, action) in enumerate(actions):
                 if not complete or not needs_action(activity, tasks):
                     break
                 if tasks.get(name):
-                    if not action():
-                        log.info(f"实训未完成：{name}")
-                        continue
                     read_more_actions = any(tasks.get(next_name) for next_name, _ in actions[index + 1:])
+                    detail = ""
+                    try:
+                        completed = action()
+                    except FATAL_GAME_ERRORS:
+                        raise
+                    except RuntimeError as error:
+                        completed = False
+                        detail = f"（{error}）"
+                    if not completed:
+                        log.warning(f"实训未完成：{name}{detail}")
+                        action_failed = True
+                        if collect or read_more_actions:
+                            try:
+                                screen.change_to("guide2", max_recursion=1)
+                            except FATAL_GAME_ERRORS:
+                                raise
+                            except RuntimeError as error:
+                                log.warning(f"实训「{name}」未完成后无法返回实训页：{error}")
+                                can_claim_milestones = False
+                                success = False
+                                break
+                        continue
                     if not collect and not read_more_actions:
                         break
                     try:
@@ -115,7 +137,7 @@ class Quest(RewardTemplate):
         if activity is not None:
             record_progress(cfg, activity)
 
-        if collect:
+        if can_claim_milestones:
             for button in claimable_milestones(auto, RECEIVE_MILESTONE, MILESTONES):
                 if not auto.click_element_with_pos(button):
                     break
@@ -124,14 +146,14 @@ class Quest(RewardTemplate):
                 if not close_item_reward():
                     break
                 time.sleep(0.5)
-            if received:
-                message = "已领取实训奖励"
-                if activity == TARGET_ACTIVITY:
-                    message = cfg.notify_template["DailyPracticeCompleted"]
-                elif activity is not None:
-                    message = f"已领取实训奖励，活跃度 {activity}/{TARGET_ACTIVITY}"
-                notify_reward(auto, message)
-        return success
+        if received:
+            message = "已领取实训奖励"
+            if activity == TARGET_ACTIVITY:
+                message = cfg.notify_template["DailyPracticeCompleted"]
+            elif activity is not None:
+                message = f"已领取实训奖励，活跃度 {activity}/{TARGET_ACTIVITY}"
+            notify_reward(auto, message)
+        return success and not (action_failed and needs_action(activity, tasks))
 
     def run(self):
         return Quest.settle()

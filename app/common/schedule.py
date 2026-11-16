@@ -112,6 +112,39 @@ def scheduled_task_payload(task) -> dict:
     return payload
 
 
+def task_launch_block_reason(command_or_task, config, *, check_saved_config=False) -> str | None:
+    """内置任务和流程共用 CLI 的支持范围，外部程序自行决定能否运行。"""
+    from module.config.platform import InvalidGameConnection, get_control_backend, get_ui_profile, read_game_connection_config
+    from module.localization import tr
+    from utils.tasks import TASK_NAMES, UNSUPPORTED_TASK, task_is_supported
+
+    if isinstance(command_or_task, dict):
+        program = str(command_or_task.get('program', '')).strip().lower()
+        if program == 'self':
+            task_id = str(command_or_task.get('args', '') or '')
+            name = command_or_task.get('name') or tr(TASK_NAMES.get(task_id, task_id))
+        elif program == 'workflow':
+            task_id = 'workflow'
+            name = command_or_task.get('name') or command_or_task.get('workflow_name') or command_or_task.get('args')
+        else:
+            return None
+    else:
+        task_id = str(command_or_task)
+        name = tr(TASK_NAMES.get(task_id, task_id))
+
+    name = name or tr('未命名')
+    try:
+        if check_saved_config:
+            config = read_game_connection_config(config)
+        get_control_backend(config)
+        get_ui_profile(config)
+        if task_is_supported(task_id, config):
+            return None
+    except InvalidGameConnection as error:
+        return f"{tr('未执行')}（{name}）：{error}"
+    return f"{tr(UNSUPPORTED_TASK)}（{name}）"
+
+
 def find_scheduled_task(task, tasks) -> int:
     task_id = task.get('id')
     if task_id:

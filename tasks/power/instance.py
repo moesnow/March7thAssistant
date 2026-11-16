@@ -33,6 +33,7 @@ FIGHT_AGAIN = "./assets/images/zh_CN/fight/fight_again.png"
 FIGHT_FAIL = "./assets/images/zh_CN/fight/fight_fail.png"
 FIGHT_EXIT = "./assets/images/zh_CN/fight/fight_exit.png"
 PAUSE = "./assets/images/purefiction/battle_pause.png"
+AUTO_DISABLED = "./assets/images/share/base/not_auto.png"
 MAX_START_CLICKS = 5
 MAX_RECONNECTS = 3
 
@@ -82,11 +83,29 @@ class Instance:
             instance_name = get_raw_instance_names()[instance_type][instance_name].replace("2", "")
         title = ((591 / 1920, 98 / 1080, 594 / 1920, 393 / 1080) if is_ornament
                  else (1172 / 1920, 5 / 1080, 742 / 1920, 636 / 1080))
+        entry_prompts = (("不再弹出", "是否切换", "是否传送") if instance_type == ECHO
+                         else ("是否切换", "是否传送", "不再弹出"))
+        echo_checkbox_attempted = False
 
         def ready():
+            nonlocal echo_checkbox_attempted
             if auto.find_element(instance_name, "text", include=True, crop=title):
                 return True
-            if auto.find_element(("是否切换", "是否传送", "不再弹出"), "text", include=True, crop=DIALOG):
+            popup = auto.find_element(entry_prompts, "text", include=True, crop=DIALOG)
+            if not popup:
+                return False
+            if instance_type == ECHO and auto.matched_text == "不再弹出":
+                if not echo_checkbox_attempted:
+                    echo_checkbox_attempted = True
+                    if not auto.click_element_with_pos(popup):
+                        log.warning("未能勾选历战余响的不再弹出，继续确认剧情提示")
+                    time.sleep(0.5)
+                confirm = auto.find_element(CONFIRM, "image", 0.9)
+                if confirm:
+                    auto.click_element_with_pos(confirm)
+                else:
+                    auto.click_element("确认", "text", include=True, crop=DIALOG)
+            else:
                 auto.click_element(CONFIRM, "image", 0.9)
             return False
 
@@ -111,7 +130,7 @@ class Instance:
         if not plus:
             if instance_type == ECHO:
                 return 1
-            raise PowerError("未找到增加连续挑战次数的按钮")
+            raise ChallengePageUnavailable("未找到增加连续挑战次数的按钮")
         for _ in range(requested - 1):
             if not auto.click_element_with_pos(plus):
                 raise PowerError("无法调整连续挑战次数")
@@ -187,16 +206,16 @@ class Instance:
         else:
             if not auto.click_element("挑战", "text", crop=CHALLENGE, max_retries=5, retry_delay=0.35):
                 Instance.check_popup()
-                raise PowerError("未找到副本的挑战按钮")
+                raise ChallengePageUnavailable("未找到副本的挑战按钮")
             if practice:
                 Instance._confirm_practice()
             start_button = auto.find_element("开始挑战", "text", crop=CHALLENGE, max_retries=12, retry_delay=0.3)
             if not start_button:
                 Instance.check_popup()
-                raise PowerError("未进入副本编队")
+                raise ChallengePageUnavailable("未进入副本编队")
             if cfg.instance_team_enable and not world_team:
                 if not Instance._select_instance_team(Instance.get_target_team(instance_type, name)):
-                    # 有些 PC 编队页只给临时队伍。退出后沿用主世界切队，重进并重新核算费用。
+                    # 有些 PC 编队页只给临时队伍。退出后沿用主世界切队。
                     raise TeamPresetUnavailable("编队页未找到配置的预设队伍")
                 start_button = None
 
@@ -215,7 +234,7 @@ class Instance:
             button = auto.find_element("开始挑战", "text", crop=CHALLENGE, max_retries=5, retry_delay=0.35)
         if not button:
             Instance.check_popup()
-            raise PowerError("无法开始挑战")
+            raise ChallengePageUnavailable("未找到开始挑战按钮")
 
         popups = INSTANCE_POPUPS + ("连接中断",)
         if ornament:
@@ -333,23 +352,30 @@ class Instance:
                         auto.click_element(CONFIRM, "image", 0.9, take_screenshot=False)
                     time.sleep(5)
                     continue
+            if result_visible:
+                time.sleep(0.55)
+                continue
+
             pause = auto.find_element(PAUSE, "image", 0.88, crop=(0.95, 0, 0.05, 0.09), scale_range=(0.65, 1.05))
+            controls_due = now >= next_controls and game_option_enabled(cfg, "auto_battle_detect_enable")
+            disabled_auto = controls_due and auto.find_element(
+                AUTO_DISABLED, "image", 0.9, crop=(0, 903 / 1080, 144 / 1920, 120 / 1080),
+            )
             speed_visible = False
-            if awaiting_repeat and not result_visible and not pause:
+            if not in_battle and not pause and not disabled_auto:
                 try:
                     speed_visible = battle_speed_visible(auto)
                 except FATAL_GAME_ERRORS:
                     raise
                 except RuntimeError as error:
                     log.warning(f"暂时无法识别战斗倍速控件：{error}")
-            if pause or speed_visible:
+            if pause or disabled_auto or speed_visible:
                 if not in_battle:
                     log.info("进入战斗")
                     in_battle = True
                     deadline = now + BATTLE_TIMEOUT
-                if now >= next_controls and game_option_enabled(cfg, "auto_battle_detect_enable"):
-                    if auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9,
-                                         crop=(0, 903 / 1080, 144 / 1920, 120 / 1080)):
+                if controls_due:
+                    if disabled_auto:
                         auto.press_key(cfg.get_value("hotkey_auto_battle", "v"))
                     if not speed_visible:
                         try:
@@ -387,3 +413,7 @@ class Instance:
 
 class TeamPresetUnavailable(PowerError):
     """当前编队界面不提供所选预设。"""
+
+
+class ChallengePageUnavailable(PowerError):
+    """进入副本后未找到开打前所需的界面，尚未发起战斗。"""

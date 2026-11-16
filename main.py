@@ -152,10 +152,10 @@ def parse_args():
     # 处理 --list 参数
     if args.list:
         from module.localization import load_language
-        from utils.tasks import supported_tasks, task_display_names
+        from utils.tasks import task_display_names, tasks_for_listing
 
         load_language()
-        names = task_display_names(supported_tasks(include_cli=True))
+        names = task_display_names(tasks_for_listing(include_cli=True))
         if args.json:
             import json
             print(json.dumps([{"id": task_id, "name": name} for task_id, name in names.items()], ensure_ascii=True))
@@ -262,12 +262,15 @@ if sys.platform == 'win32':
 
         with patch.dict(os.environ, {"MARCH7TH_CONFIG_READONLY": "1"}):
             from module.config import cfg
-            from module.config.platform import get_control_backend
+            from module.config.platform import InvalidGameConnection, get_control_backend, get_ui_profile
 
         requested = "workflow" if args.workflow_name else args.task or "main"
-        requires_admin = task_is_supported(requested, cfg) and not (
-            requested == "screen_test" and get_control_backend(cfg) == "adb"
-        )
+        try:
+            backend = get_control_backend(cfg)
+            get_ui_profile(cfg)
+            requires_admin = task_is_supported(requested, cfg) and not (requested == "screen_test" and backend == "adb")
+        except InvalidGameConnection:
+            requires_admin = False  # 由运行记录入口报告无效配置，无需提权。
     # 带 --run-id 的是入口转交出来的管理员进程：即使没拿到管理员权限也不能再转交一次，否则会不断重复启动自己
     if requires_admin and not is_user_admin() and not args.run_id:
         # 未提权（终端、脚本或 AI Agent 通过 m7a.exe 调用，或源码运行）：把任务交给管理员进程执行，
@@ -283,7 +286,7 @@ if args.minimize_console:
 from utils.cli_entry import read_version
 from utils.console import is_gui_started, is_docker_started, is_non_interactive
 from utils.runs import (RunSession, EXIT_OK, EXIT_FAILED, EXIT_FIRST_RUN_REQUIRED, EXIT_BUSY, EXIT_ELEVATION_FAILED,
-                        EXIT_STOPPED, STATUS_INTERRUPTED, STATUS_STOPPED, LOCK_BUSY, LOCK_FORCED, LOCK_UNAVAILABLE,
+                        EXIT_STOPPED, STATUS_BLOCKED, STATUS_INTERRUPTED, STATUS_STOPPED, LOCK_BUSY, LOCK_FORCED, LOCK_UNAVAILABLE,
                         INVOKER_DESKTOP_TWIN, describe_run, exit_code_of)
 
 
@@ -328,8 +331,24 @@ if sys.platform == 'win32' and requires_admin and not is_user_admin():
 
 from module.config import cfg
 from module.config.platform import (
-    ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend, get_ui_profile, pin_game_connection,
+    InvalidGameConnection, ProfileAssetNotFoundError, TouchProfileInputError,
+    get_control_backend, get_ui_profile, pin_game_connection,
 )
+
+
+def _report_invalid_connection(error):
+    print(str(error), file=sys.stderr, flush=True)
+    run_session.note(status=STATUS_BLOCKED, reason="invalid_game_connection", error=str(error))
+
+
+try:
+    get_control_backend(cfg)
+    get_ui_profile(cfg)
+except InvalidGameConnection as error:
+    _report_invalid_connection(error)
+    run_session.finish(EXIT_FAILED)
+    sys.exit(EXIT_FAILED)
+
 from module.logger import log
 import logging
 logging.getLogger("March7thAssistant").addHandler(run_session.error_log_handler())
@@ -864,6 +883,9 @@ if __name__ == "__main__":
             release_input()
             run_session.note(error=str(error), reason="cloud_game_paid_time_exhausted")
             notif.flush_batch()
+            sys.exit(EXIT_FAILED)
+        except InvalidGameConnection as error:
+            _report_invalid_connection(error)
             sys.exit(EXIT_FAILED)
         except (AdbError, ProfileAssetNotFoundError, TouchProfileInputError) as e:
             release_input()
