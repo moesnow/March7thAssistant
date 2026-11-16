@@ -8403,7 +8403,6 @@ msgstr ""
 msgid "确认合并"
 msgstr "Confirm merge"
 
-
 #: app/warp_interface.py:142
 msgid "选择导入方式"
 msgstr "Choose import method"
@@ -8503,3 +8502,12 @@ msgstr "Time limit"
 #: app/setting_interface.py:616
 msgid "单次运行的分钟数，0 表示不限时"
 msgstr "Minutes per run; 0 means no limit"
+
+#: app/setting_interface.py:2658
+msgid "GitHub Token"
+msgstr "GitHub Token"
+
+#: module/update/version_check.py:374
+msgid "读取 GitHub Releases 页面失败（GitHub API 返回 HTTP 403）"
+msgstr ""
+"Could not load the GitHub Releases page (GitHub API returned HTTP 403)"

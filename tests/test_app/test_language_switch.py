@@ -159,6 +159,27 @@ def switch_language(qtbot, window, language):
     assert localization.get_current_language() == language
 
 
+def test_github_token_is_the_last_update_source_card_and_edits_as_password(window, monkeypatch):
+    from app.card.messagebox_custom import MessageBoxEdit
+    from module.config import cfg
+
+    setting = window.settingInterface
+    card = setting.githubTokenCard
+    children = setting.updateSourceCard.viewLayout
+    assert children.itemAt(children.count() - 1).widget() is card
+    assert card.contentLabel.text() == ""
+
+    def edit(dialog):
+        assert dialog.lineEdit.echoMode() == dialog.lineEdit.EchoMode.Password
+        dialog.lineEdit.setText("  test-token  ")
+        return True
+
+    monkeypatch.setattr(MessageBoxEdit, "exec", edit)
+    card.button.click()
+    cfg.set_value.assert_called_with("github_token", "test-token")
+    assert card.contentLabel.text() == ""
+
+
 def test_actual_language_combo_keeps_settings_tab_scroll_and_expansion(window, qtbot, monkeypatch):
     from qfluentwidgets import qrouter
     window.stackedWidget.setAnimationEnabled(False)

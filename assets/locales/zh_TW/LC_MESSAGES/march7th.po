@@ -7998,7 +7998,6 @@ msgstr ""
 msgid "确认合并"
 msgstr "確認合併"
 
-
 #: app/warp_interface.py:142
 msgid "选择导入方式"
 msgstr "選擇匯入方式"
@@ -8094,3 +8093,11 @@ msgstr "總時限"
 #: app/setting_interface.py:616
 msgid "单次运行的分钟数，0 表示不限时"
 msgstr "單次執行的分鐘數，0 表示不限時"
+
+#: app/setting_interface.py:2658
+msgid "GitHub Token"
+msgstr "GitHub Token"
+
+#: module/update/version_check.py:374
+msgid "读取 GitHub Releases 页面失败（GitHub API 返回 HTTP 403）"
+msgstr "讀取 GitHub Releases 頁面失敗（GitHub API 傳回 HTTP 403）"

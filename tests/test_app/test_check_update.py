@@ -118,6 +118,7 @@ def test_public_beta_empty_response_reports_correct_gui_status(monkeypatch, reco
     monkeypatch.setattr(version_check, "get_local_version", lambda: config.version)
     monkeypatch.setattr(version_check, "get_update_download_requests_proxies", lambda: None)
     monkeypatch.setattr(version_check, "get_update_requests_proxy_description", lambda: "")
+    monkeypatch.setattr(version_check, "get_github_api_auth_headers", lambda: {})
     monkeypatch.setattr(version_check, "_find_fastest_api", lambda urls, **kwargs: urls[1])
     release = {"tag_name": "v2026.10.23-beta1", "body": "- 公测更新说明",
                "assets": [{"browser_download_url": "https://example.com/app_full.zip"}]}
@@ -144,3 +145,26 @@ def test_public_beta_empty_response_reports_correct_gui_status(monkeypatch, reco
         assert statuses == [UpdateStatus.FAILURE]
         assert "更新接口未返回有效版本信息" in thread.error_msg
         mirror.assert_not_called()
+
+
+def test_gui_reports_api_403_when_releases_page_is_unavailable(monkeypatch):
+    config = Mock(update_source="GitHub", mirrorchyan_cdk="", update_prerelease_enable=False,
+                  update_full_enable=True, version="v2026.11.8")
+    monkeypatch.setattr(check_update, "cfg", config)
+    monkeypatch.setattr(version_check, "get_local_version", lambda: config.version)
+    monkeypatch.setattr(version_check, "get_update_download_requests_proxies", lambda: None)
+    monkeypatch.setattr(version_check, "get_update_requests_proxy_description", lambda: "")
+    monkeypatch.setattr(version_check, "get_github_api_auth_headers", lambda: {})
+    monkeypatch.setattr(version_check, "_find_fastest_api", lambda urls, **kwargs: urls[0])
+    get = Mock(side_effect=[Mock(status_code=403), Mock(status_code=503)])
+    monkeypatch.setattr(version_check.requests, "get", get)
+
+    thread = check_update.UpdateThread(5, False)
+    statuses = []
+    thread.updateSignal.connect(statuses.append)
+    thread.run()
+
+    assert statuses == [UpdateStatus.FAILURE]
+    assert "HTTP 403" in thread.error_msg
+    assert "HTTP 503" in thread.error_msg
+    assert get.call_count == 2
