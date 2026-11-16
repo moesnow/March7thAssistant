@@ -8503,3 +8503,7 @@ msgstr "Time limit"
 #: app/setting_interface.py:616
 msgid "单次运行的分钟数，0 表示不限时"
 msgstr "Minutes per run; 0 means no limit"
+
+#: app/tools/desktop_twin.py:713
+msgid "查看排查方法"
+msgstr "Troubleshooting"

@@ -8175,3 +8175,7 @@ msgstr "制限時間"
 #: app/setting_interface.py:616
 msgid "单次运行的分钟数，0 表示不限时"
 msgstr "1 回の実行時間（分）。0 で無制限"
+
+#: app/tools/desktop_twin.py:713
+msgid "查看排查方法"
+msgstr "対処方法を見る"
