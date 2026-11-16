@@ -8,7 +8,7 @@ from module.screen import screen
 from tasks.base.list_drag import changed_ratio, drag_list, drag_to_edge
 from tasks.daily.tasks import Tasks
 from tasks.daily.training import (
-    TARGET_ACTIVITY, DailyTrainingError, TrainingCards, can_collect, needs_action, record_progress,
+    TARGET_ACTIVITY, DailyTrainingError, TrainingCards, can_collect, claimable_milestones, needs_action, record_progress,
 )
 from tasks.power.readout import read_number
 from tasks.reward.receipt import close_item_reward, confirm_item_reward, notify_reward
@@ -18,7 +18,7 @@ from .rewardtemplate import RewardTemplate
 ACTIVITY = (304 / 1920, 333 / 1080, 78 / 1920, 46 / 1080)
 CARDS = (275 / 1920, 399 / 1080, 1380 / 1920, 490 / 1080)
 BUTTONS = (277 / 1920, 775 / 1080, 1378 / 1920, 112 / 1080)
-MILESTONES = (594 / 1920, 268 / 1080, 1065 / 1920, 107 / 1080)
+MILESTONES = (415 / 1920, 270 / 1080, 1252 / 1920, 114 / 1080)
 RECEIVE_CARD = "./assets/images/zh_CN/reward/quest/receive.png"
 RECEIVE_MILESTONE = "./assets/images/share/reward/quest/gift.png"
 LEFT = (455 / 1920, 628 / 1080)
@@ -116,8 +116,8 @@ class Quest(RewardTemplate):
             record_progress(cfg, activity)
 
         if collect:
-            for _ in range(5):
-                if not auto.click_element(RECEIVE_MILESTONE, "image", 0.90, crop=MILESTONES):
+            for button in claimable_milestones(auto, RECEIVE_MILESTONE, MILESTONES):
+                if not auto.click_element_with_pos(button):
                     break
                 confirm_item_reward("实训档位奖励")
                 received += 1

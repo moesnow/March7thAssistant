@@ -15,7 +15,7 @@ from tasks.base.task_steps import FATAL_GAME_ERRORS
 from tasks.daily.tasks import Tasks
 from tasks.daily.training import (
     TARGET_ACTIVITY, MATERIAL_TASK, SUPPORT_TASK, DailyTrainingError, TrainingCards,
-    can_collect, can_complete, needs_action, record_progress,
+    can_collect, can_complete, claimable_milestones, needs_action, record_progress,
 )
 from tasks.power.policy import SupportDemand
 from tasks.reward.receipt import notify_reward
@@ -27,8 +27,9 @@ ACTIVITY_STEP = 100
 ACTIVITY_CROP = (213 / 1920, 311 / 1080, 90 / 1920, 50 / 1080)
 CARDS_CROP = (179 / 1920, 386 / 1080, 1573 / 1920, 549 / 1080)
 CARD_BUTTONS_CROP = (179 / 1920, 822 / 1080, 1573 / 1920, 89 / 1080)
-MILESTONE_X = (594, 871.5, 1147.5, 1425, 1701)
 MILESTONE_POINTS = range(ACTIVITY_STEP, MAX_ACTIVITY + 1, ACTIVITY_STEP)
+MILESTONES = (551 / 1920, 237 / 1080, 1193 / 1920, 84 / 1080)
+RECEIVE_MILESTONE = f"{IMAGE_ROOT}/milestone_ready.png"
 REWARD_POPUP = "./assets/touch_720/images/screen/item_reward.png"
 REWARD_POPUP_CROP = (895 / 1920, 75 / 1080, 130 / 1920, 132 / 1080)
 REWARD_CLOSE_CROP = (960 / 1920, 854 / 1080, 0, 0)
@@ -122,27 +123,23 @@ def scan_cards(activity, collect, *, read_tasks=True):
     return activity, available, claimed, TrainingCards(tasks.daily_tasks, sum(tasks.claimable.values()))
 
 
-def claimable_milestones(activity):
-    """只查下一档可领取图标。游戏可能在一次点击中领完多档。"""
-    for points, x in zip(MILESTONE_POINTS, MILESTONE_X):
-        if points > activity:
-            break
-        crop = ((x - 43) / 1920, 237 / 1080, 86 / 1920, 84 / 1080)
-        button = auto.find_element(f"{IMAGE_ROOT}/milestone_ready.png", "image", 0.9, crop=crop)
-        if button:
-            yield points, button
-
-
-def click_milestone(points, button):
+def click_milestone(button):
     if not auto.click_element_with_pos(button):
-        raise DailyTrainingError(f"{points} 档礼盒无法点击")
+        raise DailyTrainingError("实训档位礼盒无法点击")
     if not auto.find_element(REWARD_POPUP, "image", 0.9, max_retries=8, retry_delay=0.3, crop=REWARD_POPUP_CROP):
-        raise DailyTrainingError(f"点击 {points} 档礼盒后，未找到「获得物品」弹窗")
-    log.info(f"已领取 {points} 档礼盒")
+        raise DailyTrainingError("点击实训档位礼盒后，未找到「获得物品」弹窗")
+    log.info("已领取实训档位奖励")
     if not auto.click_element(REWARD_CLOSE_CROP, "crop"):
         log.warning("已确认实训档位奖励到账，获得物品弹窗仍未关闭")
         return False
     time.sleep(0.6)
+    try:
+        screen.wait_for_screen_change("guide2", max_recursion=0)
+    except FATAL_GAME_ERRORS:
+        raise
+    except RuntimeError as error:
+        log.warning(f"已确认档位奖励到账，后续档位待检查：{error}")
+        return False
     return True
 
 
@@ -203,22 +200,12 @@ def run(*, complete_training=False, on_summary=None, full_run=False):
             record_progress(cfg, activity)
 
         if collect:
-            last_threshold = activity if success else MAX_ACTIVITY
             try:
-                for points, button in claimable_milestones(last_threshold):
-                    closed = click_milestone(points, button)
+                for button in claimable_milestones(auto, RECEIVE_MILESTONE, MILESTONES):
+                    closed = click_milestone(button)
                     received += 1
                     if not closed:
                         break
-                    if points < last_threshold:
-                        # 确认弹窗已退出，再看下一档，避免点击被遮挡的礼盒。
-                        try:
-                            screen.wait_for_screen_change("guide2", max_recursion=0)
-                        except FATAL_GAME_ERRORS:
-                            raise
-                        except RuntimeError as error:
-                            log.warning(f"已确认档位奖励到账，后续档位待检查：{error}")
-                            break
             except DailyTrainingError as error:
                 log.error(f"实训档位奖励：{error}")
                 success = False

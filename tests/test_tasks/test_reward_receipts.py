@@ -305,7 +305,7 @@ def test_pc_training_does_not_rescan_after_the_last_action_when_collection_is_di
 
 def test_pc_training_reports_pending_claim_failure_without_repeating_the_completed_action(monkeypatch):
     monkeypatch.setattr(quest, "cfg", SimpleNamespace(reward_enable=True, reward_quest_enable=True))
-    monkeypatch.setattr(quest, "auto", Mock(click_element=Mock(return_value=False)))
+    monkeypatch.setattr(quest, "auto", Mock(find_element=Mock(return_value=None)))
     scan = Mock(side_effect=[(400, {"拍照1次": True}, 0), quest.DailyTrainingError("任务卡片领取按钮无法点击")])
     monkeypatch.setattr(quest.Quest, "scan", scan)
     photo = Mock(return_value=True)
@@ -389,20 +389,18 @@ def test_training_collects_visible_milestones_without_card_name_ocr(monkeypatch,
     monkeypatch.setattr(module, "notify_reward", notify)
     badge = Mock(side_effect=daily.DailyTrainingError("未识别活跃度")) if missing_badge else Mock(return_value=100)
 
-    if touch:
-        milestone = Mock(side_effect=[BUTTON] + [None] * 4)
-        def find_element(target, *_args, **_kwargs):
-            if target.endswith("milestone_ready.png"):
-                return milestone()
-            return BUTTON if target == daily.REWARD_POPUP else None
+    milestone = Mock(side_effect=[BUTTON, None])
 
-        auto.find_element.side_effect = find_element
+    def find_element(target, *_args, **_kwargs):
+        if target == module.RECEIVE_MILESTONE:
+            return milestone()
+        return BUTTON if touch and target == daily.REWARD_POPUP else None
+
+    auto.find_element.side_effect = find_element
+    if touch:
         monkeypatch.setattr(daily, "read_activity", badge)
         assert daily.run() is not missing_badge
-        auto.click_element_with_pos.assert_called_once_with(BUTTON)
     else:
-        auto.find_element.return_value = None
-        auto.click_element.side_effect = [True, False]
         monkeypatch.setattr(quest.Quest, "activity", badge)
         claim = Mock()
         monkeypatch.setattr(quest, "confirm_item_reward", claim)
@@ -410,8 +408,51 @@ def test_training_collects_visible_milestones_without_card_name_ocr(monkeypatch,
         assert quest.Quest.settle() is not missing_badge
         claim.assert_called_once_with("实训档位奖励")
 
+    auto.click_element_with_pos.assert_called_once_with(BUTTON)
     ocr.recognize_multi_lines.assert_not_called()
     notify.assert_called_once()
+
+
+@pytest.mark.parametrize("touch, expected_crop", [
+    (False, (415 / 1920, 270 / 1080, 1252 / 1920, 114 / 1080)),
+    (True, (551 / 1920, 237 / 1080, 1193 / 1920, 84 / 1080)),
+])
+def test_training_waits_for_initial_milestone_after_activity_is_full(monkeypatch, touch, expected_crop):
+    module = daily if touch else quest
+    frames = iter([None, None, BUTTON, None])
+    budgets = []
+
+    def find(target, kind, threshold, *, max_retries, crop, **_kwargs):
+        if touch and target == daily.REWARD_POPUP:
+            return BUTTON
+        assert (target, kind, threshold) == (module.RECEIVE_MILESTONE, "image", 0.9)
+        assert crop == expected_crop
+        budgets.append(max_retries)
+        return next((button for _ in range(max_retries) if (button := next(frames, None))), None)
+
+    auto = Mock(find_element=Mock(side_effect=find), click_element_with_pos=Mock(return_value=True))
+    cfg = SimpleNamespace(reward_enable=True, reward_quest_enable=True, save_timestamp=Mock(),
+                          notify_template={"DailyPracticeCompleted": "每日实训已完成"})
+    monkeypatch.setattr(module, "auto", auto)
+    monkeypatch.setattr(module, "cfg", cfg)
+    monkeypatch.setattr(module, "screen", Mock())
+    monkeypatch.setattr(module, "time", SimpleNamespace(sleep=Mock()))
+    monkeypatch.setattr(module, "notify_reward", Mock())
+    if touch:
+        monkeypatch.setattr(daily, "read_activity", Mock(return_value=500))
+        assert daily.run()
+        auto.click_element.assert_called_once_with(daily.REWARD_CLOSE_CROP, "crop")
+    else:
+        claim = Mock()
+        monkeypatch.setattr(quest.Quest, "activity", Mock(return_value=500))
+        monkeypatch.setattr(quest, "confirm_item_reward", claim)
+        monkeypatch.setattr(quest, "close_item_reward", Mock(return_value=True))
+        assert quest.Quest.settle()
+        claim.assert_called_once_with("实训档位奖励")
+
+    assert budgets == [10, 1]
+    auto.click_element_with_pos.assert_called_once_with(BUTTON)
+    cfg.save_timestamp.assert_called_once_with("last_run_timestamp")
 
 
 def test_touch_synthesis_preserves_confirmed_result_when_popup_does_not_close(monkeypatch):
@@ -429,9 +470,11 @@ def test_touch_synthesis_preserves_confirmed_result_when_popup_does_not_close(mo
     auto.click_element.assert_called_with(daily.REWARD_CLOSE_CROP, "crop")
 
 
-def test_touch_training_preserves_confirmed_milestone_when_page_return_fails(monkeypatch):
+@pytest.mark.parametrize("close_sent", [False, True])
+def test_touch_training_preserves_confirmed_milestone_when_popup_does_not_close(monkeypatch, close_sent):
     auto = Mock()
     auto.find_element.side_effect = [BUTTON, BUTTON]
+    auto.click_element.return_value = close_sent
     screen = Mock()
     screen.wait_for_screen_change.side_effect = RuntimeError("返回实训超时")
     notify = Mock()
@@ -446,7 +489,7 @@ def test_touch_training_preserves_confirmed_milestone_when_page_return_fails(mon
     assert daily.run()
 
     auto.click_element_with_pos.assert_called_once_with(BUTTON)
-    screen.wait_for_screen_change.assert_called_once_with("guide2", max_recursion=0)
+    assert screen.wait_for_screen_change.call_count == int(close_sent)
     notify.assert_called_once_with(auto, "已领取实训奖励，活跃度 200/500", crop=daily.REWARD_REPORT_CROP)
 
 
