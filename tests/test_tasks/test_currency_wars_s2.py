@@ -1252,7 +1252,7 @@ def test_default_opening_fills_the_empty_front_before_fighting(monkeypatch, worl
 
 
 @pytest.mark.parametrize("outcome", (
-    "single", "weekly", "loop", "reconnect", "late_front", "limit", "no_settlement", "stopped", "timeout",
+    "single", "weekly", "loop", "reconnect", "late_front", "later_board", "limit", "no_settlement", "stopped", "timeout",
 ))
 def test_default_opening_restart_settles_once_and_plays_the_new_match(monkeypatch, world, outcome):
     world.cfg.currencywars_strategy = policy.DEFAULT_STRATEGY
@@ -1263,14 +1263,14 @@ def test_default_opening_restart_settles_once_and_plays_the_new_match(monkeypatc
 
     def preparation(team):
         frame = page(Page.BOARD, ("商店", *shop_button), ("出战", *fight_button),
-                     stage=stage, capacity=(team.used, team.capacity), gold=team.gold)
+                     stage=team.stage, capacity=(team.used, team.capacity), gold=team.gold)
         frame.slots = lambda: team.slots
         frame.field_slots = lambda: tuple(s for s in team.slots if s.zone != "bench")
         frame.deployed_copy = lambda *_: None
         return frame
 
     empty_team = board(slot("front", 0), slot("back", 0), slot("bench", 0, BAILU), slot("bench", 1),
-                       stage=stage, used=0, gold=3)
+                       stage="2-3" if outcome == "later_board" else stage, used=0, gold=3)
     ready_team = board(slot("front", 0, CORE), slot("back", 0), slot("bench", 0), slot("bench", 1),
                        stage=stage, used=1, gold=3)
     blocked, ready = preparation(empty_team), preparation(ready_team)
@@ -1322,6 +1322,15 @@ def test_default_opening_restart_settles_once_and_plays_the_new_match(monkeypatc
                         lambda f, **_: (f, empty_team if f is blocked else ready_team))
     monkeypatch.setattr(world.war, "_gather", lambda f: f)
     monkeypatch.setattr(world.war, "_equip", lambda f, _: f)
+    if outcome == "later_board":
+        prepare = world.war._prepare
+
+        def stuck_preparation(f):
+            if f is blocked:
+                raise task.CurrencyWarsActionUnready("无法完成备战")
+            return prepare(f)
+
+        monkeypatch.setattr(world.war, "_prepare", stuck_preparation)
     on_result = Mock()
     monkeypatch.setattr(world.war, "_on_match_result", on_result)
     reward_checks = []
@@ -3433,11 +3442,12 @@ def test_takeover_bounds_unplayable_preparation_and_keeps_the_board(monkeypatch,
     monkeypatch.setattr(task, "TASK_SECONDS", 25)
     state = drive(monkeypatch, world, initial)
 
-    with pytest.raises(task.CurrencyWarsUnavailable, match="1-1.*仍无法完成备战并推进"):
+    with pytest.raises(task.CurrencyWarsUnavailable, match="1-1.*重开未完成"):
         world.war.start(resume=True)
 
     assert world.now[0] < task.TASK_SECONDS
-    assert state.frame is initial and not state.clicks and not state.keys
+    assert state.frame is initial and not state.clicks
+    assert state.keys == [(Page.BOARD, "esc")] * 2
     world.auto.drag_mouse.assert_not_called()
 
 

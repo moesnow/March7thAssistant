@@ -137,12 +137,16 @@ class CurrencyWarsBenchBlocked(CurrencyWarsRecoverable):
     """晶矿需要空备战位，已无法在保留可用阵容的前提下腾位。"""
 
 
-class CurrencyWarsOpeningBlocked(CurrencyWarsError):
-    """开局已确认缺少可用前台，交回整局流程重开。"""
+class CurrencyWarsPreparationBlocked(CurrencyWarsError):
+    """备战已无法继续，交回整局流程核对退出。"""
 
     def __init__(self, frame, reason):
         super().__init__(reason)
         self.frame = frame
+
+
+class CurrencyWarsOpeningBlocked(CurrencyWarsPreparationBlocked):
+    """开局已确认缺少可用前台。"""
 
 
 class CurrencyWarsReconnect(CurrencyWarsError):
@@ -2762,6 +2766,13 @@ class CurrencyWars:
         return (frame is not None and frame.page == Page.BOARD and frame.stage == stage
                 and any(slot.zone == "front" and slot.occupied for slot in frame.slots()))
 
+    def _restartable_board(self, frame):
+        if (self.result is not None or frame.page != Page.BOARD or not frame.stage
+                or frame.preparation_banner or frame.shop_open or frame.halo_preview()):
+            return False
+        field = frame.field_slots()
+        return bool(any(s.zone == "front" for s in field) and frame.field_count_matches(field))
+
     def _opening_front_empty(self, frame):
         if not self.default_strategy or frame.page != Page.BOARD or frame.stage != "1-1":
             return False
@@ -4230,28 +4241,42 @@ class CurrencyWars:
         time.sleep(0.35)
         return self._observe()
 
-    def _play_with_opening_restarts(self, frame):
+    def _play_with_restarts(self, frame):
         restarts = 0
         while True:
             self.in_match = True
             try:
                 return self._play(frame)
-            except CurrencyWarsOpeningBlocked as error:
+            except CurrencyWarsPreparationBlocked as error:
                 frame, reason = error.frame, str(error)
+                opening = isinstance(error, CurrencyWarsOpeningBlocked)
             finally:
                 self.in_match = False
                 self.unidentified_since = None
+            stage = frame.stage
+            location = stage or frame.page.value
             retry = restarts < MAX_OPENING_RESTARTS
             if retry:
-                log.warning(f"1-1 {reason}，尝试重开（{restarts + 1}/{MAX_OPENING_RESTARTS}）")
+                log.warning(f"{location} {reason}，尝试重开（{restarts + 1}/{MAX_OPENING_RESTARTS}）")
             else:
-                log.warning(f"1-1 {reason}，已达重开上限，尝试结束当前对局")
-            frame, restarted = self._restart_match(
-                frame, can_exit=self._opening_front_empty, recovered=self._opening_can_continue, start_new=retry,
-            )
+                log.warning(f"{location} {reason}，已达重开上限，尝试结束当前对局")
+
+            def can_exit(f):
+                if opening:
+                    return self._opening_front_empty(f)
+                return f.stage == stage and self._restartable_board(f)
+
+            def recovered(f):
+                if opening:
+                    return self._opening_can_continue(f)
+                return (f.page in (Page.BATTLE, Page.NODE_RESULT, Page.CONFIRM_FIGHT)
+                        or f.stage != stage and self._restartable_board(f))
+
+            frame, restarted = self._restart_match(frame, can_exit=can_exit, recovered=recovered, start_new=retry)
             if not retry and frame.page == Page.MODES:
+                limit = "开局重开" if opening else "对局重开"
                 raise CurrencyWarsUnavailable(
-                    f"1-1 已达开局重开上限（{MAX_OPENING_RESTARTS} 次），{reason}，已结束最后一局"
+                    f"{location} 已达{limit}上限（{MAX_OPENING_RESTARTS} 次），{reason}，已结束最后一局"
                 )
             restarts += int(restarted)
 
@@ -4319,7 +4344,10 @@ class CurrencyWars:
                     if preparation_fallbacks >= MAX_PREPARATION_FALLBACKS:
                         if self._opening_front_empty(frame):
                             raise CurrencyWarsOpeningBlocked(frame, "多次复核后仍无法部署前台角色")
-                        raise CurrencyWarsUnavailable(f"节点 {stage or '开局'} 多次复核后仍无法完成备战并推进，已保留当前现场")
+                        reason = "多次复核后仍无法完成备战并推进"
+                        if self._restartable_board(frame):
+                            raise CurrencyWarsPreparationBlocked(frame, reason)
+                        raise CurrencyWarsUnavailable(f"节点 {stage or '开局'} {reason}，已保留当前现场")
                     preparation_fallbacks += 1
                     frame = self._advance_existing_team()
                 else:
@@ -4329,7 +4357,7 @@ class CurrencyWars:
             except CurrencyWarsEquipmentReplan as error:
                 log.info(error)
                 frame = self.frame
-            except (CurrencyWarsTerminalError, CurrencyWarsOpeningBlocked):
+            except (CurrencyWarsTerminalError, CurrencyWarsPreparationBlocked):
                 raise
             except Exception as error:
                 if before.page == Page.BOARD:
@@ -4685,7 +4713,7 @@ class CurrencyWars:
                     matches += 1
                     if loop:
                         self._loop_matches += 1
-                    frame = self._play_with_opening_restarts(frame)
+                    frame = self._play_with_restarts(frame)
                     if self.result is None:
                         log.warning("已离开对局，整局胜负仍待核对")
                     frame, latest_score, just_claimed = self._check_weekly_reward(frame)
