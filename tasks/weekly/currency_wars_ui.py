@@ -150,7 +150,7 @@ HALO_DETAIL_NAME = (813, 180, 1088, 225)
 MENTOR_TITLE = (780, 40, 1250, 145)
 MENTOR_PROMPT = (590, 78, 1460, 201)
 MENTOR_CONFIRM = (1250, 451, 1760, 650)
-MENTOR_CONFIRM_POINT = (1492, 493)
+MENTOR_CONFIRM_X = 1492
 TEA_RETURN = (1600, 20, 1919, 115)
 AUTO_CONTROLS = (1592, 17, 1912, 98)
 AUTO_HINT = (0, 903, 144, 1023)
@@ -614,8 +614,8 @@ class Frame:
             return Page.END_MATCH_CONFIRM
         if self.empty_front_confirm():
             return Page.EMPTY_FRONT
-        if self.mentor_prompt or (self.has("从师", area=MENTOR_TITLE)
-                                  and (self.mentor_confirm_label or self.mentor_needs_selection)):
+        if self.mentor_prompt or (self.has("从师", area=MENTOR_TITLE) and (
+                self.mentor_confirm_label or self.mentor_selection_prompt or self.mentor_confirm())):
             return Page.HALO_MENTOR
         if self.svarog_modification:
             return Page.SVAROG_MODIFICATION
@@ -1705,26 +1705,43 @@ class Frame:
         return self.find("确认选择", area=MENTOR_CONFIRM)
 
     @cached_property
-    def mentor_needs_selection(self) -> bool:
-        return self.has("请选择一名角色", "请选择1名角色", area=(1230, 413, 1760, 599))
+    def mentor_selection_prompt(self) -> Label | None:
+        return self.find("请选择一名角色", "请选择1名角色", area=(1230, 413, 1760, 599))
 
     def mentor_confirm(self) -> Label | None:
-        if self.mentor_needs_selection:
+        if self.mentor_selection_prompt:
             return None
-        button = self.mentor_confirm_label or Label("确认选择", MENTOR_CONFIRM_POINT)
-        x, y = button.point
-        # 未选中时按钮也有白字，取文字两侧的底色来判断是否点亮。
-        sides = (self.crop((x - 125, y - 8, x - 57, y + 9)), self.crop((x + 57, y - 8, x + 125, y + 9)))
-        return button if all((cv2.cvtColor(side, cv2.COLOR_RGB2GRAY) >= 178).mean() > 0.55 for side in sides) else None
+        button = self.mentor_confirm_label
+        x = button.point[0] if button else MENTOR_CONFIRM_X
+        top, bottom = MENTOR_CONFIRM[1], MENTOR_CONFIRM[3]
+        # 取文字两侧的亮色底，兼容按钮文字漏读和不同画幅下的按钮高度差。
+        sides = (self.crop((x - 125, top, x - 57, bottom)), self.crop((x + 57, top, x + 125, bottom)))
+        bright = np.logical_and.reduce([
+            (cv2.cvtColor(side, cv2.COLOR_RGB2GRAY) >= 178).mean(axis=1) > 0.55 for side in sides
+        ])
+        edges = np.flatnonzero(np.diff(np.r_[False, bright, False])) + top
+        buttons = [(int(start), int(end)) for start, end in zip(edges[::2], edges[1::2]) if 22 <= end - start <= 75]
+        if button:
+            return button if any(start <= button.point[1] < end for start, end in buttons) else None
+        if len(buttons) == 1:
+            start, end = buttons[0]
+            return Label("确认选择", (x, (start + end) // 2))
+        return None
 
     @cached_property
     def mentor_candidates(self) -> tuple[Label, ...]:
         # 候选会随名单和横向滚动移动。用名字行上方的青色卡面定位可见卡片。
-        confirm_y = (point(self.mentor_confirm_label) or MENTOR_CONFIRM_POINT)[1]
+        button = self.mentor_confirm_label or self.mentor_confirm()
+        if button:
+            confirm_y = button.point[1]
+        elif self.mentor_selection_prompt:
+            confirm_y = self.mentor_selection_prompt.point[1] + 52
+        else:
+            confirm_y = 537 if self.image.width * 9 == self.image.height * 16 else 493
         prompt_y = self.mentor_prompt.point[1] if self.mentor_prompt else 104
         row = round(0.42 * prompt_y + 0.58 * confirm_y)
         left, right = 190, 1755
-        r, g, b = self.crop((left, row - 31, right, row - 22)).astype(np.int16).transpose(2, 0, 1)
+        r, g, b = self.crop((left, row - 36, right, row - 28)).astype(np.int16).transpose(2, 0, 1)
         colored = (b > 108) & (g - r > 27) & (b - r > 40) & (10 * g > 7 * b)
         columns = (colored.mean(axis=0) > 0.6).astype(np.uint8)
         columns = cv2.morphologyEx(columns[None, :], cv2.MORPH_CLOSE, np.ones((1, 7), np.uint8))[0]

@@ -6054,21 +6054,25 @@ def test_halo_recovers_from_an_ambiguous_portrait_in_the_same_run(monkeypatch, w
     assert task.save_error_screenshot.call_count == (outcome in ("unavailable", "budget"))
 
 
-def mentor_dialog(candidates, *, selected=False, read_names=True, read_confirm=True):
+def mentor_dialog(candidates, *, selected=False, read_names=True, read_confirm=True, confirm_y=493, warning=False):
     image = CANVAS.copy()
     draw = ImageDraw.Draw(image)
     entries = [("从师", 960, 66), ("请选择1名角色作为师父，受益于其羁绊效果", 960, 103),
                ("备战阶段", 291, 75), ("1-9", 291, 108), ("商店", 1620, 982), ("出战", 1818, 750)]
+    card_shift = round((confirm_y - 493) * 0.58)
     for name, x in candidates:
-        draw.rectangle((x - 78, 294, x + 77, 316), fill=(37, 151, 170))
+        draw.rectangle((x - 78, 294 + card_shift, x + 77, 316 + card_shift), fill=(37, 151, 170))
         if read_names:
-            entries.append((name, x, 331))
+            entries.append((name, x, 331 + card_shift))
     if read_confirm:
-        entries.append(("确认选择", 1492, 493))
-    draw.rectangle((1359, 477, 1625, 515), fill=(233, 227, 206) if selected else (111, 111, 111))
-    if read_confirm and not selected:
+        entries.append(("确认选择", 1492, confirm_y))
+    if warning and not selected:
+        entries.append(("请选择一名角色", 1492, confirm_y - 53))
+    draw.rectangle((1359, confirm_y - 19, 1625, confirm_y + 19),
+                   fill=(233, 227, 206) if selected else (111, 111, 111))
+    if not selected:
         # 未选中时仍显示白色按钮文案，点亮与否由文字两侧的底色决定。
-        draw.rectangle((1450, 485, 1534, 501), fill=(235, 235, 235))
+        draw.rectangle((1450, confirm_y - 8, 1534, confirm_y + 8), fill=(235, 235, 235))
     return Frame(image, labels(*entries))
 
 
@@ -6092,6 +6096,22 @@ def test_halo_mentor_reads_the_visible_cards_and_the_enabled_confirm(names, cent
     effect = Frame(CANVAS, labels(("选择一个角色获得主角光环", 960, 90), ("从师", 420, 436),
                                  ("使角色受益于师父的非独立羁绊效果", 420, 536)))
     assert effect.page == Page.HALO
+
+
+@pytest.mark.parametrize("confirm_y", (493, 537))
+def test_halo_mentor_falls_back_on_both_layouts_without_names_or_confirm_ocr(confirm_y):
+    candidates = (("流萤", 544), ("景元", 825), ("长夜月", 1105), ("爻光", 1387), ("瓦尔特", 1616))
+    frame = mentor_dialog(candidates, read_names=False, read_confirm=False, confirm_y=confirm_y, warning=True)
+    assert frame.page == Page.HALO_MENTOR
+    assert frame.mentor_confirm() is None
+    assert [(card.text, card.point[0]) for card in frame.mentor_candidates] == [
+        ("候选角色", x) for _, x in candidates
+    ]
+
+    selected = mentor_dialog(candidates, selected=True, read_names=False, read_confirm=False, confirm_y=confirm_y)
+    assert selected.page == Page.HALO_MENTOR
+    assert ui.point(selected.mentor_confirm()) == (1492, confirm_y)
+    assert [card.point[0] for card in selected.mentor_candidates] == [x for _, x in candidates]
 
 
 @pytest.mark.parametrize("entry", ("single", "loop", "daily"))
