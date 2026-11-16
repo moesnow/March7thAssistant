@@ -10,16 +10,16 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * 会留在系统里的两处改动：实体面板的电源状态，以及游戏的 PLAY_AUDIO AppOps。
+ * 管理实体面板的电源状态和游戏静音。
  *
  * 服务正常退出时在这里恢复。进程被强杀时没有机会执行任何代码，所以第一次产生改动时会另起一个
  * {@link Cleanup} 子进程，父进程一消失它就把记下来的改动恢复掉。
@@ -36,12 +36,9 @@ final class SideEffects {
     private boolean panelRestorePending;
     private boolean keepAwakeRequested;
     private Thread keepAwake;
-    /** 包名到静音前的 AppOps 模式。 */
-    private final Map<String, String> muted = new LinkedHashMap<>();
+    private final Set<String> muted = new LinkedHashSet<>();
     private CleanupChannel cleanup;
     private boolean cleanupUnavailable;
-    /** 写入结果未确认且子进程正在通过 EOF 回滚的包。 */
-    private String pendingMute;
     private boolean closed;
 
     SideEffects(String cleanupJarPath) {
@@ -53,9 +50,7 @@ final class SideEffects {
     }
 
     synchronized List<String> mutedPackages() {
-        List<String> packages = new ArrayList<>(muted.keySet());
-        packages.remove(pendingMute);
-        return packages;
+        return new ArrayList<>(muted);
     }
 
     /**
@@ -148,151 +143,45 @@ final class SideEffects {
         }
     }
 
-    /**
-     * 按包名静音或恢复。
-     *
-     * @return 静音前的模式
-     */
-    synchronized String mute(String packageName, boolean on) throws CommandException, InterruptedException {
+    /** 按包名静音或恢复，返回操作前的 AppOps 模式。 */
+    synchronized String mute(String packageName, boolean on) throws CommandException {
         requireOpen();
         try {
-            if (on) {
-                String original = muted.get(packageName);
-                if (original == null) {
-                    original = AudioAppOps.mode(packageName);
-                    if ("ignore".equals(original)) {
-                        // 本来就是静音，不归我们恢复
-                        return original;
-                    }
-                    if ("default".equals(original)) {
-                        // 旧版本恢复时留下的记录，实际效果是静音，结束后恢复为 allow
-                        original = "allow";
-                    }
-                }
-                registerCleanup("mute " + packageName + " " + original);
-                muted.put(packageName, original);
-                try {
-                    if (!applyMute(packageName)) {
-                        throw new IOException("cleanup could not set PLAY_AUDIO to ignore");
-                    }
-                    String now = AudioAppOps.mode(packageName);
-                    if (!"ignore".equals(now)) {
-                        throw new IOException("PLAY_AUDIO stayed at " + now);
-                    }
-                } catch (IOException | InterruptedException error) {
-                    try {
-                        restoreAudio(packageName);
-                    } catch (CommandException | IOException | InterruptedException restoreError) {
-                        if (restoreError instanceof InterruptedException) {
-                            Thread.currentThread().interrupt();
-                        }
-                        Logger.w("cannot roll back PLAY_AUDIO of " + packageName, restoreError);
-                    }
-                    throw error;
-                }
-                return original;
+            String original = exchangeCleanup((on ? "mute " : "restore_audio ") + packageName, CLEANUP_MUTE_TIMEOUT_MS);
+            if (on && !"ignore".equals(original)) {
+                muted.add(packageName);
+            } else {
+                muted.remove(packageName);
             }
-            String original = muted.get(packageName);
-            if (original != null) {
-                restoreAudio(packageName);
-            }
-            if (original != null) {
-                return original;
-            }
-            String current = AudioAppOps.mode(packageName);
-            if ("default".equals(current)) {
-                // 不静音时也顺带修复旧版本留下的记录
-                AudioAppOps.setModeAndWait(packageName, "allow");
-                return "allow";
-            }
-            return current;
-        } catch (IOException e) {
-            throw new CommandException(Protocol.E_UNSUPPORTED, e.getMessage());
-        }
-    }
-
-    private boolean applyMute(String packageName) throws CommandException {
-        try {
-            return exchangeCleanup("apply_mute " + packageName, CLEANUP_MUTE_TIMEOUT_MS);
-        } catch (IOException | RuntimeException e) {
-            pendingMute = packageName;
-            markCleanupUnavailable(e);
-            // 没收到写入完成的确认时，只有子进程能按顺序撤销这条写入。
+            return original;
+        } catch (IOException | RuntimeException error) {
+            markCleanupUnavailable(error);
+            // 在途音频操作由同一个子进程做完，再按 EOF 恢复。
             closeCleanupInput();
-            restoreRegisteredEffects();
-            throw new CommandException(Protocol.E_CLEANUP_UNAVAILABLE,
-                    "cannot confirm the mute; cleanup will restore it after the command finishes");
+            throw new CommandException(Protocol.E_CLEANUP_UNAVAILABLE, error.getMessage());
         }
     }
 
-    private void restoreAudio(String packageName) throws CommandException, IOException, InterruptedException {
-        if (packageName.equals(pendingMute) && !cleanup.process.waitFor(CLEANUP_ACK_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-            throw new CommandException(Protocol.E_CLEANUP_UNAVAILABLE, "the pending mute is still being restored");
-        }
-        String original = muted.get(packageName);
-        String command = "restore_audio " + packageName + " " + original;
-        boolean restored = false;
-        if (cleanup != null && !cleanupUnavailable) {
-            try {
-                restored = exchangeCleanup(command, CLEANUP_MUTE_TIMEOUT_MS);
-            } catch (IOException | RuntimeException e) {
-                markCleanupUnavailable(e);
-            }
-        }
-        if (!restored) {
-            // 备用恢复也在持有交接锁的子进程内完成，主进程被替换时不能留下未登记的 AppOps 写入。
-            try (CleanupChannel backup = startCleanup()) {
-                restored = backup.exchange(command, CLEANUP_MUTE_TIMEOUT_MS);
-            } catch (IOException | RuntimeException e) {
-                markCleanupUnavailable(e);
-                throw new CommandException(Protocol.E_CLEANUP_UNAVAILABLE, "cannot confirm audio restore: " + e.getMessage());
-            }
-            if (!restored) {
-                throw new IOException("cleanup could not restore PLAY_AUDIO to " + original);
-            }
-            forgetCleanup("unmute " + packageName);
-        }
-        muted.remove(packageName);
-        if (packageName.equals(pendingMute)) {
-            pendingMute = null;
-        }
-        Logger.i("PLAY_AUDIO of " + packageName + " restored to " + original);
-    }
-
-    /** 恢复全部改动，服务退出时调用。 */
     synchronized void restoreAll() {
         if (closed) {
             return;
         }
         try {
-            restoreRegisteredEffects();
+            setPanel(true);
+        } catch (CommandException error) {
+            Logger.w("cannot restore the panel: " + error.getMessage());
         } finally {
             closed = true;
             stopKeepAwake();
-            // UserService 关闭核心后进程可能还活着，主动断管，让子进程兜底恢复失败的记录。
             closeCleanupInput();
+            if (cleanup != null) {
+                try {
+                    cleanup.process.waitFor(CLEANUP_MUTE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException error) {
+                    Thread.currentThread().interrupt();
+                }
+            }
             cleanup = null;
-        }
-    }
-
-    private void restoreRegisteredEffects() {
-        try {
-            setPanel(true);
-        } catch (CommandException e) {
-            Logger.w("cannot restore the panel: " + e.getMessage());
-        }
-        for (String packageName : new ArrayList<>(muted.keySet())) {
-            if (packageName.equals(pendingMute) && cleanup.process.isAlive()) {
-                continue;
-            }
-            try {
-                restoreAudio(packageName);
-            } catch (CommandException | IOException e) {
-                Logger.w("cannot restore PLAY_AUDIO of " + packageName, e);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
         }
     }
 
@@ -310,9 +199,7 @@ final class SideEffects {
 
     private void registerCleanup(String line) throws CommandException {
         try {
-            if (!exchangeCleanup(line, CLEANUP_ACK_TIMEOUT_MS)) {
-                throw new IOException("cleanup refused the record");
-            }
+            exchangeCleanup(line, CLEANUP_ACK_TIMEOUT_MS);
         } catch (IOException | RuntimeException e) {
             markCleanupUnavailable(e);
             throw new CommandException(Protocol.E_CLEANUP_UNAVAILABLE, "cannot register cleanup: " + e.getMessage());
@@ -325,23 +212,20 @@ final class SideEffects {
             return;
         }
         try {
-            if (!exchangeCleanup(line, CLEANUP_ACK_TIMEOUT_MS)) {
-                throw new IOException("cleanup refused to remove the record");
-            }
-        } catch (IOException | RuntimeException e) {
+            exchangeCleanup(line, CLEANUP_ACK_TIMEOUT_MS);
+        } catch (CommandException | IOException | RuntimeException e) {
             markCleanupUnavailable(e);
         }
     }
 
     private void markCleanupUnavailable(Exception error) {
-        // 保留旧进程的恢复记录。备用进程只能恢复原值。
         if (!cleanupUnavailable) {
             Logger.w("cleanup process unavailable", error);
             cleanupUnavailable = true;
         }
     }
 
-    private boolean exchangeCleanup(String line, long timeoutMs) throws IOException {
+    private String exchangeCleanup(String line, long timeoutMs) throws IOException, CommandException {
         if (cleanupUnavailable) {
             throw new IOException("cleanup channel is unavailable");
         }
@@ -383,7 +267,7 @@ final class SideEffects {
             output = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
         }
 
-        boolean exchange(String line, long timeoutMs) throws IOException {
+        String exchange(String line, long timeoutMs) throws IOException, CommandException {
             if (line.length() > 1024) {
                 throw new IOException("cleanup record is too long");
             }
@@ -402,15 +286,19 @@ final class SideEffects {
             worker.start();
             try {
                 String reply = exchange.get(timeoutMs, TimeUnit.MILLISECONDS);
-                if (process.isAlive()) {
-                    if (("M7A_CLEANUP_OK " + line).equals(reply)) {
-                        ready = true;
-                        return true;
-                    }
-                    if (("M7A_CLEANUP_FAILED " + line).equals(reply)) {
-                        ready = true;
-                        return false;
-                    }
+                String success = Cleanup.OK + line;
+                String failure = Cleanup.FAILED + line + " ";
+                if (success.equals(reply)) {
+                    ready = true;
+                    return "";
+                }
+                if (reply != null && reply.startsWith(success + " ")) {
+                    ready = true;
+                    return reply.substring(success.length() + 1);
+                }
+                if (reply != null && reply.startsWith(failure)) {
+                    ready = true;
+                    throw new CommandException(Protocol.E_UNSUPPORTED, reply.substring(failure.length()));
                 }
                 throw new IOException("cleanup did not acknowledge the record");
             } catch (InterruptedException e) {

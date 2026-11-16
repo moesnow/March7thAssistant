@@ -7,6 +7,7 @@ import android.os.Process;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.march7th.deviceservice.core.DeviceService;
+import org.march7th.deviceservice.core.GameAudio;
 import org.march7th.deviceservice.core.Logger;
 import org.march7th.deviceservice.protocol.Handshake;
 import org.march7th.deviceservice.protocol.Message;
@@ -77,6 +78,17 @@ public final class AppServer {
 
     public int port() {
         return listener.getLocalPort();
+    }
+
+    /** App 重开时恢复音频，使用与正常运行相同的实例锁。 */
+    public static void recoverAudio() throws IOException, InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (!Main.acquireInstanceLock(false)) {
+            if (!CleanupHandoff.pauseUntil(deadline)) {
+                throw new IOException(BUSY);
+            }
+        }
+        new GameAudio().restorePending();
     }
 
     /** Binder 死亡和 Root 管道 EOF 都走这里。中断收发，等待正在处理的命令结束。 */
@@ -190,11 +202,22 @@ public final class AppServer {
     @SuppressWarnings("deprecation")
     public static void main(String[] args) {
         int uid = Process.myUid();
-        if (uid != Process.SHELL_UID || args.length != 1) {
+        boolean recoverAudioOnly = args.length == 2 && "--recover-audio".equals(args[1]);
+        if (uid != Process.SHELL_UID || (args.length != 1 && !recoverAudioOnly)) {
             Logger.w("invalid Root service entry: uid=" + uid + ", argc=" + args.length);
             System.exit(2);
         }
         Looper.prepareMainLooper();
+        if (recoverAudioOnly) {
+            try {
+                recoverAudio();
+                System.exit(0);
+            } catch (Exception error) {
+                Logger.e("cannot recover game audio", error);
+                System.exit(3);
+            }
+            return;
+        }
         BufferedReader owner = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8));
         try {
             System.out.println(ROOT_STDIN_READY);

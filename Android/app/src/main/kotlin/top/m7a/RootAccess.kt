@@ -51,9 +51,6 @@ internal class RootAccess(
     }
 
     fun open(apkPath: String, token: String): DeviceLease {
-        val path = "'" + apkPath.replace("'", "'\\''") + "'"
-        val command = "CLASSPATH=$path exec /system/bin/app_process /system/bin " +
-            "--nice-name=m7a-apk-root org.march7th.deviceservice.AppServer $path"
         val shell = startShell(token)
         val tokenRequested = CompletableFuture<Boolean>()
         val portAnnounced = CompletableFuture<Int>()
@@ -81,7 +78,7 @@ internal class RootAccess(
         }
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(START_SECONDS)
         try {
-            shell.writeLine(command)
+            shell.writeLine(appServerCommand(apkPath))
             if (!tokenRequested.get(deadline - System.nanoTime(), TimeUnit.NANOSECONDS)) {
                 permission = PermissionState.NOT_AUTHORIZED
                 throw DeviceFailure("root_unavailable", "设备端未请求令牌")
@@ -106,6 +103,27 @@ internal class RootAccess(
             }
             throw DeviceFailure(code, shell.diagnostic(reason))
         }
+    }
+
+    fun recoverAudio(apkPath: String) {
+        val shell = startShell()
+        val reader = shell.readOutput { false }
+        try {
+            shell.writeLine(appServerCommand(apkPath) + " --recover-audio")
+            shell.close()
+            reader.join(OUTPUT_DRAIN_MS)
+            if (shell.process.exitValue() != 0) {
+                throw DeviceFailure("cleanup_pending", shell.diagnostic("游戏音频恢复失败"))
+            }
+        } finally {
+            shell.process.destroy()
+        }
+    }
+
+    private fun appServerCommand(apkPath: String): String {
+        val path = "'" + apkPath.replace("'", "'\\''") + "'"
+        return "CLASSPATH=$path exec /system/bin/app_process /system/bin " +
+            "--nice-name=m7a-apk-root org.march7th.deviceservice.AppServer $path"
     }
 
     private fun startShell(token: String? = null): RootShell = try {

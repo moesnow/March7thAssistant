@@ -39,6 +39,25 @@ class GameUserService(private val context: Context) : IDeviceBootstrap.Stub() {
         }
     }
 
+    @Synchronized
+    override fun recoverAudio(): Int {
+        if (Binder.getCallingUid() != appUid) {
+            throw SecurityException()
+        }
+        check(!started)
+        started = true
+        val identity = Binder.clearCallingIdentity()
+        return try {
+            AppServer.recoverAudio()
+            0
+        } catch (error: Exception) {
+            Log.w("M7ADevice", "Game audio recovery is still pending", error)
+            FAILED
+        } finally {
+            Binder.restoreCallingIdentity(identity)
+        }
+    }
+
     override fun destroy() {
         val caller = Binder.getCallingUid()
         if (caller != appUid && caller != Process.myUid() && caller != Process.SHELL_UID && caller != 0) {
