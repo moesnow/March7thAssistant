@@ -481,6 +481,7 @@ def run_main_actions(no_run_immediately=False):
                             from module.automation.automation import screenshot_retry_timeout
                             from module.automation.background_input import GameWindowLost, InputInterrupted
                             from module.screen import screen
+                            from tasks.weekly.currency_wars import ENTRY_SCREENS
 
                             try:
                                 with screenshot_retry_timeout(0):
@@ -489,10 +490,19 @@ def run_main_actions(no_run_immediately=False):
                                 raise
                             except (OSError, RuntimeError) as fallback_error:
                                 raise error from fallback_error
-                            if not ready or screen.current_screen not in ("main", "menu"):
+                            # 某些挑战退出弹窗也有到主界面的路径，只放行常规页面。
+                            ordinary_screens = (
+                                *ENTRY_SCREENS, "map", "map3d", "mail", "visa", "redemption", "camera",
+                                "photo_preview", "dispatch", "pass1", "pass2", "consumables", "material",
+                                "bag_consumables", "bag_relicset", "bag_lc", "configure_team", "activity",
+                                "character_warp", "stellar_warp", "achievement", "character",
+                                "incoming_message", "reward_guide",
+                            )
+                            if (not ready or screen.current_screen not in ordinary_screens
+                                    or not screen.can_change_from(screen.current_screen, "main")):
                                 raise
                             log.warning(f"已确认游戏可操作，按正常顺序继续完整运行：{error}")
-                            return True
+                            return screen.current_screen
                         return currency_wars_first
 
                     game.start(screen_ready=current_currency_wars)

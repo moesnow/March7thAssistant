@@ -25,7 +25,7 @@ from module.screen import screen
 from module.automation import auto
 from module.automation.automation import screenshot_retry_timeout
 from module.automation.background_input import WINDOW_WAIT_SECONDS, GameWindowLost, InputInterrupted
-from module.automation.windows_input import WindowsInputApi
+from module.automation.windows_input import WINDOW_EMPTY, WINDOW_MISSING, WindowsInputApi
 from module.config import cfg
 from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend, get_ui_profile
 from module.notification import notif
@@ -148,6 +148,25 @@ def _wait_for_local_resolution(controller, target, timeout):
     raise GameStartupUnavailable(f"{message}，已保留游戏现场") from read_error
 
 
+def _inspect_local_resolution_window(controller):
+    """关闭进程前复核窗口状态，允许窗口短暂重建或尺寸读取失败。"""
+    attempts = 3
+    for attempt in range(attempts):
+        pause_ctl.checkpoint()
+        try:
+            windows = WindowsInputApi()
+            window, problem = windows.inspect(controller.window_name, controller.process_name)
+            resolution = windows.size(window) if problem is None else None
+        except Exception as error:
+            pause_ctl.check_stop()
+            if attempt + 1 == attempts:
+                raise GameStartupUnavailable(f"无法确认游戏窗口状态，已保留游戏现场。{error}") from error
+        else:
+            if problem not in (WINDOW_MISSING, WINDOW_EMPTY) or attempt + 1 == attempts:
+                return window, problem, resolution
+        time.sleep(1)
+
+
 def prepare_currency_wars_takeover():
     """让已有本地游戏进入可操作状态，保留游戏进程与对局。"""
     pause_ctl.checkpoint()
@@ -224,6 +243,7 @@ def _start_local_touch_game():
 
 
 def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
+    """启动或接管游戏。任务就绪回调也可返回本次确认的通用页面标识。"""
     backend = get_control_backend(cfg)
     timeout = getattr(cfg, "start_game_timeout", 10) * 60
     if backend == "adb":
@@ -305,6 +325,10 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
         login_error = None
         return True
 
+    def check_local_client_version():
+        if auto.find_element("前往启动器下载最新客户端", "text", take_screenshot=False, include=True):
+            raise GameClientOutdatedError(tr("检测到游戏客户端版本过低，请前往启动器下载最新客户端"))
+
     def check_and_click_enter():
         # 点击进入
         if auto.click_element("./assets/images/screen/click_enter.png", "image", 0.9):
@@ -328,10 +352,7 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                     raise PermissionError("账号登录过期")
             if auto.find_element("./assets/images/screen/password_field.png", "image", 0.9, take_screenshot=False):
                 login_with_saved_credentials(auto_login_os)
-        # 游戏已有新版本，请前往启动器下载最新客户端，完成本次更新后登录游戏即可获
-        # 得300星琼奖励。
-        if auto.find_element("前往启动器下载最新客户端", "text", take_screenshot=False, include=True):
-            raise GameClientOutdatedError(tr("检测到游戏客户端版本过低，请前往启动器下载最新客户端"))
+        check_local_client_version()
 
         # 适配B服，需要点击“登录”，强制使用前台截图方式（#901）
         if auto.find_element(("bilibili游戏隐私政策提示", "登录记录"), "text", use_background_screenshot=False):
@@ -485,7 +506,7 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
 
     cloud_disconnected = False
 
-    def cloud_player_ready():
+    def cloud_startup_entry():
         nonlocal cloud_disconnected
         last_error = None
         for attempt in range(MAX_RETRY):
@@ -494,16 +515,17 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                 in_game = cloud_game.is_in_game()
                 pause_ctl.checkpoint()
                 if in_game:
-                    return True
+                    return "running"
                 if screen_ready is not None:
-                    if cloud_game.has_startup_entry(queue_only=cloud_disconnected):
+                    entry = cloud_game.startup_entry(disconnected=cloud_disconnected)
+                    if entry is not None:
                         pause_ctl.checkpoint()
-                        return False
+                        return entry
                     if cloud_disconnected:
-                        raise CloudGameProbeUnready("云游戏断开后暂未确认播放器或原排队状态")
+                        raise CloudGameProbeUnready("云游戏断开后暂未确认播放器或原排队状态，或可重新进入的大厅")
                     raise CloudGameProbeUnready("暂未确认云游戏播放器、大厅或排队状态")
                 if last_error is None:
-                    return False
+                    return "enter"
             except (CloudGameDisconnectedError, CloudGameProbeUnready, TimeoutError) as error:
                 cloud_disconnected |= isinstance(error, CloudGameDisconnectedError)
                 last_error = error
@@ -521,12 +543,19 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
         pause_ctl.checkpoint()
         if not started:
             raise ConnectionError("启动或连接浏览器失败")
-        if not cloud_player_ready():
-            if screen_ready is not None and cloud_disconnected:
+        entry = cloud_startup_entry()
+        if entry != "running":
+            if entry == "resume_queue":
                 entered = cloud_game.enter_cloud_game(resume_queue=True)
+            elif entry == "signed_in_lobby":
+                entered = cloud_game.enter_cloud_game(signed_in_lobby_only=True)
             else:
                 entered = cloud_game.enter_cloud_game()
             pause_ctl.checkpoint()
+            if entered == "game_running":
+                if not cloud_game.is_in_game():
+                    raise CloudGameProbeUnready("暂未确认恢复的云游戏播放器")
+                return
             if not entered:
                 raise ConnectionError("进入云游戏失败")
             time.sleep(10)
@@ -540,12 +569,24 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
         try:
             if screen_ready is not None:
                 # 货币战争的职级和局内页面不都在通用状态机里，不能用 Esc 探测。
-                ready = screen_ready() or screen.get_current_screen(autotry=False, max_retries=1)
-                if backend == "local" and not ready:
-                    # 通用识别已取新画面。只在确认登录提示后使用现有的登录操作。
-                    try_task_local_login()
+                ready = screen_ready()
+                confirmed_screen = ready if isinstance(ready, str) else None
+                if not ready:
+                    ready = screen.get_current_screen(autotry=False, max_retries=1)
+                    if ready:
+                        confirmed_screen = screen.current_screen
+                if backend == "local":
+                    # 完整运行的回退也可能已识别到更新弹窗下方的标题页。
+                    if not ready or confirmed_screen in ("start_game", "click_enter"):
+                        check_local_client_version()
+                    if not ready:
+                        try_task_local_login()
             else:
                 ready = screen.get_current_screen(max_retries=1)
+        except GameClientOutdatedError as error:
+            if not cfg.update_via_launcher:
+                raise GameStartupUnavailable(f"{error}，已保留游戏现场") from error
+            raise
         except (InputInterrupted, GameWindowLost, ProfileAssetNotFoundError, TouchProfileInputError):
             raise
         except (RuntimeError, OSError) as error:
@@ -585,8 +626,11 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
                 raise GameStartupUnavailable(message) from readiness_error
             break
         except CloudGameZeroDurationError:
-            # 时长为 0 时重试也无法进入游戏：关闭浏览器后交给调用方，由主循环决定等待下次运行还是按错误退出
-            cloud_game.stop_game()
+            # 重入时长为 0 时保留附着的浏览器，播放器可能在读取余额后恢复。
+            if screen_ready is not None and cloud_disconnected:
+                cloud_game.preserve_running_browser()
+            else:
+                cloud_game.stop_game()
             raise
         except (CloudGameLoginTimeoutError, TouchProfileInputError, ProfileAssetNotFoundError):
             raise
@@ -596,20 +640,14 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
             if retry == MAX_RETRY - 1 or not game_option_enabled(cfg, "auto_set_resolution_enable"):
                 raise GameStartupUnavailable(f"{error}，已保留游戏现场") from error
 
-            # 分辨率等待期间窗口可能已退出或最小化，关闭进程前确认当前窗口仍可操作。
-            pause_ctl.checkpoint()
-            try:
-                windows = WindowsInputApi()
-                window, problem = windows.inspect(starrail.window_name, starrail.process_name)
-                if problem is None and windows.size(window) != error.resolution:
-                    continue
-            except Exception as window_error:
-                raise GameStartupUnavailable(f"无法确认游戏窗口状态，已保留游戏现场。{window_error}") from window_error
+            window, problem, resolution = _inspect_local_resolution_window(starrail)
             pause_ctl.check_stop()
             if problem is not None:
                 if _local_game_process_running(starrail) is False:
                     continue
                 raise GameStartupUnavailable("重新检查分辨率时游戏窗口已不可操作，已保留游戏现场") from error
+            if resolution != error.resolution:
+                continue
             if cfg.auto_set_game_path_enable:
                 try:
                     update_game_path(psutil.Process(window.pid).exe())
@@ -662,9 +700,11 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
             if backend == "cloud":
                 cloud_game.stop_game()
             elif starrail is not None:
+                pause_ctl.checkpoint()
                 starrail.stop_game()
                 # 非云游戏模式下，若检测到是版本过低则尝试通过启动器更新
                 if isinstance(e, GameClientOutdatedError) and cfg.update_via_launcher:
+                    pause_ctl.checkpoint()
                     update_via_launcher()
             if retry == MAX_RETRY - 1:
                 raise  # 如果是最后一次尝试，则重新抛出异常

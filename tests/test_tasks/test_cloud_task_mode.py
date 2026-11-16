@@ -1509,10 +1509,24 @@ def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_gam
     ("already_selecting_paid", True, 0, 1, 0),
     ("already_selecting_unknown_balance", True, 0, 1, 1),
     ("disconnect_into_queue", True, 0, 1, None),
+    ("disconnect_then_signed_in_lobby", True, 1, 1, 1),
+    ("disconnect_then_signed_in_lobby_paid", True, 1, 1, 0),
+    ("disconnect_then_signed_in_lobby_unknown_balance", True, 1, 1, 1),
+    ("disconnect_then_signed_in_lobby_probe_failed", True, 1, 2, 1),
+    ("disconnect_then_signed_in_lobby_choice_reply_lost", False, 1, 2, 1),
     ("disconnect_then_lobby", False, 0, 1, None),
     ("disconnect_then_queue_selection", False, 0, 1, None),
     ("disconnect_queue_returns_to_lobby", False, 0, 2, None),
+    ("disconnect_queue_returns_to_signed_in_lobby", False, 0, 2, None),
     ("disconnect_queue_returns_to_selection", False, 0, 2, None),
+    ("disconnect_lobby_queue_race", True, 0, 1, None),
+    ("disconnect_lobby_loses_login_before_click", False, 0, 2, None),
+    ("disconnect_lobby_changes_at_dispatch", False, 0, 2, None),
+    ("disconnect_lobby_player_recovers_at_dispatch", True, 0, 1, None),
+    ("disconnect_lobby_queue_during_zero_balance_read", True, 0, 1, None),
+    ("disconnect_lobby_loses_login_during_zero_balance_read", False, 0, 2, None),
+    ("disconnect_lobby_button_stale_once", True, 1, 2, None),
+    ("disconnect_entry_reply_lost", False, 1, 2, None),
     ("lobby", True, 1, 1, None),
     ("probe_failed_after_enter", True, 1, 2, None),
     ("queued_while_locating_enter", True, 0, 1, None),
@@ -1522,7 +1536,7 @@ def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_gam
     ("queue_timeout_after_probe_failure", False, 0, 2, None),
 ))
 def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
-        monkeypatch, scenario, started, entries, attachments, queue_choice):
+        runner, currency_wars_game, monkeypatch, scenario, started, entries, attachments, queue_choice):
     from selenium.webdriver.support import wait as selenium_wait
     from tasks import game
     from utils import wait
@@ -1535,12 +1549,23 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
         "disconnect_into_queue": "in_queue",
         "disconnect_then_queue_selection": "select_queue",
         "disconnect_queue_returns_to_lobby": "in_queue",
+        "disconnect_queue_returns_to_signed_in_lobby": "in_queue",
         "disconnect_queue_returns_to_selection": "in_queue",
+        "disconnect_lobby_queue_race": "signed_in_lobby",
+        "disconnect_lobby_loses_login_before_click": "signed_in_lobby",
+        "disconnect_lobby_changes_at_dispatch": "signed_in_lobby",
+        "disconnect_lobby_player_recovers_at_dispatch": "signed_in_lobby",
+        "disconnect_lobby_queue_during_zero_balance_read": "signed_in_lobby",
+        "disconnect_lobby_loses_login_during_zero_balance_read": "signed_in_lobby",
+        "disconnect_lobby_button_stale_once": "signed_in_lobby",
+        "disconnect_entry_reply_lost": "signed_in_lobby",
         "player_loading": None,
         "player_unidentified": None,
         "queue_timeout": "in_queue",
         "queue_timeout_after_probe_failure": "in_queue",
     }
+    if scenario.startswith("disconnect_then_signed_in_lobby"):
+        initial[scenario] = "signed_in_lobby"
     state = SimpleNamespace(time=0, entry=initial.get(scenario, "lobby"), entries=0, failed=False, choice=None)
     clock = SimpleNamespace(monotonic=lambda: state.time, sleep=lambda seconds: setattr(state, "time", state.time + seconds))
     for module in (game, cloud, wait, selenium_wait):
@@ -1565,34 +1590,57 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
             return [visible]
         if selector == ".game-player" and current == "game_running":
             return [visible]
-        if "div.user-aid.wel-card__aid" in selector and current == "lobby":
+        if "div.user-aid.wel-card__aid" in selector and current in controller.LOBBY_STATES:
             return [visible]
         return []
 
     def find_enter_button(_by, selector):
-        assert selector == "div.wel-card__content--start" and current_state() == "lobby"
-        if scenario == "queued_while_locating_enter":
+        assert selector == "div.wel-card__content--start" and current_state() in controller.LOBBY_STATES
+        if scenario in ("queued_while_locating_enter", "disconnect_lobby_queue_race"):
             state.entry = "in_queue"
+        if scenario == "disconnect_lobby_loses_login_before_click":
+            state.entry = "lobby"
         return visible
 
     def execute(script, *args):
         current = current_state()
-        if 'return "select_queue"' in script:
+        if script.endswith("return entryState();"):
             injected_fault = (scenario == "probe_failed_after_enter" and state.entry == "in_queue"
+                              or scenario == "disconnect_then_signed_in_lobby_probe_failed"
+                              and state.entry == "select_queue"
                               or scenario == "queue_timeout_after_probe_failure" and state.time >= 55)
             if injected_fault and not state.failed:
                 state.failed = True
                 raise WebDriverException("排队状态读取暂时失败")
             if current == "in_queue" and scenario.startswith("disconnect_queue_returns_to"):
-                state.entry = "lobby" if scenario.endswith("lobby") else "select_queue"
+                state.entry = scenario.removeprefix("disconnect_queue_returns_to_")
+                if state.entry == "selection":
+                    state.entry = "select_queue"
             return current
-        if script == "arguments[0].click();":
-            assert current == "lobby"
+        if script == "arguments[0].click();" or "button.click();" in script:
+            if scenario == "disconnect_lobby_changes_at_dispatch":
+                assert "entryState()" in script
+                state.entry = "lobby"
+                return False
+            if scenario == "disconnect_lobby_player_recovers_at_dispatch":
+                assert "entryState()" in script
+                state.entry = "game_running"
+                return state.entry
+            assert current in controller.LOBBY_STATES
+            if scenario == "disconnect_lobby_button_stale_once" and not state.failed:
+                state.failed = True
+                raise StaleElementReferenceException("旧按钮已卸载，脚本未运行")
             state.entries += 1
-            state.entry = "in_queue"
+            if scenario == "disconnect_entry_reply_lost":
+                raise WebDriverException("入场请求已发出但回执暂不可用")
+            state.entry = "select_queue" if scenario.startswith("disconnect_then_signed_in_lobby") else "in_queue"
+            return True
         elif "coin-prior-choose-item-include-info" in script:
             assert current == "select_queue"
+            assert state.choice is None
             state.choice, = args
+            if scenario == "disconnect_then_signed_in_lobby_choice_reply_lost":
+                raise WebDriverException("队列选择回执暂不可用")
             state.entry = "in_queue"
         elif "game-player__video" in script:
             return current == "game_running"
@@ -1608,11 +1656,17 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
     controller.cfg = SimpleNamespace(
         browser_headless_enable=True, browser_headless_restart_on_not_logged_in=True, browser_dump_cookies_enable=False,
         cloud_game_max_queue_time=1,
-        cloud_game_use_paid_time=scenario in ("already_selecting_paid", "already_selecting_unknown_balance"),
+        cloud_game_use_paid_time=scenario.endswith(("_paid", "_unknown_balance")),
     )
-    controller._get_remaining_playtime = MagicMock(
-        return_value=(None, None) if scenario == "already_selecting_unknown_balance" else (10, 50)
-    )
+    def remaining_playtime():
+        if scenario.endswith("_unknown_balance"):
+            return None, None
+        if scenario.endswith("_during_zero_balance_read"):
+            state.entry = "in_queue" if scenario == "disconnect_lobby_queue_during_zero_balance_read" else "lobby"
+            return 0, 0
+        return 10, 50
+
+    controller._get_remaining_playtime = MagicMock(side_effect=remaining_playtime)
     controller._confirm_viewport_resolution = MagicMock()
     controller._restart_browser = MagicMock()
     controller.stop_game = MagicMock()
@@ -1625,13 +1679,18 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
     controller._connect_or_create_browser = MagicMock(side_effect=connect_browser)
     monkeypatch.setattr(game, "cloud_game", controller)
     monkeypatch.setattr(game, "cfg", SimpleNamespace(control_backend="cloud", start_game_timeout=1))
+    monkeypatch.setattr(game, "task_power_request", MagicMock())
     click = MagicMock(return_value=True)
     monkeypatch.setattr(game, "auto", SimpleNamespace(click_element=click))
-    ready = MagicMock(return_value=True)
+    runner.main.__globals__["cloud_game"] = controller
+    runner.cfg.control_backend = "cloud"
+    runner.game.start.side_effect = game.start
+    runner.telemetry.track_task_complete.side_effect = lambda *_: setattr(currency_wars_game, "stop", True)
 
+    record = run_currency_wars_cli(runner, "currencywarsloop")
     if started:
-        game.start_game(screen_ready=ready)
-        ready.assert_called_once_with()
+        assert record["status"] == STATUS_STOPPED
+        assert currency_wars_game.completed == 1
     else:
         if scenario.startswith("queue_timeout"):
             message = "排队已达到等待时限"
@@ -1639,9 +1698,9 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
             message = "云游戏断开后暂未确认播放器或原排队状态"
         else:
             message = "暂未确认云游戏播放器"
-        with pytest.raises(GameStartupUnavailable, match=message):
-            game.start_game(screen_ready=ready)
-        ready.assert_not_called()
+        assert record["reason"] == "game_startup_unavailable"
+        assert message in record["error"]
+        currency_wars_game.factory.assert_not_called()
         if scenario.startswith("queue_timeout"):
             assert state.time == 60
 
@@ -1650,7 +1709,9 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
                for call in controller._connect_or_create_browser.call_args_list)
     assert state.entries == entries
     assert state.choice == queue_choice
-    assert click.call_count == (1 if started and scenario != "player_loading" else 0)
+    assert click.call_count == (1 if started and scenario not in (
+        "player_loading", "disconnect_lobby_player_recovers_at_dispatch",
+    ) else 0)
     controller.stop_game.assert_not_called()
     controller._restart_browser.assert_not_called()
 
@@ -1703,6 +1764,10 @@ def test_currency_wars_enters_from_an_existing_game_title(
     press = auto.press_key.side_effect
     auto.press_key.side_effect = lambda key: navigate(key) if state.page == "main" else press(key)
     auto.click_element.side_effect = navigate
+    find_point = auto.find_element.side_effect
+    auto.find_element.side_effect = lambda target, *args, **kwargs: (
+        None if isinstance(target, str) else find_point(target, *args, **kwargs)
+    )
     monkeypatch.setattr(navigator, "_find_image", find_image)
     monkeypatch.setattr(currency_wars.CurrencyWars, "_capture", staticmethod(capture_title))
     monkeypatch.setattr(currency_wars, "screen", navigator)
@@ -1918,6 +1983,9 @@ def test_currency_wars_startup_rechecks_resolution_without_closing_the_window(
     ("main", "applied"),
     ("currencywarsloop", "detected_path"),
     ("currencywarsloop", "resized_before_restart"),
+    ("currencywarsloop", "recheck_error_once"),
+    ("currencywarsloop", "recheck_missing_once"),
+    ("currencywarsloop", "recheck_unavailable"),
     ("currencywarsloop", "still_wrong"),
     ("currencywarsloop", "minimized"),
     ("currencywarsloop", "missing_path"),
@@ -1926,6 +1994,7 @@ def test_currency_wars_startup_rechecks_resolution_without_closing_the_window(
 ))
 def test_currency_wars_startup_restarts_once_to_apply_resolution(
         runner, currency_wars_game, monkeypatch, tmp_path, action, outcome):
+    from module.automation.windows_input import WINDOW_MISSING, WindowGoneError
     from tasks.game import starrailcontroller as local
 
     state = currency_wars_game
@@ -1961,9 +2030,14 @@ def test_currency_wars_startup_restarts_once_to_apply_resolution(
     def inspect_window(*_):
         if outcome == "user_stop":
             state.stop = True
+        if outcome == "recheck_missing_once" and windows.return_value.inspect.call_count == 1:
+            return None, WINDOW_MISSING
         return SimpleNamespace(pid=123), "minimized" if outcome == "minimized" else None
 
     def read_current_size(_):
+        if outcome == "recheck_unavailable" or (
+                outcome == "recheck_error_once" and windows.return_value.size.call_count == 1):
+            raise WindowGoneError("游戏窗口正在重建")
         if outcome == "resized_before_restart":
             controller.get_resolution.return_value = (1920, 1080)
         return controller.get_resolution.return_value
@@ -1990,7 +2064,9 @@ def test_currency_wars_startup_restarts_once_to_apply_resolution(
 
     record = run_currency_wars_cli(runner, action)
 
-    applied = outcome in ("applied", "detected_path")
+    applied = outcome in ("applied", "detected_path", "recheck_error_once", "recheck_missing_once")
+    rechecks = {"recheck_error_once": 2, "recheck_missing_once": 2, "recheck_unavailable": 3}
+    assert windows.return_value.inspect.call_count == rechecks.get(outcome, 1)
     if applied or outcome in ("still_wrong", "stop_failed"):
         controller.stop_game.assert_called_once_with()
     else:
@@ -2026,9 +2102,112 @@ def test_currency_wars_startup_restarts_once_to_apply_resolution(
             assert {
                 "still_wrong": "尝试自动重启后，游戏窗口分辨率为 2560x1440",
                 "minimized": "游戏窗口已不可操作",
+                "recheck_unavailable": "无法确认游戏窗口状态",
                 "missing_path": "未找到可重新启动的游戏路径",
                 "stop_failed": "无法关闭游戏",
             }[outcome] in record["error"]
+
+
+@pytest.mark.parametrize(("action", "outcome"), (
+    ("main", "updated"),
+    ("currencywarsloop", "title_template_visible"),
+    ("main", "prefilter_failed_with_title"),
+    ("main", "disabled"),
+    ("main", "unrecognized"),
+    ("main", "stopped"),
+    ("main", "stopped_before_close"),
+    ("main", "stopped_before_launcher"),
+))
+def test_currency_wars_startup_recovers_from_confirmed_outdated_client(
+        runner, currency_wars_game, monkeypatch, action, outcome):
+    state = currency_wars_game
+    state.page = "outdated"
+    game, controller = bind_currency_wars_local_startup(runner, state, monkeypatch, action)
+    game.cfg.start_game_timeout = 1
+    game.cfg.update_via_launcher = outcome != "disabled"
+    auto = currency_wars.auto
+    capture = currency_wars.CurrencyWars._capture
+    empty = Frame(Image.new("RGB", (1920, 1080)), ())
+
+    def capture_startup():
+        if state.page != "outdated":
+            return capture()
+        if outcome == "prefilter_failed_with_title":
+            raise OSError("货币战争启动 OCR 暂不可用")
+        return empty
+
+    monkeypatch.setattr(currency_wars.CurrencyWars, "_capture", staticmethod(capture_startup))
+    title_visible = outcome in ("title_template_visible", "prefilter_failed_with_title")
+    screen = MagicMock(current_screen="click_enter" if title_visible else None)
+    screen.get_current_screen.return_value = title_visible
+    monkeypatch.setattr(game, "screen", screen)
+    if outcome == "prefilter_failed_with_title":
+        monkeypatch.setattr(import_module("module.screen"), "screen", screen)
+    if outcome == "stopped_before_close":
+        monkeypatch.setattr(game, "log", MagicMock(error=lambda _: setattr(state, "stop", True)))
+    find_point = auto.find_element.side_effect
+
+    def find(target, *args, **kwargs):
+        if not isinstance(target, str):
+            return find_point(target, *args, **kwargs)
+        if target != "前往启动器下载最新客户端" or outcome == "unrecognized":
+            return None
+        assert state.page == "outdated" and kwargs["take_screenshot"] is False
+        if outcome == "stopped":
+            state.stop = True
+        return (960, 540)
+
+    def stop():
+        assert state.page == "outdated"
+        controller.switch_to_game.return_value = False
+        controller.is_game_running.return_value = False
+        if outcome == "stopped_before_launcher":
+            state.stop = True
+        return True
+
+    def start():
+        update.assert_called_once_with()
+        controller.switch_to_game.return_value = True
+        controller.is_game_running.return_value = True
+        return True
+
+    def enter(target, *_args, **_kwargs):
+        assert state.page == "updated" and target.endswith("/click_enter.png")
+        state.page = "home"
+        return True
+
+    update = MagicMock(side_effect=lambda: setattr(state, "page", "updated"))
+    monkeypatch.setattr(game, "update_via_launcher", update)
+    monkeypatch.setattr(game, "_local_game_process_running", lambda _: controller.is_game_running())
+    auto.find_element.side_effect = find
+    auto.click_element.side_effect = enter
+    controller.stop_game.side_effect = stop
+    controller.start_game_process.side_effect = start
+
+    record = run_currency_wars_cli(runner, action)
+
+    if outcome in ("updated", "title_template_visible", "prefilter_failed_with_title"):
+        controller.stop_game.assert_called_once_with()
+        controller.start_game_process.assert_called_once_with()
+        update.assert_called_once_with()
+        assert state.completed == 1
+        assert record["status"] == (STATUS_STOPPED if action == "currencywarsloop" else "success"), record
+        screen.get_current_screen.assert_called_once_with(autotry=False, max_retries=1)
+    else:
+        if outcome == "stopped_before_launcher":
+            controller.stop_game.assert_called_once_with()
+        else:
+            controller.stop_game.assert_not_called()
+        controller.start_game_process.assert_not_called()
+        update.assert_not_called()
+        auto.click_element.assert_not_called()
+        assert state.clicks == []
+        if outcome in ("stopped", "stopped_before_close", "stopped_before_launcher"):
+            assert record["exit_code"] == EXIT_STOPPED
+        else:
+            assert record["reason"] == "game_startup_unavailable"
+            expected = "游戏客户端版本过低" if outcome == "disabled" else "未能确认游戏起始画面"
+            assert expected in record["error"]
 
 
 @pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "main"))
@@ -2166,12 +2345,19 @@ def test_currency_wars_startup_uses_saved_credentials_only_on_a_confirmed_login_
 @pytest.mark.parametrize(("recognized", "current_screen", "can_continue"), (
     (True, "main", True),
     (True, "menu", True),
+    (True, "guide3", True),
+    (True, "map", True),
+    (True, "mail", True),
+    (True, "bag_relicset", True),
     (True, "currency_wars_homepage", False),
+    (True, "purefiction_exit_confirm", False),
+    (True, "guide1", False),
     (False, "main", False),
 ))
 def test_full_run_uses_a_known_game_screen_when_currency_wars_prefilter_cannot_read(
         runner, currency_wars_game, monkeypatch, recognized, current_screen, can_continue):
     from module import screen as screen_module
+    from module.screen.screen import Screen
     from tasks import game
     from utils import wait
 
@@ -2184,6 +2370,9 @@ def test_full_run_uses_a_known_game_screen_when_currency_wars_prefilter_cannot_r
     screen = MagicMock()
     screen.get_current_screen.return_value = recognized
     screen.current_screen = current_screen
+    navigator = object.__new__(Screen)
+    Screen.__init__(navigator, Path("assets/config/screens.json"), MagicMock())
+    screen.can_change_from.side_effect = navigator.can_change_from
     monkeypatch.setattr(game, "screen", screen)
     monkeypatch.setattr(screen_module, "screen", screen)
     runner.cfg.control_backend = "cloud"
@@ -2197,9 +2386,10 @@ def test_full_run_uses_a_known_game_screen_when_currency_wars_prefilter_cannot_r
 
     record = run_currency_wars_cli(runner, "main")
 
+    screen.get_current_screen.assert_called_once_with(autotry=False, max_retries=1)
+    screen.change_to.assert_not_called()
     if can_continue:
         assert record["status"] == "success"
-        screen.get_current_screen.assert_called_once_with(autotry=False, max_retries=1)
         runner.Daily.start.assert_called_once_with()
     else:
         assert record["reason"] == "currencywars_unavailable"
