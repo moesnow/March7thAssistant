@@ -1921,10 +1921,16 @@ class CurrencyWars:
             return recovered
 
     def _equip_board(self, frame, board):
+        if cfg.currencywars_fast_mode:
+            if board.lineup and not self.mode_confirmed:
+                # 直接接管高难对局时，配置的模式可能与当前对局不同。
+                boss = any(board.stage in stages for stages in BOSS_STAGES.values())
+            else:
+                boss = board.stage in BOSS_STAGES[self.mode]
+            if not boss:
+                return frame
         if board.lineup:
             return self._equip_team(frame, board)
-        if cfg.currencywars_fast_mode and board.stage not in BOSS_STAGES[self.mode]:
-            return frame
         deployed = [s for s in board.slots if s.unit and s.zone != "bench"]
         if self.default_strategy:
             deployed.sort(key=strategy.default_priority, reverse=True)

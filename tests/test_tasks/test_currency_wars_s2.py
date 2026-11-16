@@ -4130,6 +4130,61 @@ def test_high_equipment_summary_counts_rescans_and_confirmed_updates(monkeypatch
     ]
 
 
+@pytest.mark.parametrize(("saved_mode", "configured_mode", "stage", "fast_mode", "scan"), [
+    ("normal", "overclock", "2-7", True, True),
+    ("normal", "overclock", "2-5", True, False),
+    ("overclock", "normal", "2-5", True, True),
+    ("overclock", "normal", "2-7", True, False),
+    ("normal", "normal", "2-4", False, True),
+    ("overclock", "overclock", "2-4", False, True),
+    (None, "normal", "2-5", True, True),
+    (None, "overclock", "2-7", True, True),
+    (None, "normal", "2-4", True, False),
+])
+def test_high_fast_mode_only_checks_equipment_at_possible_boss_stages(
+    monkeypatch, world, high_lineup, saved_mode, configured_mode, stage, fast_mode, scan,
+):
+    fight, recommend, resume = (1818, 750), (1512, 818), (1692, 961)
+    target = slot("front", 0, CORE)
+    team = board(target, stage=stage, gold=0, used=1, capacity=3, lineup=high_lineup)
+    ready = page(Page.BOARD, ("出战", *fight), stage=stage, capacity=(1, 3), gold=0)
+    detail = page(Page.DETAIL, (CORE.name, 1538, 230), ("推荐", *recommend), stage=stage)
+    equipment = page(Page.EQUIPMENT, (CORE.name, 1538, 230), stage=stage)
+    fighting, lobby = battle(True), home()
+    world.cfg.currencywars_strategy = policy.HIGH_ANAXA
+    world.cfg.currencywars_type = configured_mode
+    world.cfg.currencywars_fast_mode = fast_mode
+    monkeypatch.setattr(ready, "inventory_equipment", lambda: (((1844, 248), "生命之环"),))
+    monkeypatch.setattr(ready, "slot_occupied", lambda point: point == target.point)
+    monkeypatch.setattr(world.war, "_read_board", lambda frame: (frame, team))
+    monkeypatch.setattr(world.war, "_check_weekly_reward", lambda frame: (frame, (18000, 18000), False))
+
+    def win_battle(frame):
+        assert frame is fighting
+        world.war.result = True
+        return lobby
+
+    monkeypatch.setattr(world.war, "_watch_battle", win_battle)
+    routes = {(ready, target.point): detail, (detail, recommend): equipment,
+              (equipment, (12, 12)): ready, (ready, fight): fighting}
+    initial = ready
+    expected = []
+    if saved_mode:
+        initial = mode(("继续进度", *resume), ("结束并结算", 1397, 961), (ui.MODE_NAMES[saved_mode], 670, 155))
+        routes[initial, resume] = ready
+        expected.append((Page.MODES, resume))
+    if scan:
+        expected.extend(((Page.BOARD, target.point), (Page.DETAIL, recommend), (Page.EQUIPMENT, (12, 12))))
+    expected.append((Page.BOARD, fight))
+    state = drive(monkeypatch, world, initial, lambda s, point: setattr(s, "frame", routes[s.frame, point]))
+
+    assert world.war.start(resume=True)
+    assert world.war.mode == (saved_mode or configured_mode)
+    assert world.war.mode_confirmed == bool(saved_mode)
+    assert state.clicks == expected
+    assert not state.keys
+
+
 
 @pytest.mark.parametrize(("same_employee", "worn"), ((True, False), (True, True), (False, False)))
 def test_equipment_receipt_timeout_rechecks_the_board_without_repeating_input(monkeypatch, world, same_employee, worn):
