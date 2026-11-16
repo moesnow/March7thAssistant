@@ -14,6 +14,7 @@ from tasks.base.list_drag import changed_ratio, drag_list
 from tasks.base.task_steps import run_steps
 from tasks.reward.menu_alert import menu_alert
 from tasks.reward.receipt import RewardError, notify_reward
+from tasks.reward.sms import close_sms_receipt, find_thread_title, first_unblocked_thread
 from tasks.touch import daily
 from utils.date import Date
 from utils.image_utils import ImageUtils
@@ -220,7 +221,6 @@ def _finish_message():
     while time.monotonic() < deadline:
         if auto.find_element(daily.REWARD_POPUP, "image", 0.9, crop=daily.REWARD_POPUP_CROP):
             log.info("已领取短信奖励")
-            _close_item_reward()
             return True
         if _message_pending():
             finished_frames = 0
@@ -253,8 +253,7 @@ def _open_unread_message(avoid=()):
     def find_thread():
         if not avoid:
             return auto.find_element(thread_icon, "image", 0.89, crop=MESSAGE_PENDING, max_retries=3, retry_delay=0.25)
-        candidates = auto.find_element(thread_icon, "image_with_multiple_targets", 0.89, crop=MESSAGE_PENDING) or []
-        return next((box for box in candidates if all(abs(box[0][1] - row) > 22 for row in avoid)), None)
+        return first_unblocked_thread(auto, MESSAGE_LIST, MESSAGE_PENDING, ((thread_icon, 0.89),), avoid)
 
     thread = find_thread()
     if not thread:
@@ -283,21 +282,32 @@ def claim_messages():
     completed = 0
     received = 0
     timed_out = 0
-    blocked_rows = set()
+    blocked_titles = set()
     drags = 0
     try:
         for _ in range(30):
-            if (not timed_out and _message_pending()) or _open_unread_message(blocked_rows):
+            if (not timed_out and _message_pending()) or _open_unread_message(blocked_titles):
                 try:
-                    received += bool(_finish_message())
+                    result = _finish_message()
+                    received += bool(result)
                     completed += 1
+                    if result and not close_sms_receipt(
+                        _close_item_reward,
+                        lambda: auto.find_element(daily.REWARD_POPUP, "image", 0.9, crop=daily.REWARD_POPUP_CROP),
+                    ):
+                        log.warning("已确认短信奖励到账，弹窗仍未关闭，停止本次短信处理")
+                        break
                 except MessageTimeout as error:
                     timed_out += 1
-                    if pending := _message_pending():
-                        blocked_rows.add(pending[0][1])
+                    title = find_thread_title(auto, MESSAGE_LIST, MESSAGE_PENDING,
+                                              f"{IMAGE_ROOT}/message_pending.png", 0.9)
                     log.warning(f"{error}，尝试返回列表继续其他会话")
                     screen.change_to("menu", max_recursion=0)
                     screen.change_to("incoming_message", max_recursion=0)
+                    if not title:
+                        log.warning("未识别超时会话标题，停止本次短信处理")
+                        break
+                    blocked_titles.add(title)
                 drags = 0
                 continue
             if drags >= 4:
@@ -388,7 +398,8 @@ def routine(*, on_summary=None, full_run=False, on_step=None):
 
     with screenshot_retry_timeout(5):
         result = run_steps(steps, on_step=None if on_step is None else report)
-        screen.change_to("main", max_recursion=1)
+        if result:
+            screen.change_to("main", max_recursion=1)
     if summaries and on_summary is not None:
         on_summary(tr("；").join(summaries))
     return result

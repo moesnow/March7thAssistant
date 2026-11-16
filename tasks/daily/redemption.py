@@ -1,10 +1,12 @@
 from module.screen import screen
 from module.automation import auto
 from module.config import cfg
+from module.config.platform import get_control_backend
 from module.logger import log
 from module.game import get_game_controller
 from utils.color import red, green, yellow
 import tasks.reward as reward
+from tasks.base.task_steps import FATAL_GAME_ERRORS
 import time
 import json
 import datetime
@@ -135,7 +137,7 @@ class Redemption:
         log.hr("获取最新兑换码", 0)
 
         # 如果云游戏启用，默认使用国服
-        if cfg.cloud_game_enable:
+        if get_control_backend(cfg) == "cloud":
             server = 'cn'
         elif sys.platform == 'win32':
             from utils.registry.star_rail_setting import get_server_by_registry
@@ -253,7 +255,12 @@ class Redemption:
             if send_notification:
                 notif.notify(content=msg, level=NotificationLevel.ALL)
 
-            reward.start_specific("mail")
+            try:
+                reward.start_specific("mail")
+            except FATAL_GAME_ERRORS:
+                raise
+            except Exception as error:
+                log.warning(f"兑换码已记为成功，邮件奖励待领取：{error}")
             log.hr("完成", 2)
             return True
         else:

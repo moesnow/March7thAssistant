@@ -19,13 +19,14 @@ from module.game.adb_transport import AdbError
 from module.localization import tr
 from module.ocr import ocr
 from module.config import cfg
-from module.config.platform import TouchProfileInputError, get_control_backend, get_ui_profile
+from module.config.platform import InvalidGameConnection, TouchProfileInputError, get_control_backend, get_ui_profile
 
 
 _screenshot_retry_timeout = ContextVar("screenshot_retry_timeout", default=60.0)
 _TOUCH_UNSUPPORTED_INPUTS = (
     "press_key", "press_key_down", "press_key_up", "secretly_press_key", "press_mouse", "mouse_scroll",
 )
+_INPUT_METHODS = ("mouse_click", "mouse_down", "mouse_up", "mouse_move", "mouse_drag", "secretly_write") + _TOUCH_UNSUPPORTED_INPUTS
 
 
 def _reject_touch_input(name):
@@ -58,10 +59,22 @@ class Automation(metaclass=SingletonMeta):
         self.window_title = window_title
         self.logger = logger
         self.screenshot = None
-        self._init_input()
+        self.input_handler = None
+        self.connection = None
+        try:
+            self._init_input()
+        except InvalidGameConnection:
+            # 设置页可以先打开并修复配置，实际发出输入前仍须解析有效连接。
+            pass
         self.img_cache = {}
         self._debug_overlay = None
         self._debug_initialized = False
+
+    def __getattr__(self, name):
+        if name in _INPUT_METHODS and self.__dict__.get("input_handler") is None:
+            self._init_input()
+            return self.__dict__[name]
+        raise AttributeError(name)
 
     def _init_input(self):
         """
@@ -69,23 +82,31 @@ class Automation(metaclass=SingletonMeta):
 
         支持的输入操作经过暂停卡点。不支持的操作立即报错。
         """
+        profile = get_ui_profile(cfg).name
+        backend = get_control_backend(cfg)
         previous = getattr(self, 'input_handler', None)
         if previous is not None and callable(getattr(previous, 'close', None)):
             previous.close()
         self.input_handler = get_game_controller().get_input_handler()
 
-        touch = get_ui_profile(cfg).name == "touch_720"
-        inputs = ("mouse_click", "mouse_down", "mouse_up", "mouse_move", "mouse_drag", "secretly_write")
-        for name in inputs + _TOUCH_UNSUPPORTED_INPUTS:
-            if touch and name in _TOUCH_UNSUPPORTED_INPUTS:
+        for name in _INPUT_METHODS:
+            if profile == "touch_720" and name in _TOUCH_UNSUPPORTED_INPUTS:
                 method = _reject_touch_input(name)
             else:
                 method = pause_guard(getattr(self.input_handler, name))
             setattr(self, name, method)
+        self.connection = backend, profile
 
     def close_input(self):
         if self.input_handler is not None:
             self.input_handler.close()
+
+    def reload_connection(self):
+        self.shutdown_debug()
+        self.window_title = cfg.get_value('game_title_name')
+        self.screenshot = None
+        self.ocr_result = []
+        self._init_input()
 
     def _is_debug_enabled(self):
         """检查调试模式是否启用。"""

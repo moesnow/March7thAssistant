@@ -2,7 +2,7 @@ import time
 
 from module.logger import log
 from module.ocr import ocr
-from tasks.power.policy import PowerError, parse_immersifier_stock, parse_wave_count
+from tasks.power.policy import PowerError, parse_immersifier_stock
 
 
 def read_number(auto, crop, parse, error, *, retries=6):
@@ -27,18 +27,3 @@ def read_immersifier_stock(auto, crop):
         return 0
     log.info(f"沉浸器：{stock}/12")
     return stock
-
-
-def read_wave_selection(auto, crop, limit, *, allow_no_selector=False):
-    """读取当前挑战次数。允许单场的界面没有次数控件时返回 None。"""
-    label = "挑战次数"
-    has_selector = False
-
-    def parse(text):
-        nonlocal has_selector
-        has_selector = has_selector or label in text
-        if allow_no_selector and not has_selector:
-            return 0
-        return parse_wave_count(text, label, limit)
-
-    return read_number(auto, crop, parse, "未能确认挑战次数") or None

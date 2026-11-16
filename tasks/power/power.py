@@ -3,12 +3,12 @@ from module.config import cfg
 from module.localization import get_raw_instance_names
 from module.logger import log
 from module.screen import screen
-from tasks.base.task_steps import run_steps
+from tasks.base.task_steps import FATAL_GAME_ERRORS, run_steps
 from tasks.daily.buildtarget import BuildTarget
 from tasks.power.instance import Instance, TeamPresetUnavailable
 from tasks.power.policy import (
-    ECHO, ORNAMENT, INSTANCE_LIMITS, BattleDefeat, RelicBagFull, PowerError, SupportDemand,
-    DEFEAT_RETRIES, batch_limit, parse_power, plan_paid_batch, run_plan,
+    ECHO, ORNAMENT, INSTANCE_LIMITS, BattleDefeat, InstanceUnavailable, RelicBagFull, PowerError, SupportDemand,
+    DEFEAT_RETRIES, batch_limit, parse_pc_power, plan_paid_batch, run_plan,
 )
 from tasks.power.readout import read_immersifier_stock, read_number
 from tasks.power.supplement import supplement
@@ -135,8 +135,17 @@ class Power:
             Instance.heal_teams()
 
         def enter():
-            if not Instance.prepare_instance(instance_type, name):
-                raise PowerError(f"未能进入副本 {name}")
+            for attempt in range(1, 4):
+                try:
+                    if Instance.prepare_instance(instance_type, name):
+                        return
+                    raise PowerError(f"未能进入副本 {name}")
+                except FATAL_GAME_ERRORS:
+                    raise
+                except RuntimeError as error:
+                    if isinstance(error, InstanceUnavailable) or attempt == 3:
+                        raise
+                    log.warning(f"进入副本失败，重试 {attempt}/2：{error}")
 
         remaining = planned
         previous = 0
@@ -210,14 +219,13 @@ class Power:
             if remaining is not None:
                 remaining -= waves
             if is_echo and not practice:
-                # 奖励额度读数取自游戏，不能仅凭胜场写入周常时间。
-                Instance.complete_run(instance_type)
-                previous = 0
-                rewards = Instance.read_echo_rewards()
+                rewards -= waves
                 if rewards == 0:
                     cfg.save_timestamp("echo_of_war_timestamp")
-                    if planned is None:
-                        return
+                Instance.complete_run(instance_type)
+                previous = 0
+                if rewards == 0 and planned is None:
+                    return
                 if remaining != 0 and (rewards == 0 or available >= cost_per_wave):
                     enter()
 
@@ -236,7 +244,7 @@ class Power:
         screen.change_to("map")
 
         def read():
-            return read_number(auto, MAP_POWER, parse_power, "未能确认当前开拓力")
+            return read_number(auto, MAP_POWER, parse_pc_power, "未能确认当前开拓力")
 
         balance = read()
         if use_supplement:

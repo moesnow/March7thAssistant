@@ -15,7 +15,6 @@ from utils.wait import wait_until
 
 INDEX_POWER = (1320 / 1920, 26 / 1080, 215 / 1920, 60 / 1080)
 INDEX_IMMERSIFIERS = (1605 / 1920, 26 / 1080, 144 / 1920, 60 / 1080)
-WAVES = (1504 / 1920, 822 / 1080, 174 / 1920, 49 / 1080)
 PRESETS = (448 / 1920, 61 / 1080, 166 / 1920, 49 / 1080)
 TEAM_NAMES = (47 / 1920, 140 / 1080, 169 / 1920, 862 / 1080)
 ARENA_TITLE = (60 / 1920, 7 / 1080, 131 / 1920, 51 / 1080)
@@ -87,13 +86,12 @@ def _select_team(name, team=None):
 
 
 def run_instance(name, planned, batch_limit, borrow_for_daily, on_settlement):
-    instance_screen, cost_per_wave, wave_limit = power.INSTANCES[power.ORNAMENT]
+    instance_screen, cost_per_wave, _ = power.INSTANCES[power.ORNAMENT]
     demand = (borrow_for_daily if isinstance(borrow_for_daily, power.SupportDemand)
               else power.SupportDemand(borrow_for_daily))
 
     def enter():
-        power._select_category(power.ORNAMENT)
-        power._enter_instance(power.ORNAMENT, name)
+        power._reenter_instance(power.ORNAMENT, name)
 
     power._select_category(power.ORNAMENT)
     immersifiers = read_immersifier_stock(auto, INDEX_IMMERSIFIERS)
@@ -128,9 +126,8 @@ def run_instance(name, planned, batch_limit, borrow_for_daily, on_settlement):
                 if previous:
                     power._exit_result(instance_screen)
                     previous = 0
-                    if screen.current_screen != instance_screen:
-                        enter()
-                power._set_challenge_waves(waves, wave_limit, crop=WAVES, minus=1359, y=875)
+                    enter()
+                power._set_challenge_waves(waves, y=875)
                 if cfg.instance_team_enable:
                     _select_team(name)
                 borrowed = demand.should_borrow(cfg) and support.borrow(ornament=True)

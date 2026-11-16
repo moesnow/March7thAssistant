@@ -26,10 +26,13 @@ from .tools.announcement import checkAnnouncement
 from .tools.disclaimer import disclaimer
 
 from module.config import cfg
-from module.config.platform import get_control_backend
+from app.tools.adb_service import display_connection
+from module.automation import auto
 from module.logger import log
 from module.game import get_game_controller
 from module.localization import tr
+from module.screen import screen
+from tasks.tool import stop_plot
 import base64
 import os
 import sys
@@ -119,6 +122,7 @@ class MainWindow(MSFluentWindow):
         self._desktop_twin_tray_action = None
         self._desktop_twin_notice = None
         self._desktop_twin_badge = None
+        self._backend_connection = display_connection(cfg)
         self._pending_ui_language = None
         self._navigation_animation_running = False
         self.stackedWidget.view.aniStart.connect(lambda: setattr(self, '_navigation_animation_running', True))
@@ -558,8 +562,16 @@ class MainWindow(MSFluentWindow):
         start_task("main")
 
     def refreshBackendTasks(self):
+        connection = display_connection(cfg)
+        changed = connection != self._backend_connection
+        if changed:
+            stop_plot()
+            if connection.error is None:
+                auto.reload_connection()
+                screen.reload_profile()
+            self._backend_connection = connection
         self.homeInterface.refreshBackendTasks()
-        self.toolsInterface.refreshBackendTasks()
+        self.toolsInterface.refreshBackendTasks(connection_changed=changed)
 
     def _onHotkeyChanged(self):
         """处理热键配置改变信号"""
@@ -877,6 +889,8 @@ class MainWindow(MSFluentWindow):
             replacement = SettingInterface(self)
             self._replace_settings_interface(replacement, state)
             replacement = None
+            if display_connection(cfg) != self._backend_connection:
+                self.refreshBackendTasks()
 
             # 只有在窗口可见时才显示提示
             if self.isVisible():
@@ -1025,7 +1039,12 @@ class MainWindow(MSFluentWindow):
     def startGame(self):
         if self._desktop_twin_hosting:
             return
-        if get_control_backend(cfg) == "adb":
+        connection = display_connection(cfg)
+        if connection.error:
+            InfoBar.warning(title=tr('启动失败'), content=connection.error, orient=Qt.Horizontal,
+                            position=InfoBarPosition.TOP, duration=5000, parent=self)
+            return
+        if connection.control_backend == "adb":
             # 设备会话属于任务进程，在界面进程里启动游戏会一直占着设备端服务。
             InfoBar.info(
                 title=tr('Android 设备不需要单独启动游戏'),
@@ -1119,7 +1138,7 @@ class MainWindow(MSFluentWindow):
         elif result == GameStartStatus.LOCAL_LAUNCH_FAIL:
             InfoBar.warning(
                 title=tr('游戏路径配置错误(╥╯﹏╰╥)'),
-                content=tr("请在“设置”→“程序”中配置"),
+                content=tr("请在“设置”→“游戏连接”中配置正确的游戏路径"),
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,

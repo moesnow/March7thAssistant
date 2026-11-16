@@ -50,9 +50,6 @@ class Synthesis:
 
     @staticmethod
     def _verify_training_recipe():
-        if not auto.find_element("微光原核", "text", crop=(0.49, 0.08, 0.43, 0.16), max_retries=4, retry_delay=0.3):
-            log.error("未确认微光原核配方")
-            return False
         auto.take_screenshot(crop=(0.51, 0.63, 0.41, 0.23))
         auto.perform_ocr()
         text = "\n".join(normalize(value) for _, (value, _) in auto.ocr_result)

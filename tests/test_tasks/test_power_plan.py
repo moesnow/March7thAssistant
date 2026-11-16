@@ -3,9 +3,10 @@ from types import SimpleNamespace
 from unittest.mock import Mock, call
 
 import pytest
+from ruamel.yaml.scalarint import ScalarInt
 
 from tasks.power import power as desktop
-from tasks.power.policy import CAVERN, GOLDEN_CALYX, PowerError, SupportDemand
+from tasks.power.policy import CAVERN, GOLDEN_CALYX, PowerError, SupportDemand, batch_limit
 from tasks.touch import power as touch
 
 
@@ -20,6 +21,20 @@ def config(**overrides):
                   save_timestamp=Mock(), refresh_hour=4)
     values.update(overrides)
     return SimpleNamespace(**values)
+
+
+def test_yaml_integer_subclasses_keep_batch_limits_and_plan_counts(monkeypatch):
+    cfg = config(power_plan=[[GOLDEN_CALYX, MATERIALS[1], ScalarInt(2)], [CAVERN, RELICS[1], True]],
+                 instance_names_challenge_count={GOLDEN_CALYX: ScalarInt(3), CAVERN: True})
+    runs = Mock(side_effect=lambda kind, name, count, **kwargs: iter([count]))
+    monkeypatch.setattr(desktop, "cfg", cfg)
+    monkeypatch.setattr(desktop.Power, "_run_instance", runs)
+
+    assert batch_limit(cfg, GOLDEN_CALYX) == 3
+    assert batch_limit(cfg, CAVERN) == 6
+    assert not desktop.Power.execute_power_plan()
+    runs.assert_called_once_with(GOLDEN_CALYX, MATERIALS[1], 2, support=None)
+    cfg.set_value.assert_called_once_with("power_plan", [[CAVERN, RELICS[1], True]])
 
 
 @pytest.mark.parametrize("backend", [desktop, touch], ids=["pc", "touch"])

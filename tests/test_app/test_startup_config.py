@@ -69,6 +69,9 @@ def inspect_startup(name, *args, **kwargs):
     if name == "utils.admin":
         # 仅跳过权限检查，不启动提权进程。
         return SimpleNamespace(is_user_admin=lambda: True, run_as_admin=unexpected_elevation)
+    if name == "utils.desktop_twin":
+        # 本用例只验证配置角色，独立于当前机器是否运行桌面分身。
+        return SimpleNamespace(connection_reserved=lambda: False)
     if name in ("utils.crash_log", "module.localization"):
         # 操作入口在自启配置前检查；查询入口在加载语言所需配置之前检查。
         module, config = load_config(root)

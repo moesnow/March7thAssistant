@@ -1,6 +1,7 @@
 import os
 import sys
 import argparse
+from contextlib import contextmanager, nullcontext
 # 将当前工作目录设置为程序所在的目录，确保无论从哪里执行，其工作目录都正确设置为程序本身的位置，避免路径错误。
 os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False)else os.path.dirname(os.path.abspath(__file__)))
 
@@ -326,7 +327,9 @@ if sys.platform == 'win32' and requires_admin and not is_user_admin():
     sys.exit(EXIT_ELEVATION_FAILED)
 
 from module.config import cfg
-from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend, get_ui_profile
+from module.config.platform import (
+    ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend, get_ui_profile, pin_game_connection,
+)
 from module.logger import log
 import logging
 logging.getLogger("March7thAssistant").addHandler(run_session.error_log_handler())
@@ -428,6 +431,31 @@ def first_run():
         sys.exit(EXIT_FIRST_RUN_REQUIRED)
 
 
+@contextmanager
+def _game_connection(task_id):
+    with pin_game_connection(cfg) as (backend, profile):
+        if task_id == "main" and not task_is_supported(task_id, cfg):
+            raise GameStartupUnavailable(tr(UNSUPPORTED_TASK))
+        if task_id not in HOST_TASKS:
+            game.prepare_game_connection(backend, profile.name)
+        if backend == "adb" and task_id not in HOST_TASKS:
+            controller = game.get_game_controller("adb")
+            with publish_status(controller, run_session):
+                try:
+                    yield
+                finally:
+                    controller.close()
+        else:
+            if "adb_status_endpoint" in run_session.record:
+                run_session.record.pop("adb_status_endpoint")
+                run_session.update_record()
+            recover_temporary_graphics(log)
+            try:
+                yield
+            finally:
+                restore_temporary_graphics(final=True)
+
+
 def run_main_actions(no_run_immediately=False):
     is_first_run = no_run_immediately
     while True:
@@ -439,63 +467,64 @@ def run_main_actions(no_run_immediately=False):
             notif.start_batch()
         telemetry.track_task_start("main")
         main_start_time = time.time()
-        try:
-            version.start()
-            touch = get_ui_profile(cfg).name == "touch_720"
-            currency_wars_first = False
-            if not touch and Daily.currency_wars_due():
-                def current_currency_wars():
-                    nonlocal currency_wars_first
-                    try:
-                        currency_wars_first = CurrencyWars.game_screen_ready(for_full_run=True)
-                    except CurrencyWarsUnavailable as error:
-                        from module.automation.automation import screenshot_retry_timeout
-                        from module.automation.background_input import GameWindowLost, InputInterrupted
-                        from module.screen import screen
-
+        with _game_connection("main"):
+            try:
+                version.start()
+                touch = get_ui_profile(cfg).name == "touch_720"
+                currency_wars_first = False
+                if not touch and Daily.currency_wars_due():
+                    def current_currency_wars():
+                        nonlocal currency_wars_first
                         try:
-                            with screenshot_retry_timeout(0):
-                                ready = screen.get_current_screen(autotry=False, max_retries=1)
-                        except (GameWindowLost, InputInterrupted, ProfileAssetNotFoundError, TouchProfileInputError):
-                            raise
-                        except (OSError, RuntimeError) as fallback_error:
-                            raise error from fallback_error
-                        if not ready or screen.current_screen not in ("main", "menu"):
-                            raise
-                        log.warning(f"已确认游戏可操作，按正常顺序继续完整运行：{error}")
-                        return True
-                    return currency_wars_first
+                            currency_wars_first = CurrencyWars.game_screen_ready(for_full_run=True)
+                        except CurrencyWarsUnavailable as error:
+                            from module.automation.automation import screenshot_retry_timeout
+                            from module.automation.background_input import GameWindowLost, InputInterrupted
+                            from module.screen import screen
 
-                game.start(screen_ready=current_currency_wars)
-            else:
-                game.start()
-            if touch:
-                from tasks.touch import rewards
+                            try:
+                                with screenshot_retry_timeout(0):
+                                    ready = screen.get_current_screen(autotry=False, max_retries=1)
+                            except (GameWindowLost, InputInterrupted, ProfileAssetNotFoundError, TouchProfileInputError):
+                                raise
+                            except (OSError, RuntimeError) as fallback_error:
+                                raise error from fallback_error
+                            if not ready or screen.current_screen not in ("main", "menu"):
+                                raise
+                            log.warning(f"已确认游戏可操作，按正常顺序继续完整运行：{error}")
+                            return True
+                        return currency_wars_first
 
-                success = rewards.routine(full_run=True)
-            elif currency_wars_first:
-                success = Daily.start(currency_wars_first=True)
-            else:
-                success = Daily.start()
-            telemetry.track_task_complete("main", success is not False, time.time() - main_start_time)
-            if success is False:
-                if cfg.after_finish == "Loop" and not is_gui_started():
-                    game.after_finish_is_loop()
-                    continue
+                    game.start(screen_ready=current_currency_wars)
+                else:
+                    game.start()
+                if touch:
+                    from tasks.touch import rewards
+
+                    success = rewards.routine(full_run=True)
+                elif currency_wars_first:
+                    success = Daily.start(currency_wars_first=True)
+                else:
+                    success = Daily.start()
+                telemetry.track_task_complete("main", success is not False, time.time() - main_start_time)
+                if success is False:
+                    if cfg.after_finish == "Loop" and not is_gui_started():
+                        game.after_finish_is_loop()
+                        continue
+                    notif.flush_batch()
+                    if cfg.after_finish == "Exit":
+                        game.get_game_controller().stop_game()
+                    return False
+                game.stop(True)
+            except CloudGameZeroDurationError as e:
+                telemetry.track_task_complete("main", False, time.time() - main_start_time)
+                # 时长为 0 时重启也无法恢复：循环模式等到下次定时再运行，避免容器反复重启并推送通知
+                if not game.wait_after_cloud_zero_duration(e):
+                    raise
+            except Exception:
+                telemetry.track_task_complete("main", False, time.time() - main_start_time)
                 notif.flush_batch()
-                if cfg.after_finish == "Exit":
-                    game.get_game_controller().stop_game()
-                return False
-            game.stop(True)
-        except CloudGameZeroDurationError as e:
-            telemetry.track_task_complete("main", False, time.time() - main_start_time)
-            # 时长为 0 时重启也无法恢复：循环模式等到下次定时再运行，避免容器反复重启并推送通知
-            if not game.wait_after_cloud_zero_duration(e):
                 raise
-        except Exception:
-            telemetry.track_task_complete("main", False, time.time() - main_start_time)
-            notif.flush_batch()
-            raise
 
 
 def run_sub_task(action, task_override=None):
@@ -678,20 +707,11 @@ def main(action=None, no_run_immediately=False, workflow_name=None, workflow_ste
         return False
 
     try:
-        # 包括正常返回、SystemExit、Ctrl+C、协作停止和异常，且先于外层错误暂停执行。
-        if get_control_backend(cfg) == "adb" and task_id not in HOST_TASKS:
-            controller = game.get_game_controller("adb")
-            with publish_status(controller, run_session):
-                try:
-                    return _run_action(action, no_run_immediately, workflow_name, workflow_step_path)
-                finally:
-                    controller.close()
-
-        recover_temporary_graphics(log)
-        try:
+        if task_id == "main":
             return _run_action(action, no_run_immediately, workflow_name, workflow_step_path)
-        finally:
-            restore_temporary_graphics(final=True)
+        # 完整运行逐轮管理连接，独立任务则在退出前清理本次连接。
+        with _game_connection(task_id):
+            return _run_action(action, no_run_immediately, workflow_name, workflow_step_path)
     finally:
         task_power_request.release(log)
 
@@ -815,12 +835,13 @@ if __name__ == "__main__":
             log.error("发生错误: 手动强制停止")
             pause_on_error()
             sys.exit(1)
-        except RunStopRequested:
+        except RunStopRequested as e:
             # 外部停止指令（图形界面停止按钮或 --control <运行编号> stop）：不再发出任何键鼠操作，
             # 也不按错误处理（不截图、不推送）
             release_input(close=True)
+            connection = getattr(e, "game_connection", None)
             if (args.workflow_name is None and args.task in (None, "main", "currencywars", "currencywarsloop", "currencywarstemp")
-                    and get_control_backend(cfg) == "cloud"):
+                    and (connection[0] if connection else get_control_backend(cfg)) == "cloud"):
                 cloud_game.preserve_running_browser()
             try:
                 pause_ctl.stop()
@@ -844,9 +865,11 @@ if __name__ == "__main__":
             telemetry.track_error(type(e).__name__, str(e))
             log.error(cfg.notify_template['ErrorOccurred'].format(error=e))
             terminal = isinstance(e, (CurrencyWarsTerminalError, GameStartupUnavailable))
-            if terminal and get_control_backend(cfg) == "cloud":
-                cloud_game.preserve_running_browser()
-            screenshot_path = e.screenshot if terminal else save_error_screenshot(log)
+            connection = getattr(e, "game_connection", None)
+            with pin_game_connection(cfg, connection=connection) if connection else nullcontext():
+                if terminal and get_control_backend(cfg) == "cloud":
+                    cloud_game.preserve_running_browser()
+                screenshot_path = e.screenshot if terminal else save_error_screenshot(log)
             run_session.note(error=str(e), screenshot=screenshot_path, reason=e.reason if terminal else None)
             # 合并模式下先发送已收集的通知
             notif.flush_batch()

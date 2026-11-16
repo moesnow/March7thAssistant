@@ -277,6 +277,24 @@ class TestCloudGameWorkflowConnection(unittest.TestCase):
         self.controller._clean_at_exit()
         self.controller.close_all_m7a_browser.assert_called_once_with(headless=True)
 
+    def test_cleanup_follows_actual_cloud_session(self):
+        self.browser(True)
+        driver = self.driver()
+        with (
+            patch("module.game.cloud.atexit.register") as register,
+            patch("module.game.cloud.webdriver.Chrome", return_value=driver),
+            patch.object(self.controller, "_confirm_viewport_resolution"),
+        ):
+            self.assertTrue(self.controller.start_game_process())
+            self.assertTrue(self.controller.start_game_process())
+        register.assert_called_once_with(self.controller._clean_at_exit)
+
+        with patch.object(os.path, "exists", return_value=False):
+            self.assertTrue(self.controller.stop_game())
+        self.controller.close_all_m7a_browser.reset_mock()
+        self.controller._clean_at_exit()
+        self.controller.close_all_m7a_browser.assert_not_called()
+
     def test_connected_browser_without_game_does_not_enter_queue(self):
         self.browser(False)
         with patch("module.game.cloud.webdriver.Chrome", return_value=self.driver(in_game=False)):

@@ -23,6 +23,7 @@ from module.game.cloud import (
 from module.logger import log
 from module.screen import screen
 from module.automation import auto
+from module.automation.automation import screenshot_retry_timeout
 from module.automation.background_input import WINDOW_WAIT_SECONDS, GameWindowLost, InputInterrupted
 from module.automation.windows_input import WindowsInputApi
 from module.config import cfg
@@ -211,13 +212,18 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None):
 
         def recover():
             try:
-                if auto.find_element(("消息获取失败", "网络连接失败"), "text", crop=(0.30, 0.40, 0.40, 0.18), include=True):
-                    if auto.click_element("确认", "text", crop=(0.35, 0.59, 0.30, 0.17)):
-                        log.info("已关闭 Android 启动时的网络提示，重新检查游戏画面")
-                    return
-                if screen.get_current_screen(autotry=False) and screen.can_change_from(screen.current_screen, "main"):
-                    screen.change_to("main", max_recursion=0)
-            except (AdbError, TouchProfileInputError):
+                with screenshot_retry_timeout(0):
+                    if auto.find_element(("消息获取失败", "网络连接失败"), "text", crop=(0.30, 0.40, 0.40, 0.18), include=True):
+                        if auto.click_element("确认", "text", crop=(0.35, 0.59, 0.30, 0.17)):
+                            log.info("已关闭 Android 启动时的网络提示，重新检查游戏画面")
+                        return
+                    if screen.get_current_screen(autotry=False, max_retries=1) and screen.can_change_from(screen.current_screen, "main"):
+                        screen.change_to("main", max_recursion=0)
+            except AdbError as error:
+                if error.code not in {"frame_timeout", "frame_clock_unavailable"}:
+                    raise
+                log.debug(f"ADB 启动恢复：{error}")
+            except TouchProfileInputError:
                 raise
             except RuntimeError as error:
                 log.debug(f"ADB 启动恢复：{error}")
@@ -615,6 +621,12 @@ def _finish_game_run():
         task_power_request.release(log)
 
 
+def prepare_game_connection(backend, profile):
+    if auto.connection != (backend, profile):
+        auto.reload_connection()
+        screen.reload_profile()
+
+
 def stop(detect_loop=False):
     log.hr("停止运行", 0)
 
@@ -667,8 +679,6 @@ def after_finish_is_loop():
         log.hr("完成", 2)
         sys.exit(0)
 
-    connection = get_control_backend(cfg), get_ui_profile(cfg).name
-
     final_content = cfg.notify_template['ContinueTime'].format(time=future_time)
     log.info(final_content)
     notif.flush_batch(extra_content=final_content, level=NotificationLevel.ALL)
@@ -690,8 +700,6 @@ def after_finish_is_loop():
 
     # 启动前重新加载配置 #262
     cfg._load_config()
-    if connection != (get_control_backend(cfg), get_ui_profile(cfg).name):
-        raise RuntimeError("循环等待期间游戏连接已变更，请重新启动完整运行")
 
 
 def wait_after_cloud_zero_duration(error):

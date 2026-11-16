@@ -75,17 +75,39 @@ def supplement(auto, screen, config, balance, open_dialog, read_balance, *, retu
             click_label("取消", CANCEL)
         raise
 
-    if expected is not None:
-        if auto.find_element("获得物品", "text", crop=ITEM_POPUP, max_retries=5, retry_delay=0.3):
-            auto.click_element(_crop((640, 569, 0, 0)), "crop")
-            time.sleep(0.4)
-    if auto.find_element("开拓力补充", "text", crop=TITLE) and not click_label("取消", CANCEL):
-        raise PowerError("无法关闭开拓力补充弹窗")
-    screen.wait_for_screen_change(return_screen, max_recursion=0)
+    received = expected is not None and auto.find_element(
+        "获得物品", "text", crop=ITEM_POPUP, max_retries=5, retry_delay=0.3,
+    )
+
+    def dismiss_receipt():
+        auto.click_element(_crop((640, 569, 0, 0)), "crop")
+        time.sleep(0.4)
+
+    def close_supplement_dialog():
+        if auto.find_element("开拓力补充", "text", crop=TITLE) and not click_label("取消", CANCEL):
+            raise PowerError("无法关闭开拓力补充弹窗")
+
+    def retry_receipt_dismissal():
+        if not auto.find_element("获得物品", "text", crop=ITEM_POPUP):
+            return False
+        dismiss_receipt()
+        close_supplement_dialog()
+        screen.wait_for_screen_change(return_screen, max_recursion=0)
+        return True
+
+    if received:
+        dismiss_receipt()
+    close_supplement_dialog()
+    if received:
+        screen.wait_for_screen_change(return_screen, max_recursion=0, on_timeout=retry_receipt_dismissal)
+    else:
+        screen.wait_for_screen_change(return_screen, max_recursion=0)
     if expected is None:
         return balance
-    after = read_balance()
-    if not balance + expected <= after <= balance + expected + 1:
-        raise PowerError(f"补充开拓力后余额未确认（原有 {balance}，预期增加 {expected}，实际 {after}）")
+    after = balance + expected
+    if not received:
+        after = read_balance()
+        if not balance + expected <= after <= balance + expected + 1:
+            raise PowerError(f"补充开拓力后余额未确认（原有 {balance}，预期增加 {expected}，实际 {after}）")
     log.info(f"开拓力由 {balance} 补充至 {after}")
     return after

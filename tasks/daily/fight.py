@@ -1,5 +1,6 @@
 from module.screen import screen
 from module.config import cfg
+from module.config.platform import get_control_backend
 from module.game import cloud_game, require_desktop_task
 from module.localization import tr
 from module.logger import log
@@ -91,7 +92,7 @@ class Fight:
             log.warning("锄大地功能仅支持 Windows 平台")
             return False
 
-        if cfg.cloud_game_enable and cloud_game.is_headless():
+        if get_control_backend(cfg) == "cloud" and cloud_game.is_headless():
             log.error("锄大地不支持无界面模式运行")
             return False
 

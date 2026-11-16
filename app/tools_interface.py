@@ -12,7 +12,7 @@ import subprocess
 from utils import clipboard
 from utils.desktop_twin import in_desktop_twin
 from module.config import cfg
-from module.config.platform import get_control_backend
+from app.tools.adb_service import display_connection
 from tasks.base.tasks import start_task
 from utils.tasks import task_is_supported
 import os
@@ -102,7 +102,7 @@ class ToolsInterface(ScrollArea):
         self.automaticPlotCard.retranslateUi()
         self.gameScreenshotCard.setTitle(tr('游戏截图'))
         self.gameScreenshotCard.setContent(tr('检查程序获取的图像是否正确，支持OCR识别文字（可用于自行排查异常）'))
-        self.gameScreenshotCard.button.setText(tr('捕获'))
+        self._refreshScreenshotButton(display_connection(cfg))
         self.unlockfpsCard.setTitle(tr('解锁帧率'))
         self.unlockfpsCard.setContent(tr('通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（支持国服和国际服）'))
         self.unlockfpsCard.button.setText(tr('解锁'))
@@ -321,6 +321,11 @@ class ToolsInterface(ScrollArea):
 
     def __onGameScreenshotCardClicked(self):
         """点击截图卡片后先选择来源：游戏窗口或本地图片。"""
+        connection = display_connection(cfg)
+        if connection.error or connection.control_backend == "adb":
+            self.__openScreenshotFile()
+            return
+
         message_box = MessageBox(tr("截图来源"), tr("请选择截图方式"), self.window())
         message_box.contentLabel.setMinimumWidth(500)
 
@@ -341,18 +346,16 @@ class ToolsInterface(ScrollArea):
         accepted = message_box.exec()
 
         if action["value"] == "file":
-            file_path, _ = QFileDialog.getOpenFileName(
-                self,
-                tr("选择图片"),
-                "",
-                "Image Files (*.png *.jpg *.jpeg *.bmp *.webp)"
-            )
-            if file_path:
-                tool.start_screenshot_from_file(file_path)
-            return
-
-        if accepted:
+            self.__openScreenshotFile()
+        elif accepted:
             tool.start("screenshot")
+
+    def __openScreenshotFile(self):
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, tr("选择图片"), "", "Image Files (*.png *.jpg *.jpeg *.bmp *.webp)"
+        )
+        if file_path:
+            tool.start_screenshot_from_file(file_path)
 
     def __connectSignalToSlot(self):
         self.gameScreenshotCard.clicked.connect(self.__onGameScreenshotCardClicked)
@@ -408,18 +411,27 @@ class ToolsInterface(ScrollArea):
         elif not self.automaticPlotCard.isHidden() and self.automaticPlotCard.getSwitchState():
             self.__startAutoPlot()
 
-    def refreshBackendTasks(self):
-        adb = get_control_backend(cfg) == "adb"
+    def _refreshScreenshotButton(self, connection):
+        file_only = connection.error or connection.control_backend == "adb"
+        self.gameScreenshotCard.button.setText(tr("手动选择图片") if file_only else tr("捕获"))
+
+    def refreshBackendTasks(self, *, connection_changed=False):
+        connection = display_connection(cfg)
+        adb = connection.control_backend == "adb"
         was_hidden = self.automaticPlotCard.isHidden()
-        for card in (self.automaticPlotCard, self.gameScreenshotCard, self.unlockfpsCard, self.cloudTouchCard):
+        for card in (self.unlockfpsCard, self.cloudTouchCard):
             card.setVisible(not adb)
-        if adb:
+        can_run_plot = not adb and connection.error is None
+        self.automaticPlotCard.setVisible(can_run_plot)
+        self._refreshScreenshotButton(connection)
+        if not can_run_plot:
             tool.stop_plot()
-        elif was_hidden and not self._desktop_twin_hosting and self.automaticPlotCard.getSwitchState():
+        elif (sys.platform == "win32" and (was_hidden or connection_changed) and not self._desktop_twin_hosting
+              and self.automaticPlotCard.getSwitchState()):
             self.__startAutoPlot()
-        self.redemptionCodeCard.setVisible(task_is_supported("redemption", cfg))
-        self.screenTestCard.setVisible(task_is_supported("screen_test", cfg))
-        self.characterExportCard.setVisible(task_is_supported("character_export", cfg))
+        self.redemptionCodeCard.setVisible(task_is_supported("redemption", connection))
+        self.screenTestCard.setVisible(task_is_supported("screen_test", connection))
+        self.characterExportCard.setVisible(task_is_supported("character_export", connection))
 
     def __onScreenTestCardClicked(self):
         start_task("screen_test")
@@ -466,6 +478,8 @@ class ToolsInterface(ScrollArea):
 
     def toggleAutoPlot(self):
         """切换自动对话状态（供全局热键调用）"""
+        if self.automaticPlotCard.isHidden():
+            return
         current_state = self.automaticPlotCard.getSwitchState()
         new_state = not current_state
         self.automaticPlotCard.setValue(new_state)

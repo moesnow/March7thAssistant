@@ -67,6 +67,10 @@ class Screen(metaclass=SingletonMeta):
         self.current_screen = None
         self.current_screen_threshold = 0
 
+    def reload_profile(self):
+        self.__dict__.pop("screen_map", None)
+        self._reset_screen_state()
+
     def _detect_overlay_monitor_text(self):
         """
         通过 OCR 检测是否存在常见帧率/硬件监控悬浮窗文字。

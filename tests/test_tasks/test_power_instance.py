@@ -3,8 +3,11 @@ from unittest.mock import Mock, call
 
 import pytest
 
+from module.automation.background_input import GameWindowLost
 from tasks.power import instance, power
-from tasks.power.policy import CAVERN, ECHO, GOLDEN_CALYX, ORNAMENT, BattleDefeat, PowerError, RelicBagFull, SupportDemand
+from tasks.power.policy import (
+    CAVERN, ECHO, GOLDEN_CALYX, ORNAMENT, BattleDefeat, InstanceUnavailable, PowerError, RelicBagFull, SupportDemand,
+)
 from utils.pause import RunStopRequested
 
 
@@ -133,6 +136,31 @@ def test_wait_fight_limits_reconnects_to_confirmed_dialogs(monkeypatch, button, 
     assert [entry.args[0] for entry in auto.click_element.call_args_list] == clicks
 
 
+@pytest.mark.parametrize("failure", [RuntimeError("截图超时"), GameWindowLost("游戏窗口已关闭"), RunStopRequested()])
+def test_pc_wait_fight_recovers_optional_speed_capture_only(monkeypatch, failure):
+    victories = iter([False, True])
+
+    def find(target, *_args, **_kwargs):
+        if target == instance.FIGHT_AGAIN:
+            return next(victories)
+        return target == instance.PAUSE
+
+    auto = Mock(find_element=Mock(side_effect=find), take_screenshot=Mock(side_effect=failure))
+    monkeypatch.setattr(instance, "auto", auto)
+    monkeypatch.setattr(instance, "game_option_enabled", lambda *_args: True)
+    monkeypatch.setattr(instance.time, "sleep", Mock())
+
+    if type(failure) is RuntimeError:
+        assert instance.Instance.wait_fight()
+    else:
+        with pytest.raises(type(failure)) as stopped:
+            instance.Instance.wait_fight()
+        assert stopped.value is failure
+    auto.take_screenshot.assert_called_once()
+    auto.click_element.assert_not_called()
+    auto.press_key.assert_not_called()
+
+
 def test_exit_after_victory_reuses_the_confirmed_main_screen(monkeypatch):
     auto = Mock()
     screen = Mock()
@@ -146,6 +174,59 @@ def test_exit_after_victory_reuses_the_confirmed_main_screen(monkeypatch):
     screen.check_screen.assert_called_once_with("main")
     screen.change_to.assert_not_called()
     auto.press_key.assert_not_called()
+
+
+@pytest.mark.parametrize("saw_speed", [False, True])
+def test_pc_repeat_requires_battle_evidence_without_observing_pause(monkeypatch, saw_speed):
+    now = 0.0
+    stale_results = ["victory", "exit", *(["occluded"] * 4), "victory"]
+    next_battle = ["battle", "victory"] if saw_speed else []
+    frames = iter(stale_results + next_battle)
+    frame = None
+
+    def sleep(seconds):
+        nonlocal now
+        now += seconds
+
+    def find(target, *_args, **_kwargs):
+        nonlocal frame
+        if target == instance.FIGHT_AGAIN:
+            frame = next(frames, "victory")
+            return frame == "victory"
+        if target == instance.FIGHT_EXIT:
+            return frame == "exit"
+        return False
+
+    auto = Mock(find_element=Mock(side_effect=find))
+    monkeypatch.setattr(instance, "auto", auto)
+    monkeypatch.setattr(instance, "battle_speed_visible", lambda _: frame == "battle")
+    monkeypatch.setattr(instance, "game_option_enabled", lambda *_args: False)
+    monkeypatch.setattr(instance, "ENTRY_TIMEOUT", 6)
+    monkeypatch.setattr(instance, "time", SimpleNamespace(monotonic=lambda: now, sleep=sleep))
+    if saw_speed:
+        assert instance.Instance.wait_fight(repeated=True)
+        assert sum(check.args[0] == instance.FIGHT_AGAIN for check in auto.find_element.call_args_list) == 9
+    else:
+        with pytest.raises(PowerError, match="未确认再来一次的结算"):
+            instance.Instance.wait_fight(repeated=True)
+    auto.click_element.assert_not_called()
+
+
+@pytest.mark.parametrize("failure,attempts", [(False, 2), (InstanceUnavailable("未解锁"), 1), (False, 3)])
+def test_pc_instance_entry_retries_only_within_budget(monkeypatch, failure, attempts):
+    entered = Mock(side_effect=[failure, True] if attempts < 3 else [False] * 3)
+    battle = Mock(prepare_instance=entered, select_waves=Mock(return_value=1), wait_fight=Mock(return_value=True))
+    monkeypatch.setattr(power, "Instance", battle)
+    monkeypatch.setattr(power.Power, "get", Mock(return_value=10))
+    monkeypatch.setattr(power, "cfg", SimpleNamespace(instance_names_challenge_count={}, tp_before_instance=False))
+
+    if attempts == 2:
+        assert power.Power.process(GOLDEN_CALYX, "回忆之蕾", planned_attempts=1) == 1
+    else:
+        with pytest.raises(PowerError):
+            power.Power.process(GOLDEN_CALYX, "回忆之蕾", planned_attempts=1)
+        battle.start_instance.assert_not_called()
+    assert entered.call_count == attempts
 
 
 @pytest.mark.parametrize("instance_type", [ORNAMENT, ECHO])
@@ -209,7 +290,7 @@ def test_pc_power_plan_reuses_budget_for_defeat_retry_same_batch_and_smaller_bat
 @pytest.mark.parametrize("quota", [1, 0], ids=["rewarded-echo", "practice"])
 def test_pc_echo_finishes_without_reading_the_result_meter(monkeypatch, quota):
     battle = Mock()
-    battle.read_echo_rewards.side_effect = [quota, 0]
+    battle.read_echo_rewards.side_effect = [quota, PowerError("结算后不应再次读取额度")]
     battle.select_waves.return_value = 1
     map_balance = Mock(return_value=90) if quota else Mock(side_effect=PowerError("地图余额读数失败"))
     config = SimpleNamespace(instance_names_challenge_count={}, tp_before_instance=False, save_timestamp=Mock())
@@ -219,7 +300,7 @@ def test_pc_echo_finishes_without_reading_the_result_meter(monkeypatch, quota):
     monkeypatch.setattr(power, "screen", Mock())
 
     assert power.Power.process(ECHO, "毁灭的开端", planned_attempts=1) == 1
-    assert battle.read_echo_rewards.call_count == (2 if quota else 1)
+    battle.read_echo_rewards.assert_called_once_with()
     assert map_balance.call_count == (1 if quota else 0)
     battle.complete_run.assert_called_once_with(ECHO)
     config.save_timestamp.assert_called_once_with("echo_of_war_timestamp")

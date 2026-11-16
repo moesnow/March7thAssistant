@@ -7,13 +7,14 @@ from module.localization import get_raw_instance_names
 from module.logger import log
 from module.screen import screen
 from tasks.base.list_drag import drag_list
+from tasks.base.task_steps import FATAL_GAME_ERRORS
 from tasks.base.team import Team
-from tasks.power.battle import ensure_double_speed
+from tasks.power.battle import battle_speed_visible, ensure_double_speed
 from tasks.power.policy import (
-    BATTLE_TIMEOUT, ENTRY_TIMEOUT, CRIMSON_CALYX, ECHO, INSTANCE_LIMITS, ORNAMENT,
-    PowerError, RelicBagFull, parse_echo_rewards, parse_wave_count,
+    BATTLE_TIMEOUT, ENTRY_TIMEOUT, CRIMSON_CALYX, ECHO, ORNAMENT,
+    InstanceUnavailable, PowerError, RelicBagFull, parse_echo_rewards,
 )
-from tasks.power.readout import read_number, read_wave_selection
+from tasks.power.readout import read_number
 from tasks.power.character import Character
 from tasks.power.relicset import Relicset
 from utils.game_options import game_option_enabled
@@ -68,7 +69,7 @@ class Instance:
             )
             if entry:
                 if auto.matched_text == "追踪":
-                    raise PowerError(f"指定副本未解锁：{instance_name}")
+                    raise InstanceUnavailable(f"指定副本未解锁：{instance_name}")
                 if not auto.click_element_with_pos(entry):
                     raise PowerError(f"无法点击副本入口：{instance_name}")
                 break
@@ -103,28 +104,19 @@ class Instance:
 
     @staticmethod
     def select_waves(instance_type, requested):
-        count_crop = ((1490 / 1920, 819 / 1080, 240 / 1920, 65 / 1080) if instance_type == ORNAMENT
-                      else (1476 / 1920, 837 / 1080, 156 / 1920, 43 / 1080))
-        limit = INSTANCE_LIMITS[instance_type][1]
-        selected = read_wave_selection(auto, count_crop, limit, allow_no_selector=instance_type == ECHO or requested == 1)
-        if selected is None:
+        # 从生存索引重新进入副本时，游戏默认选择一场。
+        if requested == 1:
             return 1
-        if selected == requested:
-            return requested
-        for _ in range(abs(requested - selected)):
-            if selected < requested:
-                changed = auto.click_element("./assets/images/screen/guide/plus.png", "image", 0.82, crop=WAVE_SELECTOR)
-            else:
-                point = (1359 / 1920, 875 / 1080, 0, 0) if instance_type == ORNAMENT else (1250 / 1920, 888 / 1080, 0, 0)
-                changed = auto.click_element(point, "crop")
-            if not changed:
+        plus = auto.find_element("./assets/images/screen/guide/plus.png", "image", 0.82,
+                                 crop=WAVE_SELECTOR, max_retries=3, retry_delay=0.3)
+        if not plus:
+            if instance_type == ECHO:
+                return 1
+            raise PowerError("未找到增加连续挑战次数的按钮")
+        for _ in range(requested - 1):
+            if not auto.click_element_with_pos(plus):
                 raise PowerError("无法调整连续挑战次数")
             time.sleep(0.2)
-
-        def read_adjusted(text):
-            return requested if parse_wave_count(text, "挑战次数", limit) == requested else None
-
-        read_number(auto, count_crop, read_adjusted, f"未确认已选中 {requested} 次挑战")
         return requested
 
     @staticmethod
@@ -316,14 +308,17 @@ class Instance:
     def wait_fight(*, repeated=False):
         deadline = time.monotonic() + ENTRY_TIMEOUT
         in_battle = False
-        left_result = not repeated
         next_popup_check = 0.0
         next_controls = 0.0
         reconnects = 0
         while time.monotonic() < deadline:
             victory = auto.find_element(FIGHT_AGAIN, "image", 0.88)
-            if victory and left_result:
+            if victory and (not repeated or in_battle):
                 return True
+            awaiting_repeat = repeated and not in_battle
+            result_visible = victory or (awaiting_repeat and auto.find_element(
+                FIGHT_EXIT, "image", 0.9, take_screenshot=False,
+            ))
             if auto.find_element(FIGHT_FAIL, "image", 0.9, take_screenshot=False):
                 return False
             now = time.monotonic()
@@ -339,8 +334,16 @@ class Instance:
                         auto.click_element(CONFIRM, "image", 0.9, take_screenshot=False)
                     time.sleep(5)
                     continue
-            if auto.find_element(PAUSE, "image", 0.88, crop=(0.95, 0, 0.05, 0.09), scale_range=(0.65, 1.05)):
-                left_result = True
+            pause = auto.find_element(PAUSE, "image", 0.88, crop=(0.95, 0, 0.05, 0.09), scale_range=(0.65, 1.05))
+            speed_visible = False
+            if awaiting_repeat and not result_visible and not pause:
+                try:
+                    speed_visible = battle_speed_visible(auto)
+                except FATAL_GAME_ERRORS:
+                    raise
+                except RuntimeError as error:
+                    log.warning(f"暂时无法识别战斗倍速控件：{error}")
+            if pause or speed_visible:
                 if not in_battle:
                     log.info("进入战斗")
                     in_battle = True
@@ -349,9 +352,17 @@ class Instance:
                     if auto.find_element("./assets/images/share/base/not_auto.png", "image", 0.9,
                                          crop=(0, 903 / 1080, 144 / 1920, 120 / 1080)):
                         auto.press_key(cfg.get_value("hotkey_auto_battle", "v"))
-                    ensure_double_speed(auto)
+                    if not speed_visible:
+                        try:
+                            ensure_double_speed(auto)
+                        except FATAL_GAME_ERRORS:
+                            raise
+                        except RuntimeError as error:
+                            log.warning(f"暂时无法检测战斗倍速，继续等待本场结算：{error}")
                     next_controls = now + 3
             time.sleep(0.55)
+        if repeated and not in_battle:
+            raise PowerError("等待进入新战斗超时，未确认再来一次的结算")
         raise PowerError("战斗结算超时" if in_battle else "等待进入战斗超时")
 
     @staticmethod
