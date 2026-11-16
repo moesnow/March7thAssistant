@@ -8511,3 +8511,19 @@ msgstr "GitHub Token"
 msgid "读取 GitHub Releases 页面失败（GitHub API 返回 HTTP 403）"
 msgstr ""
 "Could not load the GitHub Releases page (GitHub API returned HTTP 403)"
+
+#: module/game/adb.py:515
+msgid "检测到多个显示器，无法确定模拟器 display 0 对应的 SurfaceFlinger ID"
+msgstr ""
+"Multiple displays detected. Could not resolve the SurfaceFlinger ID for "
+"emulator display 0."
+
+#: module/game/adb.py:524
+msgid "模拟器 display 0 的截图输出为空"
+msgstr "Emulator display 0 returned an empty screenshot."
+
+#: module/game/adb.py:526
+msgid "模拟器 display 0 的截图输出不符合 PNG 格式（{size} 字节）"
+msgstr ""
+"Emulator display 0 returned an unexpected screenshot format ({size} bytes, "
+"expected PNG)."
