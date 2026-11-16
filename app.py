@@ -5,10 +5,12 @@ os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False)else os
 
 import ctypes
 import argparse
+from utils.console import ensure_utf8_output
 from utils.dpi import configure_dpi_awareness
 from utils.tasks import AVAILABLE_TASKS
 
 
+ensure_utf8_output()
 configure_dpi_awareness()
 
 

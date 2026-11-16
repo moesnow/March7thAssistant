@@ -364,7 +364,8 @@ cli_entry.run_task_elevated = unexpected_elevation
 sys.argv = [entry, *args]
 runpy.run_path(entry, run_name="__main__")
 """
-    env = dict(os.environ, MARCH7TH_CONFIG_READONLY="1")
+    # 复现 Windows CI 重定向输出时的编码。
+    env = dict(os.environ, MARCH7TH_CONFIG_READONLY="1", PYTHONIOENCODING="cp1252")
     env.pop("MARCH7TH_DESKTOP_TWIN", None)
     return subprocess.run(
         [sys.executable, "-c", script, json.dumps(values), str(tmp_path), entry, *args],
@@ -384,6 +385,7 @@ def test_invalid_game_connection_keeps_task_listing_and_records_blocked_run(tmp_
 
     launcher = _run_with_invalid_game_connection(tmp_path, values, "app.py", "--list")
     assert launcher.returncode == 0, launcher.stderr
+    assert "可用的任务列表" in launcher.stdout.decode("utf-8")
     assert b"daily" in launcher.stdout
     assert values[invalid_key].encode() in launcher.stderr
     assert not list(tmp_path.glob("*.json"))
