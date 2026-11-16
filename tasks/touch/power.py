@@ -20,7 +20,7 @@ from tasks.power.battle import ensure_double_speed
 from tasks.power.policy import (
     BATTLE_TIMEOUT, ENTRY_TIMEOUT, DEFEAT_RETRIES, CAVERN, CRIMSON_CALYX, ECHO, GOLDEN_CALYX,
     INSTANCE_LIMITS, ORNAMENT, STAGNANT_SHADOW, BattleDefeat, PowerError, RelicBagFull,
-    SupportDemand, batch_limit, check_balance, normalize as _normalize,
+    SupportDemand, batch_limit, normalize as _normalize,
     parse_echo_rewards, parse_power, run_plan,
 )
 from tasks.power.readout import read_number, read_wave_selection

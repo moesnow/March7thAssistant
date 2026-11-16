@@ -82,9 +82,10 @@ def meter_ocr(monkeypatch):
     (["410", "／300", "十"], 410),
     (["0/300"], 0),
 ])
-def test_pc_power_meter_reads_balance_without_gluing_adjacent_digits(meter_ocr, texts, expected):
+def test_pc_power_meter_reads_balance_without_gluing_adjacent_digits(monkeypatch, meter_ocr, texts, expected):
     meter_ocr.return_value = ocr_lines(texts)
-    assert instance.Instance.read_balance(GOLDEN_CALYX) == expected
+    monkeypatch.setattr(power, "screen", Mock())
+    assert power.Power.get() == expected
 
 
 def test_map_uses_same_meter_with_plus_read_as_cross(monkeypatch, meter_ocr):
@@ -99,22 +100,20 @@ def test_pc_echo_quota_ignores_neighboring_numbers(monkeypatch, meter_ocr):
     assert instance.Instance.read_echo_rewards() == 2
 
 
-@pytest.mark.parametrize("waves,available", [(5, 50), (21, 215)])
-def test_fixed_challenge_uses_selected_waves_without_scanning_payment(monkeypatch, meter_ocr, waves, available):
+@pytest.mark.parametrize("waves", [5, 21])
+def test_fixed_challenge_uses_selected_waves_without_scanning_payment(monkeypatch, meter_ocr, waves):
     meter_ocr.side_effect = [ocr_lines([f"挑战次数{waves}"]), ocr_lines(["来", f"×{waves * 10}"])]
     find = Mock()
     monkeypatch.setattr(instance.auto, "find_element", find)
 
-    assert instance.Instance.prepare_payment(
-        GOLDEN_CALYX, waves, available, practice=False, immersifier_only=False,
-    ) == (waves, waves * 10)
+    assert instance.Instance.select_waves(GOLDEN_CALYX, waves) == waves
     meter_ocr.assert_called_once()
     find.assert_not_called()
 
 
 def test_single_challenge_without_wave_selector_does_not_retry_ocr(meter_ocr):
     meter_ocr.return_value = []
-    assert instance.Instance.prepare_payment(ECHO, 3, 90, practice=False, immersifier_only=False) == (1, 30)
+    assert instance.Instance.select_waves(ECHO, 3) == 1
     meter_ocr.assert_called_once()
 
 

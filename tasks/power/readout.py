@@ -1,7 +1,8 @@
 import time
 
+from module.logger import log
 from module.ocr import ocr
-from tasks.power.policy import PowerError, parse_wave_count
+from tasks.power.policy import PowerError, parse_immersifier_stock, parse_wave_count
 
 
 def read_number(auto, crop, parse, error, *, retries=6):
@@ -16,6 +17,16 @@ def read_number(auto, crop, parse, error, *, retries=6):
             return value
         time.sleep(0.2)
     raise PowerError(error)
+
+
+def read_immersifier_stock(auto, crop):
+    try:
+        stock = read_number(auto, crop, parse_immersifier_stock, "未能识别沉浸器库存", retries=3)
+    except Exception as error:
+        log.warning(f"沉浸器库存按 0 个安排挑战（{error}）")
+        return 0
+    log.info(f"沉浸器：{stock}/12")
+    return stock
 
 
 def read_wave_selection(auto, crop, limit, *, allow_no_selector=False):

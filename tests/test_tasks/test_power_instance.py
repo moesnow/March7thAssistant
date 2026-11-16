@@ -69,8 +69,7 @@ def test_pc_power_retries_start_challenge_until_button_disappears(
     monkeypatch.setattr(power, "cfg", cfg)
     monkeypatch.setattr(power.Power, "get", Mock(return_value=65))
     monkeypatch.setattr(instance.Instance, "prepare_instance", Mock(return_value=True))
-    monkeypatch.setattr(instance.Instance, "prepare_payment", Mock(return_value=(1, 40)))
-    monkeypatch.setattr(instance.Instance, "read_balance", Mock(side_effect=PowerError("重复读余额")))
+    monkeypatch.setattr(instance.Instance, "select_waves", Mock(return_value=1))
     monkeypatch.setattr(instance.Instance, "clean_full_bag", Mock(return_value=False))
     finish = Mock()
     monkeypatch.setattr(instance.Instance, "complete_run", finish)
@@ -154,12 +153,13 @@ def test_defeat_retries_stop_without_recording_completion(monkeypatch, instance_
     name = "测试副本"
     battle = Mock()
     battle.read_echo_rewards.return_value = 3
-    battle.read_balance.return_value = 200
-    battle.prepare_payment.return_value = (1, 40)
+    battle.select_waves.return_value = 1
     battle.wait_fight.return_value = False
     balance = Mock(return_value=200)
+    stock = Mock(return_value=1)
     monkeypatch.setattr(power, "Instance", battle)
     monkeypatch.setattr(power.Power, "get", balance)
+    monkeypatch.setattr(power.Power, "get_immersifier_count", stock)
     monkeypatch.setattr(power, "get_raw_instance_names", lambda: {instance_type: {name: name}})
     monkeypatch.setattr(power, "cfg", SimpleNamespace(
         instance_names_challenge_count={}, tp_before_instance=False, use_reserved_trailblaze_power=True,
@@ -169,11 +169,8 @@ def test_defeat_retries_stop_without_recording_completion(monkeypatch, instance_
     with pytest.raises(BattleDefeat):
         next(run)
     assert battle.start_instance.call_count == battle.exit_defeat.call_count == 3
-    expected_balance_reads = [call(use_supplement=True)]
-    if instance_type == ORNAMENT:
-        expected_balance_reads += [call(use_supplement=False)] * 3
-    assert balance.call_args_list == expected_balance_reads
-    assert battle.read_balance.call_count == (3 if instance_type == ORNAMENT else 0)
+    balance.assert_called_once_with(use_supplement=True)
+    assert stock.call_count == (1 if instance_type == ORNAMENT else 0)
 
 
 def test_pc_power_plan_reuses_budget_for_defeat_retry_same_batch_and_smaller_batch(monkeypatch):
@@ -190,7 +187,7 @@ def test_pc_power_plan_reuses_budget_for_defeat_retry_same_batch_and_smaller_bat
     monkeypatch.setattr(power, "cfg", cfg)
     monkeypatch.setattr(power.Power, "get", balance)
     monkeypatch.setattr(instance.Instance, "prepare_instance", Mock(return_value=True))
-    monkeypatch.setattr(instance.Instance, "_select_waves", select)
+    monkeypatch.setattr(instance.Instance, "select_waves", select)
     monkeypatch.setattr(instance.Instance, "start_instance", Mock(return_value=False))
     monkeypatch.setattr(instance.Instance, "start_instance_again", Mock())
     monkeypatch.setattr(instance.Instance, "wait_fight", Mock(side_effect=[False, True, True, True]))
@@ -213,8 +210,7 @@ def test_pc_power_plan_reuses_budget_for_defeat_retry_same_batch_and_smaller_bat
 def test_pc_echo_finishes_without_reading_the_result_meter(monkeypatch, quota):
     battle = Mock()
     battle.read_echo_rewards.side_effect = [quota, 0]
-    battle.read_balance.side_effect = PowerError("重复读余额")
-    battle.prepare_payment.return_value = (1, 30 if quota else 0)
+    battle.select_waves.return_value = 1
     map_balance = Mock(return_value=90) if quota else Mock(side_effect=PowerError("地图余额读数失败"))
     config = SimpleNamespace(instance_names_challenge_count={}, tp_before_instance=False, save_timestamp=Mock())
     monkeypatch.setattr(power, "Instance", battle)
@@ -224,22 +220,21 @@ def test_pc_echo_finishes_without_reading_the_result_meter(monkeypatch, quota):
 
     assert power.Power.process(ECHO, "毁灭的开端", planned_attempts=1) == 1
     assert battle.read_echo_rewards.call_count == (2 if quota else 1)
-    battle.read_balance.assert_not_called()
     assert map_balance.call_count == (1 if quota else 0)
     battle.complete_run.assert_called_once_with(ECHO)
     config.save_timestamp.assert_called_once_with("echo_of_war_timestamp")
 
 
-def test_pc_immersifier_only_uses_button_payment_without_reading_power(monkeypatch):
+def test_pc_immersifier_only_uses_stock_without_reading_power(monkeypatch):
     name = "浴火钢心"
     config = SimpleNamespace(instance_names_challenge_count={ORNAMENT: 1}, tp_before_instance=False)
     monkeypatch.setattr(power, "cfg", config)
     monkeypatch.setattr(power.Power, "get", Mock(side_effect=PowerError("地图余额读数失败")))
-    monkeypatch.setattr(instance.Instance, "read_balance", Mock(side_effect=PowerError("副本余额读数失败")))
+    stock = Mock(return_value=1)
+    monkeypatch.setattr(power.Power, "get_immersifier_count", stock)
     monkeypatch.setattr(instance.Instance, "prepare_instance", Mock(return_value=True))
     monkeypatch.setattr(instance.Instance, "complete_run", Mock())
-    monkeypatch.setattr(instance.Instance, "_select_waves", Mock(return_value=1))
-    monkeypatch.setattr(instance.Instance, "_read_ornament_payment", Mock(side_effect=[0, 40, 40]))
+    monkeypatch.setattr(instance.Instance, "select_waves", Mock(return_value=1))
     monkeypatch.setattr(instance.Instance, "start_instance", Mock(return_value=False))
     monkeypatch.setattr(instance.Instance, "start_instance_again", Mock())
     monkeypatch.setattr(instance.Instance, "wait_fight", Mock(return_value=True))
@@ -249,11 +244,48 @@ def test_pc_immersifier_only_uses_button_payment_without_reading_power(monkeypat
     instance.Instance.start_instance.assert_called_once()
     instance.Instance.start_instance_again.assert_not_called()
     power.Power.get.assert_not_called()
-    instance.Instance.read_balance.assert_not_called()
+    stock.assert_called_once_with()
+
+
+def test_pc_ornament_mixed_repeat_and_defeat_reuse_the_initial_budget(monkeypatch):
+    name = "浴火钢心"
+    later_plan = [CAVERN, "密伶之径", 1]
+    config = SimpleNamespace(
+        power_plan=[[ORNAMENT, name, 15], later_plan], power_plan_keep=False, power_plan_continue=False,
+        instance_names_challenge_count={ORNAMENT: 6}, tp_before_instance=False, set_value=Mock(),
+    )
+    balance = Mock(side_effect=[174, PowerError("重复读余额")])
+    stock = Mock(side_effect=[10, PowerError("重复读库存")])
+    battle = Mock()
+    battle.select_waves.side_effect = lambda _kind, waves: waves
+    battle.wait_fight.side_effect = [True, False, True, True]
+    plan_batch = Mock(wraps=power.plan_paid_batch)
+    monkeypatch.setattr(power, "cfg", config)
+    monkeypatch.setattr(power, "Instance", battle)
+    monkeypatch.setattr(power, "plan_paid_batch", plan_batch)
+    monkeypatch.setattr(power.Power, "get", balance)
+    monkeypatch.setattr(power.Power, "get_immersifier_count", stock)
+
+    assert power.Power.run(skip_weekly_cleanup=True, support=SupportDemand())
+    assert plan_batch.call_args_list == [
+        call(6, 174, 40, immersifiers=10),
+        call(6, 174, 40, immersifiers=4),
+        call(6, 174, 40, immersifiers=4),
+        call(3, 94, 40, immersifiers=0),
+        call(1, 14, 40, immersifiers=0),
+    ]
+    assert battle.select_waves.call_args_list == [call(ORNAMENT, waves) for waves in (6, 6, 2)]
+    battle.start_instance_again.assert_called_once_with()
+    battle.exit_defeat.assert_called_once_with()
+    assert config.set_value.call_args_list == [
+        call("power_plan", [[ORNAMENT, name, remaining], later_plan]) for remaining in (9, 3, 1)
+    ]
+    stock.assert_called_once_with()
+    balance.assert_called_once_with(use_supplement=True)
 
 
 @pytest.mark.parametrize("entry", ["divergent", "universe"])
-def test_universe_bonus_uses_shared_payment_without_reading_immersifier_stock(monkeypatch, entry):
+def test_universe_bonus_delegates_to_immersifier_only_power_task(monkeypatch, entry):
     from tasks.weekly import divergent_universe as divergent
     from tasks.weekly import universe
 
