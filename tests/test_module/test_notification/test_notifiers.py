@@ -301,13 +301,17 @@ class TestLarkNotifier:
 
         image_io = io.BytesIO(b"fakeimg")
         with (
-            patch("module.notification.lark.requests.post", side_effect=[auth_resp, upload_resp, send_resp]) as mock_post,
+            patch(
+                "module.notification.lark.requests.post",
+                side_effect=[auth_resp, upload_resp, send_resp],
+            ) as mock_post,
             patch.object(image_notifier.logger, "error") as mock_error,
         ):
             image_notifier.send("标题", "内容", image_io=image_io)
 
         upload_resp.raise_for_status.assert_called_once_with()
         mock_error.assert_not_called()
+        assert mock_post.call_count == 3
         upload_call = mock_post.call_args_list[1]
         assert upload_call.args[0] == "https://open.feishu.cn/open-apis/im/v1/images"
         assert upload_call.kwargs["data"] == {"image_type": "message"}
@@ -319,21 +323,29 @@ class TestLarkNotifier:
         post = webhook_call.kwargs["json"]["content"]["post"]["zh_cn"]
         assert post["content"][0][1] == {"tag": "img", "image_key": "img_key"}
 
-    def test_send_image_aborts_on_upload_http_502(self, image_notifier):
+    @pytest.mark.parametrize(
+        ("status_code", "reason"), [(402, "Payment Required"), (502, "Bad Gateway")]
+    )
+    def test_send_image_upload_http_error_stops_sending(self, image_notifier, status_code, reason):
         from requests import HTTPError, Response
 
         auth_resp = MagicMock(status_code=200)
         auth_resp.json.return_value = {"tenant_access_token": "token"}
+        # 402 和 502 对 100 取余均为 2，旧判断会跳过 HTTP 错误检查。
         upload_resp = Response()
-        upload_resp.status_code = 502
-        upload_resp.reason = "Bad Gateway"
+        upload_resp.status_code = status_code
+        upload_resp.reason = reason
         upload_resp.url = "https://open.feishu.cn/open-apis/im/v1/images"
 
-        with patch("module.notification.lark.requests.post", side_effect=[auth_resp, upload_resp]) as mock_post:
-            with pytest.raises(HTTPError) as exc_info:
-                image_notifier.send("标题", "内容", image_io=io.BytesIO(b"fakeimg"))
+        with (
+            patch("module.notification.lark.requests.post", side_effect=[auth_resp, upload_resp]) as mock_post,
+            patch.object(upload_resp, "json", wraps=upload_resp.json) as upload_json,
+            pytest.raises(HTTPError) as exc_info,
+        ):
+            image_notifier.send("标题", "内容", image_io=io.BytesIO(b"fakeimg"))
 
         assert exc_info.value.response is upload_resp
+        upload_json.assert_not_called()
         assert mock_post.call_count == 2
         assert mock_post.call_args.args == (upload_resp.url,)
 
