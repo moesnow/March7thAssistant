@@ -2665,6 +2665,18 @@ class CurrencyWars:
                 and any(slot.zone == "front" and slot.occupied for slot in frame.slots()))
 
     def _finish_preparation(self, frame, board):
+        stage = board.stage
+        if (not self.default_strategy and self.held_deployment is None
+                and (stage, "部署") not in self.deferred_operations and (move := strategy.anaxa_front_fallback(board))):
+            try:
+                frame = self._move(frame, board, *move)
+            except CurrencyWarsRecoverable as error:
+                frame = self._recover_deployment(board, error)
+            if frame.page != Page.BOARD or frame.stage != stage:
+                return frame
+            frame, board = self._read_board(frame)
+            if board is None or board.stage != stage:
+                return frame
         frame = self._equip(frame, board)
         if frame.page != Page.BOARD or frame.stage != board.stage:
             return frame

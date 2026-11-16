@@ -47,6 +47,7 @@ CORE = policy.Unit("那刻夏", True, False, 2, equipment=0)
 BAILU = policy.Unit("白露", False, True, 1)
 CER = policy.Unit("刻律德菈", False, True, 1)
 FILLER = policy.Unit("瓦尔特", True, True, 1)
+EVERNIGHT = policy.Unit("长夜月", True, True, 2, output=True, equipment=0)
 
 
 def board(*slots, **kwargs):
@@ -6254,6 +6255,101 @@ def test_high_moves_other_damage_away_from_auto_support_target(high_lineup):
               final_node="3-7")
     assert policy.deployment(b) == ((front[1], rear[2]),)
     assert policy.deployment(apply_deployment(b, policy.deployment(b)[0])) == ()
+
+
+@pytest.mark.parametrize("selected", (policy.STRATEGY_ID, policy.HIGH_ANAXA))
+@pytest.mark.parametrize("rear_open", (False, True))
+def test_anaxa_uses_evernight_to_fill_the_back_but_not_the_fourth_front_slot(selected, rear_open):
+    front = (slot("front", 0, CORE), slot("front", 1, policy.Unit("花火", True, False)),
+             slot("front", 2, policy.Unit("星期日", True, True)), slot("front", 3))
+    rear = slot("back", 1, None if rear_open else BAILU)
+    bench = slot("bench", 0, EVERNIGHT)
+    used = 4 + int(not rear_open)
+    b = board(*front, slot("back", 0, CER), rear, bench, slot("bench", 1),
+              lineup=policy.LINEUPS.get(selected), used=used, capacity=used + 1)
+    expected = ((bench, rear),) if rear_open else ()
+    assert policy.deployment(b) == policy.deployment(b, overflow=True) == expected
+    assert policy.should_buy_exp(replace(b, capacity=used), 4) is rear_open
+
+
+@pytest.mark.parametrize("selected", (policy.STRATEGY_ID, policy.HIGH_ANAXA))
+@pytest.mark.parametrize("other_output", (False, True))
+def test_anaxa_moves_existing_front_evernight_back_when_another_output_is_ready(selected, other_output):
+    source = slot("front", 0, EVERNIGHT)
+    other = slot("front", 1, CORE if other_output else policy.Unit("花火", True, False))
+    target = slot("back", 1)
+    b = board(source, other, slot("back", 0, BAILU), target, slot("bench", 0),
+              lineup=policy.LINEUPS.get(selected), used=3, capacity=3)
+    assert policy.deployment(b) == (((source, target),) if other_output else ())
+
+
+@pytest.mark.parametrize("selected", (policy.STRATEGY_ID, policy.HIGH_ANAXA))
+def test_anaxa_can_still_purchase_evernight_for_backline_healing(selected):
+    b = board(slot("front", 0, CORE), slot("back", 0), slot("bench", 0),
+              lineup=policy.LINEUPS.get(selected), used=1, capacity=3)
+    offer = policy.Offer(EVERNIGHT.name, 3, (601, 194), 0, front=True, back=True)
+    assert policy.shop_purchase(b, (offer,)) == offer
+    assert EVERNIGHT.name in b.healers
+
+
+def test_default_can_still_deploy_dual_role_evernight_in_front():
+    main, front, reserve = slot("front", 0, CORE), slot("front", 1), slot("bench", 0, EVERNIGHT)
+    b = board(main, front, reserve, used=1, capacity=2)
+    assert policy.default_deployment(b, {}, set()) == (reserve, front)
+    assert policy.can_move(b, reserve, front)
+
+
+def test_anaxa_front_fallback_prefers_another_confirmed_dual_role_character():
+    front = slot("front", 0)
+    support = slot("back", 1, policy.Unit("星期日", True, True))
+    b = board(front, slot("back", 0, EVERNIGHT), support, used=2, capacity=2)
+    assert policy.anaxa_front_fallback(b) == (support, front)
+
+
+@pytest.mark.parametrize("selected", (policy.STRATEGY_ID, policy.HIGH_ANAXA))
+@pytest.mark.parametrize("shop_has_core", (False, True))
+def test_anaxa_checks_the_shop_before_frontline_evernight_fallback(monkeypatch, world, selected, shop_has_core):
+    world.cfg.currencywars_strategy = selected
+    front, rear, bench = slot("front", 0), slot("back", 0, EVERNIGHT), slot("bench", 0)
+    current = board(front, rear, bench, stage="1-2", used=1, capacity=3, lineup=policy.LINEUPS.get(selected))
+    fight = (1818, 751)
+    frame = page(Page.BOARD, ("出战", *fight), stage=current.stage)
+    won = page(Page.MATCH_RESULT, ("对局胜利", 960, 260), ("返回货币战争", 960, 899))
+    lobby = home()
+    routes = {(frame, fight): won, (won, (960, 899)): lobby}
+    state = drive(monkeypatch, world, frame, lambda s, point: setattr(s, "frame", routes[s.frame, point]))
+    operations = []
+
+    def shop(f, team, refreshes, **_):
+        nonlocal current
+        operations.append("商店")
+        offer = policy.Offer(CORE.name, 1, (601, 194), 0, front=True)
+        if shop_has_core and team == initial:
+            assert policy.shop_purchase(team, (offer,)) == offer
+            current = replace(team, slots=(front, rear, slot("bench", 0, CORE)), gold=team.gold - offer.cost)
+            return f, refreshes, True
+        return f, refreshes, False
+
+    def move(f, team, source, target):
+        nonlocal current
+        operations.append(source.unit.name)
+        current = apply_deployment(team, (source, target))
+        return f
+
+    initial = current
+    monkeypatch.setattr(world.war, "_settle_board", lambda f: f)
+    monkeypatch.setattr(world.war, "_collect_preparation_rewards", lambda f: (f, True))
+    monkeypatch.setattr(world.war, "_read_board", lambda f: (f, current))
+    monkeypatch.setattr(world.war, "_shop", shop)
+    monkeypatch.setattr(world.war, "_move", move)
+    monkeypatch.setattr(world.war, "_equip", lambda f, _: f)
+    monkeypatch.setattr(world.war, "_check_weekly_reward", lambda f: (f, (18000, 18000), False))
+
+    assert world.war.start(resume=True)
+    assert operations == (["商店", CORE.name, "商店"] if shop_has_core else ["商店", EVERNIGHT.name])
+    assert current.slots[0].unit == (CORE if shop_has_core else EVERNIGHT)
+    assert current.slots[1].unit == (EVERNIGHT if shop_has_core else None)
+    assert state.frame is lobby
 
 
 def test_high_places_main_damage_in_first_front_slot_without_selling():
