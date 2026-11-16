@@ -15,6 +15,8 @@ import os
 import sys
 import subprocess
 
+from utils.admin import describe_com_error
+
 IS_WINDOWS = sys.platform == "win32"
 
 # 旧版开机启动（登录时触发，固定执行完整运行）的任务名
@@ -90,8 +92,12 @@ def enable() -> bool:
             program_path=program_path,
             program_args=program_args,
         )
-        return is_enabled()
-    except Exception:
+        if not is_enabled():
+            raise RuntimeError("注册后未能确认计划任务已启用")
+        return True
+    except Exception as error:
+        from module.logger import log
+        log.error(f"开启计划任务 {TASK_NAME} 失败：{describe_com_error(error)}")
         return False
 
 

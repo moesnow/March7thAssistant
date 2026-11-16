@@ -23,6 +23,42 @@ def is_user_admin() -> bool:
     return ctypes.windll.shell32.IsUserAnAdmin() != 0
 
 
+def current_user_sid() -> str:
+    """读取当前 Windows 进程令牌中的用户 SID。"""
+    import win32api
+    import win32con
+    import win32security
+
+    token = win32security.OpenProcessToken(win32api.GetCurrentProcess(), win32con.TOKEN_QUERY)
+    try:
+        sid = win32security.GetTokenInformation(token, win32security.TokenUser)[0]
+    finally:
+        token.Close()
+    return win32security.ConvertSidToStringSid(sid)
+
+
+def describe_com_error(error) -> str:
+    """把 COM 错误整理成一行，包含说明和实际失败的 HRESULT。"""
+    hresult = getattr(error, "hresult", None)
+    if not isinstance(hresult, int):
+        return str(error)
+    text = getattr(error, "strerror", None) or ""
+    excepinfo = getattr(error, "excepinfo", None)
+    # 经 IDispatch 调用时，真正的错误在 excepinfo 的说明和错误码中。
+    if excepinfo and len(excepinfo) > 5 and excepinfo[5]:
+        hresult = excepinfo[5]
+        text = excepinfo[2] or _system_message(hresult) or text
+    return f"{str(text).strip()}（0x{hresult & 0xFFFFFFFF:08X}）"
+
+
+def _system_message(code: int) -> str:
+    try:
+        import win32api
+        return win32api.FormatMessage(code & 0xFFFFFFFF).strip()
+    except Exception:
+        return ""
+
+
 def current_command_line() -> list:
     """当前进程的完整命令行：[程序, 参数...]。
 

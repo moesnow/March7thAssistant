@@ -17,6 +17,7 @@ import sys
 import time
 from subprocess import list2cmdline
 
+from utils.admin import current_user_sid, describe_com_error
 from utils.runs import EXIT_FAILED, STATUS_RUNNING, effective_status, load_run
 
 IS_WINDOWS = sys.platform == "win32"
@@ -76,19 +77,6 @@ def is_enabled() -> bool:
     return state()[0] == STATE_ON
 
 
-def current_user_sid() -> str:
-    """当前用户的 SID 字符串（提权前后相同）。"""
-    import win32api
-    import win32con
-    import win32security
-    token = win32security.OpenProcessToken(win32api.GetCurrentProcess(), win32con.TOKEN_QUERY)
-    try:
-        sid = win32security.GetTokenInformation(token, win32security.TokenUser)[0]
-    finally:
-        token.Close()
-    return win32security.ConvertSidToStringSid(sid)
-
-
 def task_sddl(user_sid: str) -> str:
     """任务的安全描述符：系统与管理员完全控制；当前用户只能读取和运行（未提权的 m7a.exe 要能启动它，但不能改它）。"""
     return f"D:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;FRFX;;;{user_sid})"
@@ -102,17 +90,23 @@ def enable() -> bool:
         from utils.schedule import create_on_demand_task
         program, arguments = task_action()
         if not os.path.exists(program):
-            return False
+            raise FileNotFoundError(f"找不到任务程序 {program}")
+        user_sid = current_user_sid()
         create_on_demand_task(
             task_name=TASK_NAME,
             program_path=program,
             program_args=arguments,
             working_dir=os.getcwd(),
             description="三月七小助手：供 m7a.exe 免 UAC 以管理员权限运行任务（在图形界面「设置 → 杂项」中开启或关闭）",
-            sddl=task_sddl(current_user_sid()),
+            sddl=task_sddl(user_sid),
+            user_sid=user_sid,
         )
-        return is_enabled()
-    except Exception:
+        if not is_enabled():
+            raise RuntimeError("注册后未能确认计划任务已启用")
+        return True
+    except Exception as error:
+        from module.logger import log
+        log.error(f"开启计划任务 {TASK_NAME} 失败：{describe_com_error(error)}")
         return False
 
 
@@ -126,29 +120,6 @@ def disable() -> bool:
         return state()[0] == STATE_OFF
     except Exception:
         return False
-
-
-def describe_error(error) -> str:
-    """把计划任务接口的错误整理成一行：COM 错误显示为「说明（0x错误码）」。"""
-    hresult = getattr(error, "hresult", None)
-    if not isinstance(hresult, int):
-        return str(error)
-    text = getattr(error, "strerror", None) or ""
-    excepinfo = getattr(error, "excepinfo", None)
-    # 经 IDispatch 调用时真正的错误在 excepinfo 里：(wCode, 来源, 说明, 帮助文件, 帮助编号, 错误码)，
-    # 说明常为空，此时按错误码查系统说明（外层的「发生意外。」没有参考价值）
-    if excepinfo and len(excepinfo) > 5 and excepinfo[5]:
-        hresult = excepinfo[5]
-        text = excepinfo[2] or _system_message(hresult) or text
-    return f"{str(text).strip()}（0x{hresult & 0xFFFFFFFF:08X}）"
-
-
-def _system_message(code: int) -> str:
-    try:
-        import win32api
-        return win32api.FormatMessage(code & 0xFFFFFFFF).strip()
-    except Exception:
-        return ""
 
 
 class TaskRun:
@@ -190,7 +161,7 @@ def launch(args, run_id: str, timeout: float = START_TIMEOUT_SECONDS, poll_inter
     try:
         run_task(TASK_NAME, list2cmdline(list(args)))
     except Exception as e:
-        raise LaunchError(f"启动计划任务 {TASK_NAME} 失败：{describe_error(e)}") from e
+        raise LaunchError(f"启动计划任务 {TASK_NAME} 失败：{describe_com_error(e)}") from e
     deadline = time.time() + timeout
     while True:
         record = load_run(run_id)
