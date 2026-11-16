@@ -1164,6 +1164,7 @@ class CurrencyWars:
 
         def source_ready(f):
             return (f.slot_occupied(source.point)
+                    and not f.fixed_partner(source.point)
                     and (source.zone != "bench" or source.point not in f.locked_bench_slots))
 
         def destination_free(f):
@@ -2441,8 +2442,9 @@ class CurrencyWars:
                 return frame
             if make_space and not overflow and len(board.empty_bench) >= minimum_free:
                 return frame
+            deployed = tuple(slot for slot in board.field if slot.unit is not None)
             copies = {slot: copy for slot in strategy.default_bench(board)
-                      if (copy := frame.deployed_copy(slot, board.field)) and copy.unit is not None}
+                      if (copy := frame.deployed_copy(slot, deployed)) is not None}
             skipped = deferred_moves | {
                 (point, zone) for saved_stage, point, zone in self.default_deployment_skips if saved_stage == stage
             }

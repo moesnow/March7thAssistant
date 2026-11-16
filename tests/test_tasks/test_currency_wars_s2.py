@@ -907,6 +907,63 @@ def test_default_replaces_lower_stars_and_preserves_equipped_and_halo_slots():
     assert policy.default_surplus(current, {high: low}) == (extra,)
 
 
+@pytest.mark.parametrize("mascot_count", (1, 2))
+def test_default_replaces_a_character_without_dragging_peppy(monkeypatch, world, mascot_count):
+    world.war.default_strategy = True
+    count = 6 + mascot_count
+    centers = tuple(round(960 + (i - (count - 1) / 2) * 142) for i in range(count))
+    mascot_points = tuple((x, ui.BACK_Y) for x in centers[-mascot_count:])
+    outgoing = (centers[-mascot_count - 1], ui.BACK_Y)
+    incoming, spare = ui.BENCH_POINTS[:2]
+    capacity = 2 + mascot_count
+    with Image.open("assets/images/screen/currency_wars/s2_peppy.png") as mascot:
+        base = CANVAS.copy()
+        draw = ImageDraw.Draw(base)
+        for x in centers:
+            draw.rectangle((x - 60, 598, x + 60, 731), outline=(120, 170, 176), width=2)
+        for x, y in mascot_points:
+            base.paste(mascot, (x - 39, y - 33))
+
+    def screenshot(weak, strong, used):
+        image = base.copy()
+        draw = ImageDraw.Draw(image)
+        fx, fy = 745, ui.FRONT_Y
+        draw.ellipse((fx - 25, fy - 24, fx + 25, fy + 24), fill=(185, 120, 210))
+        for (x, y), cost in ((weak, 2), (strong, 3)):
+            if cost == 2:
+                draw.rectangle((x - 30, y - 24, x, y + 29), fill=(173, 93, 28))
+            else:
+                draw.ellipse((x - 28, y - 14, x + 29, y + 23), fill=(57, 199, 144))
+            shift = 36 if y == ui.BENCH_Y else 44
+            draw.rectangle((x + shift - 3, y - 43, x + shift + 3, y - 38), fill="white")
+            draw.rectangle((x - 40, y + 51, x + 38, y + 56), fill=tuple(ui.CARD_COST_PALETTE[cost - 1]))
+        frame = Frame(image, labels((f"{used}/{capacity}", 960, 260)))
+        frame.__dict__.update(page=Page.BOARD, stage="3-4")
+        return frame
+
+    before = screenshot(outgoing, incoming, capacity)
+    parked = screenshot(spare, incoming, capacity - 1)
+    after = screenshot(spare, outgoing, capacity)
+    _, team = world.war._read_default_board(before)
+    assert team.used == len(team.field) == capacity
+    assert tuple(s.point for s in team.field if s.blocked and s.unit is None) == mascot_points
+
+    state = drive(monkeypatch, world, before)
+    routes = {before: (outgoing, spare, parked), parked: (incoming, outgoing, after)}
+
+    def drag(start, end, **_):
+        source, target, updated = routes[state.frame]
+        assert start == pytest.approx((source[0] / 1920, source[1] / 1080))
+        assert end == pytest.approx((target[0] / 1920, target[1] / 1080))
+        state.frame = updated
+        return True
+
+    world.auto.drag_mouse.side_effect = drag
+    assert world.war._prepare_default_team(before) is after
+    assert world.auto.drag_mouse.call_count == 2
+    assert state.clicks == []
+
+
 def test_default_sells_surplus_but_keeps_a_candidate_for_the_next_level():
     field = slot("front", 0, replace(CORE, stars=2))
     copy = slot("bench", 0, replace(CORE, stars=1, equipment=0))

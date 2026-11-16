@@ -864,6 +864,13 @@ class Frame:
         # 溢出页给空格绘制红色斜纹。真正角色仍有多通道纹理。
         return float(np.median(contrast) if self.bench_overflow else contrast.max()) >= 14.0
 
+    def fixed_partner(self, point: Point) -> bool:
+        x, y = point
+        # 佩佩占用后台格和部署人数。头像在获得不同星徽时相同。
+        return y == BACK_Y and self.match(
+            "screen/currency_wars/s2_peppy.png", (x - 52, y - 54, x + 52, y + 39), 0.85,
+        ) is not None
+
     def back_row(self) -> tuple[int, ...]:
         """从横向边缘确定 S2 后台布局。6/8 格与 7/9 格交错，比较左右两侧的边缘。"""
         candidates = []
@@ -892,7 +899,9 @@ class Frame:
         for zone, centers, y in (("front", (745, 888, 1030, 1173), FRONT_Y),
                                  ("back", xs, BACK_Y)):
             for i, x in enumerate(centers):
-                result.append(Slot(zone, i, (x, y), self.slot_occupied((x, y))))
+                point = (x, y)
+                occupied = self.slot_occupied(point)
+                result.append(Slot(zone, i, point, occupied, blocked=occupied and self.fixed_partner(point)))
         return tuple(result)
 
     def slots(self) -> tuple[Slot, ...]:
