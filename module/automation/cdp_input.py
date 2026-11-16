@@ -1,4 +1,4 @@
-from module.automation.input_base import InputBase
+from module.automation.input_base import InputBase, input_deadline_reached
 from utils.pause import pause_ctl
 import time
 
@@ -166,6 +166,8 @@ class CdpInput(InputBase):
         return True
 
     def mouse_down(self, x, y):
+        if input_deadline_reached(time.monotonic()):
+            return False
         self.last_x, self.last_y = x, y
         try:
             self.cloud_game.execute_cdp_cmd("Input.dispatchMouseEvent", {
@@ -177,8 +179,10 @@ class CdpInput(InputBase):
                 "pointerType": "mouse"
             })
             self.logger.debug(f"鼠标按下 ({x}, {y})")
+            return True
         except Exception as e:
             self.logger.error(f"鼠标按下出错：{e}")
+            return False
 
     def mouse_up(self):
         try:
@@ -191,8 +195,10 @@ class CdpInput(InputBase):
                 "pointerType": "mouse"
             })
             self.logger.debug(f"鼠标释放 ({self.last_x}, {self.last_y})")
+            return True
         except Exception as e:
             self.logger.error(f"鼠标释放出错：{e}")
+            return False
 
     def mouse_click(self, x, y):
         self.mouse_down(x, y)
@@ -265,18 +271,27 @@ class CdpInput(InputBase):
         return True
 
     def press_key(self, key, wait_time=0.2):
+        if input_deadline_reached(time.monotonic()):
+            return False
         self.focus()
+        pause_ctl.check_stop()
+        if input_deadline_reached(time.monotonic()):
+            return False
         if self._get_key_payload(key) is None:
             self.logger.error(f"未知按键：{key}")
-            return
+            return False
 
         try:
-            self._dispatch_key_event(key, "keyDown")
+            if not self._dispatch_key_event(key, "keyDown"):
+                return False
             time.sleep(wait_time)
-            self._dispatch_key_event(key, "keyUp")
+            if not self._dispatch_key_event(key, "keyUp"):
+                return False
             self.logger.debug(f"按键按下：{key}, 持续 {wait_time}s")
+            return True
         except Exception as e:
             self.logger.error(f"按键 {key} 出错：{e}")
+            return False
 
     def press_key_down(self, key):
         self.focus()

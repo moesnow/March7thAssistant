@@ -24,6 +24,7 @@ BOTTOM_RIGHT = (1200, 880, 1920, 1040)
 MODE_HEADER = (570, 123, 1110, 200)
 MODE_END_BUTTON = (1272, 924, 1520, 997)
 END_MATCH_CONFIRM_BUTTON = (743, 696, 1215, 789)
+END_ACTIVE_MATCH_CONFIRM_BUTTON = (570, 696, 935, 789)
 RANK_MODE = (38, 840, 330, 925)
 RANK_PROMOTION_LABEL = (183, 374, 400, 487)
 RANK_NAMES = ("黑铁", "青铜", "翠钢", "钴银", "冰钛", "紫金", "投资大师", "资本帝王", "财富造物主")
@@ -573,10 +574,25 @@ class Frame:
         return None
 
     @cached_property
-    def end_match_dialog(self) -> bool:
+    def end_match_confirm_area(self) -> Area | None:
+        if not self.has("提示", area=(714, 306, 884, 372)):
+            return None
         message = "".join(label.text for label in self.texts((740, 377, 1490, 465)))
-        return (any(prompt in message for prompt in ("结算并重置进度", "确定结束进程"))
-                and self.has("提示", area=(714, 306, 884, 372)))
+        if "中断挑战并保存当前进度" in message:
+            # 局内退出时左侧是放弃结算，右侧是暂时离开。
+            return END_ACTIVE_MATCH_CONFIRM_BUTTON
+        if any(prompt in message for prompt in ("结算并重置进度", "确定结束进程")):
+            return END_MATCH_CONFIRM_BUTTON
+        return None
+
+    @cached_property
+    def end_match_dialog(self) -> bool:
+        return self.end_match_confirm_area is not None
+
+    def end_match_confirm(self) -> Label | None:
+        if (area := self.end_match_confirm_area) is not None:
+            return self.enabled_button(self.find("放弃并结算", area=area))
+        return None
 
     @cached_property
     def page(self) -> Page:
@@ -1765,8 +1781,13 @@ class Frame:
             cards.append(Label(name, (int((start + end) // 2), row - 68)))
         if cards:
             return tuple(cards)
-        return tuple(Label(label.text, (label.point[0], row - 68))
-                     for label in sorted(names, key=lambda label: label.point[0]))
+        if names:
+            return tuple(Label(label.text, (label.point[0], row - 68))
+                         for label in sorted(names, key=lambda label: label.point[0]))
+        if self.mentor_prompt and self.mentor_selection_prompt:
+            # 已确认从师要求选择。卡面和名字都漏读时尝试可见布局的中部卡位。
+            return tuple(Label("候选角色", (x, row - 68)) for x in (625, 930, 1212))
+        return ()
 
     def tea_signature(self):
         return tuple(label.text for label in self.texts((1120, 175, 1850, 855)))

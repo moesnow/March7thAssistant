@@ -2,7 +2,7 @@ import pyautogui
 import time
 from math import ceil
 
-from module.automation.input_base import InputBase
+from module.automation.input_base import InputBase, input_deadline_reached
 from utils.pause import pause_ctl
 
 
@@ -23,6 +23,8 @@ class LocalInput(InputBase):
 
     def mouse_down(self, x, y):
         '''在屏幕上的（x，y）位置按下鼠标按钮'''
+        if input_deadline_reached(time.monotonic()):
+            return False
         try:
             pyautogui.mouseDown(x, y)
             self.logger.debug(f"鼠标按下 ({x}, {y})")
@@ -96,13 +98,17 @@ class LocalInput(InputBase):
 
     def press_key(self, key, wait_time=0.2):
         '''模拟键盘按键，可以指定按下的时间'''
+        if input_deadline_reached(time.monotonic()):
+            return False
         try:
             pyautogui.keyDown(key)
             time.sleep(wait_time)  # 等待指定的时间
             pyautogui.keyUp(key)
             self.logger.debug(f"键盘按下 {key}")
+            return True
         except Exception as e:
             self.logger.error(f"键盘按下 {key} 出错：{e}")
+            return False
 
     def press_key_down(self, key):
         '''模拟键盘按下指定按键'''

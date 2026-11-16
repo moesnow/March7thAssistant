@@ -1459,6 +1459,16 @@ def test_gui_thread_idle_limit_gives_up_quickly_without_clicking(backend, monkey
     b.input.logger.warning.assert_not_called()
 
 
+def test_input_deadline_expires_during_mouse_idle_wait_without_clicking(backend):
+    b = backend
+    with module.input_wait_limit(.5, deadline=b.clock.now + .1):
+        with pytest.raises(InputInterrupted, match="达到任务总时限"):
+            b.input.mouse_down(300, 400)
+    assert not posts(b.api, 0x201)
+    assert b.input._session is None
+    assert b.input.mouse_click(300, 400) is True
+
+
 def test_locked_desktop_reports_clear_reason_and_releases_inputs(backend):
     b = backend
     b.input.press_key_down('alt')

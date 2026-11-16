@@ -29,6 +29,13 @@ def page(kind, *entries, **properties):
     return frame
 
 
+def enable_investment_confirm(frame):
+    x, y = frame.investment_confirm().point
+    frame.image = frame.image.copy()
+    ImageDraw.Draw(frame.image).rectangle((x - 57, y - 10, x + 57, y + 10), fill=(235, 235, 235))
+    return frame
+
+
 def slot(zone, index, unit=None, *, occupied=False):
     return policy.Slot(zone, index, (735 + index * 140, {"front": 405, "back": 670, "bench": 910}[zone]),
                        occupied or unit is not None, unit)
@@ -1309,7 +1316,9 @@ def test_default_opening_fills_the_empty_front_before_fighting(monkeypatch, worl
 
 
 @pytest.mark.parametrize("outcome", (
-    "single", "weekly", "loop", "reconnect", "late_front", "limit", "no_settlement", "stopped", "timeout",
+    "single", "weekly", "loop", "reconnect", "reconnect_original_board", "reconnect_original_prompt",
+    "late_front", "later_board", "abandon_returns_original", "abandon_returns_saved",
+    "limit", "no_settlement", "stopped", "timeout",
 ))
 def test_default_opening_restart_settles_once_and_plays_the_new_match(monkeypatch, world, outcome):
     world.cfg.currencywars_strategy = policy.DEFAULT_STRATEGY
@@ -1320,14 +1329,14 @@ def test_default_opening_restart_settles_once_and_plays_the_new_match(monkeypatc
 
     def preparation(team):
         frame = page(Page.BOARD, ("商店", *shop_button), ("出战", *fight_button),
-                     stage=stage, capacity=(team.used, team.capacity), gold=team.gold)
+                     stage=team.stage, capacity=(team.used, team.capacity), gold=team.gold)
         frame.slots = lambda: team.slots
         frame.field_slots = lambda: tuple(s for s in team.slots if s.zone != "bench")
         frame.deployed_copy = lambda *_: None
         return frame
 
     empty_team = board(slot("front", 0), slot("back", 0), slot("bench", 0, BAILU), slot("bench", 1),
-                       stage=stage, used=0, gold=3)
+                       stage="2-3" if outcome == "later_board" else stage, used=0, gold=3)
     ready_team = board(slot("front", 0, CORE), slot("back", 0), slot("bench", 0), slot("bench", 1),
                        stage=stage, used=1, gold=3)
     blocked, ready = preparation(empty_team), preparation(ready_team)
@@ -1336,17 +1345,22 @@ def test_default_opening_restart_settles_once_and_plays_the_new_match(monkeypatc
     lobby = home()
     menu = mode(("进入标准博弈", 1692, 961))
     ranks = rank()
-    prompt = end_match_dialog()
+    saved = mode(("继续进度", 1692, 961), ("结束并结算", 1397, 961), ("标准博弈", 646, 156))
+    prompt = active_match_exit_dialog()
+    abandon_point = (770, 743)
     reconnect = reconnect_prompt()
     abandoned = page(Page.MATCH_RESULT, ("对局失败", 960, 233), ("返回货币战争", 960, 899))
     won = page(Page.MATCH_RESULT, ("对局胜利", 960, 233), ("返回货币战争", 960, 899))
     state = SimpleNamespace(frame=lobby, clicks=[], keys=[], launches=[])
+    recovered = {"reconnect_original_board": ready, "reconnect_original_prompt": prompt}
     routes = {
-        (lobby, (1600, 972)): menu, (menu, (1692, 961)): ranks,
+        (lobby, (1600, 972)): menu, (menu, (1692, 961)): ranks, (saved, (1692, 961)): ready,
         (blocked, shop_button): shop, (shop, shop_button): blocked,
-        (prompt, (980, 743)): (prompt if outcome == "no_settlement"
-                               else reconnect if outcome == "reconnect" else abandoned),
-        (reconnect, (1188, 672)): abandoned, (abandoned, (960, 899)): lobby,
+        (prompt, abandon_point): (prompt if outcome == "no_settlement"
+                                  else ready if outcome == "abandon_returns_original"
+                                  else lobby if outcome == "abandon_returns_saved"
+                                  else reconnect if outcome.startswith("reconnect") else abandoned),
+        (reconnect, (1188, 672)): recovered.get(outcome, abandoned), (abandoned, (960, 899)): lobby,
         (ready, fight_button): won, (won, (960, 899)): lobby,
     }
 
@@ -1355,30 +1369,49 @@ def test_default_opening_restart_settles_once_and_plays_the_new_match(monkeypatc
         if state.frame is ranks and point == (1680, 965):
             state.launches.append(world.war.deadline)
             state.frame = blocked if len(state.launches) == 1 or outcome == "limit" else ready
+        elif outcome == "abandon_returns_saved" and state.frame is lobby and state.launches:
+            assert point == (1600, 972)
+            state.frame = saved
         else:
             state.frame = routes[state.frame, point]
         return True
 
     def press(key):
-        assert state.frame is blocked and key == "esc"
+        assert key == "esc"
         state.keys.append(key)
+        if state.frame is prompt and outcome == "reconnect_original_prompt":
+            state.frame = ready
+            return True
+        assert state.frame is blocked
         state.frame = prompt
         if outcome == "stopped":
             task.pause_ctl.checkpoint.side_effect = RunStopRequested()
         elif outcome == "timeout":
             world.now[0] = world.war.deadline
+        return True
 
-    def capture():
-        if (outcome == "late_front" and state.frame is blocked and not world.war.in_match
-                and (shop, shop_button) in state.clicks):
+    monkeypatch.setattr(world.war, "_capture", lambda: state.frame)
+    if outcome == "late_front":
+        restart_match = world.war._restart_match
+
+        def restart_with_new_front(frame, **kwargs):
             state.frame = ready
-        return state.frame
+            return restart_match(frame, **kwargs)
 
-    monkeypatch.setattr(world.war, "_capture", capture)
+        monkeypatch.setattr(world.war, "_restart_match", restart_with_new_front)
     monkeypatch.setattr(world.war, "_read_default_board",
                         lambda f, **_: (f, empty_team if f is blocked else ready_team))
     monkeypatch.setattr(world.war, "_gather", lambda f: f)
     monkeypatch.setattr(world.war, "_equip", lambda f, _: f)
+    if outcome == "later_board":
+        prepare = world.war._prepare
+
+        def stuck_preparation(f):
+            if f is blocked:
+                raise task.CurrencyWarsActionUnready("无法完成备战")
+            return prepare(f)
+
+        monkeypatch.setattr(world.war, "_prepare", stuck_preparation)
     on_result = Mock()
     monkeypatch.setattr(world.war, "_on_match_result", on_result)
     reward_checks = []
@@ -1395,9 +1428,9 @@ def test_default_opening_restart_settles_once_and_plays_the_new_match(monkeypatc
         with pytest.raises(task.CurrencyWarsUnavailable, match="已达开局重开上限"):
             world.war.start()
         assert state.frame is menu
-        assert state.keys == ["esc"] * (task.MAX_OPENING_RESTARTS + 1)
-        assert state.clicks.count((prompt, (980, 743))) == task.MAX_OPENING_RESTARTS + 1
-        assert state.launches == [60] * (task.MAX_OPENING_RESTARTS + 1)
+        assert state.keys == ["esc"] * (task.MAX_MATCH_RESTARTS + 1)
+        assert state.clicks.count((prompt, abandon_point)) == task.MAX_MATCH_RESTARTS + 1
+        assert state.launches == [60] * (task.MAX_MATCH_RESTARTS + 1)
         assert not reward_checks
         on_result.assert_not_called()
     elif outcome in ("no_settlement", "stopped", "timeout"):
@@ -1406,15 +1439,16 @@ def test_default_opening_restart_settles_once_and_plays_the_new_match(monkeypatc
         with pytest.raises(error):
             world.war.start()
         assert state.frame is prompt and state.keys == ["esc"] and state.launches == [60]
-        assert state.clicks.count((prompt, (980, 743))) == (1 if outcome == "no_settlement" else 0)
+        assert state.clicks.count((prompt, abandon_point)) == (1 if outcome == "no_settlement" else 0)
         assert not reward_checks
         on_result.assert_not_called()
     else:
         assert world.war.start(weekly=outcome == "weekly", loop=outcome == "loop")
-        restarted = outcome != "late_front"
+        restarted = outcome not in ("late_front", "abandon_returns_original", "abandon_returns_saved") and outcome not in recovered
+        escape_count = 0 if outcome == "late_front" else 2 if outcome == "reconnect_original_prompt" else 1
         assert state.frame is lobby
-        assert state.keys == ["esc"] * restarted and state.launches == [60] * (1 + restarted)
-        assert state.clicks.count((prompt, (980, 743))) == int(restarted)
+        assert state.keys == ["esc"] * escape_count and state.launches == [60] * (1 + restarted)
+        assert state.clicks.count((prompt, abandon_point)) == int(outcome != "late_front")
         assert state.clicks.count((ready, fight_button)) == 1
         assert reward_checks == ([None, True] if outcome == "weekly" else [True])
         assert world.war._loop_matches == (1 if outcome == "loop" else 0)
@@ -1896,6 +1930,62 @@ def end_match_dialog():
     ))
 
 
+def active_match_exit_dialog(*, abandon_enabled=True):
+    image = CANVAS.copy()
+    draw = ImageDraw.Draw(image)
+    if abandon_enabled:
+        draw.rounded_rectangle((571, 715, 931, 772), radius=28, fill=(224, 224, 224))
+    draw.rounded_rectangle((989, 715, 1349, 772), radius=28, fill=(224, 224, 224))
+    return Frame(image, labels(
+        ("提示", 778, 341), ("是否中断挑战并保存当前进度？进度将保留至1-6。", 1014, 412),
+        ("选择放弃挑战将放弃当前的挑战进度。", 948, 441), ("当前持有金币", 830, 587),
+        ("放弃并结算", 770, 743), ("暂时离开", 1188, 744),
+    ))
+
+
+@pytest.mark.parametrize("abandon_enabled", (False, True))
+def test_active_match_escape_uses_only_the_left_abandon_button(monkeypatch, world, abandon_enabled):
+    prompt = active_match_exit_dialog(abandon_enabled=abandon_enabled)
+    assert prompt.page == Page.END_MATCH_CONFIRM
+    assert ui.point(prompt.end_match_confirm()) == ((770, 743) if abandon_enabled else None)
+    initial = page(Page.BOARD, stage="1-6")
+    menu = mode(("进入标准博弈", 1692, 961))
+
+    def click(state, point):
+        assert state.frame is prompt and point == (770, 743)
+        state.frame = menu
+
+    state = drive(monkeypatch, world, initial, click)
+
+    def press(key):
+        state.keys.append((state.frame.page, key))
+        state.frame = prompt
+        return True
+
+    world.auto.press_key.side_effect = press
+    if abandon_enabled:
+        assert world.war._restart_match(initial, can_exit=lambda f: f is initial, start_new=False) == (menu, True)
+    else:
+        with pytest.raises(task.CurrencyWarsUnavailable, match="未确认旧对局已结束"):
+            world.war._restart_match(initial, can_exit=lambda f: f is initial, start_new=False)
+    assert state.keys == [(Page.BOARD, "esc")]
+    assert state.clicks == ([(Page.END_MATCH_CONFIRM, (770, 743))] if abandon_enabled else [])
+
+
+def test_takeover_cancels_an_open_in_match_exit_prompt(monkeypatch, world):
+    prompt = Frame(CANVAS, labels(("提示", 778, 341), ("是否中断挑战并保存当前进度？", 1014, 412)))
+    ready = page(Page.BOARD, stage="2-3")
+    state = drive(monkeypatch, world, prompt)
+
+    def press(key):
+        state.keys.append(key)
+        state.frame = ready
+
+    world.auto.press_key.side_effect = press
+    assert world.war._enter_with_recovery(prompt, resume=True) is ready
+    assert state.keys == ["esc"] and not state.clicks
+
+
 @pytest.mark.parametrize("explicit_takeover", (False, True))
 def test_saved_match_resumes_in_its_own_mode_using_configured_strategy(monkeypatch, world, explicit_takeover):
     world.cfg.currencywars_unfinished_match = "restart" if explicit_takeover else "resume"
@@ -2015,9 +2105,11 @@ def test_entry_reconnect_preserves_a_result_while_opening_modes(monkeypatch, wor
 def test_takeover_plays_the_current_match_without_visiting_the_menu(monkeypatch, world, start_in_battle):
     world.cfg.currencywars_type = "overclock"
     world.cfg.currencywars_unfinished_match = "restart"
-    investment = Frame(CANVAS, labels(("投资环境", 960, 100), ("经济过热", 438, 392),
-                                      ("仙舟舰队邀请", 960, 392), ("人身意外险", 1482, 392),
-                                      ("确认", 1082, 984)))
+    investment_text = labels(("投资环境", 960, 100), ("经济过热", 438, 392),
+                             ("仙舟舰队邀请", 960, 392), ("人身意外险", 1482, 392),
+                             ("确认", 1082, 984))
+    investment = Frame(CANVAS, investment_text)
+    selected = enable_investment_confirm(Frame(CANVAS, investment_text))
     fighting = battle(True)
     result = page(Page.MATCH_RESULT, ("挑战成功", 960, 233), ("返回货币战争", 960, 899))
     lobby = home()
@@ -2026,8 +2118,8 @@ def test_takeover_plays_the_current_match_without_visiting_the_menu(monkeypatch,
     monkeypatch.setattr(world.war, "get_reward", lambda f: (f, (18000, 18000), False))
 
     routes = {
-        (investment, (1482, 392)): investment,
-        (investment, (1082, 984)): fighting,
+        (investment, (1482, 392)): selected,
+        (selected, (1082, 984)): fighting,
         (result, (960, 899)): lobby,
     }
     battle_reads = 0
@@ -3395,6 +3487,332 @@ def test_play_replans_from_fresh_frames_after_local_failures(monkeypatch, world,
     assert not state.clicks
 
 
+@pytest.mark.parametrize("transition", (
+    "result", "result_after_escape", "result_after_unmapped_abandon", "result_after_failed_abandon",
+    "loss_after_failed_abandon", "reconnect_before_abandon", "fight_confirm", "already_open_exit",
+    "failed_escape", "late_shop", "board_advanced",
+))
+def test_stuck_preparation_respects_late_original_match_updates(monkeypatch, world, transition):
+    stage = "3-7"
+    blocked = page(Page.BOARD, ("出战", 1818, 751), stage=stage, capacity=(1, 3))
+    blocked.field_slots = lambda: (slot("front", 0, CORE), slot("back", 0))
+    confirm_point, return_point = (963, 694), (960, 899)
+    fight_confirm = page(Page.CONFIRM_FIGHT, ("确认", *confirm_point), stage=stage)
+    prompt = active_match_exit_dialog()
+    resumed = page(Page.BOARD, stage=stage, capacity=(1, 4))
+    resumed.field_slots = blocked.field_slots
+    shop = page(Page.SHOP, ("收起", 1624, 983), stage=stage)
+    wins = transition != "loss_after_failed_abandon"
+    result = page(Page.MATCH_RESULT, ("对局胜利" if wins else "对局失败", 960, 233),
+                  ("返回货币战争", *return_point))
+    reconnect = reconnect_prompt()
+    lobby = home()
+    menu = mode(("进入标准博弈", 1692, 961))
+    routes = {
+        (fight_confirm, confirm_point): resumed,
+        (shop, (1624, 983)): resumed,
+        (reconnect, (1188, 672)): prompt,
+        (result, return_point): lobby,
+        (lobby, (1600, 972)): menu,
+    }
+    state = SimpleNamespace(frame=blocked, clicks=[], keys=[], advances=0, receipts=[])
+    prompt_reads = 0
+
+    def capture():
+        nonlocal prompt_reads
+        if transition == "reconnect_before_abandon" and state.frame is prompt:
+            prompt_reads += 1
+            if prompt_reads == 2:
+                state.frame = reconnect
+        return state.frame
+
+    def prepare(frame):
+        if frame is blocked:
+            world.war.stage_refreshes[stage] = 2
+            world.war.deferred_operations.add((stage, "商店"))
+            raise task.CurrencyWarsActionUnready("备战画面未更新")
+        assert frame is resumed
+        state.receipts.append((world.war.stage_refreshes.get(stage), (stage, "商店") in world.war.deferred_operations))
+        state.frame = result
+        return world.war._observe()
+
+    def advance_existing_team():
+        state.advances += 1
+        if state.advances == task.MAX_PREPARATION_FALLBACKS:
+            if transition == "result":
+                state.frame = result
+            elif transition == "fight_confirm":
+                state.frame = fight_confirm
+            elif transition == "already_open_exit":
+                state.frame = prompt
+            elif transition == "late_shop":
+                state.frame = shop
+            elif transition == "board_advanced":
+                state.frame = resumed
+        return blocked
+
+    original_find = world.auto.find_element.side_effect
+
+    def find(target, *args, **kwargs):
+        point = original_find(target, *args, **kwargs)
+        if transition == "result_after_unmapped_abandon" and state.frame is prompt and point == (770, 743):
+            state.frame = result
+            return None
+        return point
+
+    def click(point, *, press_duration):
+        state.clicks.append((state.frame, point))
+        if transition in ("result_after_failed_abandon", "loss_after_failed_abandon") and state.frame is prompt:
+            assert point == (770, 743)
+            state.frame = result
+            return False
+        state.frame = routes[state.frame, point]
+        return True
+
+    def press(key):
+        state.keys.append((state.frame.page, key))
+        if transition == "result_after_escape":
+            state.frame = result
+        elif (state.frame is blocked and transition in ("result_after_unmapped_abandon",
+                                                        "result_after_failed_abandon", "loss_after_failed_abandon",
+                                                        "reconnect_before_abandon")):
+            state.frame = prompt
+        elif transition == "failed_escape" and state.frame is blocked:
+            state.frame = prompt
+            return False
+        elif state.frame is prompt:
+            state.frame = resumed
+        return True
+
+    on_result = Mock()
+    launched = Mock(return_value=lobby)
+    rewards = Mock(side_effect=lambda f: (f, (18000, 18000), False))
+    monkeypatch.setattr(world.war, "_capture", capture)
+    monkeypatch.setattr(world.war, "_prepare", prepare)
+    monkeypatch.setattr(world.war, "_advance_existing_team", advance_existing_team)
+    monkeypatch.setattr(world.war, "_on_match_result", on_result)
+    monkeypatch.setattr(world.war, "_enter_with_recovery", launched)
+    monkeypatch.setattr(world.war, "_check_weekly_reward", rewards)
+    world.auto.find_element.side_effect = find
+    world.auto.click_element_with_pos.side_effect = click
+    world.auto.press_key.side_effect = press
+
+    assert world.war.start(resume=True) is wins
+    on_result.assert_called_once_with(result)
+    rewards.assert_called_once_with(lobby)
+    launched.assert_not_called()
+    assert state.advances == task.MAX_PREPARATION_FALLBACKS
+    expected_keys = {
+        "result_after_escape": [(Page.BOARD, "esc")],
+        "result_after_unmapped_abandon": [(Page.BOARD, "esc")],
+        "result_after_failed_abandon": [(Page.BOARD, "esc")],
+        "loss_after_failed_abandon": [(Page.BOARD, "esc")],
+        "reconnect_before_abandon": [(Page.BOARD, "esc"), (Page.END_MATCH_CONFIRM, "esc")],
+        "already_open_exit": [(Page.END_MATCH_CONFIRM, "esc")],
+        "failed_escape": [(Page.BOARD, "esc"), (Page.END_MATCH_CONFIRM, "esc")],
+    }
+    assert state.keys == expected_keys.get(transition, [])
+    expected = {
+        "fight_confirm": [(fight_confirm, confirm_point)],
+        "late_shop": [(shop, (1624, 983))],
+        "result_after_failed_abandon": [(prompt, (770, 743))],
+        "loss_after_failed_abandon": [(prompt, (770, 743))],
+        "reconnect_before_abandon": [(reconnect, (1188, 672))],
+    }
+    assert state.clicks == [*expected.get(transition, ()), (result, return_point)]
+    resumes_board = ("fight_confirm", "already_open_exit", "failed_escape", "late_shop", "board_advanced",
+                     "reconnect_before_abandon")
+    assert state.receipts == ([(2, True)] if transition in resumes_board else [])
+
+
+def test_preexisting_in_match_exit_prompt_is_cancelled_after_blocked_choice(monkeypatch, world):
+    stage = "2-3"
+    initial = page(Page.CHOICE, stage=stage, choice="遭遇节点")
+    prompt = active_match_exit_dialog()
+    ready = page(Page.BOARD, stage=stage)
+    return_point = (960, 899)
+    won = page(Page.MATCH_RESULT, ("对局胜利", 960, 233), ("返回货币战争", *return_point))
+    lobby = home()
+    state = SimpleNamespace(frame=initial, clicks=[], keys=[])
+
+    def choose(frame):
+        state.frame = prompt
+        raise task.CurrencyWarsPageBlocked(frame, "遭遇选择未确认")
+
+    def press(key):
+        state.keys.append((state.frame, key))
+        if state.frame is prompt and key == "esc":
+            state.frame = ready
+
+    def prepare(frame):
+        assert frame is ready
+        state.frame = won
+        return world.war._observe()
+
+    def click(point, *, press_duration):
+        state.clicks.append((state.frame, point))
+        if state.frame is won and point == return_point:
+            state.frame = lobby
+        return True
+
+    launched = Mock(return_value=lobby)
+    rewards = Mock(side_effect=lambda f: (f, (18000, 18000), False))
+    monkeypatch.setattr(world.war, "_capture", lambda: state.frame)
+    monkeypatch.setattr(world.war, "_choose", choose)
+    monkeypatch.setattr(world.war, "_prepare", prepare)
+    monkeypatch.setattr(world.war, "_enter_with_recovery", launched)
+    monkeypatch.setattr(world.war, "_check_weekly_reward", rewards)
+    world.auto.press_key.side_effect = press
+    world.auto.click_element_with_pos.side_effect = click
+
+    assert world.war.start(resume=True)
+    assert state.keys == [(prompt, "esc")]
+    assert state.clicks == [(won, return_point)]
+    launched.assert_not_called()
+    rewards.assert_called_once_with(lobby)
+
+
+@pytest.mark.parametrize("response", ("board", "quit_prompt", "unchanged", "flicker", "stop", "budget"))
+def test_play_tries_one_escape_at_a_blocked_choice_page(monkeypatch, world, response):
+    stage = "2-3"
+    initial = page(Page.CHOICE, stage=stage, choice="遭遇节点")
+    ready = page(Page.BOARD, stage=stage, capacity=(1, 3))
+    ready.field_slots = lambda: (slot("front", 0, CORE), slot("back", 0))
+    lobby = home()
+    state = drive(monkeypatch, world, initial)
+    failure = task.CurrencyWarsPageBlocked(initial, "遭遇选择未确认")
+    world.war.deadline = 60
+
+    def step(f):
+        if f is initial:
+            world.war.stage_refreshes[stage] = 1
+            raise failure
+        assert f is ready
+        assert world.war.stage_refreshes[stage] == 1
+        assert (stage, "晶矿") in world.war.deferred_operations
+        return lobby
+
+    def press(key):
+        assert key == "esc"
+        state.keys.append(key)
+        if response == "board":
+            state.frame = ready
+        elif response == "quit_prompt":
+            state.frame = active_match_exit_dialog()
+        elif response == "flicker":
+            state.frame = page(Page.CHOICE, choice="遭遇节点")
+        elif response == "stop":
+            task.pause_ctl.checkpoint.side_effect = RunStopRequested()
+        elif response == "budget":
+            world.now[0] = 60
+        return True
+
+    monkeypatch.setattr(world.war, "_play_step", step)
+    world.auto.press_key.side_effect = press
+    if response == "board":
+        assert world.war._play(initial) is lobby
+    else:
+        expected = {"quit_prompt": task.CurrencyWarsRestartRequested, "unchanged": task.CurrencyWarsUnavailable,
+                    "flicker": task.CurrencyWarsUnavailable, "stop": RunStopRequested,
+                    "budget": task.CurrencyWarsBudgetExceeded}[response]
+        with pytest.raises(expected) as caught:
+            world.war._play(initial)
+        if response in ("unchanged", "flicker"):
+            assert caught.value is failure
+        elif response == "quit_prompt":
+            assert caught.value.frame.page == Page.END_MATCH_CONFIRM
+    assert state.keys == ["esc"] and not state.clicks
+
+
+@pytest.mark.parametrize("title", ("投资环境", "请选择投资策略", "补给阶段"))
+def test_exhausted_mandatory_choice_keeps_the_choice_error(monkeypatch, world, title):
+    initial = page(Page.CHOICE, choice=title)
+    blocked = task.CurrencyWarsPageBlocked(initial, f"{title}仍无法提交")
+    drive(monkeypatch, world, initial)
+    monkeypatch.setattr(world.war, "_play_step", Mock(side_effect=blocked))
+    with pytest.raises(task.CurrencyWarsUnavailable, match="仍无法提交"):
+        world.war._play(initial)
+    world.auto.press_key.assert_not_called()
+
+
+def test_node_number_flicker_does_not_reset_choice_failure_limit(monkeypatch, world):
+    stage = "2-3"
+    visible = page(Page.CHOICE, stage=stage, choice="遭遇节点")
+    missed = page(Page.CHOICE, choice="遭遇节点")
+    ready = page(Page.BOARD, stage=stage, capacity=(1, 3))
+    ready.field_slots = lambda: (slot("front", 0, CORE), slot("back", 0))
+    lobby = home()
+    state = drive(monkeypatch, world, visible)
+    failures = []
+
+    def step(frame):
+        if frame is ready:
+            return lobby
+        failures.append(frame)
+        state.frame = missed if frame is visible else visible
+        if len(failures) > task.MAX_PAGE_FAILURES:
+            raise RunStopRequested()
+        raise task.CurrencyWarsActionUnready("遭遇选择未确认")
+
+    def press(key):
+        state.keys.append(key)
+        state.frame = ready
+        return True
+
+    monkeypatch.setattr(world.war, "_play_step", step)
+    world.auto.press_key.side_effect = press
+    assert world.war._play(visible) is lobby
+    assert len(failures) == task.MAX_PAGE_FAILURES
+    assert state.keys == ["esc"]
+
+
+def test_escape_recovery_preserves_terminal_disconnect_reason(monkeypatch, world):
+    initial = page(Page.CHOICE, choice="遭遇节点", stage="2-3")
+    state = SimpleNamespace(frame=initial)
+    monkeypatch.setattr(world.war, "_capture", lambda: state.frame)
+    monkeypatch.setattr(world.war, "_choose", Mock(side_effect=task.CurrencyWarsPageBlocked(initial, "遭遇选择未确认")))
+
+    def press(key):
+        assert key == "esc"
+        state.frame = page(Page.DISCONNECTED)
+        return True
+
+    world.auto.press_key.side_effect = press
+    with pytest.raises(task.CurrencyWarsUnavailable, match="未确认云游戏连接恢复"):
+        world.war.start(resume=True)
+    world.auto.press_key.assert_called_once_with("esc")
+    world.auto.click_element_with_pos.assert_not_called()
+
+
+@pytest.mark.parametrize("unreadable_last_frame", (False, True))
+def test_native_exit_cancel_has_a_local_limit_without_task_deadline(monkeypatch, world, unreadable_last_frame):
+    world.cfg.currencywars_time_limit = 0
+    initial = page(Page.CHOICE, choice="遭遇节点", stage="2-3")
+    prompt = active_match_exit_dialog()
+    state = SimpleNamespace(frame=initial, attempts=0)
+    monkeypatch.setattr(world.war, "_capture", lambda: state.frame)
+
+    def choose(frame):
+        state.frame = prompt
+        raise task.CurrencyWarsPageBlocked(frame, "遭遇选择未确认")
+
+    def press(key):
+        assert key == "esc" and state.frame is prompt
+        state.attempts += 1
+        if state.attempts > 2:
+            raise RunStopRequested()
+        if state.attempts == 2 and unreadable_last_frame:
+            state.frame = page(Page.UNKNOWN)
+        return False
+
+    monkeypatch.setattr(world.war, "_choose", choose)
+    world.auto.press_key.side_effect = press
+    with pytest.raises(task.CurrencyWarsUnavailable, match="无法取消局内退局弹窗"):
+        world.war.start(resume=True)
+    assert state.attempts == 2
+    world.auto.click_element_with_pos.assert_not_called()
+
+
 def test_preparation_failure_can_use_the_visible_fight_button(monkeypatch, world):
     frame = page(Page.BOARD, ("出战", 1817, 751), stage="1-2", capacity=(1, 2))
     monkeypatch.setattr(frame, "slots", lambda: (slot("front", 0, CORE),))
@@ -3490,11 +3908,12 @@ def test_takeover_bounds_unplayable_preparation_and_keeps_the_board(monkeypatch,
     monkeypatch.setattr(task, "TASK_SECONDS", 25)
     state = drive(monkeypatch, world, initial)
 
-    with pytest.raises(task.CurrencyWarsUnavailable, match="1-1.*仍无法完成备战并推进"):
+    with pytest.raises(task.CurrencyWarsUnavailable, match="1-1.*重开未完成"):
         world.war.start(resume=True)
 
     assert world.now[0] < task.TASK_SECONDS
-    assert state.frame is initial and not state.clicks and not state.keys
+    assert state.frame is initial and not state.clicks
+    assert state.keys == [(Page.BOARD, "esc")] * 2
     world.auto.drag_mouse.assert_not_called()
 
 
@@ -3568,9 +3987,10 @@ def test_takeover_rechecks_zero_input_deployment_after_the_first_fallback(monkey
         world.auto.drag_mouse.assert_called_once()
         assert state.clicks.count((Page.BOARD, fight)) == 1
     else:
-        with pytest.raises(task.CurrencyWarsUnavailable, match="1-1.*仍无法完成备战并推进"):
+        with pytest.raises(task.CurrencyWarsUnavailable, match="1-1.*重开未完成"):
             world.war.start(resume=True)
         assert misses and not state.clicks
+        assert state.keys == [(Page.BOARD, "esc")] * 2
         world.auto.drag_mouse.assert_not_called()
     assert world.now[0] < task.TASK_SECONDS
 
@@ -4853,12 +5273,12 @@ def test_default_always_selects_uncollected_investment_even_without_the_title(
     world.cfg.currencywars_investment_priority = configured
     option = page(Page.CHOICE, ("连击概念股", 460, y), ("获得简易装备", 460, y + 50),
                   ("确认", 960, 984), choice=title, uncollected_investment_columns={2})
+    selected = enable_investment_confirm(page(Page.CHOICE, ("确认", 960, 984), choice=title))
     after = page(Page.BOARD)
     refresh = Mock(side_effect=AssertionError("默认策略不刷新投资"))
     monkeypatch.setattr(world.war, "_refresh_unusable_investments", refresh)
-    state = drive(monkeypatch, world, option, lambda s, p: (
-        setattr(s, "frame", after) if p == (960, 984) else None
-    ))
+    routes = {(option, (1460, y)): selected, (selected, (960, 984)): after}
+    state = drive(monkeypatch, world, option, lambda s, p: setattr(s, "frame", routes[s.frame, p]))
     assert world.war._choose(option) is after
     assert state.clicks == [(Page.CHOICE, (1460, y)), (Page.CHOICE, (960, 984))]
     refresh.assert_not_called()
@@ -4872,16 +5292,14 @@ def test_catalog_investment_environment_reselects_and_confirms_without_outline(m
     image.paste(badge, (1150, 216))
     text = labels(("投资环境", 960, 100), ("连击概念股", 460, 393), ("开局获得简易装备", 460, 433),
                   ("新环境", 960, 393), ("获得一个奇遇伙伴", 960, 433), ("确认", 979, 984))
+    if preselected:
+        draw = ImageDraw.Draw(image)
+        for x in (460 - 234, 460 + 234):
+            draw.line((x, 406, x, 755), fill="white")
     first = Frame(image, text)
-
-    selected_image = image.copy()
-    draw = ImageDraw.Draw(selected_image)
-    center = 460 if preselected else 960
-    for x in (center - 234, center + 234):
-        draw.line((x, 406, x, 755), fill="white")
-    selected = Frame(selected_image, text)
+    selected = enable_investment_confirm(Frame(image, text))
     after = page(Page.BOARD)
-    state = drive(monkeypatch, world, selected if preselected else first, lambda s, pt: setattr(
+    state = drive(monkeypatch, world, first, lambda s, pt: setattr(
         s, "frame", selected if pt == (960, 393) else after))
 
     assert world.war._choose(state.frame) is after
@@ -5280,7 +5698,7 @@ def test_investment_replans_when_the_rest_of_the_cards_slide_in(monkeypatch, wor
                  ("开局获得装备", 440, 435), choice="投资环境")
     stable = page(Page.CHOICE, title, ("幻月游戏概念股", 438, 393),
                   ("人身意外险", 960, 393), ("人才下沉", 1477, 393), choice="投资环境")
-    selected = page(Page.CHOICE, title, ("确认", 1082, 984), choice="投资环境")
+    selected = enable_investment_confirm(page(Page.CHOICE, title, ("确认", 1082, 984), choice="投资环境"))
     after = page(Page.BOARD)
     frames = iter((early, stable))
 
@@ -5303,12 +5721,13 @@ def test_investment_confirmation_recognizes_a_second_same_title_catalog(monkeypa
               ("追加资源" if replaced_columns == 2 else "积攒收益", 1460, 490), ("获得2金币。", 1460, 535))
     confirm = ("确认", 979, 984)
     before = page(Page.CHOICE, *first, choice=title)
-    selected = page(Page.CHOICE, *first, confirm, choice=title)
+    selected = enable_investment_confirm(page(Page.CHOICE, *first, confirm, choice=title))
     following = page(Page.CHOICE, *second, confirm, choice=title)
+    following_selected = enable_investment_confirm(page(Page.CHOICE, *second, confirm, choice=title))
     after = page(Page.BOARD)
     routes = {
         (before, card[1:]): selected, (selected, confirm[1:]): following,
-        (following, card[1:]): following, (following, confirm[1:]): after,
+        (following, card[1:]): following_selected, (following_selected, confirm[1:]): after,
     }
     state = drive(monkeypatch, world, before, lambda s, p: setattr(s, "frame", routes[s.frame, p]))
     expected = [(Page.CHOICE, card[1:]), (Page.CHOICE, confirm[1:])]
@@ -5335,6 +5754,8 @@ def test_random_environment_can_replace_three_cards_with_a_single_same_title_car
         ImageDraw.Draw(old_image).rectangle((x - 160, 180, x + 160, 382), fill=(210, 194, 211))
     for f in (before, selected):
         f.image = old_image
+    enable_investment_confirm(selected)
+    enable_investment_confirm(following_selected)
     after = page(Page.BOARD, stage="1-1")
     routes = {(before, random[1:]): selected, (selected, confirm.point): following,
               (following, invitation[1:]): following_selected, (following_selected, confirm.point): after}
@@ -5895,6 +6316,32 @@ def test_replacement_prompt_preserves_first_halo(monkeypatch, world):
     assert CORE.name in world.war.halo_excluded
 
 
+@pytest.mark.parametrize(("kind", "next_kind", "close_point"), (
+    (Page.BLACK_MARKET, Page.BOARD, (12, 12)),
+    (Page.HALO_REPLACE, Page.HALO, (763, 672)),
+))
+@pytest.mark.parametrize("disappears", (True, False))
+def test_event_overlay_tries_escape_once_when_safe_close_has_no_receipt(
+        monkeypatch, world, kind, next_kind, close_point, disappears):
+    overlay = page(kind, ("取消", 763, 672))
+    after = page(next_kind, stage="3-4")
+    state = drive(monkeypatch, world, overlay)
+
+    def escape(key):
+        state.keys.append((state.frame.page, key))
+        if disappears:
+            state.frame = after
+
+    world.auto.press_key.side_effect = escape
+    if disappears:
+        assert world.war._play_step(overlay) is after
+    else:
+        with pytest.raises(task.CurrencyWarsUnavailable, match="已保留当前现场"):
+            world.war._play_step(overlay)
+    assert state.clicks == [(kind, close_point)] * 2
+    assert state.keys == [(kind, "esc")]
+
+
 @pytest.mark.parametrize("from_fallback", (False, True))
 def test_halo_confirms_name_when_center_art_does_not_match(monkeypatch, world, from_fallback):
     sunday = policy.Unit("星期日", True, True, 1)
@@ -6259,6 +6706,20 @@ def test_halo_mentor_takeover_confirms_an_existing_selection(monkeypatch, world)
     assert world.war.start(resume=True)
     assert state.clicks == [(Page.HALO_MENTOR, (1492, 493)), (Page.BOARD, (1818, 750)),
                             (Page.MATCH_RESULT, (962, 893))]
+
+
+def test_halo_mentor_tries_fixed_card_when_name_and_color_are_missing(monkeypatch, world):
+    initial = mentor_dialog((), warning=True, confirm_y=537)
+    selected = mentor_dialog((), selected=True, confirm_y=537)
+    ready = page(Page.BOARD, stage="1-9")
+    assert initial.page == Page.HALO_MENTOR
+    card = initial.mentor_candidates[0].point
+    assert card[0] == 625 and initial.mentor_confirm() is None
+    routes = {(initial, card): selected, (selected, (1492, 537)): ready}
+    state = drive(monkeypatch, world, initial, lambda s, p: setattr(s, "frame", routes[s.frame, p]))
+    assert world.war._halo_mentor(initial) is ready
+    assert state.clicks == [(Page.HALO_MENTOR, card), (Page.HALO_MENTOR, (1492, 537))]
+    assert not state.keys
 
 
 @pytest.mark.parametrize(("outcome", "error"), (("unavailable", task.CurrencyWarsUnavailable),
@@ -7294,29 +7755,29 @@ def test_start_recovers_disassembly_only_on_an_unchanged_board(monkeypatch, worl
     ("投资环境", (960, 393)),
     ("请选择投资策略", (960, 490)),
 ))
-@pytest.mark.parametrize("successful_attempt", (2, None))
+@pytest.mark.parametrize("enabled_column", (2, None))
 def test_investment_uses_layout_when_ocr_misses_cards_and_bounds_retries(
-        monkeypatch, world, title, fallback, successful_attempt):
-    frame = page(Page.CHOICE, choice=title)
+        monkeypatch, world, title, fallback, enabled_column):
+    frame = page(Page.CHOICE, ("确认", 960, 984), choice=title)
+    selected = enable_investment_confirm(page(Page.CHOICE, choice=title))
     after = page(Page.BOARD)
-    confirms = 0
 
     def click(state, point):
-        nonlocal confirms
-        if point == (960, 984):
-            confirms += 1
-            if confirms == successful_attempt:
-                state.frame = after
+        if state.frame is selected and point == (960, 984):
+            state.frame = after
+        elif enabled_column is not None and point == (ui.INVESTMENT_CENTERS[enabled_column], fallback[1]):
+            state.frame = selected
 
     state = drive(monkeypatch, world, frame, click)
-    if successful_attempt:
+    expected = [(Page.CHOICE, fallback)] * 3 + [
+        (Page.CHOICE, (x, fallback[1])) for x in ui.INVESTMENT_CENTERS
+    ]
+    if enabled_column is not None:
         assert world.war._choose(frame) is after
-        expected = [(Page.CHOICE, fallback), (Page.CHOICE, (960, 984))] * successful_attempt
+        expected.append((Page.CHOICE, (960, 984)))
     else:
         with pytest.raises(task.CurrencyWarsUnavailable, match="多次尝试后仍无法提交"):
             world.war._choose(frame)
-        expected = [(Page.CHOICE, fallback), (Page.CHOICE, (960, 984))] * 3
-        expected.extend((Page.CHOICE, (x, fallback[1])) for x in (460, 960, 1460))
     assert state.clicks == expected
 
 
@@ -7359,7 +7820,7 @@ def test_investment_fixed_card_recovers_in_the_same_run_after_delayed_enable(mon
         assert daily.Daily._run_currency_wars()
     else:
         assert world.war.start(resume=entry == "takeover", loop=entry == "loop")
-    expected = [(515, 570), (960, 984)] * 3 + [(514, 420), (1005, 420), (1409, 420), (960, 984)]
+    expected = [(515, 570)] * 3 + [(514, 420), (1005, 420), (1409, 420), (960, 984)]
     assert [point for page_, point in state.clicks if page_ == Page.CHOICE] == expected
     assert world.war.result is True and state.frame is lobby
     assert world.war._loop_matches == (1 if entry == "loop" else 0)
@@ -7385,7 +7846,7 @@ def test_investment_fixed_card_recovery_preserves_terminal_states(monkeypatch, w
     state = drive(monkeypatch, world, frame, click)
     with pytest.raises(exception):
         world.war.start(resume=True)
-    expected = [(1005, 420), (960, 984)] * 3 + [(514, 420)]
+    expected = [(1005, 420)] * 3 + [(514, 420)]
     if outcome == "unavailable":
         expected.extend(((1005, 420), (1409, 420)))
     assert state.clicks == [(Page.CHOICE, point) for point in expected]
@@ -7770,6 +8231,124 @@ def test_match_recognition_window_restarts_after_a_confirmed_page(monkeypatch, w
     with pytest.raises(task.CurrencyWarsUnavailable, match="对局画面持续无法识别"):
         world.war._observe()
     world.auto.click_element_with_pos.assert_not_called()
+
+
+def test_unknown_match_screen_gets_one_escape_at_the_recognition_limit(monkeypatch, world):
+    initial = page(Page.CHOICE, stage="1-2", choice="补给阶段")
+    unknown = page(Page.UNKNOWN)
+    ready = page(Page.BOARD, stage="1-2", capacity=(1, 3))
+    ready.field_slots = lambda: (slot("front", 0, CORE), slot("back", 0))
+    lobby = home()
+    world.war.frame = initial
+    world.war.in_match = True
+    world.war.deadline = 60
+    current = initial
+    keys = []
+    monkeypatch.setattr(task, "MATCH_UNIDENTIFIED_SECONDS", 2)
+    monkeypatch.setattr(world.war, "_capture", lambda: current)
+
+    def step(f):
+        nonlocal current
+        if f is ready:
+            return lobby
+        current = unknown
+        return world.war._expect(lambda frame: frame is ready, 10, "识别失败")
+
+    def press(key):
+        nonlocal current
+        keys.append(key)
+        current = ready
+
+    monkeypatch.setattr(world.war, "_play_step", step)
+    world.auto.press_key.side_effect = press
+    assert world.war._play(initial) is lobby
+    assert keys == ["esc"]
+
+
+@pytest.mark.parametrize("source", ("battle", "node_result", "combat_conflict", "late_combat_conflict"))
+def test_unreadable_combat_or_settlement_never_sends_escape(monkeypatch, world, source):
+    unreadable = page(Page.UNKNOWN)
+    combat_conflict = Frame(CANVAS, labels(("2-3", 726, 26), ("2%", 773, 28), ("出战", 1818, 750)))
+    assert combat_conflict.page == Page.CONFLICT and combat_conflict.combat_buttons
+    if source == "battle":
+        initial = battle(True)
+    elif source == "node_result":
+        initial = page(Page.NODE_RESULT, ("挑战结束", 958, 232))
+    else:
+        initial = page(Page.CHOICE, choice="遭遇节点", stage="2-3")
+        if source == "combat_conflict":
+            unreadable = combat_conflict
+        monkeypatch.setattr(world.war, "_choose", lambda frame: world.war._expect(
+            lambda f: f.page == Page.BOARD, 10, "局内页面仍有冲突",
+        ))
+    recognition_limit = 2
+    monkeypatch.setattr(task, "MATCH_UNIDENTIFIED_SECONDS", recognition_limit)
+    captures = iter((initial,))
+    limit_reached = False
+
+    def capture():
+        nonlocal limit_reached
+        if frame := next(captures, None):
+            return frame
+        if source == "late_combat_conflict":
+            if limit_reached:
+                return combat_conflict
+            since = world.war.unidentified_since
+            limit_reached = since is not None and world.now[0] - since >= recognition_limit
+        return unreadable
+
+    monkeypatch.setattr(world.war, "_capture", capture)
+
+    with pytest.raises(task.CurrencyWarsUnavailable, match="对局画面持续无法识别"):
+        world.war.start(resume=True)
+    world.auto.press_key.assert_not_called()
+    world.auto.click_element_with_pos.assert_not_called()
+
+
+@pytest.mark.parametrize("source", ("board", "confirm", "skip"))
+def test_unreadable_first_frame_after_fight_input_never_sends_escape(monkeypatch, world, source):
+    stage = "2-3"
+    fight = "跳过(1/1)" if source == "skip" else "出战"
+    press_point = (963, 694) if source == "confirm" else (1818, 751)
+    if source == "confirm":
+        initial = page(Page.CONFIRM_FIGHT, ("确认", *press_point), stage=stage)
+    else:
+        initial = page(Page.BOARD, (fight, *press_point), stage=stage)
+        monkeypatch.setattr(world.war, "_prepare", lambda f: world.war._advance_board(f, f.board_advance))
+    state = SimpleNamespace(frame=initial, clicks=[])
+    monkeypatch.setattr(task, "MATCH_UNIDENTIFIED_SECONDS", 2)
+    monkeypatch.setattr(world.war, "_capture", lambda: state.frame)
+
+    def click(point, *, press_duration):
+        state.clicks.append(point)
+        state.frame = page(Page.UNKNOWN)
+        return True
+
+    world.auto.click_element_with_pos.side_effect = click
+    with pytest.raises(task.CurrencyWarsUnavailable, match="对局画面持续无法识别"):
+        world.war.start(resume=True)
+    assert state.clicks == [press_point]
+    world.auto.press_key.assert_not_called()
+
+
+@pytest.mark.parametrize("source", ("unknown", "unverified_board"))
+def test_unverified_frame_escape_cannot_authorize_abandon(monkeypatch, world, source):
+    initial = page(Page.UNKNOWN) if source == "unknown" else page(Page.BOARD, stage="2-3", capacity=(2, 3))
+    if source == "unverified_board":
+        initial.field_slots = lambda: (slot("front", 0, CORE), slot("back", 0))
+        assert not world.war._restartable_board(initial)
+    prompt = active_match_exit_dialog()
+    state = drive(monkeypatch, world, initial)
+
+    def press(key):
+        state.keys.append(key)
+        state.frame = prompt
+        return True
+
+    world.auto.press_key.side_effect = press
+    failure = task.CurrencyWarsPageBlocked(initial, "对局画面持续无法识别")
+    assert world.war._escape_blocked_page(failure, set()) is prompt
+    assert state.keys == ["esc"] and not state.clicks
 
 
 def test_capture_retries_a_transient_screenshot_timeout_without_input(monkeypatch, world):

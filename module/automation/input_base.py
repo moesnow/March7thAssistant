@@ -1,6 +1,15 @@
 from abc import ABC, abstractmethod
+from contextvars import ContextVar
 import sys
 from module.config.platform import get_control_backend
+
+
+input_deadline = ContextVar("input_dispatch_deadline", default=None)
+
+
+def input_deadline_reached(now):
+    deadline = input_deadline.get()
+    return deadline is not None and now >= deadline
 
 
 def background_enabled(config):
