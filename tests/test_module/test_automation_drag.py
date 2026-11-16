@@ -271,7 +271,7 @@ def test_cdp_timed_click_reports_dispatch_result(failure):
     automation.mouse_down = backend.mouse_down
 
     assert automation.click_element_with_pos(((1, 2), (3, 4)), press_duration=0.001) is (failure is None)
-    assert events == (["mousePressed"] if failure == "mousePressed" else ["mousePressed", "mouseReleased"])
+    assert events == ["mousePressed", "mouseReleased"]
 
 
 def test_timed_click_releases_even_if_interrupted_before_the_pause_checkpoint(monkeypatch):

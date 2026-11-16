@@ -182,41 +182,166 @@ def test_cdp_key_press_reports_dispatch_failure(monkeypatch):
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="本地输入后端仅在 Windows 使用")
-def test_local_recovery_input_checks_deadline_at_dispatch(monkeypatch):
+@pytest.mark.parametrize("expired", [True, False])
+def test_currency_wars_local_recovery_input_marks_actual_dispatch(monkeypatch, expired):
     from module.automation import local_input
     from module.automation.background_input import input_wait_limit
+    from tasks.weekly import currency_wars
 
-    pressed, clicked = Mock(), Mock()
+    now = [2.0 if expired else 0.0]
+    pressed = Mock(side_effect=TimeoutError("输入回执超时"))
+    clicked = Mock(side_effect=TimeoutError("输入回执超时"))
+
+    def move(*_):
+        if expired:
+            now[0] = 2.0
+
+    moved = Mock(side_effect=move)
+    released = Mock()
     monkeypatch.setattr(local_input.pyautogui, "keyDown", pressed)
     monkeypatch.setattr(local_input.pyautogui, "mouseDown", clicked)
-    monkeypatch.setattr(local_input, "time", SimpleNamespace(monotonic=lambda: 2.0))
+    monkeypatch.setattr(local_input.pyautogui, "moveTo", moved)
+    monkeypatch.setattr(local_input.pyautogui, "mouseUp", released)
+    monkeypatch.setattr(local_input, "time", SimpleNamespace(monotonic=lambda: now[0]))
     backend = local_input.LocalInput(Mock())
+    monkeypatch.setattr(currency_wars, "auto", SimpleNamespace(input_handler=backend))
+    war = currency_wars.CurrencyWars()
+    mark_sent, mark_operation = Mock(), Mock()
 
     with input_wait_limit(1, deadline=1.0):
-        assert backend.press_key("esc") is False
-        assert backend.mouse_down(770, 743) is False
-    pressed.assert_not_called()
-    clicked.assert_not_called()
+        assert war._dispatch_input(backend.press_key, "esc", mark_sent=mark_sent,
+                                   before_input=mark_operation) is False
+        assert war._dispatch_input(backend.mouse_down, 770, 743, mark_sent=mark_sent,
+                                   before_input=mark_operation) is False
+    assert pressed.call_count == clicked.call_count == (0 if expired else 1)
+    assert mark_sent.call_count == mark_operation.call_count == (0 if expired else 2)
+
+    now[0] = 0.0
+    mark_sent.reset_mock()
+    mark_operation.reset_mock()
+    with input_wait_limit(1, deadline=1.0):
+        if expired:
+            assert war._dispatch_input(backend.mouse_drag, 10, 20, 30, 40, mark_sent=mark_sent,
+                                       before_input=mark_operation) is False
+        else:
+            with pytest.raises(TimeoutError, match="输入回执超时"):
+                war._dispatch_input(backend.mouse_drag, 10, 20, 30, 40, mark_sent=mark_sent,
+                                    before_input=mark_operation)
+    moved.assert_called_once_with(10, 20)
+    assert clicked.call_count == (0 if expired else 2)
+    assert released.call_count == mark_sent.call_count == mark_operation.call_count == (0 if expired else 1)
 
 
-def test_cdp_escape_checks_deadline_again_after_slow_focus(monkeypatch):
+@pytest.mark.parametrize("expired", [True, False])
+def test_currency_wars_cdp_recovery_input_marks_actual_dispatch_after_focus(monkeypatch, expired):
     from module.automation import cdp_input
     from module.automation.background_input import input_wait_limit
+    from tasks.weekly import currency_wars
 
     now = [0.0]
     events = []
 
     def dispatch(_, payload):
         events.append(payload["type"])
-        if payload["type"] == "mouseMoved":
+        if payload["type"] == "mouseMoved" and expired:
             now[0] = 2.0
+        if payload["type"] in {"keyDown", "mousePressed"}:
+            raise TimeoutError("输入回执超时")
 
     monkeypatch.setattr(cdp_input, "time", SimpleNamespace(monotonic=lambda: now[0], sleep=lambda _: None))
     backend = cdp_input.CdpInput(SimpleNamespace(execute_cdp_cmd=dispatch), Mock())
+    monkeypatch.setattr(currency_wars, "auto", SimpleNamespace(input_handler=backend))
+    war = currency_wars.CurrencyWars()
+    mark_sent, mark_operation = Mock(), Mock()
     with input_wait_limit(1, deadline=1.0):
-        assert backend.press_key("esc", wait_time=0) is False
-        assert backend.mouse_down(770, 743) is False
-    assert events == ["mouseMoved"]
+        assert war._dispatch_input(backend.press_key, "esc", wait_time=0, mark_sent=mark_sent,
+                                   before_input=mark_operation) is False
+        assert war._dispatch_input(backend.mouse_down, 770, 743, mark_sent=mark_sent,
+                                   before_input=mark_operation) is False
+    assert events == (["mouseMoved"] if expired else ["mouseMoved", "keyDown", "mousePressed", "mouseReleased"])
+    assert mark_sent.call_count == mark_operation.call_count == (0 if expired else 2)
+
+    now[0] = 0.0
+    events.clear()
+    mark_sent.reset_mock()
+    mark_operation.reset_mock()
+    with input_wait_limit(1, deadline=1.0):
+        if expired:
+            assert war._dispatch_input(backend.mouse_drag, 10, 20, 30, 40, mark_sent=mark_sent,
+                                       before_input=mark_operation) is False
+        else:
+            with pytest.raises(TimeoutError, match="输入回执超时"):
+                war._dispatch_input(backend.mouse_drag, 10, 20, 30, 40, mark_sent=mark_sent,
+                                    before_input=mark_operation)
+    assert events == (["mouseMoved"] if expired else ["mouseMoved", "mousePressed", "mouseReleased"])
+    assert mark_sent.call_count == mark_operation.call_count == (0 if expired else 1)
+
+
+@pytest.mark.parametrize("failure", ["expired", "no_driver", "lost_receipt", "lost_release_receipt"])
+def test_currency_wars_cdp_click_releases_only_after_mouse_press_attempt(monkeypatch, failure):
+    from module.automation import cdp_input
+    from module.automation.background_input import input_wait_limit
+    from module.game.cloud import CloudGameController
+    from tasks.weekly import currency_wars
+
+    events = []
+
+    def dispatch(_, payload):
+        events.append(payload["type"])
+        if (payload["type"], failure) in (
+            ("mousePressed", "lost_receipt"), ("mouseReleased", "lost_release_receipt"),
+        ):
+            raise TimeoutError("鼠标输入回执超时")
+
+    driver = None if failure == "no_driver" else SimpleNamespace(execute_cdp_cmd=dispatch)
+    cloud_game = SimpleNamespace(driver=driver)
+    cloud_game.execute_cdp_cmd = Mock(side_effect=lambda *args: CloudGameController.execute_cdp_cmd(cloud_game, *args))
+    backend = cdp_input.CdpInput(cloud_game, Mock())
+    now = 2.0 if failure == "expired" else 0.0
+    monkeypatch.setattr(cdp_input, "time", SimpleNamespace(monotonic=lambda: now))
+    monkeypatch.setattr(currency_wars, "auto", SimpleNamespace(input_handler=backend))
+    war = currency_wars.CurrencyWars()
+    mark_sent, mark_operation = Mock(), Mock()
+    attempted = failure in ("lost_receipt", "lost_release_receipt")
+    with input_wait_limit(1, deadline=1.0):
+        assert war._dispatch_input(backend.mouse_click, 770, 743, mark_sent=mark_sent,
+                                   before_input=mark_operation) is (None if attempted else False)
+    assert events == (["mousePressed", "mouseReleased"] if attempted else [])
+    assert cloud_game.execute_cdp_cmd.call_count == (2 if attempted else 0)
+    assert mark_sent.call_count == mark_operation.call_count == int(attempted)
+
+
+@pytest.mark.parametrize("entry", ["power", "workflow"])
+def test_unobserved_cdp_release_timeout_keeps_ordinary_click_contract(monkeypatch, entry):
+    import module.workflow as workflow
+    from module.automation.cdp_input import CdpInput
+    from tasks.power import instance
+
+    events = []
+
+    def dispatch(_, payload):
+        event = payload["type"]
+        events.append(event)
+        if event == "mouseReleased":
+            raise TimeoutError("浏览器已释放鼠标，回执超时")
+
+    auto = object.__new__(Automation)
+    auto.input_handler = CdpInput(SimpleNamespace(execute_cdp_cmd=dispatch), Mock())
+    auto.mouse_click = auto.input_handler.mouse_click
+    auto.find_element = Mock(return_value=(770, 743))
+    auto.calculate_click_position = Mock(return_value=(770, 743))
+
+    if entry == "power":
+        monkeypatch.setattr(instance, "auto", auto)
+        instance.Instance.start_instance_again()
+    else:
+        monkeypatch.setattr(workflow, "auto", auto)
+        runner = workflow.WorkflowRunner()
+        assert runner._click_text({
+            "text": "确认", "click_action": "press_and_release", "max_retries": 1, "include": False,
+        })
+
+    assert events == ["mousePressed", "mouseReleased"]
 
 
 GUARDED_METHODS = [

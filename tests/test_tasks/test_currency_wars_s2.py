@@ -1316,7 +1316,7 @@ def test_default_opening_fills_the_empty_front_before_fighting(monkeypatch, worl
 
 
 @pytest.mark.parametrize("outcome", (
-    "single", "weekly", "loop", "reconnect", "reconnect_original_board", "reconnect_original_prompt",
+    "single", "weekly", "loop",
     "late_front", "later_board", "abandon_returns_original", "abandon_returns_saved",
     "limit", "no_settlement", "stopped", "timeout",
 ))
@@ -1348,19 +1348,16 @@ def test_default_opening_restart_settles_once_and_plays_the_new_match(monkeypatc
     saved = mode(("继续进度", 1692, 961), ("结束并结算", 1397, 961), ("标准博弈", 646, 156))
     prompt = active_match_exit_dialog()
     abandon_point = (770, 743)
-    reconnect = reconnect_prompt()
     abandoned = page(Page.MATCH_RESULT, ("对局失败", 960, 233), ("返回货币战争", 960, 899))
     won = page(Page.MATCH_RESULT, ("对局胜利", 960, 233), ("返回货币战争", 960, 899))
     state = SimpleNamespace(frame=lobby, clicks=[], keys=[], launches=[])
-    recovered = {"reconnect_original_board": ready, "reconnect_original_prompt": prompt}
     routes = {
         (lobby, (1600, 972)): menu, (menu, (1692, 961)): ranks, (saved, (1692, 961)): ready,
         (blocked, shop_button): shop, (shop, shop_button): blocked,
         (prompt, abandon_point): (prompt if outcome == "no_settlement"
                                   else ready if outcome == "abandon_returns_original"
-                                  else lobby if outcome == "abandon_returns_saved"
-                                  else reconnect if outcome.startswith("reconnect") else abandoned),
-        (reconnect, (1188, 672)): recovered.get(outcome, abandoned), (abandoned, (960, 899)): lobby,
+                                  else lobby if outcome == "abandon_returns_saved" else abandoned),
+        (abandoned, (960, 899)): lobby,
         (ready, fight_button): won, (won, (960, 899)): lobby,
     }
 
@@ -1379,9 +1376,6 @@ def test_default_opening_restart_settles_once_and_plays_the_new_match(monkeypatc
     def press(key):
         assert key == "esc"
         state.keys.append(key)
-        if state.frame is prompt and outcome == "reconnect_original_prompt":
-            state.frame = ready
-            return True
         assert state.frame is blocked
         state.frame = prompt
         if outcome == "stopped":
@@ -1444,8 +1438,8 @@ def test_default_opening_restart_settles_once_and_plays_the_new_match(monkeypatc
         on_result.assert_not_called()
     else:
         assert world.war.start(weekly=outcome == "weekly", loop=outcome == "loop")
-        restarted = outcome not in ("late_front", "abandon_returns_original", "abandon_returns_saved") and outcome not in recovered
-        escape_count = 0 if outcome == "late_front" else 2 if outcome == "reconnect_original_prompt" else 1
+        restarted = outcome not in ("late_front", "abandon_returns_original", "abandon_returns_saved")
+        escape_count = int(outcome != "late_front")
         assert state.frame is lobby
         assert state.keys == ["esc"] * escape_count and state.launches == [60] * (1 + restarted)
         assert state.clicks.count((prompt, abandon_point)) == int(outcome != "late_front")
@@ -1480,11 +1474,17 @@ def test_default_exp_batches_do_not_repeat_after_an_intervening_choice(monkeypat
     choice = page(Page.GARDEN, stage=current.stage)
     monkeypatch.setattr(before, "deployed_copy", lambda *_: None)
     monkeypatch.setattr(world.war, "_read_default_board", lambda f, **kw: (f, current))
-    bought = Mock(return_value=choice)
-    monkeypatch.setattr(world.war, "_buy_exp", bought)
+    state = drive(monkeypatch, world, before)
+
+    def press(key):
+        state.keys.append(key)
+        state.frame = choice
+
+    world.auto.press_key.side_effect = press
     assert world.war._prepare_default_team(before) is choice
+    state.frame = before
     assert world.war._prepare_default_team(before) is before
-    assert bought.call_count == 1
+    assert state.keys == ["f"] * policy.experience_purchases(current.exp)
 
 
 def test_default_closes_shop_opened_by_the_game_without_waiting_for_fight(monkeypatch, world):
@@ -1680,245 +1680,58 @@ def test_homepage_entry_recovers_after_the_interaction_timeout(monkeypatch, worl
     assert attempted_entries == entries
 
 
-def reconnect_prompt(*, split=False, enabled=True):
-    image = CANVAS.copy()
-    if enabled:
-        ImageDraw.Draw(image).rectangle((1090, 649, 1278, 693), fill="white")
-    message = (("失去网络连接，战斗结果同步失败，", 921, 519), ("是否尝试重新连接？", 1004, 548)) if split else (
-        ("失去网络连接，战斗结果同步失败，是否尝试重新连接？", 956, 526),
-    )
-    return Frame(image, labels(("提示", 959, 412), ("取消", 770, 671), ("确认", 1188, 672), *message))
-
-
-def test_reconnect_modal_uses_native_title_message_and_enabled_confirmation():
-    prompt = reconnect_prompt(split=True)
-    retained = tuple(label for label in prompt.labels if label.text != "取消")
-    overlapping = Frame(prompt.image, retained + labels(
-        ("备战阶段", 282, 72), ("1-4", 282, 109), ("收起", 1624, 982), ("刷新", 1630, 488)))
-    assert overlapping.page == Page.RECONNECT
-    assert overlapping.action_context == (Page.RECONNECT, None, None)
-    assert overlapping.reconnect_confirm().point == (1188, 672)
-    assert reconnect_prompt(enabled=False).reconnect_confirm() is None
-    unrelated = Frame(prompt.image, labels(("提示", 959, 412), ("取消", 770, 671), ("确认", 1188, 672),
-                                          ("是否中断挑战并保存当前进度？", 956, 526)))
-    assert unrelated.page != Page.RECONNECT
-    assert unrelated.reconnect_confirm() is None
-
-
-@pytest.mark.parametrize("returns_to_world", (False, True))
-def test_reconnect_replans_from_recovered_state_without_repeating_the_pending_input(
-        monkeypatch, world, returns_to_world):
-    before = page(Page.BOARD, stage="1-4", gold=16)
-    modal = reconnect_prompt()
-    overworld = page(Page.UNKNOWN)
-    lobby = home()
-    mode_loading = mode(("进行中", 1120, 730), ("标准博弈", 646, 156))
-    continuing = mode(("结束并结算", 1340, 962), ("继续对局", 1640, 962), ("标准博弈", 646, 156))
-    resumed = page(Page.BOARD, stage="1-4", gold=14)
-    old_action = (1420, 765)
-    routes = {
-        (before, old_action): modal,
-        (modal, (1188, 672)): overworld if returns_to_world else resumed,
-        (lobby, (1600, 972)): mode_loading,
-        (continuing, (1640, 962)): resumed,
-    }
-    menu_reads = 0
-
-    def capture(state):
-        nonlocal menu_reads
-        if state.frame is mode_loading:
-            menu_reads += 1
-            if menu_reads == 3:
-                state.frame = continuing
-
-    state = drive(monkeypatch, world, before, lambda s, p: setattr(s, "frame", routes[s.frame, p]),
-                  after_capture=capture)
-    screen = SimpleNamespace(
-        current_screen="main",
-        get_current_screen=lambda **kwargs: state.frame is overworld,
-        change_to=Mock(side_effect=lambda *a, **k: setattr(state, "frame", lobby)),
-    )
-    monkeypatch.setattr(task, "screen", screen)
-
-    def prepare(frame):
-        if frame is before:
-            world.war.stage_refreshes["1-4"] = 1
-            world.war.experience_probes.add("1-4")
-            world.war.slot_cache["old"] = None
-            return world.war._click_to(before, lambda f: old_action, lambda f: f.page == Page.BOARD and f.gold == 14,
-                                       "模拟尚未确认的购买回执")
-        assert frame is resumed
-        assert frame.gold == 14
-        assert not world.war.slot_cache
-        assert world.war.stage_refreshes == {"1-4": 1}
-        assert world.war.experience_probes == {"1-4"}
-        return lobby
-
-    monkeypatch.setattr(world.war, "_prepare", prepare)
-    assert world.war._play(before) is lobby
-    expected = [(Page.BOARD, old_action), (Page.RECONNECT, (1188, 672))]
-    if returns_to_world:
-        expected += [(Page.HOME, (1600, 972)), (Page.MODES, (1640, 962))]
-        assert menu_reads == 3
-    assert state.clicks == expected
-    assert world.war.network_reconnects == 1
-
-
-@pytest.mark.parametrize("restored", ("missing", "wrong_mode", "late_saved", "late_result"))
-def test_in_match_reconnect_waits_for_the_original_match_or_preserves_the_menu(monkeypatch, world, restored):
-    world.cfg.currencywars_unfinished_match = "resume"
-    saved = mode(("继续对局", 1640, 962), ("标准博弈", 646, 156))
-    fighting = battle(True)
-    modal = reconnect_prompt()
-    menu = mode(("继续对局", 1640, 962), ("超频博弈", 646, 156)) if restored == "wrong_mode" else mode(
-        ("进入标准博弈", 1638, 960))
-    continued = mode(("继续对局", 1640, 962), ("标准博弈", 646, 156))
-    result = Frame(CANVAS, labels(("对局胜利", 960, 233), ("返回货币战争", 960, 899)))
-    lobby = home()
-    points = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: False)
-    routes = {(saved, (1640, 962)): fighting, (modal, (1188, 672)): menu,
-              (continued, (1640, 962)): result, (result, (960, 899)): lobby, (lobby, (381, 961)): points}
-    battle_reads = menu_reads = 0
-
-    def capture(state):
-        nonlocal battle_reads, menu_reads
-        if state.frame is fighting:
-            battle_reads += 1
-            if battle_reads == 2:
-                state.frame = modal
-        elif state.frame is menu:
-            menu_reads += 1
-            if menu_reads == 3 and restored in ("late_saved", "late_result"):
-                state.frame = continued if restored == "late_saved" else result
-
-    state = drive(monkeypatch, world, saved, lambda s, p: setattr(s, "frame", routes[s.frame, p]), capture)
-    world.auto.press_key.side_effect = lambda key: (
-        state.keys.append((state.frame.page, key)), setattr(state, "frame", lobby)
-    )
-    expected = [(Page.MODES, (1640, 962)), (Page.RECONNECT, (1188, 672))]
-    if restored in ("missing", "wrong_mode"):
-        with pytest.raises(task.CurrencyWarsUnavailable, match="未找到同模式续局入口"):
-            world.war.start()
-        assert state.frame is menu and world.war.result is None
-        assert not state.keys
-        world.cfg.save_timestamp.assert_not_called()
-    else:
-        assert world.war.start() is True
-        assert world.war.mode == "normal" and world.war.result is True
-        if restored == "late_saved":
-            expected.append((Page.MODES, (1640, 962)))
-        expected += [(Page.MATCH_RESULT, (960, 899)), (Page.HOME, (381, 961))]
-        assert state.keys == [(Page.WEEKLY, "esc")]
-        world.cfg.save_timestamp.assert_called_once_with("currencywars_timestamp")
-    assert state.clicks == expected
-
-
-def test_in_match_reconnect_preserves_the_result_while_opening_modes(monkeypatch, world):
-    world.cfg.currencywars_unfinished_match = "resume"
-    saved = mode(("继续对局", 1640, 962), ("标准博弈", 646, 156))
-    fighting = battle(True)
-    reconnect = reconnect_prompt()
-    lobby = home()
-    result = Frame(CANVAS, labels(("对局胜利", 960, 233)))
-    detail = Frame(CANVAS, labels(("返回货币战争", 960, 899)))
-    points = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: False)
-    routes = {(saved, (1640, 962)): fighting, (reconnect, (1188, 672)): lobby,
-              (lobby, (1600, 972)): result, (detail, (960, 899)): lobby, (lobby, (381, 961)): points}
-    battle_reads = result_reads = 0
-
-    def capture(state):
-        nonlocal battle_reads, result_reads
-        if state.frame is fighting:
-            battle_reads += 1
-            if battle_reads == 2:
-                state.frame = reconnect
-        elif state.frame is result:
-            result_reads += 1
-            if result_reads == 2:
-                state.frame = detail
-
-    state = drive(monkeypatch, world, saved, lambda s, p: setattr(s, "frame", routes[s.frame, p]), capture)
-    world.auto.press_key.side_effect = lambda key: setattr(state, "frame", lobby)
-    record = Mock()
-    monkeypatch.setattr(world.war, "_on_match_result", record)
-
-    assert world.war.start()
-    assert world.war.result is True
-    assert state.clicks == [(f.page, point) for f, point in routes]
-    record.assert_called_once_with(result)
-    world.cfg.save_timestamp.assert_called_once_with("currencywars_timestamp")
-
-
-def test_reconnect_uses_the_task_budget_and_a_bounded_native_retry(monkeypatch, world):
-    modal = reconnect_prompt()
-    state = drive(monkeypatch, world, modal)
-    world.war.network_reconnects = task.MAX_RECONNECTS - 1
-    with pytest.raises(task.CurrencyWarsError, match="游戏重连后未确认恢复画面"):
-        world.war._recover_network(modal)
-    assert state.clicks == [(Page.RECONNECT, (1188, 672))] * 2
-    with pytest.raises(task.CurrencyWarsError, match="重连次数上限"):
-        world.war._recover_network(modal)
-    assert state.clicks == [(Page.RECONNECT, (1188, 672))] * 2
-
-
-def test_network_modal_ends_combat_wait_without_a_combat_input(monkeypatch, world):
-    modal = reconnect_prompt()
-    state = drive(monkeypatch, world, modal)
-    assert world.war._watch_battle(battle(True)) is modal
-    assert state.clicks == state.keys == []
-
-
-def test_stop_during_reconnect_does_not_retry_the_dialog(monkeypatch, world):
-    modal = reconnect_prompt()
-
-    def capture(state):
-        if state.clicks:
-            raise RunStopRequested()
-
-    state = drive(monkeypatch, world, modal, after_capture=capture)
-    with pytest.raises(RunStopRequested):
-        world.war._recover_network(modal)
-    assert state.clicks == [(Page.RECONNECT, (1188, 672))]
-
-
-def test_mid_match_takeover_recovers_the_existing_mode_after_reconnect(monkeypatch, world):
-    assert world.cfg.currencywars_type == "normal"
-    fighting = Frame(CANVAS, labels(("3-5", 726, 27), ("1%", 785, 28)))
-    modal = reconnect_prompt()
-    saved = Frame(CANVAS, labels(("入画奇航", 155, 80), ("标准博弈", 160, 224), ("超频博弈", 160, 420),
-                                 ("超频博弈", 646, 156), ("继续进度", 1692, 961)))
-    assert saved.page == Page.MODES and saved.menu_mode == "overclock"
-    result = Frame(CANVAS, labels(("对局胜利", 960, 233), ("返回货币战争", 960, 899)))
-    lobby = home()
-    points = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: False)
-    routes = {
-        (modal, (1188, 672)): saved,
-        (saved, (1692, 961)): result,
-        (result, (960, 899)): lobby,
-        (lobby, (381, 961)): points,
-    }
-
-    def capture(state):
-        if state.frame is fighting and world.now[0] > 0:
-            state.frame = modal
-
-    state = drive(monkeypatch, world, fighting, lambda s, p: setattr(s, "frame", routes[s.frame, p]), capture)
-    world.auto.press_key.side_effect = lambda key: (
-        state.keys.append((state.frame.page, key)), setattr(state, "frame", lobby)
-    )
-    assert world.war.start(resume=True)
-    assert world.war.mode == "overclock" and world.war.mode_confirmed
-    assert world.war.result is True
-    assert world.war.weekly_score == (18000, 18000)
-    assert state.clicks == [(frame.page, point) for frame, point in routes]
-    assert state.keys == [(Page.WEEKLY, "esc")]
-    world.cfg.save_timestamp.assert_called_once_with("currencywars_timestamp")
-
-
 def test_mode_menu_rejects_conflicting_saved_match_titles():
     saved = mode(("超频博弈", 646, 156), ("标准博弈", 806, 156), ("继续进度", 1692, 961))
     assert saved.unfinished_match
     assert saved.menu_mode is None
+
+
+@pytest.mark.parametrize("cancel_visible", (False, True))
+def test_native_network_prompt_does_not_trigger_input_over_the_shop(monkeypatch, world, cancel_visible):
+    shop_labels = labels(("备战阶段", 282, 72), ("1-4", 282, 109), ("收起", 1624, 982), ("刷新", 1630, 488))
+    shop = Frame(CANVAS, shop_labels)
+    image = CANVAS.copy()
+    ImageDraw.Draw(image).rectangle((1090, 649, 1278, 693), fill="white")
+    prompt_labels = labels(
+        ("提示", 959, 412), ("失去网络连接，战斗结果同步失败，是否尝试重新连接？", 956, 526),
+        ("确认", 1188, 672),
+    )
+    if cancel_visible:
+        prompt_labels += labels(("取消", 770, 671))
+    prompt = Frame(image, shop_labels + prompt_labels)
+    assert shop.page == Page.SHOP
+    ready = page(Page.BOARD, stage="1-4")
+    won = page(Page.MATCH_RESULT, ("对局胜利", 960, 233), ("返回货币战争", 960, 899))
+    lobby = home()
+    state = SimpleNamespace(frame=shop, captured=shop, shop_reads=0, clicks=[])
+
+    def capture():
+        if state.frame is shop:
+            state.shop_reads += 1
+        state.captured = prompt if state.frame is shop and 2 <= state.shop_reads <= 7 else state.frame
+        return state.captured
+
+    def click(point, *, press_duration):
+        state.clicks.append((state.captured, point))
+        if state.captured is shop and point == (1624, 982):
+            state.frame = ready
+        elif state.captured is won and point == (960, 899):
+            state.frame = lobby
+        return True
+
+    def fight(frame):
+        assert frame is ready
+        state.frame = won
+        return world.war._observe()
+
+    monkeypatch.setattr(world.war, "_capture", capture)
+    monkeypatch.setattr(world.war, "_prepare", fight)
+    monkeypatch.setattr(world.war, "get_reward", lambda f: (f, (18000, 18000), False))
+    world.auto.click_element_with_pos.side_effect = click
+
+    assert world.war.start(resume=True)
+    assert state.clicks == [(shop, (1624, 982)), (won, (960, 899))]
+    world.auto.press_key.assert_not_called()
 
 
 def end_match_dialog():
@@ -2014,91 +1827,6 @@ def test_saved_match_resumes_in_its_own_mode_using_configured_strategy(monkeypat
     assert world.war.start(resume=explicit_takeover)
     assert state.clicks == [(Page.MODES, (1692, 961))]
     assert state.keys == ([(Page.END_MATCH_CONFIRM, "esc")] if explicit_takeover else [])
-
-
-@pytest.mark.parametrize("explicit_takeover", (False, True))
-@pytest.mark.parametrize("checkpoint", ("before_input", "same_mode", "wrong_mode"))
-def test_entry_reconnect_preserves_mode_after_the_first_continue_input(monkeypatch, world, explicit_takeover, checkpoint):
-    world.cfg.currencywars_unfinished_match = "restart" if explicit_takeover else "resume"
-
-    def saved(title):
-        return Frame(CANVAS, labels(("入画奇航", 155, 80), ("标准博弈", 160, 224), ("超频博弈", 160, 420),
-                                    (title, 646, 156), ("继续进度", 1692, 961)))
-
-    initial = saved("超频博弈")
-    recovered = saved("超频博弈" if checkpoint == "same_mode" else "标准博弈")
-    reconnect = reconnect_prompt()
-    result = Frame(CANVAS, labels(("对局胜利", 960, 233), ("返回货币战争", 960, 899)))
-    lobby = home()
-    routes = {
-        (initial, (1692, 961)): reconnect,
-        (reconnect, (1188, 672)): recovered,
-        (recovered, (1692, 961)): result,
-        (result, (960, 899)): lobby,
-    }
-    seen = 0
-
-    def capture(state):
-        nonlocal seen
-        if state.frame is initial and checkpoint == "before_input":
-            seen += 1
-            if seen == 3:
-                state.frame = reconnect
-
-    state = drive(monkeypatch, world, initial, lambda s, p: setattr(s, "frame", routes[s.frame, p]), capture)
-    monkeypatch.setattr(world.war, "get_reward", lambda f: (f, (18000, 18000), False))
-
-    assert world.war.start(resume=explicit_takeover) is (checkpoint != "wrong_mode")
-    expected = [] if checkpoint == "before_input" else [(Page.MODES, (1692, 961))]
-    expected.append((Page.RECONNECT, (1188, 672)))
-    if checkpoint == "wrong_mode":
-        assert state.frame is recovered and world.war.result is None
-    else:
-        expected.extend([(Page.MODES, (1692, 961)), (Page.MATCH_RESULT, (960, 899))])
-        assert world.war.result is True
-    assert world.war.mode_confirmed and world.war.mode == ("normal" if checkpoint == "before_input" else "overclock")
-    assert state.clicks == expected and not state.keys
-
-
-@pytest.mark.parametrize("entry", ("saved", "takeover", "new"))
-@pytest.mark.parametrize("won", (False, True))
-def test_entry_reconnect_preserves_a_result_while_opening_modes(monkeypatch, world, entry, won):
-    world.cfg.currencywars_unfinished_match = "restart" if entry == "takeover" else "resume"
-    if entry == "new":
-        initial, entry_point = rank(), (1680, 965)
-    else:
-        initial = mode(("继续对局", 1640, 962), ("标准博弈", 646, 156))
-        entry_point = (1640, 962)
-    reconnect = reconnect_prompt()
-    lobby = home()
-    result = Frame(CANVAS, labels(("对局胜利" if won else "对局失败", 960, 233)))
-    detail = Frame(CANVAS, labels(("返回货币战争", 960, 899)))
-    points = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: False)
-    routes = {(initial, entry_point): reconnect, (reconnect, (1188, 672)): lobby,
-              (lobby, (1600, 972)): result, (detail, (960, 899)): lobby,
-              (lobby, (381, 961)): points}
-    result_seen = False
-
-    def capture(state):
-        nonlocal result_seen
-        if state.frame is result:
-            if result_seen:
-                state.frame = detail
-            result_seen = True
-
-    state = drive(monkeypatch, world, initial, lambda s, p: setattr(s, "frame", routes[s.frame, p]), capture)
-    world.auto.press_key.side_effect = lambda key: (
-        state.keys.append((state.frame.page, key)), setattr(state, "frame", lobby)
-    )
-    record = Mock()
-    monkeypatch.setattr(world.war, "_on_match_result", record)
-
-    assert world.war.start(resume=entry == "takeover") is won
-    assert world.war.result is won
-    assert state.clicks == [(f.page, point) for f, point in routes]
-    assert state.keys == [(Page.WEEKLY, "esc")]
-    record.assert_called_once_with(result)
-    world.cfg.save_timestamp.assert_called_once_with("currencywars_timestamp")
 
 
 @pytest.mark.parametrize("start_in_battle", (False, True))
@@ -2243,48 +1971,10 @@ def test_unconfirmed_end_match_is_not_repeated_and_does_not_start_a_new_match(mo
     assert not state.keys
 
 
-@pytest.mark.parametrize("checkpoint", ("initial", "rank_entry", "start_sent"))
-def test_entry_reconnect_keeps_the_verified_launch_intent(monkeypatch, world, checkpoint):
-    world.cfg.currencywars_unfinished_match = "restart"
-    lobby = home()
-    reconnect = reconnect_prompt()
-    saved = mode(("结束并结算", 1397, 961), ("继续进度", 1692, 961), ("标准博弈", 646, 156))
-    prompt = end_match_dialog()
-    fresh = mode(("进入标准博弈", 1638, 960))
-    ranks = rank()
-    result = page(Page.MATCH_RESULT, ("对局胜利", 960, 233), ("返回货币战争", 960, 899))
-    routes = {
-        (lobby, (1600, 972)): fresh,
-        (reconnect, (1188, 672)): ranks if checkpoint == "rank_entry" else saved,
-        (saved, (1397, 961)): prompt,
-        (prompt, (980, 743)): fresh,
-        (saved, (1692, 961)): result,
-        (fresh, (1638, 960)): reconnect if checkpoint == "rank_entry" else ranks,
-        (ranks, (1680, 965)): reconnect if checkpoint == "start_sent" else result,
-        (result, (960, 899)): lobby,
-    }
-    initial = reconnect if checkpoint == "initial" else lobby
-    state = drive(monkeypatch, world, initial, lambda s, p: setattr(s, "frame", routes[s.frame, p]))
-    monkeypatch.setattr(world.war, "get_reward", lambda f: (f, (18000, 18000), False))
-    assert world.war.start() is True
-    assert state.keys == []
-    reconnect_click = (Page.RECONNECT, (1188, 672))
-    start_click = (Page.RANK, (1680, 965))
-    if checkpoint == "initial":
-        expected = [reconnect_click, (Page.MODES, (1397, 961)), (Page.END_MATCH_CONFIRM, (980, 743)),
-                    (Page.MODES, (1638, 960)), start_click]
-    else:
-        expected = [(Page.HOME, (1600, 972)), (Page.MODES, (1638, 960))]
-        expected += ([reconnect_click, start_click] if checkpoint == "rank_entry"
-                     else [start_click, reconnect_click, (Page.MODES, (1692, 961))])
-    assert state.clicks == [*expected, (Page.MATCH_RESULT, (960, 899))]
-
-
-@pytest.mark.parametrize("outcome", ("before_confirmation", "still_saved", "settled", "old_result", "delayed"))
+@pytest.mark.parametrize("outcome", ("still_saved", "settled", "old_result", "delayed"))
 def test_old_match_settlement_keeps_restart_intent(monkeypatch, world, outcome):
     ongoing = mode(("结束并结算", 1397, 961), ("继续进度", 1692, 961), ("标准博弈", 646, 156))
     prompt = end_match_dialog()
-    reconnect = reconnect_prompt()
     fresh = mode(("进入标准博弈", 1638, 960))
     ranks = rank()
     ready = page(Page.BOARD, stage="1-1")
@@ -2292,23 +1982,16 @@ def test_old_match_settlement_keeps_restart_intent(monkeypatch, world, outcome):
     result = page(Page.MATCH_RESULT, ("对局胜利", 960, 233), ("返回货币战争", 960, 899))
     lobby = home()
     confirmed_at = None
-    reconnect_before_confirmation = outcome == "before_confirmation"
-    recovered = {"before_confirmation": ongoing, "still_saved": ongoing, "old_result": old_result}.get(outcome, fresh)
-    routes = {(ongoing, (1397, 961)): prompt, (reconnect, (1188, 672)): recovered,
-              (old_result, (960, 899)): fresh, (fresh, (1638, 960)): ranks,
+    settled = {"still_saved": ongoing, "old_result": old_result}.get(outcome, fresh)
+    routes = {(ongoing, (1397, 961)): prompt, (old_result, (960, 899)): fresh, (fresh, (1638, 960)): ranks,
               (ranks, (1680, 965)): ready, (result, (960, 899)): lobby}
 
     def click(state, point):
-        nonlocal confirmed_at, reconnect_before_confirmation
-        if reconnect_before_confirmation and state.frame is ongoing:
-            reconnect_before_confirmation = False
-            state.frame = reconnect
-        elif state.frame is prompt and point == (980, 743):
+        nonlocal confirmed_at
+        if state.frame is prompt and point == (980, 743):
             confirmed_at = world.now[0]
-            if outcome == "before_confirmation":
-                state.frame = fresh
-            elif outcome != "delayed":
-                state.frame = reconnect
+            if outcome != "delayed":
+                state.frame = settled
         else:
             state.frame = routes[state.frame, point]
 
@@ -2321,10 +2004,6 @@ def test_old_match_settlement_keeps_restart_intent(monkeypatch, world, outcome):
     monkeypatch.setattr(world.war, "_prepare", lambda f: setattr(state, "frame", result) or result)
     monkeypatch.setattr(world.war, "get_reward", lambda f: (f, (18000, 18000), False))
     expected = [(Page.MODES, (1397, 961)), (Page.END_MATCH_CONFIRM, (980, 743))]
-    if outcome == "before_confirmation":
-        expected = [(Page.MODES, (1397, 961)), (Page.RECONNECT, (1188, 672))] + expected
-    elif outcome != "delayed":
-        expected.append((Page.RECONNECT, (1188, 672)))
     if outcome == "old_result":
         expected.append((Page.MATCH_RESULT, (960, 899)))
     if outcome == "still_saved":
@@ -2345,6 +2024,47 @@ def test_missing_resume_button_does_not_end_or_start_a_match(monkeypatch, world)
     with pytest.raises(task.CurrencyWarsReadTimeout, match="没有可确认的续局入口"):
         world.war._launch(ongoing, False)
     assert not state.clicks and not state.keys
+
+
+def test_unmapped_start_does_not_override_the_restart_setting(monkeypatch, world):
+    world.cfg.currencywars_unfinished_match = "restart"
+    initial = rank()
+    ongoing = mode(("标准博弈", 646, 156), ("继续进度", 1692, 961), ("结束并结算", 1397, 961))
+    prompt = end_match_dialog()
+    fresh = mode(("进入标准博弈", 1638, 960))
+    ready = page(Page.BOARD, stage="1-1")
+    routes = {
+        (ongoing, (1397, 961)): prompt, (prompt, (980, 743)): fresh,
+        (fresh, (1638, 960)): initial, (initial, (1680, 965)): ready,
+        (ongoing, (1692, 961)): ready,
+    }
+    state = drive(monkeypatch, world, initial, lambda s, p: setattr(s, "frame", routes[s.frame, p]))
+    map_point = world.auto.find_element.side_effect
+
+    def mapping(*args, **kwargs):
+        point = map_point(*args, **kwargs)
+        if point == (1680, 965) and not state.clicks:
+            state.frame = ongoing
+            return None
+        return point
+
+    world.auto.find_element.side_effect = mapping
+    assert world.war._enter_with_recovery(initial, resume=False) is ready
+    assert state.clicks == [(frame.page, point) for frame, point in routes if point != (1692, 961)]
+
+
+def test_unmapped_resume_does_not_accept_an_unrelated_battle(monkeypatch, world):
+    world.war.mode = "overclock"
+    world.cfg.currencywars_unfinished_match = "resume"
+    ongoing = mode(("标准博弈", 646, 156), ("继续进度", 1692, 961))
+    unrelated = page(Page.BATTLE, combat_progress=False)
+    state = drive(monkeypatch, world, ongoing)
+    world.auto.find_element.side_effect = lambda *a, **kw: setattr(state, "frame", unrelated)
+
+    assert world.war._enter_with_recovery(ongoing, resume=False) is None
+    assert not state.clicks
+    assert world.war.mode == "overclock"
+    assert not world.war.mode_confirmed
 
 
 def test_locked_overclock_stops_without_starting_standard(monkeypatch, world):
@@ -2750,6 +2470,43 @@ def test_shop_refresh_checks_the_displayed_price_again_before_input(monkeypatch,
     assert stage not in world.war.stage_refreshes
 
 
+@pytest.mark.parametrize("fault", ("transient", "unavailable", "action_timeout", "stop", "reply_lost"))
+def test_shop_refresh_records_only_dispatched_input(monkeypatch, world, fault):
+    stage = "1-6"
+    point = (1618, 488)
+    before = page(Page.SHOP, ("刷新", *point), stage=stage, gold=12, shop_refresh_price=2)
+    updated = page(Page.SHOP, stage=stage, gold=10, shop_catalog_changed=lambda f: f is before)
+    state = drive(monkeypatch, world, before,
+                  lambda s, _: False if fault == "reply_lost" else setattr(s, "frame", updated))
+    reads = 0
+
+    def mapping(*args, **kwargs):
+        nonlocal reads
+        reads += 1
+        if fault == "stop":
+            task.pause_ctl.checkpoint.side_effect = RunStopRequested()
+        elif fault == "action_timeout":
+            world.now[0] += 9
+        if fault == "unavailable" or fault == "transient" and reads == 1:
+            return None
+        return point
+
+    world.auto.find_element.side_effect = mapping
+    if fault == "transient":
+        assert world.war._refresh_shop(before, 2, 0, stage) == (updated, True)
+    else:
+        error = {
+            "unavailable": task.CurrencyWarsActionUnready, "action_timeout": task.CurrencyWarsActionUnready,
+            "stop": RunStopRequested, "reply_lost": task.CurrencyWarsReceiptTimeout,
+        }[fault]
+        with pytest.raises(error):
+            world.war._refresh_shop(before, 2, 0, stage)
+    sent = fault in ("transient", "reply_lost")
+    assert state.clicks == ([(Page.SHOP, point)] if sent else [])
+    assert world.war.stage_refreshes.get(stage, 0) == int(sent)
+    assert ((stage, "商店") in world.war.deferred_operations) == (fault == "reply_lost")
+
+
 @pytest.mark.parametrize("missed_stage", (False, True))
 def test_shop_retry_keeps_refresh_budget_after_a_recognition_failure(monkeypatch, world, missed_stage):
     stage = "1-3"
@@ -2793,22 +2550,16 @@ def test_shop_retry_keeps_refresh_budget_after_a_recognition_failure(monkeypatch
     assert set(world.war.stage_refreshes) == {stage}
 
 
-@pytest.mark.parametrize("stopped", (False, True))
-def test_shop_pending_refresh_is_kept_until_after_stop_or_reconnect(monkeypatch, world, stopped):
+def test_shop_pending_refresh_is_kept_after_stop(monkeypatch, world):
     stage = "1-6"
     button = (1618, 488)
     shop = page(Page.SHOP, ("刷新", *button), stage=stage, gold=12, shop_refresh_price=2)
-    reconnect = page(Page.RECONNECT)
 
-    def input_refresh(state, _):
-        if stopped:
-            task.pause_ctl.checkpoint.side_effect = RunStopRequested()
-        else:
-            state.frame = reconnect
+    def input_refresh(_state, _point):
+        task.pause_ctl.checkpoint.side_effect = RunStopRequested()
 
     state = drive(monkeypatch, world, shop, input_refresh)
-    error = RunStopRequested if stopped else task.CurrencyWarsReconnect
-    with pytest.raises(error):
+    with pytest.raises(RunStopRequested):
         world.war._refresh_shop(shop, 2, 0, stage)
     assert world.war.stage_refreshes[stage] == 1
     assert (stage, "商店") in world.war.deferred_operations
@@ -3292,8 +3043,8 @@ def test_recognized_pages_can_continue_after_more_than_sixteen_steps(monkeypatch
     assert choose.call_count == 21
 
 
-@pytest.mark.parametrize("next_page", (Page.BATTLE, Page.NODE_RESULT, Page.MATCH_RESULT, Page.RECONNECT))
-def test_play_allows_battle_settlement_or_reconnect_after_the_preparation_limit(monkeypatch, world, next_page):
+@pytest.mark.parametrize("next_page", (Page.BATTLE, Page.NODE_RESULT, Page.MATCH_RESULT))
+def test_play_allows_battle_or_settlement_after_the_preparation_limit(monkeypatch, world, next_page):
     preparation = page(Page.BOARD, stage="3-5")
     next_frame = page(next_page)
     home = page(Page.HOME)
@@ -3359,38 +3110,6 @@ def test_full_bench_experience_batch_uses_f_without_ocr_between_inputs(monkeypat
     assert 1 not in observations and observations.count(2) >= 2
     assert world.war.preparation_progress == 1
     assert (stage, "经验") not in world.war.deferred_operations
-
-
-def test_full_bench_does_not_repeat_an_experience_batch_after_reconnect(monkeypatch, world, high_lineup):
-    stage = "2-6"
-    reserve = slot("bench", 0, FILLER)
-    team = board(slot("front", 0, CORE), slot("back", 0, BAILU), slot("back", 1, CER), slot("back", 2),
-                 reserve, stage=stage, gold=60, used=3, capacity=3, level=4, exp=(0, 8), lineup=high_lineup)
-    initial = page(Page.BENCH_FULL, stage=stage, gold=60, capacity=(3, 3), experience=(0, 8), experience_cost=4)
-    modal = reconnect_prompt()
-    choice = page(Page.CHOICE, stage=stage)
-    home_frame = page(Page.HOME)
-    monkeypatch.setattr(initial, "slots", lambda: team.slots)
-    monkeypatch.setattr(world.war, "_read_board", lambda f, **_: (f, team))
-    sell = Mock(return_value=choice)
-    monkeypatch.setattr(world.war, "_sell_for_space", sell)
-    monkeypatch.setattr(world.war, "_choose", lambda _: home_frame)
-    state = drive(monkeypatch, world, initial, lambda s, _: setattr(s, "frame", initial))
-
-    def press(key):
-        state.keys.append((state.frame.page, key))
-        if len(state.keys) == 2:
-            state.frame = modal
-        elif len(state.keys) == 4:
-            state.frame = choice
-
-    world.auto.press_key.side_effect = press
-
-    assert world.war._play(initial) is home_frame
-    assert (stage, "经验") in world.war.deferred_operations
-    assert state.keys == [(Page.BENCH_FULL, "f")] * 2
-    assert state.clicks == [(Page.RECONNECT, (1188, 672))]
-    sell.assert_called_once_with(initial, reserve, identified=True)
 
 
 @pytest.mark.parametrize(("gold", "exp", "accepted"), (
@@ -3489,7 +3208,7 @@ def test_play_replans_from_fresh_frames_after_local_failures(monkeypatch, world,
 
 @pytest.mark.parametrize("transition", (
     "result", "result_after_escape", "result_after_unmapped_abandon", "result_after_failed_abandon",
-    "loss_after_failed_abandon", "reconnect_before_abandon", "fight_confirm", "already_open_exit",
+    "loss_after_failed_abandon", "fight_confirm", "already_open_exit",
     "failed_escape", "late_shop", "board_advanced",
 ))
 def test_stuck_preparation_respects_late_original_match_updates(monkeypatch, world, transition):
@@ -3505,27 +3224,15 @@ def test_stuck_preparation_respects_late_original_match_updates(monkeypatch, wor
     wins = transition != "loss_after_failed_abandon"
     result = page(Page.MATCH_RESULT, ("对局胜利" if wins else "对局失败", 960, 233),
                   ("返回货币战争", *return_point))
-    reconnect = reconnect_prompt()
     lobby = home()
     menu = mode(("进入标准博弈", 1692, 961))
     routes = {
         (fight_confirm, confirm_point): resumed,
         (shop, (1624, 983)): resumed,
-        (reconnect, (1188, 672)): prompt,
         (result, return_point): lobby,
         (lobby, (1600, 972)): menu,
     }
     state = SimpleNamespace(frame=blocked, clicks=[], keys=[], advances=0, receipts=[])
-    prompt_reads = 0
-
-    def capture():
-        nonlocal prompt_reads
-        if transition == "reconnect_before_abandon" and state.frame is prompt:
-            prompt_reads += 1
-            if prompt_reads == 2:
-                state.frame = reconnect
-        return state.frame
-
     def prepare(frame):
         if frame is blocked:
             world.war.stage_refreshes[stage] = 2
@@ -3574,8 +3281,7 @@ def test_stuck_preparation_respects_late_original_match_updates(monkeypatch, wor
         if transition == "result_after_escape":
             state.frame = result
         elif (state.frame is blocked and transition in ("result_after_unmapped_abandon",
-                                                        "result_after_failed_abandon", "loss_after_failed_abandon",
-                                                        "reconnect_before_abandon")):
+                                                        "result_after_failed_abandon", "loss_after_failed_abandon")):
             state.frame = prompt
         elif transition == "failed_escape" and state.frame is blocked:
             state.frame = prompt
@@ -3587,7 +3293,7 @@ def test_stuck_preparation_respects_late_original_match_updates(monkeypatch, wor
     on_result = Mock()
     launched = Mock(return_value=lobby)
     rewards = Mock(side_effect=lambda f: (f, (18000, 18000), False))
-    monkeypatch.setattr(world.war, "_capture", capture)
+    monkeypatch.setattr(world.war, "_capture", lambda: state.frame)
     monkeypatch.setattr(world.war, "_prepare", prepare)
     monkeypatch.setattr(world.war, "_advance_existing_team", advance_existing_team)
     monkeypatch.setattr(world.war, "_on_match_result", on_result)
@@ -3607,7 +3313,6 @@ def test_stuck_preparation_respects_late_original_match_updates(monkeypatch, wor
         "result_after_unmapped_abandon": [(Page.BOARD, "esc")],
         "result_after_failed_abandon": [(Page.BOARD, "esc")],
         "loss_after_failed_abandon": [(Page.BOARD, "esc")],
-        "reconnect_before_abandon": [(Page.BOARD, "esc"), (Page.END_MATCH_CONFIRM, "esc")],
         "already_open_exit": [(Page.END_MATCH_CONFIRM, "esc")],
         "failed_escape": [(Page.BOARD, "esc"), (Page.END_MATCH_CONFIRM, "esc")],
     }
@@ -3617,11 +3322,9 @@ def test_stuck_preparation_respects_late_original_match_updates(monkeypatch, wor
         "late_shop": [(shop, (1624, 983))],
         "result_after_failed_abandon": [(prompt, (770, 743))],
         "loss_after_failed_abandon": [(prompt, (770, 743))],
-        "reconnect_before_abandon": [(reconnect, (1188, 672))],
     }
     assert state.clicks == [*expected.get(transition, ()), (result, return_point)]
-    resumes_board = ("fight_confirm", "already_open_exit", "failed_escape", "late_shop", "board_advanced",
-                     "reconnect_before_abandon")
+    resumes_board = ("fight_confirm", "already_open_exit", "failed_escape", "late_shop", "board_advanced")
     assert state.receipts == ([(2, True)] if transition in resumes_board else [])
 
 
@@ -4023,23 +3726,24 @@ def test_failed_reward_does_not_write_completed_timestamp(monkeypatch, world):
     assert not state.keys
 
 
-@pytest.mark.parametrize("layout", ("confirm", "close", "close_without_ocr"))
+@pytest.mark.parametrize("layout", ("confirm", "right_confirm", "close", "close_without_ocr"))
 def test_full_weekly_score_with_reward_limit_does_not_start_a_match(monkeypatch, world, layout):
     lobby = home()
     weekly = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: True)
-    message = ("背包内助燃券持有数量已达上限。", 956, 580)
-    if layout == "confirm":
+    message = ("背包内助燃券持有数量已达上限。", 956, 526 if layout == "right_confirm" else 580)
+    if layout in ("confirm", "right_confirm"):
+        close_point = (1188, 672) if layout == "right_confirm" else (960, 724)
+        x, y = close_point
         image = CANVAS.copy()
-        ImageDraw.Draw(image).rectangle((853, 698, 1067, 751), fill="white")
-        close_point = (960, 724)
-        limit = Frame(image, labels(message, ("确认", *close_point)))
+        ImageDraw.Draw(image).rectangle((x - 107, y - 26, x + 107, y + 27), fill="white")
+        limit = Frame(image, labels(("提示", 960, 412), message, ("确认", *close_point)))
     else:
         close_point = (1462, 378 if layout == "close" else 379)
         close = (("X", *close_point),) if layout == "close" else ()
         limit = Frame(CANVAS, labels(message, ("清理", 774, 708), ("前往使用", 1188, 708), *close))
     assert limit.page == Page.REWARD_LIMIT
     routes = {(lobby, (381, 961)): weekly}
-    if layout == "confirm":
+    if layout in ("confirm", "right_confirm"):
         routes[weekly, (1640, 728)] = limit
     else:
         receipt = page(Page.REWARD_RECEIPT, ("点击空白处关闭", 960, 910))
@@ -4068,7 +3772,7 @@ def test_full_home_score_prevents_start_when_the_reward_entry_cannot_be_read(mon
     world.cfg.save_timestamp.assert_not_called()
 
 
-@pytest.mark.parametrize("checkpoint", (Page.WEEKLY, Page.RECONNECT, Page.REWARD_RECEIPT))
+@pytest.mark.parametrize("checkpoint", (Page.WEEKLY, Page.REWARD_RECEIPT))
 def test_weekly_start_uses_the_open_points_page_when_home_entry_is_unreadable(monkeypatch, world, checkpoint):
     lobby = Frame(CANVAS, labels(("入画奇航", 150, 80), ("开始货币战争", 1600, 972), ("18000/18000", 196, 961)))
     points = labels(("积分奖励", 145, 330), ("18000/18000", 273, 740))
@@ -4077,10 +3781,9 @@ def test_weekly_start_uses_the_open_points_page_when_home_entry_is_unreadable(mo
     monkeypatch.setattr(pending, "claim_available", lambda: True)
     monkeypatch.setattr(credited, "claim_available", lambda: False)
     receipt = Frame(CANVAS, points + labels(("点击空白处关闭", 960, 910)))
-    reconnect = reconnect_prompt()
-    initial = {Page.WEEKLY: pending, Page.RECONNECT: reconnect, Page.REWARD_RECEIPT: receipt}[checkpoint]
+    initial = pending if checkpoint == Page.WEEKLY else receipt
     assert initial.page == checkpoint and lobby.page == Page.HOME
-    routes = {(reconnect, (1188, 672)): pending, (pending, (1640, 728)): receipt, (receipt, (960, 910)): credited}
+    routes = {(pending, (1640, 728)): receipt, (receipt, (960, 910)): credited}
     state = drive(monkeypatch, world, initial, lambda s, point: setattr(s, "frame", routes[s.frame, point]))
 
     def press(key):
@@ -4090,9 +3793,7 @@ def test_weekly_start_uses_the_open_points_page_when_home_entry_is_unreadable(mo
     world.auto.press_key.side_effect = press
 
     assert world.war.start(weekly=True)
-    expected = [(Page.RECONNECT, (1188, 672))] if checkpoint == Page.RECONNECT else []
-    if checkpoint != Page.REWARD_RECEIPT:
-        expected.append((Page.WEEKLY, (1640, 728)))
+    expected = [(Page.WEEKLY, (1640, 728))] if checkpoint == Page.WEEKLY else []
     assert state.clicks == [*expected, (Page.REWARD_RECEIPT, (960, 910))]
     assert state.keys == [(Page.WEEKLY, "esc")]
     assert not world.war.weekly_reward_pending
@@ -4535,12 +4236,10 @@ def svarog_modification(stage=None, *, read_controls=True, costs=(0, 0, 0)):
     return Frame(CANVAS, labels(*words))
 
 
-def test_svarog_modification_is_identified_without_a_node_and_yields_to_reconnect():
+def test_svarog_modification_is_identified_without_a_node():
     pending = svarog_modification()
     assert pending.page is Page.SVAROG_MODIFICATION
     assert pending.stage is None
-    reconnect = reconnect_prompt()
-    assert Frame(reconnect.image, pending.labels + reconnect.labels).page is Page.RECONNECT
 
 
 def test_svarog_bond_in_sidebar_keeps_the_normal_preparation_page():
@@ -7967,6 +7666,49 @@ def test_uncertain_experience_is_deferred_after_actual_board_read_with_no_second
     assert (stage, "经验") in world.war.deferred_operations
 
 
+@pytest.mark.parametrize("expanded", (False, True))
+def test_late_partial_experience_receipt_does_not_start_another_batch(monkeypatch, world, expanded):
+    stage = "2-1"
+    units = (slot("front", 0, CORE),)
+    controls = (("出战", 1818, 751), ("购买经验", 296, 866))
+    initial = page(Page.BOARD, *controls, stage=stage, capacity=(1, 1), gold=50,
+                   level=7, experience=(64, 72), experience_cost=4)
+    partial = page(Page.BOARD, *controls, stage=stage, capacity=(1, 1), gold=53,
+                   level=7, experience=(68, 72), experience_cost=4)
+    leveled = page(Page.BOARD, *controls, stage=stage, capacity=(1, 2), gold=55,
+                   level=8, experience=(0, 80), experience_cost=4)
+    for frame in (initial, partial, leveled):
+        monkeypatch.setattr(frame, "slots", lambda: units)
+    entered = battle(True)
+    receipt_at = None
+
+    def capture(state):
+        if state.frame is initial and receipt_at is not None and world.now[0] >= receipt_at:
+            state.frame = leveled if expanded else partial
+
+    state = drive(monkeypatch, world, initial, lambda s, _: setattr(s, "frame", entered), capture)
+    monkeypatch.setattr(world.war, "_read_board", lambda f: (f, board(
+        *units, stage=stage, used=f.capacity[0], capacity=f.capacity[1], gold=f.gold, level=f.level, exp=f.experience,
+    )))
+    monkeypatch.setattr(world.war, "_can_buy_exp", lambda board, _: board.used == board.capacity)
+
+    def press(key):
+        nonlocal receipt_at
+        state.keys.append((state.frame.page, key))
+        if len(state.keys) == 2:
+            receipt_at = world.now[0] + 1
+        elif len(state.keys) > 2:
+            state.frame = leveled
+        return True
+
+    world.auto.press_key.side_effect = press
+    assert world.war._prepare(initial) is entered
+    assert state.keys == [(Page.BOARD, "f")] * 2
+    assert state.clicks == [(Page.BOARD, (1818, 751))]
+    assert world.war.preparation_progress == 1
+    assert ((stage, "经验") in world.war.deferred_operations) is not expanded
+
+
 def test_high_experience_interrupted_by_supply_is_not_repeated_after_return(monkeypatch, world):
     stage = "2-6"
     world.cfg.currencywars_strategy = policy.HIGH_ANAXA
@@ -8487,33 +8229,19 @@ def test_weekly_read_recovers_on_the_open_points_page(monkeypatch, world, fault)
     world.cfg.save_timestamp.assert_called_once_with("currencywars_timestamp")
 
 
-@pytest.mark.parametrize("final_page", (Page.MATCH_RESULT, Page.HOME))
-@pytest.mark.parametrize("in_match", (False, True))
-def test_reconnect_preserves_a_result_seen_before_stabilization(monkeypatch, world, final_page, in_match):
-    reconnect = reconnect_prompt()
-    fighting = battle(True)
-    result = Frame(CANVAS, labels(("对局胜利", 960, 233)))
-    detail = Frame(CANVAS, labels(("返回货币战争", 960, 899)))
+def test_weekly_claim_retries_coordinate_mapping_before_any_input(monkeypatch, world):
     lobby = home()
-    assert result.page == detail.page == Page.MATCH_RESULT
-    result_seen = False
-    routes = {(reconnect, (1188, 672)): result, (detail, (960, 899)): lobby}
+    pending = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: True)
+    credited = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: False)
+    state = drive(monkeypatch, world, pending, lambda s, _: setattr(s, "frame", credited))
+    world.auto.press_key.side_effect = lambda _: setattr(state, "frame", lobby)
+    world.auto.find_element.side_effect = (None, (1640, 728))
 
-    def capture(state):
-        nonlocal result_seen
-        if state.frame is fighting and world.now[0] > 0:
-            state.frame = reconnect
-        elif state.frame is result:
-            if result_seen:
-                state.frame = detail if final_page == Page.MATCH_RESULT else lobby
-            result_seen = True
-
-    initial = fighting if in_match else reconnect
-    state = drive(monkeypatch, world, initial, lambda s, p: setattr(s, "frame", routes[s.frame, p]), capture)
-    monkeypatch.setattr(world.war, "get_reward", lambda f: (f, (18000, 18000), False))
-    assert world.war.start(resume=True)
-    assert world.war.result is True
-    assert state.clicks == [(f.page, point) for f, point in routes if f is reconnect or final_page == Page.MATCH_RESULT]
+    assert world.war.start(weekly=True)
+    assert state.clicks == [(Page.WEEKLY, (1640, 728))]
+    assert world.war.reward_claim_score is None
+    assert not world.war.weekly_reward_pending
+    world.cfg.save_timestamp.assert_called_once_with("currencywars_timestamp")
 
 
 def test_transition_wait_preserves_a_result_heading_shown_without_buttons(monkeypatch, world):
@@ -8533,90 +8261,6 @@ def test_transition_wait_preserves_a_result_heading_shown_without_buttons(monkey
     assert world.war.start(resume=True)
     assert world.war.result is True
     assert state.clicks == [(Page.MATCH_RESULT, (960, 899))]
-
-
-@pytest.mark.parametrize("checkpoint", ("before_match", "settlement", "after_match"))
-def test_weekly_reconnect_returns_to_points_without_resuming_a_match(monkeypatch, world, checkpoint):
-    result = page(Page.MATCH_RESULT, ("挑战成功", 960, 233), ("返回货币战争", 960, 899))
-    lobby = home()
-    weekly = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: False)
-    reconnect = reconnect_prompt()
-    before_match = checkpoint == "before_match"
-    during_settlement = checkpoint == "settlement"
-
-    def click(state, point):
-        if state.frame == result:
-            state.frame = reconnect if during_settlement else lobby
-        elif state.frame == reconnect:
-            state.frame = lobby
-        elif state.frame == lobby and point == (381, 961):
-            needs_reconnect = not during_settlement and world.war.network_reconnects == 0
-            state.frame = reconnect if needs_reconnect else weekly
-
-    state = drive(monkeypatch, world, lobby if before_match else result, click)
-    world.auto.press_key.side_effect = lambda key: setattr(state, "frame", lobby)
-    assert world.war.start(weekly=True)
-    expected = [] if before_match else [(Page.MATCH_RESULT, (960, 899))]
-    if not during_settlement:
-        expected.append((Page.HOME, (381, 961)))
-    assert state.clicks == expected + [(Page.RECONNECT, (1188, 672)), (Page.HOME, (381, 961))]
-    assert world.war.result is (None if before_match else True)
-    world.cfg.save_timestamp.assert_called_once_with("currencywars_timestamp")
-
-
-@pytest.mark.parametrize("restored", (True, False))
-def test_weekly_reward_checks_fresh_points_after_the_last_reconnect(monkeypatch, world, restored):
-    result = page(Page.MATCH_RESULT, ("挑战成功", 960, 233), ("返回货币战争", 960, 899))
-    lobby = home()
-    weekly = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: False)
-    reconnect = reconnect_prompt()
-
-    def click(state, point):
-        if state.frame == result and point == (960, 899):
-            state.frame = lobby
-        elif state.frame == lobby and point == (381, 961):
-            state.frame = reconnect
-        elif state.frame == reconnect and point == (1188, 672) and restored:
-            state.frame = weekly if world.war.network_reconnects == task.MAX_RECONNECTS else lobby
-
-    state = drive(monkeypatch, world, result, click)
-    world.auto.press_key.side_effect = lambda key: setattr(state, "frame", lobby)
-    if restored:
-        assert world.war.start(weekly=True)
-        assert state.clicks.count((Page.RECONNECT, (1188, 672))) == task.MAX_RECONNECTS
-        world.cfg.save_timestamp.assert_called_once_with("currencywars_timestamp")
-    else:
-        with pytest.raises(task.CurrencyWarsUnavailable, match="重连次数上限"):
-            world.war.start(weekly=True)
-        assert state.frame == reconnect
-        assert state.clicks.count((Page.RECONNECT, (1188, 672))) == 2 * task.MAX_RECONNECTS
-        world.cfg.save_timestamp.assert_not_called()
-    assert world.war.result is True
-    assert world.war.network_reconnects == task.MAX_RECONNECTS
-
-
-@pytest.mark.parametrize("credited", (True, False))
-def test_reconnect_after_claim_rechecks_earned_tiers_without_claiming_again(monkeypatch, world, credited):
-    result = page(Page.MATCH_RESULT, ("挑战成功", 960, 233), ("返回货币战争", 960, 899))
-    lobby = home()
-    pending = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: True)
-    rechecked = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: not credited)
-    reconnect = reconnect_prompt()
-    routes = {(result, (960, 899)): lobby, (lobby, (381, 961)): pending,
-              (pending, (1640, 728)): reconnect, (reconnect, (1188, 672)): rechecked}
-    state = drive(monkeypatch, world, result, lambda s, p: setattr(s, "frame", routes[s.frame, p]))
-    world.auto.press_key.side_effect = lambda key: setattr(state, "frame", lobby)
-    assert world.war.start(weekly=True) is credited
-    assert world.war.result is True
-    assert state.clicks == [(Page.MATCH_RESULT, (960, 899)), (Page.HOME, (381, 961)),
-                            (Page.WEEKLY, (1640, 728)), (Page.RECONNECT, (1188, 672))]
-    if credited:
-        task.Base.send_notification_with_screenshot.assert_any_call(
-            "货币战争奖励已领取", task.NotificationLevel.ALL, rechecked.image,
-        )
-        world.cfg.save_timestamp.assert_called_once_with("currencywars_timestamp")
-    else:
-        world.cfg.save_timestamp.assert_not_called()
 
 
 def test_timestamp_write_failure_keeps_the_confirmed_weekly_score_and_match_result(monkeypatch, world):

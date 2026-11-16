@@ -58,7 +58,6 @@ def runner():
     scope["cfg"].after_finish = "None"
     scope["cfg"].browser_headless_enable = True
     scope["cfg"].notify_merge = False
-    scope["Daily"].currency_wars_due.return_value = False
     scope["CloudGameZeroDurationError"] = type("CloudGameZeroDurationError", (Exception,), {})
     scope.update(get_control_backend=get_control_backend, get_ui_profile=get_ui_profile,
                  AVAILABLE_TASKS=AVAILABLE_TASKS, CLI_ONLY_TASKS=CLI_ONLY_TASKS, HOST_TASKS=HOST_TASKS,
@@ -66,12 +65,11 @@ def runner():
                  InvalidGameConnection=InvalidGameConnection, STATUS_BLOCKED=STATUS_BLOCKED,
                  ProfileAssetNotFoundError=ProfileAssetNotFoundError,
                  TouchProfileInputError=TouchProfileInputError,
-                 CurrencyWarsTerminalError=currency_wars.CurrencyWarsTerminalError,
-                 CurrencyWarsUnavailable=currency_wars.CurrencyWarsUnavailable,
+                 GameRecoveryError=task_steps.GameRecoveryError,
                  GameStartupUnavailable=GameStartupUnavailable,
                  CloudGamePaidTimeExhaustedError=CloudGamePaidTimeExhaustedError)
     scope.update(sys=sys, contextmanager=contextmanager, nullcontext=nullcontext,
-                 pin_game_connection=pin_game_connection, time=SimpleNamespace(time=lambda: 0))
+                 pin_game_connection=pin_game_connection, time=SimpleNamespace(time=lambda: 0, sleep=MagicMock()))
     scope["EXCLUSIVE_ACTIONS"] = PAUSABLE_TASKS | {"game", "game_update", "game_pre_download", "app_update", "adb_check"}
     # 仅加载入口函数，避免导入 CLI 时触发权限检查或游戏操作。
     exec(compile(ast.Module(body=functions, type_ignores=[]), str(source), "exec"), scope)
@@ -155,7 +153,9 @@ def test_direct_task_selects_browser_mode(runner, action, headless, configured_h
     runner.run_sub_task(action)
 
     if action == "currencywars":
-        runner.game.start.assert_called_once_with(headless=headless, screen_ready=runner.CurrencyWars.game_screen_ready)
+        runner.game.start.assert_called_once_with(
+            headless=headless, screen_ready=runner.CurrencyWars.game_screen_ready, preserve_cloud_session=True,
+        )
     else:
         runner.game.start.assert_called_once_with(headless=headless)
     assert runner.cfg.browser_headless_enable is configured_headless
@@ -211,13 +211,6 @@ def currency_wars_game(runner, monkeypatch):
         current.__dict__.update(page=page, **properties)
         return current
 
-    reconnect_image = image.copy()
-    ImageDraw.Draw(reconnect_image).rectangle((1090, 649, 1278, 693), fill="white")
-    reconnect = Frame(reconnect_image, (
-        Label("提示", (959, 412)),
-        Label("失去网络连接，战斗结果同步失败，是否尝试重新连接？", (956, 526)),
-        Label("确认", (1188, 672)),
-    ))
     disconnected = Frame(image, (Label("连接中断", (960, 480)), Label("退出游戏", (960, 600))))
     frames = {
         "home": frame(Page.HOME, ("开始货币战争", (1600, 972)), ("积分", (381, 961))),
@@ -231,7 +224,7 @@ def currency_wars_game(runner, monkeypatch):
     }
     state = SimpleNamespace(page="home", now=0.0, completed=0, clicks=[], delayed_reads=0, battle_reads=0,
                             fault=None, stop=False, delayed_until=None, later_steps=[], capture_failures=0,
-                            reward_read_failures=0, reconnect_count=0, disconnect_reads=0,
+                            reward_read_failures=0, disconnect_reads=0,
                             capture_board=lambda: frames["board"])
     clock = SimpleNamespace(monotonic=lambda: state.now,
                             sleep=lambda seconds: setattr(state, "now", state.now + seconds))
@@ -250,8 +243,6 @@ def currency_wars_game(runner, monkeypatch):
             if resumed or (state.fault not in ("timeout", "stopped", "unidentified")
                            and state.now >= state.delayed_until):
                 state.page = "battle"
-        if state.page == "reconnect":
-            return reconnect
         if state.page == "board":
             return state.capture_board()
         if state.page == "battle":
@@ -277,13 +268,6 @@ def currency_wars_game(runner, monkeypatch):
             state.battle_reads = 0
             state.delayed_until = state.now + 28
             state.page = "battle" if state.completed else "delayed"
-        elif state.page == "reconnect":
-            assert point == (1188, 672)
-            state.reconnect_count += 1
-            state.page = "home"
-        elif (state.page == "home" and point == (381, 961) and state.fault == "weekly_reconnect"
-              and state.completed and not state.reconnect_count):
-            state.page = "reconnect"
         else:
             if state.page == "result":
                 state.completed += 1
@@ -340,7 +324,6 @@ def currency_wars_game(runner, monkeypatch):
     monkeypatch.setattr(daily.Daily, "run", lambda **_: state.later_steps.append("每日实训"))
     monkeypatch.setattr(task_steps, "screen", MagicMock())
     runner.Daily.start.side_effect = daily.Daily.start
-    runner.Daily.currency_wars_due.side_effect = daily.Daily.currency_wars_due
     state.factory = factory
     return state
 
@@ -793,33 +776,77 @@ def test_currency_wars_entry_switches_from_shaking_tea_to_chat(
             ("stopped", None, EXIT_STOPPED) if outcome == "stopped" else ("failed", "currencywars_timeout", EXIT_FAILED))
 
 
-def test_currency_wars_local_takeover_does_not_enter_an_unavailable_window(runner):
-    runner.game.prepare_currency_wars_takeover.side_effect = GameStartupUnavailable(
-        "无法切换到货币战争游戏窗口，已保留游戏现场"
-    )
+def test_local_currency_wars_takeover_does_not_enter_an_unavailable_window(runner):
+    runner.game.prepare_local_takeover.side_effect = GameStartupUnavailable("无法切换到游戏窗口，已保留游戏现场")
 
     record = run_currency_wars_cli(runner, "currencywarstemp")
 
     assert (record["status"], record["reason"], record["exit_code"]) == (
         "failed", "game_startup_unavailable", EXIT_FAILED)
-    runner.game.prepare_currency_wars_takeover.assert_called_once_with()
+    runner.game.prepare_local_takeover.assert_called_once_with()
     runner.game.switch_to_game.assert_not_called()
     runner.game.start.assert_not_called()
     runner.CurrencyWars.assert_not_called()
+    runner.DivergentUniverse.assert_not_called()
 
 
-def test_currency_wars_loop_stops_after_repeated_unconfirmed_attempts(runner):
+@pytest.mark.parametrize(("backend", "browser_started"), (("local", True), ("cloud", True), ("cloud", False)))
+def test_divergent_takeover_retains_browser_start_and_forced_window_switch(
+        runner, monkeypatch, backend, browser_started):
+    from tasks import game
+
+    runner.cfg.control_backend = backend
+    monkeypatch.setattr(game, "cfg", runner.cfg)
+    controller = MagicMock()
+    monkeypatch.setattr(game, "StarRailController", MagicMock(return_value=controller))
+    calls = MagicMock()
+    calls.start_browser.return_value = browser_started
+    calls.play.return_value = True
+    runner.cloud_game.start_game_process.side_effect = calls.start_browser
+    runner.game.switch_to_game.side_effect = game.switch_to_game
+    controller.switch_to_game.side_effect = calls.switch_window
+    runner.DivergentUniverse.return_value.loop.side_effect = calls.play
+
+    record = run_currency_wars_cli(runner, "divergenttemp")
+
+    assert record["exit_code"] == (EXIT_OK if browser_started else EXIT_FAILED)
+    expected = [("start_browser", (), {})] if backend == "cloud" else []
+    if browser_started:
+        expected += [("switch_window", (), {"force": True}), ("play", (), {})]
+    assert calls.mock_calls == expected
+    runner.game.prepare_local_takeover.assert_not_called()
+    runner.game.connect_to_running_cloud_game.assert_not_called()
+    runner.game.start.assert_not_called()
+
+
+def test_currency_wars_loop_can_progress_after_repeated_unconfirmed_attempts(runner):
     war = runner.CurrencyWars.return_value
     war.result = None
-    war.start.side_effect = [False, False, False, RunStopRequested]
-    runner.main.__globals__["CurrencyWarsUnavailable"] = currency_wars.CurrencyWarsUnavailable
+    war.start.side_effect = [False, False, False, True, RunStopRequested]
 
     record = run_currency_wars_cli(runner, "currencywarsloop")
 
     assert (record["status"], record["reason"], record["exit_code"]) == (
-        "failed", "currencywars_unavailable", EXIT_FAILED)
-    assert war.start.call_count == 3
-    assert runner.telemetry.track_task_complete.call_count == 3
+        STATUS_STOPPED, None, EXIT_STOPPED)
+    assert war.start.call_count == 5
+    runner.time.sleep.assert_not_called()
+    assert [call.args[1] for call in runner.telemetry.track_task_complete.call_args_list] == [False, False, False, True]
+
+
+@pytest.mark.parametrize("action", ("currencywarsloop", "divergentloop"))
+def test_stop_after_failed_match_blocks_next_round(runner, action):
+    start = (runner.CurrencyWars if action == "currencywarsloop" else runner.DivergentUniverse).return_value.start
+    start.side_effect = [False, AssertionError("停止后启动了下一轮")]
+
+    def request_stop(*_):
+        runner.pause_ctl.checkpoint.side_effect = RunStopRequested
+
+    runner.telemetry.track_task_complete.side_effect = request_stop
+    record = run_currency_wars_cli(runner, action)
+
+    assert (record["status"], record["exit_code"]) == (STATUS_STOPPED, EXIT_STOPPED)
+    start.assert_called_once()
+    runner.time.sleep.assert_not_called()
 
 
 @pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))
@@ -898,7 +925,7 @@ def test_currency_wars_entry_records_clear_terminal_states(
 
 
 @pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))
-@pytest.mark.parametrize("fault", ("brief_disconnect", "local_capacity", "node_read", "weekly_read", "weekly_reconnect"))
+@pytest.mark.parametrize("fault", ("brief_disconnect", "local_capacity", "node_read", "weekly_read"))
 def test_currency_wars_entry_recovers_the_same_run(runner, currency_wars_game, monkeypatch, action, fault):
     state = currency_wars_game
     state.fault = fault
@@ -947,13 +974,12 @@ def test_currency_wars_entry_recovers_the_same_run(runner, currency_wars_game, m
     assert state.completed == expected
     assert state.clicks.count(("board", (1818, 750))) == expected
     assert state.clicks.count(("rank", (1680, 965))) == (0 if action == "currencywarstemp" else expected)
-    assert state.clicks.count(("home", (381, 961))) == expected + (action == "main") + (fault == "weekly_reconnect")
+    assert state.clicks.count(("home", (381, 961))) == expected + (action == "main")
     assert not any(point == (1640, 728) for _, point in state.clicks)
     assert record["status"] == ("stopped" if action == "currencywarsloop" else "success")
     assert record["error"] is None and record["reason"] is None
     assert state.disconnect_reads == (fault == "brief_disconnect")
     assert state.reward_read_failures == (fault == "weekly_read")
-    assert state.reconnect_count == (fault == "weekly_reconnect")
     if fault == "local_capacity":
         assert local_reads.call_count >= 2
     if fault == "node_read":
@@ -1158,6 +1184,70 @@ def test_full_run_keeps_default_browser_mode(runner, action):
     runner.cfg.set_value.assert_not_called()
 
 
+@pytest.mark.parametrize("fault", ("stale_debugger", "headless_mode_mismatch"))
+def test_ordinary_cloud_full_run_starts_a_browser_in_the_configured_mode(runner, monkeypatch, fault):
+    from tasks import game
+
+    stale_debugger = fault == "stale_debugger"
+    browser = MagicMock()
+    browser.cmdline.return_value = ["chrome.exe", "--headless=new", "--remote-debugging-port=9225"]
+    controller = object.__new__(CloudGameController)
+    controller.cfg = SimpleNamespace(
+        control_backend="cloud", start_game_timeout=1, browser_headless_enable=stale_debugger,
+        browser_type="chrome", browser_debug_port=9222, browser_persistent_enable=True,
+        browser_dump_cookies_enable=False, cloud_game_fullscreen_enable=True, game_optimization_enable=False,
+    )
+    controller.driver = None
+    controller.logger = MagicMock()
+    controller.user_profile_path = str(Path.cwd())
+    controller.get_m7a_browsers = MagicMock(side_effect=lambda headless=None: [browser] if headless is not False else [])
+    controller.close_all_m7a_browser = MagicMock()
+    controller._prepare_browser_and_driver = MagicMock(return_value=("chrome.exe", "chromedriver.exe"))
+    controller._get_port_bind_error = MagicMock(return_value=None)
+    controller._get_browser_arguments = MagicMock(
+        side_effect=lambda headless: ["--headless=new"] if headless else []
+    )
+    controller._configure_pointer_lock = MagicMock()
+    controller._confirm_viewport_resolution = MagicMock()
+    controller._refresh_page = MagicMock()
+    controller.is_in_game = MagicMock(return_value=True)
+
+    def open_browser(*, service, options):
+        if options.debugger_address and stale_debugger:
+            raise WebDriverException("已有浏览器的调试端口已失效")
+        return MagicMock()
+
+    launch = MagicMock(side_effect=open_browser)
+    monkeypatch.setattr(cloud.atexit, "register", MagicMock())
+    monkeypatch.setattr(cloud.webdriver, "Chrome", launch)
+    monkeypatch.setattr(game, "cloud_game", controller)
+    monkeypatch.setattr(game, "cfg", controller.cfg)
+    monkeypatch.setattr(game, "task_power_request", MagicMock())
+    monkeypatch.setattr(game, "screen", MagicMock(**{"get_current_screen.return_value": True}))
+    monkeypatch.setattr(game, "time", SimpleNamespace(monotonic=lambda: 0, sleep=MagicMock()))
+    runner.cfg.control_backend = "cloud"
+    runner.game.start.side_effect = game.start
+    runner.game.stop.side_effect = SystemExit(EXIT_OK)
+    runner.Daily.start.return_value = True
+    runner.Daily.currency_wars_due.return_value = False
+
+    record = run_currency_wars_cli(runner, "main")
+
+    assert record["status"] == "success"
+    runner.Daily.start.assert_called_once_with()
+    runner.CurrencyWars.game_screen_ready.assert_not_called()
+    expected_closes = [{"headless": not stale_debugger}] + ([{}] if stale_debugger else [])
+    assert [call.kwargs for call in controller.close_all_m7a_browser.call_args_list] == expected_closes
+    assert launch.call_count == (2 if stale_debugger else 1)
+    if stale_debugger:
+        assert launch.call_args_list[0].kwargs["options"].debugger_address == "127.0.0.1:9225"
+    options = launch.call_args.kwargs["options"]
+    assert not options.debugger_address
+    assert ("--headless=new" in options.arguments) == stale_debugger
+    assert controller.is_headless() == stale_debugger
+    controller._refresh_page.assert_called_once_with()
+
+
 @pytest.mark.parametrize("action", ["screen_test", "character_export"])
 @pytest.mark.parametrize("result", [False, True])
 def test_cleanup_exceptions_remain_exempt(runner, action, result):
@@ -1272,12 +1362,12 @@ def test_adb_workflow_reports_not_executed(runner):
 
 @pytest.mark.parametrize(("fault", "expected_attempts", "exit_code", "reason"), (
     ("transient", 2, EXIT_OK, None),
-    ("persistent", 3, EXIT_FAILED, "currencywars_unavailable"),
+    ("persistent", 3, EXIT_FAILED, "game_startup_unavailable"),
     ("stopped", 1, EXIT_STOPPED, None),
 ))
 def test_currency_wars_takeover_retries_cloud_attach_without_restarting_browser(
-        runner, fault, expected_attempts, exit_code, reason):
-    from module.game.cloud import CloudGameController
+        runner, monkeypatch, fault, expected_attempts, exit_code, reason):
+    from tasks import game
 
     controller = object.__new__(CloudGameController)
     controller.driver = None
@@ -1303,18 +1393,18 @@ def test_currency_wars_takeover_retries_cloud_attach_without_restarting_browser(
             raise RunStopRequested
 
     controller._connect_or_create_browser = MagicMock(side_effect=connect_browser)
-    runner.cloud_game.connect_to_running_game.side_effect = controller.connect_to_running_game
+    monkeypatch.setattr(game, "cloud_game", controller)
+    monkeypatch.setattr(game, "pause_ctl", SimpleNamespace(checkpoint=checkpoint))
+    monkeypatch.setattr(game, "time", SimpleNamespace(sleep=MagicMock()))
+    runner.game.connect_to_running_cloud_game.side_effect = game.connect_to_running_cloud_game
     runner.cfg.control_backend = "cloud"
-    runner.pause_ctl.checkpoint.side_effect = checkpoint
-    runner.time.sleep = MagicMock()
-    runner.main.__globals__["CurrencyWarsUnavailable"] = currency_wars.CurrencyWarsUnavailable
     runner.CurrencyWars.return_value.start.return_value = True
 
     record = run_currency_wars_cli(runner, "currencywarstemp")
 
     assert (record["exit_code"], record["reason"]) == (exit_code, reason)
     assert controller._connect_or_create_browser.call_count == expected_attempts
-    assert runner.time.sleep.call_count == expected_attempts - 1
+    assert game.time.sleep.call_count == expected_attempts - 1
     runner.cloud_game.start_game_process.assert_not_called()
     runner.game.start.assert_not_called()
     runner.game.switch_to_game.assert_not_called()
@@ -1323,13 +1413,14 @@ def test_currency_wars_takeover_retries_cloud_attach_without_restarting_browser(
         runner.CurrencyWars.return_value.start.assert_called_once_with(resume=True)
     else:
         runner.CurrencyWars.assert_not_called()
+        runner.DivergentUniverse.assert_not_called()
         if fault == "persistent":
             assert "连续无法连接正在运行的云游戏" in record["error"]
         else:
             assert record["status"] == STATUS_STOPPED
 
 
-@pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "main"))
+@pytest.mark.parametrize("action", ("currencywars", "currencywarsloop"))
 @pytest.mark.parametrize("fault", (
     "transient_disconnect", "stale_dom", "probe_timeout", "probe_timeout_no_player", "persistent_disconnect", "unavailable_frames",
     "existing_board", "different_window_mode", "transient_attach", "persistent_attach", "attach_stopped", "cold_start",
@@ -1432,10 +1523,6 @@ def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_gam
         frame.__dict__.update(slots=lambda: (Slot("front", 0, (745, 405), True),), inventory_items=lambda: ())
         state.capture_board = lambda: frame
 
-        def prepare_daily():
-            assert state.completed == 1
-
-        monkeypatch.setattr(daily.Daily, "prepare_daily", prepare_daily)
     if fault.startswith("runtime_"):
         state.fault = fault.removeprefix("runtime_")
         if state.fault == "timeout":
@@ -1499,7 +1586,7 @@ def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_gam
         controller._clean_at_exit()
         controller.close_all_m7a_browser.assert_not_called()
         assert controller.driver is None
-    if fault == "unavailable_frames" and action == "main":
+    if fault == "unavailable_frames":
         screen.get_current_screen.assert_called_once_with(autotry=False, max_retries=1)
     else:
         screen.get_current_screen.assert_not_called()
@@ -1733,7 +1820,7 @@ def test_currency_wars_enters_from_an_existing_game_title(
     navigator = object.__new__(screen_module.Screen)
     screen_module.Screen.__init__(navigator, Path("assets/config/screens.json"), MagicMock())
     navigator.current_screen = title_page
-    navigator._handle_autotry = MagicMock()
+    navigator.recover_current_screen = MagicMock()
     capture = currency_wars.CurrencyWars._capture
     unknown = Frame(Image.new("RGB", (1920, 1080)), ())
 
@@ -1797,7 +1884,7 @@ def test_currency_wars_enters_from_an_existing_game_title(
         ["start_game"] * (title_page == "start_game") + ["click_enter", "main", "menu", "menu", "guide5", "guide5"]
     )
     assert title_inputs[0][1].endswith(f"/{title_page}.png")
-    navigator._handle_autotry.assert_not_called()
+    navigator.recover_current_screen.assert_not_called()
     controller.start_game_process.assert_not_called()
     controller.stop_game.assert_not_called()
 
@@ -1850,11 +1937,13 @@ def test_currency_wars_background_waits_for_the_existing_game_window(
     auto.input_handler = handler
     monkeypatch.setattr(game, "auto", auto)
     runner.game.start.side_effect = game.start
-    runner.game.prepare_currency_wars_takeover.side_effect = game.prepare_currency_wars_takeover
+    runner.game.prepare_local_takeover.side_effect = game.prepare_local_takeover
     if action == "currencywarsloop" and outcome == "recovers":
         runner.telemetry.track_task_complete.side_effect = lambda *_: setattr(state, "stop", True)
     if action == "main":
-        monkeypatch.setattr(daily.Daily, "prepare_daily", lambda: state.completed == 1)
+        screen = MagicMock()
+        screen.get_current_screen.return_value = True
+        monkeypatch.setattr(game, "screen", screen)
 
     record = run_currency_wars_cli(runner, action)
 
@@ -1883,34 +1972,42 @@ def test_currency_wars_background_waits_for_the_existing_game_window(
 
 def bind_currency_wars_local_startup(runner, state, monkeypatch, action):
     from tasks import game
+    from tasks.game import starrailcontroller as local
     from utils import wait
 
+    controller_type = local.StarRailController
     clock = currency_wars.time
     monkeypatch.setattr(game, "time", clock)
+    monkeypatch.setattr(local, "time", clock)
     monkeypatch.setattr(wait, "time", clock)
     monkeypatch.setattr(game, "cfg", SimpleNamespace(control_backend="local", start_game_timeout=.2,
                                                       auto_set_game_path_enable=False))
     monkeypatch.setattr(game, "task_power_request", MagicMock())
     checkpoint = currency_wars.pause_ctl.checkpoint
-    monkeypatch.setattr(game, "pause_ctl", SimpleNamespace(checkpoint=checkpoint, check_stop=checkpoint))
+    control = SimpleNamespace(checkpoint=checkpoint, check_stop=checkpoint)
+    monkeypatch.setattr(game, "pause_ctl", control)
+    monkeypatch.setattr(local, "pause_ctl", control, raising=False)
     monkeypatch.setattr(game, "auto", currency_wars.auto)
-    controller = MagicMock(launch_method="direct")
+    controller = MagicMock(launch_method="direct", launched_new_process=True)
     controller.is_game_running.return_value = True
     controller.switch_to_game.return_value = True
     controller.get_resolution.return_value = (1920, 1080)
+    controller.screen_resolution = (2560, 1440)
+    controller.check_resolution.side_effect = lambda *size: controller_type.check_resolution(controller, *size)
     monkeypatch.setattr(game, "StarRailController", MagicMock(return_value=controller))
+    screen = MagicMock()
+    screen.get_current_screen.return_value = True
+    monkeypatch.setattr(game, "screen", screen)
     runner.game.start.side_effect = game.start
     if action == "currencywarsloop":
         runner.telemetry.track_task_complete.side_effect = lambda *_: setattr(state, "stop", True)
-    if action == "main":
-        monkeypatch.setattr(daily.Daily, "prepare_daily", lambda: state.completed == 1)
     return game, controller
 
 
 @pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "main"))
 @pytest.mark.parametrize("outcome", (
     "missing_once", "read_error_once", "manual_adjustment", "auto_resolution_disabled",
-    "optimization_disabled", "single_bad_read", "unavailable", "stopped",
+    "optimization_disabled", "unavailable", "stopped",
 ))
 def test_currency_wars_startup_rechecks_resolution_without_closing_the_window(
         runner, currency_wars_game, monkeypatch, action, outcome):
@@ -1919,6 +2016,7 @@ def test_currency_wars_startup_rechecks_resolution_without_closing_the_window(
     state = currency_wars_game
     state.page = "board"
     game, controller = bind_currency_wars_local_startup(runner, state, monkeypatch, action)
+    game.cfg.start_game_timeout = 2
     controller.get_window_handle.return_value = 12
     if outcome == "missing_once":
         controller.get_window_handle.side_effect = [0, 12]
@@ -1926,20 +2024,16 @@ def test_currency_wars_startup_rechecks_resolution_without_closing_the_window(
     if outcome == "read_error_once":
         get_rect.side_effect = [OSError("窗口尺寸读取失败"), (0, 0, 1920, 1080)]
     elif outcome == "manual_adjustment":
-        game.cfg.start_game_timeout = 2
+        def read_window_size(_):
+            return (0, 0, 2560, 1440) if state.now < 20 else (0, 0, 1920, 1080)
 
-        def change_at_deadline(_):
-            return (0, 0, 2560, 1440) if state.now < game.WINDOW_WAIT_SECONDS else (0, 0, 1920, 1080)
-
-        get_rect.side_effect = change_at_deadline
-    elif outcome in ("auto_resolution_disabled", "optimization_disabled", "single_bad_read"):
+        get_rect.side_effect = read_window_size
+    elif outcome in ("auto_resolution_disabled", "optimization_disabled"):
         get_rect.return_value = (0, 0, 2560, 1440)
         if outcome == "auto_resolution_disabled":
             game.cfg.auto_set_resolution_enable = False
         elif outcome == "optimization_disabled":
             game.cfg.game_optimization_enable = False
-        else:
-            game.cfg.start_game_timeout = 1 / 60
     elif outcome == "unavailable":
         get_rect.side_effect = OSError("窗口尺寸读取失败")
     elif outcome == "stopped":
@@ -1953,30 +2047,23 @@ def test_currency_wars_startup_rechecks_resolution_without_closing_the_window(
 
     record = run_currency_wars_cli(runner, action)
 
+    controller.check_resolution.assert_any_call(1920, 1080)
     controller.start_game_process.assert_not_called()
     controller.stop_game.assert_not_called()
     if outcome in ("missing_once", "read_error_once", "manual_adjustment"):
         assert record["status"] == (STATUS_STOPPED if action == "currencywarsloop" else "success"), record
         assert state.completed == 1
         assert state.clicks[0] == ("board", (1818, 750))
-        assert controller.get_resolution.call_count == (
-            game.WINDOW_WAIT_SECONDS + 1 if outcome == "manual_adjustment" else 2
-        )
     else:
         assert state.clicks == []
         state.factory.assert_not_called()
         if outcome == "stopped":
             assert (record["status"], record["exit_code"]) == (STATUS_STOPPED, EXIT_STOPPED)
-            assert controller.get_resolution.call_count == 1
         else:
             assert record["reason"] == "game_startup_unavailable"
             assert "已保留游戏现场" in record["error"]
-            expected_error = "持续无法读取游戏窗口分辨率" if outcome == "unavailable" else "2560x1440"
+            expected_error = "窗口尺寸读取失败" if outcome == "unavailable" else "2560x1440"
             assert expected_error in record["error"]
-            if outcome == "single_bad_read":
-                controller.get_resolution.assert_called_once()
-            else:
-                assert controller.get_resolution.call_count > 1
 
 
 @pytest.mark.parametrize(("action", "outcome"), (
@@ -1984,29 +2071,22 @@ def test_currency_wars_startup_rechecks_resolution_without_closing_the_window(
     ("currencywarsloop", "applied"),
     ("main", "applied"),
     ("currencywarsloop", "detected_path"),
-    ("currencywarsloop", "resized_before_restart"),
-    ("currencywarsloop", "recheck_error_once"),
-    ("currencywarsloop", "recheck_missing_once"),
-    ("currencywarsloop", "recheck_unavailable"),
     ("currencywarsloop", "still_wrong"),
-    ("currencywarsloop", "minimized"),
     ("currencywarsloop", "missing_path"),
     ("currencywarsloop", "stop_failed"),
-    ("currencywarsloop", "user_stop"),
 ))
-def test_currency_wars_startup_restarts_once_to_apply_resolution(
+def test_currency_wars_startup_uses_local_restart_to_apply_resolution(
         runner, currency_wars_game, monkeypatch, tmp_path, action, outcome):
-    from module.automation.windows_input import WINDOW_MISSING, WindowGoneError
     from tasks.game import starrailcontroller as local
 
     state = currency_wars_game
     game, controller = bind_currency_wars_local_startup(runner, state, monkeypatch, action)
-    game.cfg.start_game_timeout = 1
+    game.cfg.start_game_timeout = 2
     currency_wars.auto.input_handler.is_background = action == "currencywarsloop"
     game_path = tmp_path / "StarRail.exe"
     if outcome != "missing_path":
         game_path.touch()
-    controller.game_path = str(game_path)
+    game.cfg.game_path = controller.game_path = str(game_path)
     original_resolution = (2560, 1440, False)
     registry = SimpleNamespace(resolution=original_resolution)
     controller.screen_resolution = original_resolution[:2]
@@ -2019,30 +2099,15 @@ def test_currency_wars_startup_restarts_once_to_apply_resolution(
 
     if outcome == "detected_path":
         game.cfg.auto_set_game_path_enable = True
+        game.cfg.game_process_name = "StarRail.exe"
         game.cfg.game_path = controller.game_path = str(tmp_path / "missing.exe")
         game.cfg.set_value = MagicMock(side_effect=lambda key, value: setattr(game.cfg, key, value))
         process = MagicMock(return_value=SimpleNamespace(exe=lambda: str(game_path)))
-        monkeypatch.setattr(game, "psutil", SimpleNamespace(Process=process, Error=game.psutil.Error))
-
-    windows = MagicMock()
-    monkeypatch.setattr(game, "WindowsInputApi", windows)
-    monkeypatch.setattr(game, "process_session_id", lambda: 4)
-    windows.return_value.process_running.return_value = False
-
-    def inspect_window(*_):
-        if outcome == "user_stop":
-            state.stop = True
-        if outcome == "recheck_missing_once" and windows.return_value.inspect.call_count == 1:
-            return None, WINDOW_MISSING
-        return SimpleNamespace(pid=123), "minimized" if outcome == "minimized" else None
-
-    def read_current_size(_):
-        if outcome == "recheck_unavailable" or (
-                outcome == "recheck_error_once" and windows.return_value.size.call_count == 1):
-            raise WindowGoneError("游戏窗口正在重建")
-        if outcome == "resized_before_restart":
-            controller.get_resolution.return_value = (1920, 1080)
-        return controller.get_resolution.return_value
+        monkeypatch.setattr(game, "psutil", SimpleNamespace(
+            Process=process, Error=game.psutil.Error,
+            process_iter=lambda **_: [SimpleNamespace(info={"pid": 123, "name": "StarRail.exe"})],
+        ))
+    monkeypatch.setattr(game, "_local_game_process_running", lambda _: controller.is_game_running())
 
     def stop_game():
         if outcome == "stop_failed":
@@ -2059,36 +2124,34 @@ def test_currency_wars_startup_restarts_once_to_apply_resolution(
             controller.get_resolution.return_value = registry.resolution[:2]
         return True
 
-    windows.return_value.inspect.side_effect = inspect_window
-    windows.return_value.size.side_effect = read_current_size
     controller.stop_game.side_effect = stop_game
     controller.start_game_process.side_effect = start_game_process
 
     record = run_currency_wars_cli(runner, action)
 
-    applied = outcome in ("applied", "detected_path", "recheck_error_once", "recheck_missing_once")
-    rechecks = {"recheck_error_once": 2, "recheck_missing_once": 2, "recheck_unavailable": 3}
-    assert windows.return_value.inspect.call_count == rechecks.get(outcome, 1)
-    if applied or outcome in ("still_wrong", "stop_failed"):
+    controller.check_resolution.assert_any_call(1920, 1080)
+    applied = outcome in ("applied", "detected_path")
+    if applied or outcome == "stop_failed":
         controller.stop_game.assert_called_once_with()
-    else:
+    elif outcome == "missing_path":
         controller.stop_game.assert_not_called()
-    if applied or outcome == "still_wrong":
+    if applied:
         controller.start_game_process.assert_called_once_with()
         controller.restore_resolution.assert_called_once_with()
         controller.restore_auto_hdr.assert_called_once_with()
+        assert registry.resolution == original_resolution
+    elif outcome == "still_wrong":
+        assert 1 <= controller.start_game_process.call_count <= 2
+        assert controller.stop_game.call_count <= 3
         assert registry.resolution == original_resolution
     else:
         controller.start_game_process.assert_not_called()
         controller.change_resolution.assert_not_called()
 
-    if applied or outcome == "resized_before_restart":
+    if applied:
         assert record["status"] == (STATUS_STOPPED if action == "currencywarsloop" else "success"), record
         assert state.completed == 1
-        if applied:
-            currency_wars.auto.click_element.assert_called_once_with("./assets/images/screen/click_enter.png", "image", 0.9)
-        else:
-            currency_wars.auto.click_element.assert_not_called()
+        currency_wars.auto.click_element.assert_called_once_with("./assets/images/screen/click_enter.png", "image", 0.9)
         if outcome == "detected_path":
             process.assert_called_once_with(123)
             game.cfg.set_value.assert_called_once_with("game_path", str(game_path))
@@ -2097,25 +2160,20 @@ def test_currency_wars_startup_restarts_once_to_apply_resolution(
         state.factory.assert_not_called()
         currency_wars.auto.click_element.assert_not_called()
         currency_wars.auto.press_mouse.assert_not_called()
-        if outcome == "user_stop":
-            assert (record["status"], record["exit_code"]) == (STATUS_STOPPED, EXIT_STOPPED)
-        else:
-            assert (record["status"], record["reason"]) == ("failed", "game_startup_unavailable")
-            assert {
-                "still_wrong": "尝试自动重启后，游戏窗口分辨率为 2560x1440",
-                "minimized": "游戏窗口已不可操作",
-                "recheck_unavailable": "无法确认游戏窗口状态",
-                "missing_path": "未找到可重新启动的游戏路径",
-                "stop_failed": "无法关闭游戏",
-            }[outcome] in record["error"]
+        assert (record["status"], record["reason"]) == ("failed", "game_startup_unavailable")
+        assert {
+            "still_wrong": "2560x1440",
+            "missing_path": "未找到可重新启动的游戏路径",
+            "stop_failed": "无法关闭",
+        }[outcome] in record["error"]
 
 
 @pytest.mark.parametrize(("action", "outcome"), (
     ("main", "updated"),
     ("currencywarsloop", "title_template_visible"),
-    ("main", "prefilter_failed_with_title"),
+    ("main", "title_template_visible"),
     ("main", "disabled"),
-    ("main", "unrecognized"),
+    ("currencywars", "unrecognized"),
     ("main", "stopped"),
     ("main", "stopped_before_close"),
     ("main", "stopped_before_launcher"),
@@ -2134,17 +2192,18 @@ def test_currency_wars_startup_recovers_from_confirmed_outdated_client(
     def capture_startup():
         if state.page != "outdated":
             return capture()
-        if outcome == "prefilter_failed_with_title":
-            raise OSError("货币战争启动 OCR 暂不可用")
         return empty
 
     monkeypatch.setattr(currency_wars.CurrencyWars, "_capture", staticmethod(capture_startup))
-    title_visible = outcome in ("title_template_visible", "prefilter_failed_with_title")
-    screen = MagicMock(current_screen="click_enter" if title_visible else None)
-    screen.get_current_screen.return_value = title_visible
+    title_visible = outcome == "title_template_visible"
+    screen = MagicMock()
+
+    def read_screen(**_):
+        screen.current_screen = ("click_enter" if title_visible else None) if state.page == "outdated" else "main"
+        return screen.current_screen is not None
+
+    screen.get_current_screen.side_effect = read_screen
     monkeypatch.setattr(game, "screen", screen)
-    if outcome == "prefilter_failed_with_title":
-        monkeypatch.setattr(import_module("module.screen"), "screen", screen)
     if outcome == "stopped_before_close":
         monkeypatch.setattr(game, "log", MagicMock(error=lambda _: setattr(state, "stop", True)))
     find_point = auto.find_element.side_effect
@@ -2188,13 +2247,13 @@ def test_currency_wars_startup_recovers_from_confirmed_outdated_client(
 
     record = run_currency_wars_cli(runner, action)
 
-    if outcome in ("updated", "title_template_visible", "prefilter_failed_with_title"):
+    if outcome in ("updated", "title_template_visible"):
         controller.stop_game.assert_called_once_with()
         controller.start_game_process.assert_called_once_with()
         update.assert_called_once_with()
         assert state.completed == 1
         assert record["status"] == (STATUS_STOPPED if action == "currencywarsloop" else "success"), record
-        screen.get_current_screen.assert_called_once_with(autotry=False, max_retries=1)
+        screen.get_current_screen.assert_any_call(autotry=False, max_retries=1)
     else:
         if outcome == "stopped_before_launcher":
             controller.stop_game.assert_called_once_with()
@@ -2258,7 +2317,7 @@ def test_currency_wars_startup_uses_saved_credentials_only_on_a_confirmed_login_
         if not isinstance(target, str):
             return find_point(target, *args, **kwargs)
         asset = Path(target).stem
-        if asset == "welcome":
+        if asset in ("welcome", "main"):
             return state.page == "home"
         matched = state.page == "native_login" and asset in templates
         if matched and asset in ("account_and_password", "account_field_os"):
@@ -2290,7 +2349,7 @@ def test_currency_wars_startup_uses_saved_credentials_only_on_a_confirmed_login_
     monkeypatch.setattr(game, "load_acc_and_pwd", MagicMock(return_value=credentials))
     monkeypatch.setattr(game, "gamereg_uid", lambda: 1)
     monkeypatch.setattr(game, "ensure_IME_lang_en", MagicMock())
-    monkeypatch.setattr(navigator, "_handle_autotry", MagicMock())
+    monkeypatch.setattr(navigator, "recover_current_screen", MagicMock())
     if prompt == "cold_login_pending":
         game.cfg.start_game_timeout = 1.5
         controller.is_game_running.side_effect = lambda: controller.start_game_process.called
@@ -2305,7 +2364,7 @@ def test_currency_wars_startup_uses_saved_credentials_only_on_a_confirmed_login_
     record = run_currency_wars_cli(runner, action)
 
     assert all(previous < current for previous, current in zip(verified_frames, verified_frames[1:]))
-    navigator._handle_autotry.assert_not_called()
+    navigator.recover_current_screen.assert_not_called()
     controller.stop_game.assert_not_called()
     assert controller.start_game_process.call_count == (1 if prompt == "cold_login_pending" else 0)
     if prompt in ("account_and_password", "os", "opening_capture_error", "os_opening_capture_error"):
@@ -2344,22 +2403,10 @@ def test_currency_wars_startup_uses_saved_credentials_only_on_a_confirmed_login_
             assert "未找到保存的登录凭据" in record["error"]
 
 
-@pytest.mark.parametrize(("recognized", "current_screen", "can_continue"), (
-    (True, "main", True),
-    (True, "menu", True),
-    (True, "guide3", True),
-    (True, "map", True),
-    (True, "mail", True),
-    (True, "bag_relicset", True),
-    (True, "currency_wars_homepage", False),
-    (True, "purefiction_exit_confirm", False),
-    (True, "guide1", False),
-    (False, "main", False),
-))
-def test_full_run_uses_a_known_game_screen_when_currency_wars_prefilter_cannot_read(
-        runner, currency_wars_game, monkeypatch, recognized, current_screen, can_continue):
-    from module import screen as screen_module
-    from module.screen.screen import Screen
+@pytest.mark.parametrize("current_screen", ("main", "monthly_card", "currency_wars_homepage", "purefiction_exit_confirm"))
+@pytest.mark.parametrize("ocr_unavailable", (False, True))
+def test_full_run_does_not_probe_currency_wars_before_shared_readiness(
+        runner, currency_wars_game, monkeypatch, current_screen, ocr_unavailable):
     from tasks import game
     from utils import wait
 
@@ -2369,95 +2416,151 @@ def test_full_run_uses_a_known_game_screen_when_currency_wars_prefilter_cannot_r
     monkeypatch.setattr(wait, "time", clock)
     monkeypatch.setattr(game, "task_power_request", MagicMock())
     monkeypatch.setattr(game, "cfg", SimpleNamespace(control_backend="cloud", start_game_timeout=0.08))
-    screen = MagicMock()
-    screen.get_current_screen.return_value = recognized
-    screen.current_screen = current_screen
-    navigator = object.__new__(Screen)
-    Screen.__init__(navigator, Path("assets/config/screens.json"), MagicMock())
-    screen.can_change_from.side_effect = navigator.can_change_from
+    screen = MagicMock(current_screen=current_screen)
+    screen.get_current_screen.return_value = True
     monkeypatch.setattr(game, "screen", screen)
-    monkeypatch.setattr(screen_module, "screen", screen)
     runner.cfg.control_backend = "cloud"
     runner.game.start.side_effect = game.start
     runner.cloud_game.start_game_process.return_value = True
     runner.cloud_game.is_in_game.return_value = True
     monkeypatch.setattr(game, "cloud_game", runner.cloud_game)
-    state.factory.game_screen_ready = MagicMock(side_effect=currency_wars.CurrencyWarsUnavailable("专用画面 OCR 暂不可用"))
+    state.factory.game_screen_ready = MagicMock(
+        return_value=False,
+        side_effect=currency_wars.CurrencyWarsUnavailable("专用画面 OCR 暂不可用") if ocr_unavailable else None,
+    )
     runner.Daily.start.side_effect = None
     runner.Daily.start.return_value = True
 
     record = run_currency_wars_cli(runner, "main")
 
-    screen.get_current_screen.assert_called_once_with(autotry=False, max_retries=1)
+    assert record["status"] == "success"
+    runner.game.start.assert_called_once_with()
+    runner.Daily.start.assert_called_once_with()
+    state.factory.game_screen_ready.assert_not_called()
+    screen.get_current_screen.assert_called_once()
     screen.change_to.assert_not_called()
-    if can_continue:
-        assert record["status"] == "success"
-        runner.Daily.start.assert_called_once_with()
-    else:
-        assert record["reason"] == "currencywars_unavailable"
-        runner.Daily.start.assert_not_called()
     runner.cloud_game.stop_game.assert_not_called()
 
 
-@pytest.mark.parametrize("dialog", ("reward_limit", "weekly_receipt", "generic_receipt"))
-def test_full_run_checks_the_context_of_existing_reward_dialog(runner, currency_wars_game, monkeypatch, dialog):
-    from tasks import game
-    from utils import wait
-
+def test_full_run_prepares_daily_before_currency_wars_at_the_homepage(runner, currency_wars_game, monkeypatch):
     state = currency_wars_game
-    clock = SimpleNamespace(monotonic=lambda: state.now, sleep=lambda n: setattr(state, "now", state.now + n))
-    monkeypatch.setattr(game, "time", clock)
-    monkeypatch.setattr(wait, "time", clock)
-    monkeypatch.setattr(game, "task_power_request", MagicMock())
-    monkeypatch.setattr(game, "cfg", SimpleNamespace(control_backend="cloud", start_game_timeout=0.08))
-    screen = MagicMock()
-    screen.get_current_screen.return_value = False
-    monkeypatch.setattr(game, "screen", screen)
-    runner.cfg.control_backend = "cloud"
-    runner.game.start.side_effect = game.start
-    runner.cloud_game.start_game_process.return_value = True
-    runner.cloud_game.is_in_game.return_value = True
-    monkeypatch.setattr(game, "cloud_game", runner.cloud_game)
+    state.factory.game_screen_ready = MagicMock(return_value=True)
 
-    image = Image.new("RGB", (1920, 1080))
-    if dialog == "reward_limit":
-        ImageDraw.Draw(image).rectangle((823, 694, 1097, 754), fill="white")
-        point = (960, 724)
-        frame = Frame(image, (Label("背包内助燃券持有数量已达上限", (960, 486)), Label("确认", point)))
-        assert frame.page == Page.REWARD_LIMIT
-    else:
-        point = (964, 851)
-        labels = [Label("获得奖励", (960, 281)), Label("点击空白处关闭", point)]
-        if dialog == "weekly_receipt":
-            labels.append(Label("积分奖励", (151, 338)))
-        frame = Frame(image, tuple(labels))
-        assert frame.page == Page.REWARD_RECEIPT
-    capture = currency_wars.CurrencyWars._capture
-    click = currency_wars.auto.click_element_with_pos.side_effect
-    pressed = []
+    def start_game(*, screen_ready=None, **_):
+        if screen_ready is not None:
+            screen_ready()
 
-    def click_or_close(target, *, press_duration):
-        if pressed:
-            return click(target, press_duration=press_duration)
-        assert target == point
-        pressed.append(target)
+    def prepare_daily():
+        assert state.clicks == []
+        state.later_steps.append("日常准备")
 
-    monkeypatch.setattr(currency_wars.CurrencyWars, "_capture", staticmethod(lambda: capture() if pressed else frame))
-    currency_wars.auto.click_element_with_pos.side_effect = click_or_close
+    runner.game.start.side_effect = start_game
+    monkeypatch.setattr(daily.Daily, "prepare_daily", prepare_daily)
+
     record = run_currency_wars_cli(runner, "main")
 
-    runner.cloud_game.enter_cloud_game.assert_not_called()
-    runner.cloud_game.stop_game.assert_not_called()
-    if dialog == "generic_receipt":
-        assert record["reason"] == "game_startup_unavailable"
-        assert pressed == []
-        state.factory.assert_not_called()
-        assert all(call.kwargs == {"autotry": False, "max_retries": 1} for call in screen.get_current_screen.call_args_list)
+    assert record["status"] == "success"
+    assert state.completed == 1
+    assert state.later_steps == ["日常准备", "日常领奖", "每日实训"]
+    runner.game.start.assert_called_once_with()
+    state.factory.game_screen_ready.assert_not_called()
+
+
+def test_stop_preserves_the_cloud_session_of_an_ordinary_task(runner):
+    runner.cfg.control_backend = "cloud"
+    runner.game.start.side_effect = RunStopRequested
+
+    record = run_currency_wars_cli(runner, "routine")
+
+    assert record["status"] == STATUS_STOPPED
+    runner.cloud_game.preserve_running_browser.assert_called_once_with()
+    runner.Daily.routine.assert_not_called()
+
+
+def test_full_run_dismisses_story_recap_along_the_shared_startup_path(runner, currency_wars_game, monkeypatch):
+    from module.screen import screen as screen_instance
+
+    screen_code = import_module("module.screen.screen")
+    state = currency_wars_game
+    game, _ = bind_currency_wars_local_startup(runner, state, monkeypatch, "main")
+    monkeypatch.setattr(game.auto, "find_element", MagicMock(return_value=None))
+    runner.cfg.control_backend = "local"
+    runner.Daily.start.side_effect = None
+    runner.Daily.start.return_value = True
+    dismissed_at = None
+
+    def recap_present():
+        return dismissed_at is None or state.now < dismissed_at + 0.1
+
+    def read_screen(*, autotry=False, max_retries):
+        assert not autotry and max_retries == 1
+        if not recap_present():
+            screen_instance.current_screen = "main"
+            return True
+        return False
+
+    def click_recap(*args, **kwargs):
+        nonlocal dismissed_at
+        assert args == ((920, 890),)
+        dismissed_at = state.now
+        return True
+
+    inputs = MagicMock()
+    inputs.find_element.side_effect = lambda text, *_args, **_kwargs: (
+        (920, 890) if text == "稍后再看" and recap_present() else None
+    )
+    inputs.click_element_with_pos.side_effect = click_recap
+    monkeypatch.setattr(screen_code, "auto", inputs)
+    monkeypatch.setattr(screen_code, "time", currency_wars.time)
+    monkeypatch.setattr(screen_instance, "_warn_overlay_monitor_text_if_needed", MagicMock())
+    monkeypatch.setattr(screen_instance, "current_screen", None)
+    monkeypatch.setattr(screen_instance, "get_current_screen", read_screen)
+    monkeypatch.setattr(game, "screen", screen_instance)
+    state.factory.game_screen_ready = MagicMock()
+
+    record = run_currency_wars_cli(runner, "main")
+
+    assert record["status"] == "success"
+    inputs.click_element_with_pos.assert_called_once_with((920, 890))
+    inputs.press_key.assert_not_called()
+    runner.Daily.start.assert_called_once_with()
+    state.factory.game_screen_ready.assert_not_called()
+
+
+@pytest.mark.parametrize("backend", ["local", "cloud"])
+@pytest.mark.parametrize("failure", ["startup", "daily", "in_match", "budget"])
+def test_scheduled_full_run_waits_after_a_game_recovery_error(runner, backend, failure):
+    runner.cfg.control_backend = backend
+    runner.cfg.after_finish = "Loop"
+    runner.cfg.notify_template = {"ErrorOccurred": "发生错误：{error}"}
+    runner.main.__globals__["is_gui_started"] = lambda: False
+    error_type = {
+        "startup": GameStartupUnavailable,
+        "daily": task_steps.GameRecoveryError,
+        "in_match": currency_wars.CurrencyWarsUnavailable,
+        "budget": currency_wars.CurrencyWarsBudgetExceeded,
+    }[failure]
+    error = error_type("本轮无法继续")
+    if failure == "startup":
+        runner.game.start.side_effect = [error, RunStopRequested]
     else:
-        assert record["status"] == "success"
-        assert pressed == [point]
-        assert state.completed == 1
-        screen.get_current_screen.assert_not_called()
+        runner.Daily.start.side_effect = [error, RunStopRequested]
+        error.screenshot = "currencywars.png"
+
+    record = run_currency_wars_cli(runner, "main")
+
+    assert (record["status"], record["reason"], record["exit_code"]) == (STATUS_STOPPED, None, EXIT_STOPPED)
+    assert record["last_failed_round"] == {
+        "reason": error.reason, "error": str(error), "screenshot": error.screenshot,
+    }
+    runner.game.after_finish_is_loop.assert_called_once_with(
+        preserve_game=backend == "local" and failure != "budget",
+    )
+    assert runner.game.start.call_count == 2
+    assert [call.args[1] for call in runner.telemetry.track_task_complete.call_args_list] == [False]
+    runner.notif.notify.assert_called_once_with(
+        content=f"发生错误：{error}", image=error.screenshot, level=currency_wars.NotificationLevel.ERROR,
+    )
 
 
 @pytest.mark.parametrize("action", ("currencywars", "currencywarsloop", "currencywarstemp", "main"))

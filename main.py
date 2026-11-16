@@ -370,6 +370,7 @@ from module.game.adb_transport import AdbError
 from module.game.adb_status import publish_status
 from tasks.game import GameStartupUnavailable, adb_check
 from module.game.cloud import CloudGamePaidTimeExhaustedError, CloudGameZeroDurationError
+from tasks.base.task_steps import GameRecoveryError
 import tasks.reward as reward
 import tasks.challenge as challenge
 import tasks.version as version
@@ -380,7 +381,7 @@ from tasks.daily.fight import Fight
 from tasks.power.power import Power
 from tasks.weekly.universe import Universe
 from tasks.daily.redemption import Redemption
-from tasks.weekly.currency_wars import CurrencyWars, CurrencyWarsTerminalError, CurrencyWarsUnavailable
+from tasks.weekly.currency_wars import CurrencyWars
 from tasks.weekly.divergent_universe import DivergentUniverse
 from tasks.base.genshin_starRail_fps_unlocker import Genshin_StarRail_fps_unlocker
 from tasks.base import screen_test
@@ -489,50 +490,11 @@ def run_main_actions(no_run_immediately=False):
         with _game_connection("main"):
             try:
                 version.start()
-                touch = get_ui_profile(cfg).name == "touch_720"
-                currency_wars_first = False
-                if not touch and Daily.currency_wars_due():
-                    def current_currency_wars():
-                        nonlocal currency_wars_first
-                        try:
-                            currency_wars_first = CurrencyWars.game_screen_ready(for_full_run=True)
-                        except CurrencyWarsUnavailable as error:
-                            from module.automation.automation import screenshot_retry_timeout
-                            from module.automation.background_input import GameWindowLost, InputInterrupted
-                            from module.screen import screen
-                            from tasks.weekly.currency_wars import ENTRY_SCREENS
-
-                            try:
-                                with screenshot_retry_timeout(0):
-                                    ready = screen.get_current_screen(autotry=False, max_retries=1)
-                            except (GameWindowLost, InputInterrupted, ProfileAssetNotFoundError, TouchProfileInputError):
-                                raise
-                            except (OSError, RuntimeError) as fallback_error:
-                                raise error from fallback_error
-                            # 某些挑战退出弹窗也有到主界面的路径，只放行常规页面。
-                            ordinary_screens = (
-                                *ENTRY_SCREENS, "map", "map3d", "mail", "visa", "redemption", "camera",
-                                "photo_preview", "dispatch", "pass1", "pass2", "consumables", "material",
-                                "bag_consumables", "bag_relicset", "bag_lc", "configure_team", "activity",
-                                "character_warp", "stellar_warp", "achievement", "character",
-                                "incoming_message", "reward_guide",
-                            )
-                            if (not ready or screen.current_screen not in ordinary_screens
-                                    or not screen.can_change_from(screen.current_screen, "main")):
-                                raise
-                            log.warning(f"已确认游戏可操作，按正常顺序继续完整运行：{error}")
-                            return screen.current_screen
-                        return currency_wars_first
-
-                    game.start(screen_ready=current_currency_wars)
-                else:
-                    game.start()
-                if touch:
+                game.start()
+                if get_ui_profile(cfg).name == "touch_720":
                     from tasks.touch import rewards
 
                     success = rewards.routine(full_run=True)
-                elif currency_wars_first:
-                    success = Daily.start(currency_wars_first=True)
                 else:
                     success = Daily.start()
                 telemetry.track_task_complete("main", success is not False, time.time() - main_start_time)
@@ -550,6 +512,19 @@ def run_main_actions(no_run_immediately=False):
                 # 时长为 0 时重启也无法恢复：循环模式等到下次定时再运行，避免容器反复重启并推送通知
                 if not game.wait_after_cloud_zero_duration(e):
                     raise
+            except GameRecoveryError as error:
+                telemetry.track_task_complete("main", False, time.time() - main_start_time)
+                if cfg.after_finish != "Loop" or is_gui_started():
+                    notif.flush_batch()
+                    raise
+                release_input()
+                message = cfg.notify_template["ErrorOccurred"].format(error=error)
+                log.error(message)
+                run_session.update_record(last_failed_round={
+                    "reason": error.reason, "error": str(error), "screenshot": error.screenshot,
+                })
+                notif.notify(content=message, image=error.screenshot, level=NotificationLevel.ERROR)
+                game.after_finish_is_loop(preserve_game=error.preserve_game and get_control_backend(cfg) == "local")
             except Exception:
                 telemetry.track_task_complete("main", False, time.time() - main_start_time)
                 notif.flush_batch()
@@ -561,35 +536,25 @@ def run_sub_task(action, task_override=None):
     visible_cloud_tasks = {"fight", "universe"}
     success = True
     if action in ("currencywars", "currencywarsloop"):
-        game.start(headless=None, screen_ready=CurrencyWars.game_screen_ready)
+        game.start(headless=None, screen_ready=CurrencyWars.game_screen_ready, preserve_cloud_session=True)
     elif action not in ("currencywarstemp", "divergenttemp"):
         game.start(headless=False if action in visible_cloud_tasks else None)
     else:
         task_power_request.acquire(log)
         backend = get_control_backend(cfg)
-        if backend == "cloud":
-            if action == "currencywarstemp":
-                attempts = 3
-                for attempt in range(1, attempts + 1):
-                    pause_ctl.checkpoint()
-                    connected = cloud_game.connect_to_running_game()
-                    pause_ctl.checkpoint()
-                    if connected:
-                        break
-                    if attempt < attempts:
-                        log.warning(f"货币战争中途接管暂未连接到云游戏，重新连接（{attempt}/{attempts}）")
-                        time.sleep(1)
-                else:
-                    raise CurrencyWarsUnavailable("连续无法连接正在运行的云游戏，请检查会话后继续货币战争")
-            elif not cloud_game.start_game_process():
+        if action == "divergenttemp":
+            if backend == "cloud" and not cloud_game.start_game_process():
                 raise ConnectionError("启动或连接浏览器失败")
-        if action == "currencywarstemp" and backend == "local":
-            game.prepare_currency_wars_takeover()
-        elif action != "currencywarstemp" or backend != "cloud":
             game.switch_to_game()
+        elif backend == "cloud":
+            if not game.connect_to_running_cloud_game():
+                raise GameStartupUnavailable("连续无法连接正在运行的云游戏，请检查会话后继续任务")
+        else:
+            game.prepare_local_takeover()
 
     def _run_loop_task_with_telemetry(task_id, task_fn):
         while True:
+            pause_ctl.checkpoint()
             telemetry.track_task_start(task_id)
             task_start_time = time.time()
             try:
@@ -602,20 +567,7 @@ def run_sub_task(action, task_override=None):
     def currencywars(mode=None):
         war = CurrencyWars()
         if mode == "loop":
-            attempts_without_result = 0
-
-            def play_next():
-                nonlocal attempts_without_result
-                won = war.start(loop=True)
-                if won or war.result is not None:
-                    attempts_without_result = 0
-                else:
-                    attempts_without_result += 1
-                    if attempts_without_result >= 3:
-                        raise CurrencyWarsUnavailable("货币战争循环连续三次未确认对局结果，已保留当前现场")
-                return won
-
-            _run_loop_task_with_telemetry("currencywarsloop", play_next)
+            _run_loop_task_with_telemetry("currencywarsloop", lambda: war.start(loop=True))
         else:
             return war.start(resume=mode == "temp")
 
@@ -869,8 +821,7 @@ if __name__ == "__main__":
             # 也不按错误处理（不截图、不推送）
             release_input(close=True)
             connection = getattr(e, "game_connection", None)
-            if (args.workflow_name is None and args.task in (None, "main", "currencywars", "currencywarsloop", "currencywarstemp")
-                    and (connection[0] if connection else get_control_backend(cfg)) == "cloud"):
+            if connection and connection[0] == "cloud" and args.task not in HOST_TASKS:
                 cloud_game.preserve_running_browser()
             try:
                 pause_ctl.stop()
@@ -896,7 +847,7 @@ if __name__ == "__main__":
             release_input()
             telemetry.track_error(type(e).__name__, str(e))
             log.error(cfg.notify_template['ErrorOccurred'].format(error=e))
-            terminal = isinstance(e, (CurrencyWarsTerminalError, GameStartupUnavailable))
+            terminal = isinstance(e, GameRecoveryError)
             connection = getattr(e, "game_connection", None)
             with pin_game_connection(cfg, connection=connection) if connection else nullcontext():
                 if terminal and get_control_backend(cfg) == "cloud":

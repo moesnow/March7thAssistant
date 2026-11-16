@@ -117,14 +117,20 @@ class Screen(metaclass=SingletonMeta):
                 "建议关闭帧率/硬件监控悬浮窗（如 FPS、CPU、GPU、RTSS、Afterburner 等）后重试"
             )
 
-    def _handle_autotry(self):
+    def dismiss_story_recap(self, *, take_screenshot=True):
+        """仅在识别到「稍后再看」时关闭前情提要。"""
+        point = auto.find_element("稍后再看", "text", take_screenshot=take_screenshot)
+        if not point or not auto.click_element_with_pos(point):
+            return False
+        self.logger.info("检测到开拓任务前情提要弹窗，已点击稍后再看")
+        return True
+
+    def recover_current_screen(self):
         """
         处理自动重试逻辑，包括按ESC键和处理特定的异常情况。
         """
         self._warn_overlay_monitor_text_if_needed()
-        if auto.click_element("稍后再看", "text", take_screenshot=False):
-            self.logger.info("检测到开拓任务前情提要弹窗，已点击稍后再看")
-        else:
+        if not self.dismiss_story_recap(take_screenshot=False):
             auto.press_key("esc")
             self.logger.warning("未识别出任何界面，请确保游戏画面干净，按ESC后重试")
         time.sleep(2)  # 等待屏幕变化
@@ -210,7 +216,7 @@ class Screen(metaclass=SingletonMeta):
                 return True
 
             if autotry:
-                self._handle_autotry()
+                self.recover_current_screen()
             else:
                 self.logger.debug("未识别出任何界面，请确保游戏画面干净")
                 break

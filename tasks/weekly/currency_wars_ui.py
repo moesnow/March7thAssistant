@@ -82,8 +82,6 @@ MATCH_WIN_TITLES = ("对局胜利", "晋升成功")
 MATCH_LOSS_TITLES = ("对局失败", "对局未完成", "晋升失败")
 MATCH_WINS = ("挑战成功", *MATCH_WIN_TITLES, "触发晋升赛")
 MATCH_LOSSES = ("挑战失败", *MATCH_LOSS_TITLES)
-RECONNECT_TEXT = (620, 486, 1310, 568)
-RECONNECT_CONFIRM = (1050, 631, 1310, 711)
 CHOICE_TITLE = (555, 38, 1370, 215)
 CHOICE_CONFIRM = (615, 775, 1900, 1045)
 INVESTMENT_CONFIRM = (850, 945, 1310, 1024)
@@ -230,7 +228,6 @@ class Page(Enum):
     BATTLE = "战斗"
     NODE_RESULT = "节点结算"
     MATCH_RESULT = "对局结算"
-    RECONNECT = "游戏重连提示"
     DISCONNECTED = "云游戏中断"
 
 
@@ -281,7 +278,7 @@ class Frame:
     def action_context(self):
         """输入必须始终属于同一节点和同一层界面。"""
         # 独立弹层的操作只依赖弹层本身。背景节点号漏读或跳变不代表弹层已关闭。
-        if self.page in (Page.RECONNECT, Page.SVAROG_MODIFICATION, Page.HALO_MENTOR):
+        if self.page in (Page.SVAROG_MODIFICATION, Page.HALO_MENTOR):
             return self.page, None, None
         dialog = {Page.CHOICE: "choice", Page.REVEAL: "reveal_kind"}.get(self.page)
         return self.page, self.stage, getattr(self, dialog) if dialog else None
@@ -563,17 +560,6 @@ class Frame:
         return self.has("收起", area=BOARD_SHOP) and self.has(*SHOP_REFRESH_LABELS, area=SHOP_REFRESH)
 
     @cached_property
-    def reconnect_dialog(self) -> bool:
-        message = "".join(label.text for label in self.texts(RECONNECT_TEXT))
-        return (all(part in message for part in ("失去网络连接", "战斗结果同步失败", "是否尝试重新连接"))
-                and self.has("提示", area=(868, 379, 1056, 443)))
-
-    def reconnect_confirm(self) -> Label | None:
-        if self.reconnect_dialog:
-            return self.enabled_button(self.find("确认", area=RECONNECT_CONFIRM))
-        return None
-
-    @cached_property
     def end_match_confirm_area(self) -> Area | None:
         if not self.has("提示", area=(714, 306, 884, 372)):
             return None
@@ -599,11 +585,18 @@ class Frame:
         if (self.find("连接中断") and self.find("退出游戏")) or (
                 self.find("加载失败", contains=True) and self.find("立即切换")):
             return Page.DISCONNECTED
-        if self.reconnect_dialog:
-            return Page.RECONNECT
         if "背包内助燃券持有数量已达上限" in "".join(
                 label.text for label in self.texts((385, 323, 1540, 650))):
             return Page.REWARD_LIMIT
+        cancel = self.find("取消", area=(552, 631, 930, 720))
+        halo_replace = cancel and self.has("替换该角色原有光环", area=(713, 453, 1210, 565), contains=True)
+        fight_prompt = self.find("本局不再提示", area=(730, 480, 1150, 730)) and self.find(
+            "确认", area=(780, 605, 1280, 830))
+        # 未识别的居中提示可能覆盖已读到的背景控件。
+        if (not (halo_replace or fight_prompt) and self.has("提示", area=(868, 379, 1056, 443))
+                and self.has("确认", area=(1050, 631, 1310, 711))
+                and (cancel or self.texts((620, 486, 1310, 568))) and not self.empty_front_confirm()):
+            return Page.CONFLICT
         try:
             if self.reward_close():
                 return Page.REWARD_RECEIPT
@@ -683,11 +676,9 @@ class Frame:
                     or self.find("周额外晋升点", area=(45, 115, 515, 173), contains=True)):
                 return Page.MODES
 
-        if self.find("本局不再提示", area=(730, 480, 1150, 730)) and self.find(
-                "确认", area=(780, 605, 1280, 830)):
+        if fight_prompt:
             return Page.CONFIRM_FIGHT
-        if (self.has("替换该角色原有光环", area=(713, 453, 1210, 565), contains=True)
-                and self.find("取消", area=(552, 631, 930, 720))):
+        if halo_replace:
             return Page.HALO_REPLACE
         if self.find("选择一个角色获得主角光环", area=HALO_HEADER):
             return Page.HALO
