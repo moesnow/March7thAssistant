@@ -34,6 +34,15 @@ def slot(zone, index, unit=None, *, occupied=False):
                        occupied or unit is not None, unit)
 
 
+def halo_selection(target):
+    return task.HaloSelection("2-7", ((target, np.zeros((61, 60, 3), dtype=np.uint8)),))
+
+
+def match_halo_at(monkeypatch, frames, point):
+    for frame in frames:
+        monkeypatch.setattr(frame, "halo_portrait_scores", lambda points, _: tuple(float(p == point) for p in points))
+
+
 CORE = policy.Unit("那刻夏", True, False, 2, equipment=0)
 BAILU = policy.Unit("白露", False, True, 1)
 CER = policy.Unit("刻律德菈", False, True, 1)
@@ -5390,7 +5399,7 @@ def test_halo_refresh_handles_discount_to_regular_price(monkeypatch, world, prev
 ))
 def test_halo_applies_the_gold_reserve_only_to_confirmed_paid_refreshes(
         monkeypatch, world, gold, status, after_status, cost):
-    world.war.halo_candidate = slot("front", 0, CORE), None
+    world.war.halo_candidate = halo_selection(slot("front", 0, CORE))
     right = ("闭关", 1480, 435)
     refresh = ("刷新", 468, 770)
     before = page(Page.HALO, ("乱披风拳法", 420, 435), right, refresh, (status, 958, 134), halo_gold=gold)
@@ -5404,8 +5413,7 @@ def test_halo_applies_the_gold_reserve_only_to_confirmed_paid_refreshes(
         monkeypatch.setattr(chosen, "halo_effect_selected", lambda index: index == 0)
         frames.extend((rolled, chosen))
         routes = {(before, refresh[1:]): rolled, (rolled, (420, 435)): chosen, (chosen, (960, 948)): after}
-    for frame in frames:
-        monkeypatch.setattr(frame, "halo_portrait_matches", lambda point, _: point == ui.HALO_TARGET)
+    match_halo_at(monkeypatch, frames, ui.HALO_TARGET)
     state = drive(monkeypatch, world, before, lambda s, p: setattr(s, "frame", routes[s.frame, p]))
     if after_status is None:
         routes.update({(before, right[1:]): before, (before, (969, 954)): after})
@@ -5466,14 +5474,13 @@ def test_halo_accepts_observed_lucky_hit_or_safe_two_star_shop_effect():
 
 
 def test_halo_uses_a_safe_support_effect_when_paid_refresh_would_spend_the_reserve(monkeypatch, world):
-    world.war.halo_candidate = slot("front", 0, CORE), None
+    world.war.halo_candidate = halo_selection(slot("front", 0, CORE))
     cards = (("守阵者", 415, 434), ("获得20%治疗强度和护盾强度，分摊伤害。", 421, 528),
              ("黑洞引力", 1491, 434), ("施放终结技后，使战斗倒计时延后10行动值。", 1501, 530),
              ("1刷新还剩6次", 958, 134), ("刷新", 401, 771))
     before = page(Page.HALO, *cards, halo_gold=4)
     selected = page(Page.HALO, *cards, halo_gold=4)
-    for f in (before, selected):
-        monkeypatch.setattr(f, "halo_portrait_matches", lambda p, _: p == ui.HALO_TARGET)
+    match_halo_at(monkeypatch, (before, selected), ui.HALO_TARGET)
     after = page(Page.BOARD)
     assert before.halo_effect() is None
     assert before.halo_effect(allow_support=True)[2].text == "黑洞引力"
@@ -5524,7 +5531,7 @@ def test_replacement_prompt_preserves_first_halo(monkeypatch, world):
                                  ("确认", 1192, 672)))
     assert dialog.page == Page.HALO_REPLACE
     selection = page(Page.HALO)
-    world.war.halo_candidate = slot("front", 0, CORE), None
+    world.war.halo_candidate = halo_selection(slot("front", 0, CORE))
     state = drive(monkeypatch, world, dialog, lambda s, _: setattr(s, "frame", selection))
     assert world.war._cancel_halo_replacement(dialog) == selection
     assert state.clicks == [(Page.HALO_REPLACE, (763, 672))]
@@ -5537,7 +5544,7 @@ def test_halo_confirms_name_when_center_art_does_not_match(monkeypatch, world, f
     target = slot("front", 3, sunday)
     source = ui.HALO_FRONT[3]
     if not from_fallback:
-        world.war.halo_candidate = target, None
+        world.war.halo_candidate = halo_selection(target)
     title = ("强化激素", 1480, 436)
     effects = (title, ("获得40%伤害增幅", 1460, 529), ("全勤底薪", 420, 436),
                ("敌人难度+3", 430, 722))
@@ -5550,8 +5557,7 @@ def test_halo_confirms_name_when_center_art_does_not_match(monkeypatch, world, f
     selected = page(Page.HALO, *effects, ("确认", 968, 953))
     selected.image = settled.image.copy()
     after = page(Page.BOARD)
-    for f in (empty, filled, settled, selected):
-        monkeypatch.setattr(f, "halo_portrait_matches", lambda point, _: point == source)
+    match_halo_at(monkeypatch, (empty, filled, settled, selected), source)
     monkeypatch.setattr(selected, "halo_effect_selected", lambda index: index == 1)
     routes = {
         (filled, (147, 954)): detail,
@@ -5585,9 +5591,9 @@ def test_halo_confirms_name_when_center_art_does_not_match(monkeypatch, world, f
 def test_halo_reselects_after_the_previous_employee_is_retained(monkeypatch, world, outcome):
     target = slot("front", 2, policy.Unit("花火", True, False, 2))
     source = ui.HALO_FRONT[target.index]
-    world.war.halo_candidate = target, None
+    world.war.halo_candidate = halo_selection(target)
     effects = (("前台专家", 425, 437), ("获得40%伤害增幅", 411, 532),
-               ("乱披风拳法", 1481, 437), ("角色详情", 147, 954))
+               ("乱披风拳法", 1481, 437), ("角色详情", 147, 954), ("返回备战界面", 1772, 66))
     previous = page(Page.HALO, *effects, ("确认", 968, 953))
     current = page(Page.HALO, *effects, ("尚未选择主角光环", 954, 890))
     chosen = page(Page.HALO, *effects, ("确认", 968, 953))
@@ -5598,14 +5604,15 @@ def test_halo_reselects_after_the_previous_employee_is_retained(monkeypatch, wor
     old_detail = page(Page.HALO_DETAIL, (CORE.name, 862, 203))
     new_detail = page(Page.HALO_DETAIL) if outcome == "unread_name" else page(Page.HALO_DETAIL, (name, 862, 203))
     after = page(Page.BOARD)
-    for f in (previous, current, chosen):
-        monkeypatch.setattr(f, "halo_portrait_matches", lambda point, _: point == source)
+    preview = page(Page.BOARD, ("返回主角选择", 1788, 66), stage="2-7")
+    match_halo_at(monkeypatch, (previous, current, chosen), source)
     monkeypatch.setattr(previous, "halo_effect_selected", lambda index: index == 1)
     monkeypatch.setattr(chosen, "halo_effect_selected", lambda index: index == 0)
     routes = {
         (previous, (147, 954)): old_detail,
         (old_detail, (1863, 65)): previous,
         (current, (147, 954)): new_detail,
+        (current, (1772, 66)): preview,
         (new_detail, (1863, 65)): current,
         (current, (425, 437)): chosen,
         (chosen, (968, 953)): after,
@@ -5624,10 +5631,127 @@ def test_halo_reselects_after_the_previous_employee_is_retained(monkeypatch, wor
         assert state.clicks == details
         assert world.auto.drag_mouse.call_count == 3
     else:
-        with pytest.raises(task.CurrencyWarsError, match="光环详情未确认花火"):
-            world.war._halo(previous)
-        assert state.clicks == details * 2
+        assert world.war._halo(previous) is preview
+        assert state.clicks == details * 2 + [(Page.HALO, (1772, 66))]
         assert world.auto.drag_mouse.call_count == 1
+
+
+def test_halo_sees_the_landed_portrait_even_if_the_caption_is_unreadable(monkeypatch, world):
+    world.war.default_strategy = True
+    world.war.halo_candidate = halo_selection(slot("front", 0, CORE))
+    effects = (("前台专家", 420, 436), ("获得40%伤害增幅", 420, 532))
+    empty = page(Page.HALO, *effects)
+    landed = page(Page.HALO, *effects)
+    landed.image = CANVAS.copy()
+    ImageDraw.Draw(landed.image).rectangle((944, 421, 980, 461), fill=(210, 165, 150))
+    match_halo_at(monkeypatch, (empty, landed), ui.HALO_FRONT[0])
+    returned = page(Page.BOARD)
+
+    def click(state, point):
+        assert state.frame is landed
+        if point == (969, 954):
+            state.frame = returned
+
+    state = drive(monkeypatch, world, empty, click)
+    world.auto.drag_mouse.side_effect = lambda *a, **k: setattr(state, "frame", landed) or True
+    assert world.war._halo(empty) is returned
+    assert world.auto.drag_mouse.call_count == 1
+    assert state.clicks == [(Page.HALO, (420, 436)), (Page.HALO, (969, 954))]
+
+
+@pytest.mark.parametrize(("entry", "outcome"), (
+    ("single", "resampled"), ("loop", "resampled"), ("takeover", "resampled"), ("daily", "resampled"),
+    ("takeover", "fixed"), ("takeover", "unavailable"), ("takeover", "budget"), ("takeover", "stopped"),
+))
+def test_halo_recovers_from_an_ambiguous_portrait_in_the_same_run(monkeypatch, world, entry, outcome):
+    stage = "2-7"
+    front, backup = slot("front", 0, CORE), slot("front", 1, FILLER)
+    team = board(front, backup, stage=stage)
+    rng = np.random.default_rng(1373)
+    old, fresh, alternate = rng.integers(24, 232, size=(3, 61, 60, 3), dtype=np.uint8)
+    open_point, back_point, effect_point, confirm_point = (1790, 66), (1772, 66), (420, 436), (969, 954)
+
+    def preview(portrait):
+        f = page(Page.BOARD, ("返回主角选择", *open_point), stage=stage, capacity=(2, 4), gold=3)
+        f.image = CANVAS.copy()
+        for (x, y), card in ((front.point, portrait), (backup.point, alternate)):
+            f.image.paste(Image.fromarray(card), (x - 30, y - 31))
+        return f
+
+    def halo(first, second, *, placed=None):
+        captions = labels(("选择一个角色获得主角光环", 960, 90), ("返回备战界面", *back_point),
+                          ("前台专家", *effect_point), ("获得40%伤害增幅", 420, 532))
+        image = CANVAS.copy()
+        for (x, y), portrait in zip((*ui.HALO_FRONT[:2], ui.HALO_TARGET), (first, second, placed)):
+            if portrait is not None:
+                tile = ui.cv2.resize(portrait.astype(np.float32), (42, 46), interpolation=ui.cv2.INTER_AREA)
+                image.paste(Image.fromarray(tile.astype(np.uint8)), (x - 21, y - 23))
+        return Frame(image, captions)
+
+    before, reread = preview(old), preview(fresh)
+    ambiguous, correct = halo(old, old), halo(fresh, alternate)
+    landed = halo(fresh, alternate, placed=fresh if outcome == "resampled" else alternate)
+    result = page(Page.MATCH_RESULT, ("对局胜利", 962, 241), ("返回货币战争", 962, 893))
+    lobby, modes, ready = home(), mode(("进入标准博弈", 1638, 960)), rank()
+    routes = {(lobby, (1600, 972)): modes, (modes, (1638, 960)): ready, (ready, (1680, 965)): before,
+              (result, (962, 893)): lobby, (before, open_point): ambiguous,
+              (reread, open_point): correct, (landed, effect_point): landed, (landed, confirm_point): result}
+    visited = []
+    drags = []
+
+    def read_board(f, *, front_only):
+        assert front_only
+        visited.append(f)
+        return f, team
+
+    def click(state, point):
+        if state.frame is ambiguous and point == back_point:
+            state.frame = reread if visited and outcome == "resampled" else before
+        else:
+            if state.frame is landed:
+                expected = backup if outcome == "fixed" else front
+                assert world.war.halo_candidate.cards[0][0] == expected
+            state.frame = routes[state.frame, point]
+
+    def drag(start, end, **_):
+        assert tuple(round(p * size) for p, size in zip(end, (1920, 1080))) == ui.HALO_TARGET
+        drags.append(tuple(round(p * size) for p, size in zip(start, (1920, 1080))))
+        if outcome == "budget":
+            world.now[0] = world.war.deadline
+        elif outcome == "stopped":
+            task.pause_ctl.checkpoint.side_effect = RunStopRequested
+        elif outcome == "resampled" or (outcome == "fixed" and len(drags) == 2):
+            state.frame = landed
+        return True
+
+    state = drive(monkeypatch, world, ambiguous if entry == "takeover" else lobby, click)
+    monkeypatch.setattr(world.war, "_read_board", read_board)
+    monkeypatch.setattr(world.war, "get_reward",
+                        lambda f: (f, (18000 if world.war.result else 0, 18000), False))
+    world.auto.drag_mouse.side_effect = drag
+
+    if entry == "daily":
+        from tasks.daily import daily
+
+        monkeypatch.setattr(daily, "CurrencyWars", lambda: world.war)
+        assert daily.Daily._run_currency_wars()
+    elif outcome in ("resampled", "fixed"):
+        assert world.war.start(resume=entry == "takeover", loop=entry == "loop")
+    else:
+        errors = {"unavailable": task.CurrencyWarsUnavailable, "budget": task.CurrencyWarsBudgetExceeded,
+                  "stopped": RunStopRequested}
+        with pytest.raises(errors[outcome]):
+            world.war.start(resume=True)
+
+    back_count = (1 if outcome == "resampled" else 2) + (entry == "takeover")
+    assert state.clicks.count((Page.HALO, back_point)) == back_count
+    assert visited == ([before, reread] if outcome == "resampled" else [before] * 3)
+    assert drags == list(ui.HALO_FRONT[:2 if outcome in ("fixed", "unavailable") else 1])
+    finished = outcome in ("resampled", "fixed")
+    submissions = [point for page_, point in state.clicks if page_ == Page.HALO and point != back_point]
+    assert submissions == ([effect_point, confirm_point] if finished else [])
+    assert state.frame is (lobby if finished else ambiguous)
+    assert task.save_error_screenshot.call_count == (outcome in ("unavailable", "budget"))
 
 
 @pytest.mark.parametrize("returned_gold", (13, 17))
@@ -6383,7 +6507,7 @@ def test_wide_population_crop_only_overrides_when_board_matches(monkeypatch):
 def test_high_halo_can_spend_a_verified_paid_reroll_below_low_rank_reserve(monkeypatch, world, high_lineup):
     world.war.lineup = high_lineup
     core = slot("front", 0, CORE)
-    world.war.halo_candidate = (core, ui.np.zeros((12, 12, 3), dtype=ui.np.uint8))
+    world.war.halo_candidate = halo_selection(core)
     price = ("1刷新还剩8次", 960, 135)
     refresh = ("刷新", 471, 772)
     left = ("苦战寻宝", 420, 435)
@@ -6397,8 +6521,7 @@ def test_high_halo_can_spend_a_verified_paid_reroll_below_low_rank_reserve(monke
     confirm = ("确认", 970, 954)
     selected = page(Page.HALO, new, *fixed, confirm, halo_gold=3)
     after = page(Page.BOARD, stage="1-9")
-    for current in (before, rolled, selected):
-        monkeypatch.setattr(current, "halo_portrait_matches", lambda *_: True)
+    match_halo_at(monkeypatch, (before, rolled, selected), ui.HALO_TARGET)
     monkeypatch.setattr(selected, "halo_effect_selected", lambda i: i == 0)
     monkeypatch.setattr(selected, "enabled_button", lambda label: label)
     routes = {(before, refresh[1:]): rolled, (rolled, new[1:]): selected, (selected, confirm[1:]): after}
@@ -6955,7 +7078,7 @@ def test_weekly_uncertain_claim_returns_home_and_does_not_claim_twice(monkeypatc
 def test_halo_refresh_timeout_uses_a_confirmed_backup_without_spending_again(monkeypatch, world):
     stage = "2-5"
     world.war.last_result_stage = stage
-    world.war.halo_candidate = slot("front", 0, CORE), None
+    world.war.halo_candidate = halo_selection(slot("front", 0, CORE))
     refresh = ("刷新", 468, 770)
     common = (("闭关", 1480, 435), ("免费刷新还剩2次", 958, 134))
     initial = page(Page.HALO, ("乱披风拳法", 420, 435), refresh, *common, halo_gold=0)
@@ -6963,8 +7086,7 @@ def test_halo_refresh_timeout_uses_a_confirmed_backup_without_spending_again(mon
     current = page(Page.HALO, *cards, halo_gold=0)
     selected = page(Page.HALO, *cards, ("确认", 960, 948), halo_gold=0)
     returned = page(Page.BOARD, stage=stage)
-    for frame in (initial, current, selected):
-        monkeypatch.setattr(frame, "halo_portrait_matches", lambda point, _: point == ui.HALO_TARGET)
+    match_halo_at(monkeypatch, (initial, current, selected), ui.HALO_TARGET)
     monkeypatch.setattr(selected, "halo_effect_selected", lambda i: i == 0)
     routes = {
         (initial, refresh[1:]): current, (current, (420, 435)): selected, (selected, (960, 948)): returned,

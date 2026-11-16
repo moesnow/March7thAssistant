@@ -41,6 +41,7 @@ AUTO_RETRY_SECONDS = 12
 MAX_PREPARATION_FALLBACKS = 3
 DEFAULT_PREPARE_LIMIT = 30
 DEFAULT_HALO_REFRESHES = 2
+MAX_HALO_IDENTITY_RETRIES = 2
 ACTION_POLL = 0.22
 CLICK_HOLD = 0.075
 BOX_HOLD = 0.20
@@ -53,6 +54,7 @@ PREP_OVERLAYS = frozenset((Page.SHOP, Page.TIMED_SHOP, Page.RAIL_SHOP, Page.BLAC
 PLAY_PAGES = PREP_OVERLAYS | {Page.BOARD, Page.BATTLE, Page.NODE_RESULT, Page.MATCH_RESULT,
                              Page.HALO, Page.HALO_DETAIL, Page.HALO_REPLACE, Page.TEA}
 ACTIVE_PAGES = PLAY_PAGES | {Page.DETAIL, Page.PARTNER_DETAIL, Page.EQUIPMENT, Page.CONFIRM_FIGHT}
+HALO_EXIT_PAGES = (ACTIVE_PAGES | {Page.HOME, Page.WEEKLY}) - {Page.HALO}
 REWARD_PAGES = {Page.HOME, Page.WEEKLY, Page.REWARD_RECEIPT, Page.REWARD_LIMIT}
 BOARD_PAGES = {Page.BOARD, Page.BENCH_FULL}
 ENTRY_SCREENS = ("guide5", "main", "menu", "guide1", "guide2", "guide3", "guide4", "start_game", "click_enter")
@@ -156,6 +158,17 @@ class ReserveSaleAttempt:
                 and cv2.absdiff(frame.slot_mark(slot.point), self.portrait).mean() <= 16)
 
 
+@dataclass(frozen=True)
+class HaloSelection:
+    stage: str
+    cards: tuple[tuple[strategy.Slot, np.ndarray], ...]
+    selected_face: np.ndarray | None = None
+
+    def same_face(self, frame):
+        return (self.selected_face is not None
+                and cv2.absdiff(frame.crop(ui.HALO_TARGET_FACE), self.selected_face).mean() <= 20)
+
+
 class CurrencyWars:
     def __init__(self):
         self.deadline = None
@@ -173,6 +186,7 @@ class CurrencyWars:
         self.last_result_stage = None
         self.slot_cache = {}
         self.halo_candidate = None
+        self.halo_identity_retries: dict[str, int] = {}
         self.tea_menu_fallback = None
         self.halo_excluded = set()
         self.stage_refreshes = {}
@@ -2118,8 +2132,10 @@ class CurrencyWars:
         else:
             target = max(fronts, key=lambda slot: (slot.unit.name == board.core, slot.unit.is_output,
                                                    strategy.slot_priority(board, slot.unit, "front")))
-        portrait = cv2.resize(frame.slot_mark(target.point), (12, 12)).astype(np.int16)
-        self.halo_candidate = (target, portrait)
+        ordered = (target, *(slot for slot in fronts if slot.index != target.index))
+        self.halo_candidate = HaloSelection(
+            board.stage, tuple((slot, frame.slot_mark(slot.point).copy()) for slot in ordered),
+        )
         return self._click_to(
             frame, lambda f: ui.point(f.find("返回主角选择", area=ui.TEA_RETURN)
                                       or f.find("选择主角", area=ui.BOARD_FIGHT)),
@@ -3312,60 +3328,163 @@ class CurrencyWars:
             same_view=same_popup,
         )
 
-    def _halo(self, frame):
-        if not self.halo_candidate:
-            return self._click_to(
-                frame, lambda f: ui.point(f.find("返回备战界面", area=ui.TEA_RETURN)),
-                lambda f: f.page == Page.BOARD, "未能返回备战页核对主角身份",
+    def _return_halo_board(self, frame):
+        return self._click_to(
+            frame, lambda f: ui.point(f.find("返回备战界面", area=ui.TEA_RETURN)),
+            lambda f: f.page in HALO_EXIT_PAGES, "未能返回备战页核对主角身份", seconds=8, attempts=2,
+        )
+
+    def _recover_halo_identity(self, frame, scores, reason):
+        if frame.page != Page.HALO:
+            return frame
+        selection = self.halo_candidate
+        target, _ = selection.cards[0]
+        stage = selection.stage
+        readings = " / ".join(f"{score:.3f}" for score in scores) or "未取得"
+        log.warning(f"{stage} 前台第 {target.index + 1} 格「{target.unit.name}」{reason}，前台相似度 {readings}")
+        attempts = self.halo_identity_retries.get(stage, 0)
+        if attempts >= MAX_HALO_IDENTITY_RETRIES:
+            return self._place_halo_by_position(frame, selection)
+
+        self.halo_identity_retries[stage] = attempts + 1
+        log.info(f"{stage} 返回备战重新读取前台（{attempts + 1}/{MAX_HALO_IDENTITY_RETRIES}）")
+        try:
+            updated = self._return_halo_board(frame)
+        except CurrencyWarsRecoverable as error:
+            log.warning(f"{stage} 返回备战暂未确认：{error}")
+            if self.frame.page == Page.HALO:
+                return self._place_halo_by_position(self.frame, selection)
+            return self.frame
+        if updated.page == Page.BOARD and updated.stage == stage:
+            self.slot_cache.clear()
+        return updated
+
+    def _place_halo_by_position(self, frame, selection):
+        before = frame.crop(ui.HALO_TARGET_FACE)
+        previous = None
+        attempted = 0
+
+        def positions(_):
+            if attempted < len(selection.cards) and previous is None:
+                slot, _ = selection.cards[attempted]
+                return ui.HALO_FRONT[slot.index], ui.HALO_TARGET
+            return None
+
+        def drag(f, start, end):
+            nonlocal attempted
+            slot, _ = selection.cards[attempted]
+            attempted += 1
+            log.info(f"{selection.stage} 按固定位置尝试前台第 {slot.index + 1} 格")
+            return self._drag(f, start, end, page=Page.HALO)
+
+        def placed(f):
+            nonlocal previous
+            if f.page != Page.HALO:
+                return f.page in HALO_EXIT_PAGES
+            face = f.halo_target_face
+            changed = (attempted > 0 and face is not None
+                       and cv2.absdiff(face, before).mean() > 20)
+            settled = changed and previous is not None and cv2.absdiff(face, previous).mean() <= 12
+            previous = face if changed else None
+            return settled
+
+        try:
+            updated = self._action(
+                frame, positions, drag, placed, "未确认固定卡位放入主角",
+                seconds=6, attempts=len(selection.cards), track_control=False,
             )
-        target, portrait = self.halo_candidate
+        except CurrencyWarsRecoverable as error:
+            raise CurrencyWarsUnavailable(f"{selection.stage} {error}，已保留当前现场") from error
+        if updated.page == Page.HALO:
+            index = attempted - 1
+            cards = selection.cards[index:] + selection.cards[:index]
+            self.halo_candidate = replace(selection, cards=cards, selected_face=updated.crop(ui.HALO_TARGET_FACE).copy())
+        return updated
+
+    def _select_halo_target(self, frame):
+        selection = self.halo_candidate
+        if selection.same_face(frame):
+            return frame
+        target, portrait = selection.cards[0]
         source = ui.HALO_FRONT[target.index]
+        scores = ()
 
         def portrait_matches(f):
-            return f.halo_portrait_matches(ui.HALO_TARGET, portrait)
+            return f.halo_portrait_scores((ui.HALO_TARGET,), portrait)[0] >= ui.HALO_PORTRAIT_MIN_SCORE
 
-        frame = self._expect(
-            lambda f: f.page == Page.HALO and (
-                portrait_matches(f) or f.halo_target_present() or f.halo_portrait_matches(source, portrait)
-            ), 8, "主角选择页与备战页的角色身份不一致",
-        )
-        verified_face = None
+        def source_matches(f):
+            nonlocal scores
+            scores = f.halo_portrait_scores(ui.HALO_FRONT, portrait)
+            score = scores[target.index]
+            other = max(value for index, value in enumerate(scores) if index != target.index)
+            return score >= ui.HALO_PORTRAIT_MIN_SCORE and score - other >= ui.HALO_PORTRAIT_MIN_GAP
+
+        def ready(f):
+            if f.page != Page.HALO:
+                return f.page in HALO_EXIT_PAGES
+            return f.halo_target_present() or portrait_matches(f) or source_matches(f)
+
+        try:
+            frame = self._expect(ready, 8, "未能核对主角选择页的前台角色")
+        except CurrencyWarsReadTimeout as error:
+            return self._recover_halo_identity(self.frame, scores, str(error))
+        if frame.page != Page.HALO:
+            return frame
+
         placed_target = False
         for attempt in range(2):
             if portrait_matches(frame):
                 break
             if frame.halo_target_present():
                 if self.default_strategy and placed_target:
-                    # 已确认拖放改动了中央角色，速刷直接锁定新肖像。
-                    verified_face = frame.crop(ui.HALO_TARGET_FACE)
                     break
                 if not self.default_strategy or not target.unit.name.endswith("格角色"):
-                    frame, matches = self._inspect_halo_target(frame, target.unit.name)
+                    try:
+                        frame, matches = self._inspect_halo_target(frame, target.unit.name)
+                    except CurrencyWarsRecoverable as error:
+                        return self._recover_halo_identity(self.frame, scores, str(error))
                     if matches or (matches is None and placed_target):
-                        verified_face = frame.crop(ui.HALO_TARGET_FACE)
                         break
             if attempt:
-                raise CurrencyWarsError(f"光环详情未确认{target.unit.name}，已保留当前选择")
+                return self._recover_halo_identity(frame, scores, "光环详情未确认角色")
 
             # 取消替换后，游戏可能仍保留前一次预选。拖放后核对中央角色已变化。
             previous_face = frame.crop(ui.HALO_TARGET_FACE) if frame.halo_target_present() else None
 
             def placed(f):
-                return f.page == Page.HALO and (portrait_matches(f) or f.halo_target_present() and (
+                if f.page != Page.HALO:
+                    return f.page in HALO_EXIT_PAGES
+                return portrait_matches(f) or (placed_target and f.halo_target_present() and (
                     previous_face is None or cv2.absdiff(f.crop(ui.HALO_TARGET_FACE), previous_face).mean() > 20
                 ))
 
-            frame = self._drag_to(
-                frame, lambda f: (source, ui.HALO_TARGET) if f.halo_portrait_matches(source, portrait) else None,
-                placed, "主角光环未确认放入角色",
-            )
-            placed_target = True
+            def drag(f, start, end):
+                nonlocal placed_target
+                placed_target = True
+                return self._drag(f, start, end, page=Page.HALO)
 
-        def same_target(f):
-            return portrait_matches(f) or (
-                verified_face is not None
-                and cv2.absdiff(f.crop(ui.HALO_TARGET_FACE), verified_face).mean() <= 20
-            )
+            try:
+                frame = self._action(
+                    frame, lambda f: (source, ui.HALO_TARGET) if source_matches(f) else None,
+                    drag, placed, "主角光环未确认放入角色", seconds=8, attempts=3,
+                )
+            except CurrencyWarsActionUnready as error:
+                return self._recover_halo_identity(self.frame, scores, str(error))
+            if frame.page != Page.HALO:
+                return frame
+        self.halo_candidate = replace(selection, selected_face=frame.crop(ui.HALO_TARGET_FACE).copy())
+        return frame
+
+    def _halo(self, frame):
+        if self.halo_candidate is None:
+            return self._return_halo_board(frame)
+        frame = self._select_halo_target(frame)
+        if frame.page != Page.HALO:
+            if frame.page not in (Page.HALO_DETAIL, Page.HALO_REPLACE):
+                self.halo_candidate = None
+            return frame
+        selection = self.halo_candidate
+        target, _ = selection.cards[0]
 
         if not self.default_strategy and not any(frame.halo_effect_texts()):
             frame = self._wait(lambda f: f.page == Page.HALO and any(f.halo_effect_texts()), 3) or frame
@@ -3443,7 +3562,7 @@ class CurrencyWars:
         effect = effect or frame.halo_effect(max_difficulty=5, allow_support=True, allowed=allowed)
 
         def option(f, attempt):
-            if not same_target(f):
+            if not selection.same_face(f):
                 return None
             if effect is not None:
                 _, index, title = effect
@@ -3461,7 +3580,10 @@ class CurrencyWars:
         def confirm(f):
             return ui.point(f.find("确认", area=ui.HALO_CONFIRM)) or (969, 954)
 
-        updated = self._choose_single(frame, option, confirm, advanced, "主角光环点选并确认后未转场")
+        updated = self._choose_single(
+            frame, option, confirm, advanced, "主角光环点选并确认后未转场",
+            can_confirm=lambda f, _: selection.same_face(f),
+        )
         if updated.page != Page.HALO_REPLACE:
             self.halo_candidate = None
         return updated
@@ -3685,7 +3807,7 @@ class CurrencyWars:
 
     def _cancel_halo_replacement(self, frame):
         if self.halo_candidate is not None:
-            target = self.halo_candidate[0]
+            target, _ = self.halo_candidate.cards[0]
             self.halo_excluded.add(target.point if self.default_strategy else target.unit.name)
         self.halo_candidate = None
         return self._click_to(
@@ -3965,6 +4087,7 @@ class CurrencyWars:
         self._reset_supply()
         self.deferred_operations.clear()
         self.halo_excluded.clear()
+        self.halo_identity_retries.clear()
         self.halo_candidate = None
         self.tea_menu_fallback = None
         self.last_board = None

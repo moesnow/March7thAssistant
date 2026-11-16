@@ -135,6 +135,8 @@ HALO_GOLD = (1342, 930, 1426, 983)
 HALO_REFRESH = (290, 739, 560, 816)
 HALO_REFRESH_AREAS = (HALO_REFRESH, (1360, 739, 1638, 816))
 HALO_FRONT = ((803, 618), (908, 618), (1013, 618), (1118, 618))
+HALO_PORTRAIT_MIN_SCORE = 0.72
+HALO_PORTRAIT_MIN_GAP = 0.08
 HALO_EFFECTS = ((235, 401, 610, 758), (1320, 401, 1700, 758))
 HALO_OPTION_POINTS = ((420, 435), (1499, 435))
 HALO_RISKS = ("熄火", "只能造成1", "变为", "无法", "献祭", "离场", "乱披风拳法", "优先施放普攻",
@@ -1655,23 +1657,31 @@ class Frame:
         button_ready = (confirm.min(axis=2) > 177).mean() > 0.4
         return bool(button_ready and highlight.any(axis=0).mean() > 0.68)
 
-    def halo_portrait_matches(self, point: Point, portrait: np.ndarray) -> bool:
-        x, y = point
-        source = self.crop((x - 34, y - 35, x + 34, y + 35)).astype(np.float32)
-        target = cv2.resize(portrait.astype(np.float32), (42, 46), interpolation=cv2.INTER_CUBIC)
-        if target.std() < 12:
-            return False
-        score = cv2.matchTemplate(source, target, cv2.TM_CCOEFF_NORMED).max()
-        return bool(score >= 0.64)
+    def halo_portrait_scores(self, points: tuple[Point, ...], portrait: np.ndarray) -> tuple[float, ...]:
+        # 从备战页的原始裁片直接缩放，保留肖像细节。
+        template = cv2.resize(portrait.astype(np.float32), (42, 46), interpolation=cv2.INTER_AREA)
+        if template.std(axis=(0, 1)).max() < 12:
+            return (0.0,) * len(points)
+        scores = []
+        for x, y in points:
+            card = self.crop((x - 34, y - 35, x + 34, y + 35)).astype(np.float32)
+            scores.append(float(cv2.matchTemplate(card, template, cv2.TM_CCOEFF_NORMED).max()))
+        return tuple(scores)
 
     def halo_skip(self) -> Label | None:
         if self.page == Page.HALO:
             return self.enabled_button(self.find("跳过", "跳过主角光环", area=(715, 905, 1510, 1035)))
         return None
 
+    @cached_property
+    def halo_target_face(self) -> np.ndarray | None:
+        face = self.crop(HALO_TARGET_FACE)
+        return face if face.std(axis=(0, 1)).max() >= 15 else None
+
     def halo_target_present(self) -> bool:
-        return self.has("尚未选择主角光环", area=(740, 864, 1170, 918)) or any(
-            self.halo_effect_selected(index) for index in range(2)
+        return (self.halo_target_face is not None
+                or self.has("尚未选择主角光环", area=(740, 864, 1170, 918))
+                or any(self.halo_effect_selected(index) for index in range(2))
         )
 
     def tea_signature(self):
