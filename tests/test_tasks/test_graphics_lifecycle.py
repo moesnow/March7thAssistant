@@ -26,6 +26,7 @@ def startup(monkeypatch):
     windows = Mock()
     windows.return_value.process_running.return_value = False
     monkeypatch.setattr(game, "WindowsInputApi", windows)
+    monkeypatch.setattr(game, "process_session_id", lambda: 1)
     monkeypatch.setattr(game, "auto", SimpleNamespace(input_handler=SimpleNamespace(is_background=False),
                                                       press_mouse=Mock(), find_element=Mock(return_value=None)))
     monkeypatch.setattr(game, "wait_until", Mock(return_value=True))
@@ -422,6 +423,7 @@ def test_local_startup_preserves_a_window_that_appears_at_launch(startup, monkey
     controller.start_game_process = MethodType(LocalGameController.start_game_process, controller)
     game.auto.click_element = Mock()
     game.wait_until.side_effect = lambda condition, _timeout: condition()
+    monkeypatch.setattr(game, "screen", Mock(get_current_screen=Mock(return_value=False)))
     monkeypatch.setattr(game, "WindowsInputApi", Mock())
     game.WindowsInputApi.return_value.process_running.return_value = False
     monkeypatch.setattr(game, "process_session_id", lambda: 4)

@@ -66,6 +66,7 @@ def start_game_with(monkeypatch, wait_for_window, running=True):
     windows=Mock()
     windows.return_value.process_running.return_value=False
     monkeypatch.setattr(module,'WindowsInputApi',windows)
+    monkeypatch.setattr(module,'process_session_id',lambda: 1)
     monkeypatch.setattr(module,'log',Mock())
     return module,controller,backend
 
