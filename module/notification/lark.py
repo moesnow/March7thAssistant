@@ -7,7 +7,6 @@ import hashlib
 import base64
 import hmac
 import time
-from module.logger import log
 
 # 定义一个通知发送器类，用于发送飞书（Lark）通知
 class LarkNotifier(Notifier):
@@ -68,9 +67,7 @@ class LarkNotifier(Notifier):
                 data={"image_type": "message"},
                 files={"image": image_io}
             )
-            if (image_response.status_code % 100 != 2):
-                log.error(image_response.text)
-                image_response.raise_for_status()
+            image_response.raise_for_status()
             image_key = image_response.json()["data"]["image_key"]
 
             # 构造发送的消息内容
