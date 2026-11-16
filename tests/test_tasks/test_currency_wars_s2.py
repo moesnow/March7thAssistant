@@ -2800,6 +2800,31 @@ def test_elapsed_first_weekly_match_cannot_reset_total_deadline(monkeypatch, wor
     launch.assert_called_once()
 
 
+@pytest.mark.parametrize(("minutes", "expected"), [(120, 7200), (30, 1800), (0, None), (-5, None)])
+def test_task_limit_minutes_map_to_seconds(minutes, expected):
+    assert task.task_limit_seconds(minutes) == expected
+
+
+def test_task_limit_seconds_keeps_the_default_for_missing_or_invalid_values(monkeypatch):
+    monkeypatch.setattr(task, "TASK_SECONDS", 7200)
+    assert task.task_limit_seconds(None) == 7200
+    assert task.task_limit_seconds("bad") == 7200
+
+
+def test_currency_wars_time_limit_zero_runs_without_a_deadline(monkeypatch, world):
+    frame = home()
+    drive(monkeypatch, world, frame)
+    world.cfg.currencywars_time_limit = 0
+    deadlines = []
+    monkeypatch.setattr(world.war, "_launch", lambda f, r: deadlines.append(world.war.deadline) or f)
+    monkeypatch.setattr(world.war, "_play", lambda f: setattr(world.war, "result", True) or f)
+    scores = iter((0, 18000))
+    monkeypatch.setattr(world.war, "get_reward", lambda f: (f, (next(scores), 18000), False))
+
+    assert world.war.start(weekly=True) is True
+    assert deadlines == [None]
+
+
 def test_recognized_pages_can_continue_after_more_than_sixteen_steps(monkeypatch, world):
     frame = page(Page.CHOICE, stage="1-1")
     next_frame = home()

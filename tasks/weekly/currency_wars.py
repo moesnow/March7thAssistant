@@ -71,6 +71,17 @@ EVENT_RISKS = ("失去", "消耗", "出售", "替换", "变为", "无法上场",
 INVESTMENT_RESTRICTIONS = ("节省工位", "只有3个备战", "奋斗协议", "钻石商人", "长线空头", "无法合成")
 
 
+def task_limit_seconds(minutes) -> int | None:
+    """把货币战争总时限的分钟数换算成秒；0 或负数表示不限制，缺省/非法值沿用 TASK_SECONDS。"""
+    if minutes is None:
+        return TASK_SECONDS
+    try:
+        value = int(minutes)
+    except (TypeError, ValueError):
+        return TASK_SECONDS
+    return value * 60 if value > 0 else None
+
+
 class CurrencyWarsError(RuntimeError):
     """当前货币战争操作没有完成。"""
 
@@ -4236,7 +4247,9 @@ class CurrencyWars:
         self.lineup = strategy.LINEUPS.get(selected)
         log.hr(f"准备货币战争·入画奇航 ({selected})", "0")
         started = time.monotonic()
-        self.deadline = started + TASK_SECONDS
+        limit = task_limit_seconds(cfg.get_value("currencywars_time_limit"))
+        self.deadline = None if limit is None else started + limit
+        log.info("货币战争总时限：不限" if limit is None else f"货币战争总时限：{limit // 60} 分钟")
         self.network_reconnects = 0
         self.reward_claim_score = None
         self.reward_claim_notified = False

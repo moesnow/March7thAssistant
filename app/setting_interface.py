@@ -15,6 +15,7 @@ from .card.uac_free_setting_card import UacFreeSettingCard
 from .card.game_path_setting_card import GamePathSettingCard
 from .card.adb_setting_cards import AdbBackendSettingCard, AdbDeviceCard, AdbEnvironmentCard, AdbStatusCard, AdbAdvancedCard
 from .card.rangesettingcard1 import RangeSettingCard1
+from .card.spinboxsettingcard1 import SpinBoxSettingCard1
 from .card.pushsettingcard1 import CustomPushSettingCard, DualPushSettingCard, TriplePushSettingCard, PushSettingCardAction, PushSettingCardInstance, PushSettingCardInstanceChallengeCount, PushSettingCardNotifyTemplate, PushSettingCardMirrorchyan, PushSettingCardStr, PushSettingCardEval, PushSettingCardDate, PushSettingCardKey, PushSettingCardTeam, PushSettingCardFriends, PushSettingCardTeamWithSwap, PushSettingCardPowerPlan, InstanceTeamSettingCard
 from .card.timepickersettingcard1 import TimePickerSettingCard1
 from .card.expandable_switch_setting_card import ExpandableSwitchSettingCard, ExpandableWeeklyRelicSettingCard, ExpandableTimestampSwitchSettingCard, ExpandableComboBoxSettingCardUpdateSource, ExpandableComboBoxSettingCard, ExpandableComboBoxSettingCardInstanceType, ExpandableSwitchSettingCardEchoofwar
@@ -607,6 +608,14 @@ class SettingInterface(ScrollArea):
             tr('类别'),
             '',
             texts={tr('标准博弈'): 'normal', tr('超频博弈'): 'overclock'}
+        )
+        self.currencywarsTimeLimitCard = SpinBoxSettingCard1(
+            "currencywars_time_limit",
+            UiIcon.TIMER,
+            tr("总时限"),
+            tr("单次运行的分钟数，0 表示不限时"),
+            minimum=0,
+            maximum=1440,
         )
         self.currencywarsBonusEnableCard = SwitchSettingCard1(
             UiIcon.DIAMOND,
@@ -2767,6 +2776,7 @@ class SettingInterface(ScrollArea):
         self.CurrencywarsGroup.addSettingCard(self.currencywarsEnableCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsPresetCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsTypeCard)
+        self.CurrencywarsGroup.addSettingCard(self.currencywarsTimeLimitCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsBonusEnableCard)
         self.CurrencywarsGroup.addSettingCard(self.currencywarsRankDifficultyCard)
         if self.currencywarsStrategyCard is not None:
