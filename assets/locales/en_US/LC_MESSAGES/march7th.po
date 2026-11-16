@@ -8527,3 +8527,7 @@ msgid "模拟器 display 0 的截图输出不符合 PNG 格式（{size} 字节�
 msgstr ""
 "Emulator display 0 returned an unexpected screenshot format ({size} bytes, "
 "expected PNG)."
+
+#: app/tools/desktop_twin.py:713
+msgid "查看排查方法"
+msgstr "Troubleshooting"

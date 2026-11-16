@@ -8113,3 +8113,7 @@ msgstr "模擬器 display 0 的截圖輸出為空"
 #: module/game/adb.py:526
 msgid "模拟器 display 0 的截图输出不符合 PNG 格式（{size} 字节）"
 msgstr "模擬器 display 0 的截圖輸出不符合 PNG 格式（{size} 位元組）"
+
+#: app/tools/desktop_twin.py:713
+msgid "查看排查方法"
+msgstr "查看排查方法"
