@@ -72,13 +72,6 @@ def parse_echo_rewards(text):
     return quotas.pop() if len(quotas) == 1 else None
 
 
-def parse_challenge_cost(text):
-    value = unicodedata.normalize("NFKC", text).strip()
-    # 开拓力图标会被 OCR 识别为「米」；金额与独立数字仍需分开。
-    match = re.fullmatch(r"(?:米\s*)?[×xX]?\s*(\d{1,3})", value)
-    return int(match[1]) if match else None
-
-
 def parse_ornament_payment(text, waves):
     """挑战按钮从左到右显示沉浸器和开拓力。两项总价须匹配波次。"""
     amounts = normalize(text).lower().replace("×", "").replace("x", "").replace("米", "")

@@ -11,7 +11,7 @@ from tasks.daily import daily, ember_exchange, redemption, synthesis
 from tasks.daily.ember_exchange import EmberExchange
 from tasks.daily.training import DailyTrainingError
 from tasks.power import instance, power, readout, supplement
-from tasks.power.policy import GOLDEN_CALYX, ORNAMENT, PowerError, SupportDemand
+from tasks.power.policy import ECHO, GOLDEN_CALYX, ORNAMENT, PowerError, SupportDemand
 from tasks.reward import message, receipt
 
 
@@ -99,16 +99,23 @@ def test_pc_echo_quota_ignores_neighboring_numbers(monkeypatch, meter_ocr):
     assert instance.Instance.read_echo_rewards() == 2
 
 
-def test_challenge_payment_does_not_accept_the_prefix_of_an_invalid_number(monkeypatch, meter_ocr):
-    meter_ocr.return_value = ocr_lines(["×1200"])
-    monkeypatch.setattr(instance.Instance, "_select_waves", Mock(return_value=12))
-    with pytest.raises(PowerError):
-        instance.Instance.prepare_payment(GOLDEN_CALYX, 12, 121, practice=False, immersifier_only=False)
+@pytest.mark.parametrize("waves,available", [(5, 50), (21, 215)])
+def test_fixed_challenge_uses_selected_waves_without_scanning_payment(monkeypatch, meter_ocr, waves, available):
+    meter_ocr.side_effect = [ocr_lines([f"挑战次数{waves}"]), ocr_lines(["来", f"×{waves * 10}"])]
+    find = Mock()
+    monkeypatch.setattr(instance.auto, "find_element", find)
+
+    assert instance.Instance.prepare_payment(
+        GOLDEN_CALYX, waves, available, practice=False, immersifier_only=False,
+    ) == (waves, waves * 10)
+    meter_ocr.assert_called_once()
+    find.assert_not_called()
 
 
-def test_challenge_payment_ignores_the_power_icon_read_as_text(meter_ocr):
-    meter_ocr.return_value = ocr_lines(["米", "×10"])
-    assert instance.Instance._read_payment(GOLDEN_CALYX, 1) == 10
+def test_single_challenge_without_wave_selector_does_not_retry_ocr(meter_ocr):
+    meter_ocr.return_value = []
+    assert instance.Instance.prepare_payment(ECHO, 3, 90, practice=False, immersifier_only=False) == (1, 30)
+    meter_ocr.assert_called_once()
 
 
 @pytest.mark.parametrize("codes,expected", [([], True), (["USED"], True), (OSError("offline"), False)])

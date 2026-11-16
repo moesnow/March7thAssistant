@@ -112,6 +112,7 @@ class Power:
         is_echo = instance_type == ECHO
         is_ornament = instance_type == ORNAMENT
         only_immersifiers = is_ornament and immersifier_only
+        available = 0
         rewards = Instance.read_echo_rewards() if is_echo else None
         if rewards == 0:
             cfg.save_timestamp("echo_of_war_timestamp")
@@ -120,8 +121,8 @@ class Power:
                 return
         if rewards != 0 and not only_immersifiers:
             if not is_ornament or cfg.use_reserved_trailblaze_power or cfg.use_fuel:
-                balance = Power.get(use_supplement=not immersifier_only)
-                if not is_ornament and balance < cost_per_wave:
+                available = Power.get(use_supplement=not immersifier_only)
+                if not is_ornament and available < cost_per_wave:
                     log.info("开拓力不足，结束本副本项")
                     return
 
@@ -136,10 +137,13 @@ class Power:
         def enter():
             if not Instance.prepare_instance(instance_type, name):
                 raise PowerError(f"未能进入副本 {name}")
-            return 0 if rewards == 0 or only_immersifiers else Instance.read_balance(instance_type)
+            if is_ornament and not only_immersifiers:
+                return Instance.read_balance(instance_type)
+            return available
 
         remaining = planned
         previous = 0
+        cost = 0
         borrowed = False
         available = enter()
         retries = 0
@@ -163,10 +167,10 @@ class Power:
             started = time.monotonic()
             repeated = False
             try:
-                if previous == requested and (not support.pending or borrowed):
-                    payment = Instance.repeat_payment(instance_type, requested, practice)
-                    if payment is not None and payment <= available and (not immersifier_only or payment == 0):
-                        Instance.start_instance_again(practice)
+                if not practice and previous == requested and (not support.pending or borrowed):
+                    payment = Instance.repeat_ornament_payment(requested) if is_ornament else cost
+                    if payment is not None and (not is_ornament or payment <= available):
+                        Instance.start_instance_again()
                         waves, cost = requested, payment
                         repeated = True
 
@@ -194,7 +198,7 @@ class Power:
                 available = enter()
                 continue
             except BattleDefeat:
-                if not (practice or only_immersifiers):
+                if is_ornament and not only_immersifiers:
                     after = Power.get(use_supplement=False)
                     check_balance(available, after, 0, time.monotonic() - started)
                 if retries >= DEFEAT_RETRIES:
@@ -218,6 +222,8 @@ class Power:
             previous, retries = waves, 0
             if remaining is not None:
                 remaining -= waves
+            if not is_ornament:
+                available -= cost
             if is_echo and not practice:
                 # 奖励额度读数取自游戏，不能仅凭胜场写入周常时间。
                 Instance.complete_run(instance_type)
@@ -227,12 +233,9 @@ class Power:
                     cfg.save_timestamp("echo_of_war_timestamp")
                     if planned is None:
                         return
-                if remaining != 0:
-                    after = enter()
-                    if rewards:
-                        check_balance(available, after, cost, time.monotonic() - started)
-                    available = after
-            elif remaining != 0 and not (practice or only_immersifiers):
+                if remaining != 0 and (rewards == 0 or available >= cost_per_wave):
+                    enter()
+            elif is_ornament and remaining != 0 and not only_immersifiers:
                 try:
                     after = Instance.read_balance(instance_type, result=True)
                 except PowerError:

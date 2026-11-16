@@ -1,7 +1,7 @@
 import time
 
 from module.ocr import ocr
-from tasks.power.policy import PowerError
+from tasks.power.policy import PowerError, parse_wave_count
 
 
 def read_number(auto, crop, parse, error, *, retries=6):
@@ -16,3 +16,18 @@ def read_number(auto, crop, parse, error, *, retries=6):
             return value
         time.sleep(0.2)
     raise PowerError(error)
+
+
+def read_wave_selection(auto, crop, limit, *, allow_no_selector=False):
+    """读取当前挑战次数。允许单场的界面没有次数控件时返回 None。"""
+    label = "挑战次数"
+    has_selector = False
+
+    def parse(text):
+        nonlocal has_selector
+        has_selector = has_selector or label in text
+        if allow_no_selector and not has_selector:
+            return 0
+        return parse_wave_count(text, label, limit)
+
+    return read_number(auto, crop, parse, "未能确认挑战次数") or None

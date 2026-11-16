@@ -20,10 +20,10 @@ from tasks.power.battle import ensure_double_speed
 from tasks.power.policy import (
     BATTLE_TIMEOUT, ENTRY_TIMEOUT, DEFEAT_RETRIES, CAVERN, CRIMSON_CALYX, ECHO, GOLDEN_CALYX,
     INSTANCE_LIMITS, ORNAMENT, STAGNANT_SHADOW, BattleDefeat, PowerError, RelicBagFull,
-    SupportDemand, batch_limit, check_balance, normalize as _normalize, parse_challenge_cost,
-    parse_echo_rewards, parse_power, parse_wave_count, run_plan,
+    SupportDemand, batch_limit, check_balance, normalize as _normalize,
+    parse_echo_rewards, parse_power, run_plan,
 )
-from tasks.power.readout import read_number
+from tasks.power.readout import read_number, read_wave_selection
 from tasks.power.supplement import supplement
 from utils.game_options import game_option_enabled
 from utils.image_utils import ImageUtils
@@ -46,15 +46,11 @@ POWER_VALUE = (1555 / 1920, 32 / 1080, 143 / 1920, 45 / 1080)
 INSTANCE_TITLE = (1204 / 1920, 105 / 1080, 645 / 1920, 68 / 1080)
 ORNAMENT_TITLE = (755 / 1920, 111 / 1080, 576 / 1920, 59 / 1080)
 WAVE_COUNT = (1455 / 1920, 810 / 1080, 175 / 1920, 50 / 1080)
-CHALLENGE_COST = (1285 / 1920, 953 / 1080, 75 / 1920, 64 / 1080)
-CAVERN_CHALLENGE_COST = (1405 / 1920, 953 / 1080, 75 / 1920, 64 / 1080)
-ECHO_CHALLENGE_COST = (1349 / 1920, 953 / 1080, 144 / 1920, 64 / 1080)
 CHALLENGE = (1392 / 1920, 950 / 1080, 461 / 1920, 76 / 1080)
 START_CHALLENGE = (1410 / 1920, 946 / 1080, 420 / 1920, 80 / 1080)
 TEAM_TABS = (531 / 1920, 14 / 1080, 861 / 1920, 86 / 1080)
 BATTLE_CONTROLS = (1665 / 1920, 30 / 1080, 210 / 1920, 63 / 1080)
 RESULT_TITLE = (754 / 1920, 109 / 1080, 411 / 1920, 253 / 1080)
-REPEAT_COST = (1091 / 1920, 917 / 1080, 85 / 1920, 61 / 1080)
 REPEAT = (1180 / 1920, 911 / 1080, 290 / 1920, 74 / 1080)
 EXIT = (414 / 1920, 906 / 1080, 1075 / 1920, 87 / 1080)
 DIALOG = (259 / 1920, 226 / 1080, 1399 / 1920, 505 / 1080)
@@ -71,14 +67,6 @@ def read_power(crop=POWER_VALUE):
 
 def _read_echo_rewards():
     return _read_number(ECHO_REWARDS, parse_echo_rewards, "未能确认历战余响的剩余奖励次数")
-
-
-def _read_waves(crop, label):
-    return _read_number(crop, lambda text: parse_wave_count(text, label, MAX_WAVES), f"未能确认{label}")
-
-
-def _read_cost(crop):
-    return _read_number(crop, parse_challenge_cost, "未能确认挑战按钮上的开拓力消耗")
 
 
 def _tap(x, y):
@@ -188,14 +176,19 @@ def _select_team(instance_type, name):
     raise PowerError(f"未找到队伍 {team}")
 
 
-def _set_challenge_waves(waves, limit, *, crop=WAVE_COUNT, minus=1270, y=866):
-    for _ in range(limit + 1):
-        selected = _read_waves(crop, "挑战次数")
+def _set_challenge_waves(waves, limit, *, crop=WAVE_COUNT, minus=1270, y=866, allow_no_selector=False):
+    selected = read_wave_selection(auto, crop, MAX_WAVES, allow_no_selector=allow_no_selector)
+    if selected is None:
+        return 1
+    for _ in range(limit):
         if selected == waves:
-            return
+            break
         _tap(1821 if selected < waves else minus, y)
         time.sleep(0.22)
-    raise PowerError(f"无法把挑战次数设为 {waves}")
+        selected = read_wave_selection(auto, crop, MAX_WAVES)
+    if selected != waves:
+        raise PowerError(f"无法把挑战次数设为 {waves}")
+    return selected
 
 
 def _confirm_echo_practice(*, required):
@@ -210,32 +203,31 @@ def _confirm_echo_practice(*, required):
 
 
 def _start_challenge(instance_type, name, waves, *, borrow_for_daily=False, practice=False):
-    _, cost, limit = INSTANCES[instance_type]
     if not practice:
-        has_wave_selector = instance_type != ECHO or auto.find_element("挑战次数", "text", include=True, crop=WAVE_COUNT)
-        if has_wave_selector:
-            _set_challenge_waves(waves, limit)
-        cost_crop = {CAVERN: CAVERN_CHALLENGE_COST, ECHO: ECHO_CHALLENGE_COST}.get(instance_type, CHALLENGE_COST)
-        if _read_cost(cost_crop) != waves * cost or read_power() < waves * cost:
-            raise PowerError("挑战消耗与已确认的波次或开拓力不符")
+        waves = _set_challenge_waves(waves, INSTANCES[instance_type][2], allow_no_selector=instance_type == ECHO)
     if not _click_text("挑战", CHALLENGE):
         raise PowerError("未找到副本的挑战按钮")
     if practice:
         _confirm_echo_practice(required=True)
-    if not auto.find_element("开始挑战", "text", crop=START_CHALLENGE, max_retries=18, retry_delay=0.4):
+    start_button = auto.find_element("开始挑战", "text", crop=START_CHALLENGE, max_retries=18, retry_delay=0.4)
+    if not start_button:
         _check_popup()
         raise PowerError("未进入副本编队页")
     if cfg.instance_team_enable:
         _select_team(instance_type, name)
+        start_button = None
     borrowed = False
     if cfg.borrow_enable and (cfg.borrow_character_enable or borrow_for_daily):
         from tasks.touch import support
 
         borrowed = support.borrow()
+        start_button = None
     time.sleep(0.6)
-    if not _click_text("开始挑战", START_CHALLENGE):
+    started = (auto.click_element_with_pos(start_button) if start_button is not None
+               else _click_text("开始挑战", START_CHALLENGE))
+    if not started:
         raise PowerError("无法开始挑战")
-    return borrowed
+    return waves, borrowed
 
 
 def _check_popup():
@@ -489,42 +481,32 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
                 waves = min(waves, quota)
         if not waves:
             break
-        if is_echo and not practice and not previous and not auto.find_element("挑战次数", "text", include=True, crop=WAVE_COUNT):
-            waves = 1
-
-        started = time.monotonic()
         repeated = False
         try:
             if previous == waves and (not demand.pending or borrowed):
-                try:
-                    repeated = practice or _read_cost(REPEAT_COST) == waves * cost
-                except PowerError:
-                    repeated = False
-                if repeated:
-                    if not _click_text("再来一次", REPEAT):
-                        _check_popup()
-                        raise PowerError("无法点击再来一次")
-                    if practice:
-                        _confirm_echo_practice(required=True)
+                if not _click_text("再来一次", REPEAT):
+                    _check_popup()
+                    raise PowerError("无法点击再来一次")
+                if practice:
+                    _confirm_echo_practice(required=True)
+                repeated = True
             if not repeated:
                 if previous:
                     _exit_result(instance_screen)
                     if screen.current_screen != instance_screen:
                         _select_category(instance_type)
                         _enter_instance(instance_type, name)
-                borrowed = _start_challenge(instance_type, name, waves, borrow_for_daily=demand.pending, practice=practice)
+                waves, borrowed = _start_challenge(
+                    instance_type, name, waves, borrow_for_daily=demand.pending, practice=practice,
+                )
             _wait_battle(repeated=repeated, instance_screen=instance_screen)
         except BattleDefeat:
-            _select_category(instance_type)
-            if not practice:
-                after = read_power()
-                check_balance(power, after, 0, time.monotonic() - started)
-                power = after
             if retries >= DEFEAT_RETRIES:
                 raise
             retries += 1
             log.warning(f"已确认战败，重试 {retries}/{DEFEAT_RETRIES}")
             previous = 0
+            _select_category(instance_type)
             _enter_instance(instance_type, name)
             continue
         except RelicBagFull:
@@ -532,7 +514,7 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
                 raise
             cleaned = True
             _select_category(instance_type)
-            power, previous = (0 if practice else read_power()), 0
+            previous = 0
             _enter_instance(instance_type, name)
             continue
 
@@ -542,9 +524,10 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
         previous, retries = waves, 0
         if remaining is not None:
             remaining -= waves
-
-        after = None
-        needs_entry = False
+        if not practice:
+            power -= waves * cost
+        if on_settlement is not None:
+            on_settlement(waves, None)
         if is_echo and not practice:
             _exit_result(instance_screen)
             previous = 0
@@ -552,29 +535,10 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
             quota = _read_echo_rewards()
             if quota == 0:
                 cfg.save_timestamp("echo_of_war_timestamp")
-            needs_entry = remaining != 0 and (quota > 0 or planned is not None)
-            if needs_entry and quota > 0:
-                after = read_power()
-        elif remaining != 0 and not practice:
-            try:
-                after = read_power()
-            except PowerError:
-                log.warning("结算页开拓力未识别，回到生存索引核对后再挑战")
-                _exit_result(instance_screen)
-                previous = 0
-                _select_category(instance_type)
-                after = read_power()
-                needs_entry = True
-        if after is not None:
-            check_balance(power, after, waves * cost, time.monotonic() - started)
-            power = after
-        if needs_entry and (quota == 0 or power >= cost):
-            _enter_instance(instance_type, name)
-        if on_settlement is not None:
-            on_settlement(waves, after)
-
-        if is_echo and quota == 0 and planned is None:
-            break
+                if planned is None:
+                    break
+            if remaining != 0 and (quota == 0 or power >= cost):
+                _enter_instance(instance_type, name)
 
     exit_screen = _exit_result(instance_screen) if previous else None
     if exit_screen != "main":

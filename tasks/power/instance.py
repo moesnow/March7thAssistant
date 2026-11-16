@@ -11,10 +11,10 @@ from tasks.base.team import Team
 from tasks.power.battle import ensure_double_speed
 from tasks.power.policy import (
     BATTLE_TIMEOUT, ENTRY_TIMEOUT, CRIMSON_CALYX, ECHO, INSTANCE_LIMITS, ORNAMENT,
-    PowerError, RelicBagFull, parse_challenge_cost, parse_echo_rewards, parse_ornament_payment,
+    PowerError, RelicBagFull, parse_echo_rewards, parse_ornament_payment,
     parse_power, parse_wave_count,
 )
-from tasks.power.readout import read_number
+from tasks.power.readout import read_number, read_wave_selection
 from tasks.power.character import Character
 from tasks.power.relicset import Relicset
 from utils.game_options import game_option_enabled
@@ -24,8 +24,8 @@ from utils.wait import wait_until
 CATEGORY = (262 / 1920, 289 / 1080, 422 / 1920, 624 / 1080)
 ENTRY_ROWS = (686 / 1920, 287 / 1080, 980 / 1920, 650 / 1080)
 WAVE_SELECTOR = (1160 / 1920, 828 / 1080, 755 / 1920, 104 / 1080)
-CHALLENGE_COST = (1210 / 1920, 947 / 1080, 262 / 1920, 78 / 1080)
-REPEAT_COST = (1011 / 1920, 923 / 1080, 174 / 1920, 78 / 1080)
+ORNAMENT_PAYMENT = (1350 / 1920, 944 / 1080, 226 / 1920, 76 / 1080)
+ORNAMENT_REPEAT_PAYMENT = (1011 / 1920, 923 / 1080, 174 / 1920, 78 / 1080)
 CHALLENGE = (1392 / 1920, 946 / 1080, 487 / 1920, 83 / 1080)
 TEAM_TABS = (311 / 1920, 12 / 1080, 1376 / 1920, 105 / 1080)
 DIALOG = (245 / 1920, 200 / 1080, 1430 / 1920, 645 / 1080)
@@ -118,17 +118,12 @@ class Instance:
     def _select_waves(instance_type, requested):
         count_crop = ((1490 / 1920, 819 / 1080, 240 / 1920, 65 / 1080) if instance_type == ORNAMENT
                       else (1476 / 1920, 837 / 1080, 156 / 1920, 43 / 1080))
-
-        def parse(text):
-            return parse_wave_count(text, "挑战次数", INSTANCE_LIMITS[instance_type][1])
-
-        if not auto.find_element("挑战次数", "text", crop=count_crop, include=True, max_retries=3, retry_delay=0.3):
-            if instance_type == ECHO:
-                return 1
-            if requested == 1:
-                return 1
-            raise PowerError("未能确认连续挑战次数")
-        selected = read_number(auto, count_crop, parse, "未识别当前挑战次数")
+        limit = INSTANCE_LIMITS[instance_type][1]
+        selected = read_wave_selection(auto, count_crop, limit, allow_no_selector=instance_type == ECHO or requested == 1)
+        if selected is None:
+            return 1
+        if selected == requested:
+            return requested
         for _ in range(abs(requested - selected)):
             if selected < requested:
                 changed = auto.click_element("./assets/images/screen/guide/plus.png", "image", 0.82, crop=WAVE_SELECTOR)
@@ -138,19 +133,17 @@ class Instance:
             if not changed:
                 raise PowerError("无法调整连续挑战次数")
             time.sleep(0.2)
-        read_number(auto, count_crop, lambda text: requested if parse(text) == requested else None,
-                    f"未确认已选中 {requested} 次挑战")
+        def read_adjusted(text):
+            return requested if parse_wave_count(text, "挑战次数", limit) == requested else None
+
+        read_number(auto, count_crop, read_adjusted, f"未确认已选中 {requested} 次挑战")
         return requested
 
     @staticmethod
-    def _read_payment(instance_type, waves, *, repeat=False):
-        if instance_type == ORNAMENT:
-            crop = REPEAT_COST if repeat else (1350 / 1920, 944 / 1080, 226 / 1920, 76 / 1080)
-            return read_number(auto, crop, lambda text: parse_ornament_payment(text, waves),
-                               "未能确认饰品提取按钮的费用", retries=3)[0]
-        crop = REPEAT_COST if repeat else CHALLENGE_COST
-
-        return read_number(auto, crop, parse_challenge_cost, "未能确认挑战按钮的开拓力费用", retries=3)
+    def _read_ornament_payment(waves, *, repeat=False):
+        crop = ORNAMENT_REPEAT_PAYMENT if repeat else ORNAMENT_PAYMENT
+        return read_number(auto, crop, lambda text: parse_ornament_payment(text, waves),
+                           "未能确认饰品提取按钮的费用", retries=3)[0]
 
     @staticmethod
     def prepare_payment(instance_type, requested, available, *, practice, immersifier_only):
@@ -159,27 +152,20 @@ class Instance:
             if practice:
                 # 无奖励提示会在点击挑战后再次确认，绝不代付额外开拓力。
                 return 1, 0
-            cost = Instance._read_payment(instance_type, waves)
-            if instance_type != ORNAMENT and cost != waves * INSTANCE_LIMITS[instance_type][0]:
-                raise PowerError(f"挑战费用 {cost} 与已选择的 {waves} 次挑战不符")
+            if instance_type != ORNAMENT:
+                return waves, waves * INSTANCE_LIMITS[instance_type][0]
+            cost = Instance._read_ornament_payment(waves)
             if cost <= (0 if immersifier_only else available):
                 return waves, cost
-            if instance_type != ORNAMENT:
-                return 0, 0
             requested = waves - (cost - (0 if immersifier_only else available) + 39) // 40
         return 0, 0
 
     @staticmethod
-    def repeat_payment(instance_type, waves, practice):
-        if practice:
-            return None  # 重新进本核对无奖励提示。
+    def repeat_ornament_payment(waves):
         try:
-            cost = Instance._read_payment(instance_type, waves, repeat=True)
+            return Instance._read_ornament_payment(waves, repeat=True)
         except PowerError:
             return None
-        if instance_type == ORNAMENT or cost == waves * INSTANCE_LIMITS[instance_type][0]:
-            return cost
-        return None
 
     @staticmethod
     def select_world_team(instance_type, name):
@@ -237,6 +223,7 @@ class Instance:
     @staticmethod
     def start_instance(instance_type, name, support, *, practice, world_team):
         ornament = instance_type == ORNAMENT
+        start_button = None
         if ornament:
             if cfg.instance_team_enable:
                 team = Instance.get_target_team(instance_type, name)
@@ -252,23 +239,29 @@ class Instance:
                 raise PowerError("未找到副本的挑战按钮")
             if practice:
                 Instance._confirm_practice()
-            if not auto.find_element("开始挑战", "text", crop=CHALLENGE, max_retries=12, retry_delay=0.3):
+            start_button = auto.find_element("开始挑战", "text", crop=CHALLENGE, max_retries=12, retry_delay=0.3)
+            if not start_button:
                 Instance.check_popup()
                 raise PowerError("未进入副本编队")
             if cfg.instance_team_enable and not world_team:
                 if not Instance._select_instance_team(Instance.get_target_team(instance_type, name)):
                     # 有些 PC 编队页只给临时队伍。退出后沿用主世界切队，重进并重新核算费用。
                     raise TeamPresetUnavailable("编队页未找到配置的预设队伍")
+                start_button = None
 
-        borrowed = support.should_borrow(cfg) and Character.borrow("ornament" if ornament else "standard", for_training=support.pending)
-        Instance._click_start_challenge(ornament=ornament)
+        borrowed = False
+        if support.should_borrow(cfg):
+            borrowed = Character.borrow("ornament" if ornament else "standard", for_training=support.pending)
+            start_button = None
+        Instance._click_start_challenge(ornament=ornament, button=start_button)
         if ornament:
             Instance._engage_ornament_boss()
         return borrowed
 
     @staticmethod
-    def _click_start_challenge(*, ornament):
-        button = auto.find_element("开始挑战", "text", crop=CHALLENGE, max_retries=5, retry_delay=0.35)
+    def _click_start_challenge(*, ornament, button=None):
+        if button is None:
+            button = auto.find_element("开始挑战", "text", crop=CHALLENGE, max_retries=5, retry_delay=0.35)
         if not button:
             Instance.check_popup()
             raise PowerError("无法开始挑战")
