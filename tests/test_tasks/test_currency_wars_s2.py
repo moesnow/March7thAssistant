@@ -1125,6 +1125,246 @@ def test_default_opening_waits_for_free_supplies_and_never_clicks_fight_with_an_
     assert state.clicks == [(Page.EMPTY_FRONT, (977, 672))]
 
 
+@pytest.mark.parametrize("outcome", (
+    "gift", "purchase", "full_back", "full_bench", "free_refresh", "receipt_lost", "unavailable", "stopped", "timeout",
+))
+def test_default_opening_fills_the_empty_front_before_fighting(monkeypatch, world, outcome):
+    world.cfg.currencywars_strategy = policy.DEFAULT_STRATEGY
+    world.cfg.currencywars_time_limit = 1
+    stage = "1-1"
+    shop_button, refresh_button, fight_button = (1624, 983), (1621, 487), (1818, 751)
+    front_offer = policy.Offer(FILLER.name, 1, (739, 194), 1, front=True, back=True)
+    expensive_front = policy.Offer("花火", 2, (1008, 194), 2, front=True)
+    rear_offer = policy.Offer(BAILU.name, 1, (470, 194), 0, back=True)
+    starter_cards = {"gift": replace(FILLER, cost=1), "full_bench": policy.Unit("娜塔莎", False, True, 1)}
+    starter = slot("bench", 2, starter_cards.get(outcome))
+    full_back = outcome == "full_back"
+    back_cards = (CER, BAILU) if full_back else (None, None)
+    bench_cards = (None, None) if full_back else (CER, BAILU)
+    opening = board(slot("front", 0), *(slot("back", i, card) for i, card in enumerate(back_cards)), slot("back", 2),
+                    *(slot("bench", i, card) for i, card in enumerate(bench_cards)), starter,
+                    stage=stage, used=2 if full_back else 0, capacity=2 if full_back else 3, gold=3)
+    boards = {}
+
+    def board_frame(team):
+        frame = page(Page.BOARD, ("商店", *shop_button), ("出战", *fight_button),
+                     stage=stage, capacity=(team.used, team.capacity), gold=team.gold)
+        boards[frame] = team
+        frame.slots = lambda: team.slots
+        frame.field_slots = lambda: tuple(s for s in team.slots if s.zone != "bench")
+        frame.bench_slots = lambda: tuple(s for s in team.slots if s.zone == "bench")
+        frame.slot_occupied = lambda point: any(s.point == point and s.occupied for s in team.slots)
+        frame.card_stars = lambda s, **_: s.unit.stars
+        frame.card_cost = lambda s: s.unit.cost
+        frame.card_equipment = lambda _: 0
+        frame.card_role = lambda s: ((False, False) if outcome == "gift" and s == starter
+                                     else (s.unit.front, s.unit.back))
+        frame.deployed_copy = lambda *_: None
+        frame.reward_orbs = frame.opening_orbs = frame.inventory_items = lambda: ()
+        return frame
+
+    initial = board_frame(opening)
+    # 满备战席先部署一名后台，购买落在刚腾出的备战位。
+    shop_team = (apply_deployment(opening, (slot("bench", 0, CER), slot("back", 0)))
+                 if outcome == "full_bench" else opening)
+    purchase_slot = slot("bench", 0 if outcome == "full_bench" else 2)
+    recruited = board_frame(replace(shop_team, gold=2, slots=tuple(
+        replace(s, unit=replace(FILLER, cost=1), occupied=True) if s == purchase_slot else s for s in shop_team.slots
+    )))
+    available = page(Page.SHOP, ("收起", *shop_button), ("刷新", *refresh_button),
+                     stage=stage, gold=3, offers=(rear_offer, front_offer, expensive_front), shop_refresh_price=2)
+    sold = page(Page.SHOP, ("收起", *shop_button), stage=stage, gold=2, offers=(rear_offer, expensive_front))
+    sold.shop_changed = lambda old, column: old is available and column == front_offer.column
+    starting_shop = available
+    if outcome in ("free_refresh", "unavailable"):
+        free = outcome == "free_refresh"
+        starting_shop = page(Page.SHOP, ("收起", *shop_button), ("免费刷新" if free else "刷新", *refresh_button),
+                             stage=stage, gold=3, offers=(rear_offer, replace(expensive_front, cost=4)),
+                             shop_refresh_price=0 if free else 2)
+        available.shop_catalog_changed = lambda old: old is starting_shop
+    won = page(Page.MATCH_RESULT, ("对局胜利", 960, 260), ("返回货币战争", 960, 899))
+    lobby = home()
+    moves = []
+
+    def click(state, point):
+        current = state.frame
+        if current in boards and point == fight_button:
+            assert boards[current].front_count == 1
+            state.frame = won
+            return
+        if current in boards and point == shop_button:
+            assert boards[current] == shop_team
+            if outcome == "stopped":
+                task.pause_ctl.checkpoint.side_effect = RunStopRequested()
+            elif outcome == "timeout":
+                world.now[0] = world.war.deadline
+            state.frame = starting_shop
+            return
+        state.frame = {
+            (starting_shop, refresh_button): available,
+            (available, front_offer.point): available if outcome == "receipt_lost" else sold,
+            (available if outcome == "receipt_lost" else sold, shop_button): recruited,
+            (starting_shop, shop_button): initial if outcome == "unavailable" else recruited,
+            (won, (960, 899)): lobby,
+        }[current, point]
+
+    state = drive(monkeypatch, world, initial, click)
+
+    def deploy(start, end, **_):
+        team = boards[state.frame]
+        source = next(s for s in team.slots if s.point == (round(start[0] * 1920), round(start[1] * 1080)))
+        target = next(s for s in team.slots if s.point == (round(end[0] * 1920), round(end[1] * 1080)))
+        moves.append((source.unit.name, target.zone))
+        state.frame = board_frame(apply_deployment(team, (source, target)))
+        return True
+
+    world.auto.drag_mouse.side_effect = deploy
+    monkeypatch.setattr(world.war, "_check_weekly_reward", lambda f: (f, (18000, 18000), False))
+
+    if outcome == "unavailable":
+        with pytest.raises(task.CurrencyWarsUnavailable, match="重开未完成.*按 ESC 后未确认"):
+            world.war.start(resume=True)
+        assert state.frame is initial and not moves
+        assert state.clicks == [(Page.BOARD, shop_button), (Page.SHOP, shop_button)]
+        assert state.keys == [(Page.BOARD, "esc")] * 2
+    elif outcome in ("stopped", "timeout"):
+        error = RunStopRequested if outcome == "stopped" else task.CurrencyWarsBudgetExceeded
+        with pytest.raises(error):
+            world.war.start(resume=True)
+        assert state.frame is starting_shop and not moves
+        assert state.clicks == [(Page.BOARD, shop_button)]
+    else:
+        assert world.war.start(resume=True)
+        assert state.frame is lobby
+        expected = {
+            "full_back": [(CER.name, "bench"), (FILLER.name, "front")],
+            "full_bench": [(CER.name, "back"), (FILLER.name, "front"), (BAILU.name, "back")],
+        }.get(outcome, [(FILLER.name, "front"), (CER.name, "back"), (BAILU.name, "back")])
+        assert moves == expected
+        shop_clicks = [(Page.BOARD, shop_button)]
+        if outcome == "free_refresh":
+            shop_clicks.append((Page.SHOP, refresh_button))
+        shop_clicks.extend(((Page.SHOP, front_offer.point), (Page.SHOP, shop_button)))
+        assert state.clicks == [
+            *([] if outcome == "gift" else shop_clicks),
+            (Page.BOARD, fight_button), (Page.MATCH_RESULT, (960, 899)),
+        ]
+
+
+@pytest.mark.parametrize("outcome", (
+    "single", "weekly", "loop", "reconnect", "late_front", "limit", "no_settlement", "stopped", "timeout",
+))
+def test_default_opening_restart_settles_once_and_plays_the_new_match(monkeypatch, world, outcome):
+    world.cfg.currencywars_strategy = policy.DEFAULT_STRATEGY
+    world.cfg.currencywars_unfinished_match = "resume"
+    world.cfg.currencywars_time_limit = 1
+    stage = "1-1"
+    shop_button, fight_button = (1624, 983), (1818, 751)
+
+    def preparation(team):
+        frame = page(Page.BOARD, ("商店", *shop_button), ("出战", *fight_button),
+                     stage=stage, capacity=(team.used, team.capacity), gold=team.gold)
+        frame.slots = lambda: team.slots
+        frame.field_slots = lambda: tuple(s for s in team.slots if s.zone != "bench")
+        frame.deployed_copy = lambda *_: None
+        return frame
+
+    empty_team = board(slot("front", 0), slot("back", 0), slot("bench", 0, BAILU), slot("bench", 1),
+                       stage=stage, used=0, gold=3)
+    ready_team = board(slot("front", 0, CORE), slot("back", 0), slot("bench", 0), slot("bench", 1),
+                       stage=stage, used=1, gold=3)
+    blocked, ready = preparation(empty_team), preparation(ready_team)
+    shop = page(Page.SHOP, ("收起", *shop_button), ("刷新", 1621, 487), stage=stage, gold=3,
+                shop_refresh_price=2, offers=(policy.Offer(BAILU.name, 2, (470, 194), 0, back=True),))
+    lobby = home()
+    menu = mode(("进入标准博弈", 1692, 961))
+    ranks = rank()
+    prompt = end_match_dialog()
+    reconnect = reconnect_prompt()
+    abandoned = page(Page.MATCH_RESULT, ("对局失败", 960, 233), ("返回货币战争", 960, 899))
+    won = page(Page.MATCH_RESULT, ("对局胜利", 960, 233), ("返回货币战争", 960, 899))
+    state = SimpleNamespace(frame=lobby, clicks=[], keys=[], launches=[])
+    routes = {
+        (lobby, (1600, 972)): menu, (menu, (1692, 961)): ranks,
+        (blocked, shop_button): shop, (shop, shop_button): blocked,
+        (prompt, (980, 743)): (prompt if outcome == "no_settlement"
+                               else reconnect if outcome == "reconnect" else abandoned),
+        (reconnect, (1188, 672)): abandoned, (abandoned, (960, 899)): lobby,
+        (ready, fight_button): won, (won, (960, 899)): lobby,
+    }
+
+    def click(point, *, press_duration):
+        state.clicks.append((state.frame, point))
+        if state.frame is ranks and point == (1680, 965):
+            state.launches.append(world.war.deadline)
+            state.frame = blocked if len(state.launches) == 1 or outcome == "limit" else ready
+        else:
+            state.frame = routes[state.frame, point]
+        return True
+
+    def press(key):
+        assert state.frame is blocked and key == "esc"
+        state.keys.append(key)
+        state.frame = prompt
+        if outcome == "stopped":
+            task.pause_ctl.checkpoint.side_effect = RunStopRequested()
+        elif outcome == "timeout":
+            world.now[0] = world.war.deadline
+
+    def capture():
+        if (outcome == "late_front" and state.frame is blocked and not world.war.in_match
+                and (shop, shop_button) in state.clicks):
+            state.frame = ready
+        return state.frame
+
+    monkeypatch.setattr(world.war, "_capture", capture)
+    monkeypatch.setattr(world.war, "_read_default_board",
+                        lambda f, **_: (f, empty_team if f is blocked else ready_team))
+    monkeypatch.setattr(world.war, "_gather", lambda f: f)
+    monkeypatch.setattr(world.war, "_equip", lambda f, _: f)
+    on_result = Mock()
+    monkeypatch.setattr(world.war, "_on_match_result", on_result)
+    reward_checks = []
+
+    def rewards(f):
+        reward_checks.append(world.war.result)
+        return f, (18000 if world.war.result is True else 0, 18000), False
+
+    monkeypatch.setattr(world.war, "_check_weekly_reward", rewards)
+    world.auto.click_element_with_pos.side_effect = click
+    world.auto.press_key.side_effect = press
+
+    if outcome == "limit":
+        with pytest.raises(task.CurrencyWarsUnavailable, match="已达开局重开上限"):
+            world.war.start()
+        assert state.frame is menu
+        assert state.keys == ["esc"] * (task.MAX_OPENING_RESTARTS + 1)
+        assert state.clicks.count((prompt, (980, 743))) == task.MAX_OPENING_RESTARTS + 1
+        assert state.launches == [60] * (task.MAX_OPENING_RESTARTS + 1)
+        assert not reward_checks
+        on_result.assert_not_called()
+    elif outcome in ("no_settlement", "stopped", "timeout"):
+        error = {"no_settlement": task.CurrencyWarsUnavailable, "stopped": RunStopRequested,
+                 "timeout": task.CurrencyWarsBudgetExceeded}[outcome]
+        with pytest.raises(error):
+            world.war.start()
+        assert state.frame is prompt and state.keys == ["esc"] and state.launches == [60]
+        assert state.clicks.count((prompt, (980, 743))) == (1 if outcome == "no_settlement" else 0)
+        assert not reward_checks
+        on_result.assert_not_called()
+    else:
+        assert world.war.start(weekly=outcome == "weekly", loop=outcome == "loop")
+        restarted = outcome != "late_front"
+        assert state.frame is lobby
+        assert state.keys == ["esc"] * restarted and state.launches == [60] * (1 + restarted)
+        assert state.clicks.count((prompt, (980, 743))) == int(restarted)
+        assert state.clicks.count((ready, fight_button)) == 1
+        assert reward_checks == ([None, True] if outcome == "weekly" else [True])
+        assert world.war._loop_matches == (1 if outcome == "loop" else 0)
+        on_result.assert_called_once_with(won)
+    assert (blocked, fight_button) not in state.clicks
+
+
 def test_default_sale_uses_slot_receipt_without_role_name_or_exact_refund(monkeypatch, world):
     world.war.default_strategy = True
     tile = slot("bench", 1, FILLER)

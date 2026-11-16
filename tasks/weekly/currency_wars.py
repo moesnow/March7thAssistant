@@ -39,7 +39,9 @@ BATTLE_SECONDS = 10 * 60
 MAX_AUTO_ATTEMPTS = 2
 AUTO_RETRY_SECONDS = 12
 MAX_PREPARATION_FALLBACKS = 3
+MAX_OPENING_RESTARTS = 2
 DEFAULT_PREPARE_LIMIT = 30
+DEFAULT_OPENING_RECRUITMENT = "开局招募"
 DEFAULT_HALO_REFRESHES = 2
 MAX_HALO_IDENTITY_RETRIES = 2
 HALO_FOLLOWUP_SECONDS = 3
@@ -133,6 +135,14 @@ class CurrencyWarsReceiptTimeout(CurrencyWarsRecoverable):
 
 class CurrencyWarsBenchBlocked(CurrencyWarsRecoverable):
     """晶矿需要空备战位，已无法在保留可用阵容的前提下腾位。"""
+
+
+class CurrencyWarsOpeningBlocked(CurrencyWarsError):
+    """开局已确认缺少可用前台，交回整局流程重开。"""
+
+    def __init__(self, frame, reason):
+        super().__init__(reason)
+        self.frame = frame
 
 
 class CurrencyWarsReconnect(CurrencyWarsError):
@@ -724,7 +734,7 @@ class CurrencyWars:
         )
 
     def _settle_saved_match(self, frame):
-        log.info("检测到未完成对局，按设置结束并结算")
+        log.info("结束未完成的货币战争对局并核对结算")
         confirmation_sent = False
 
         def menu_ready(f):
@@ -786,6 +796,46 @@ class CurrencyWars:
                 if confirmation_sent or frame.page == Page.RECONNECT or frame.page in ACTIVE_PAGES:
                     raise CurrencyWarsUnavailable(f"旧对局结算待核对，保留当前现场：{error}") from error
                 raise
+
+    def _restart_match(self, frame, *, can_exit, recovered=None, start_new=True):
+        """结束当前对局并按当前模式重新进入，返回新画面和是否重开。"""
+        location = frame.stage or frame.page.value
+        ending = {Page.END_MATCH_CONFIRM, Page.MATCH_RESULT, Page.HOME, Page.MODES}
+        in_match, mode_confirmed = self.in_match, self.mode_confirmed
+        # 放弃页也是整局结算。重开期间不将这次结算登记为本次任务的结果。
+        self.in_match = False
+        self.mode_confirmed = False
+
+        def advanced(f):
+            return f.page in ending or recovered is not None and recovered(f)
+
+        def escape(_):
+            self._check_budget()
+            return auto.press_key("esc")
+
+        try:
+            while not advanced(frame):
+                try:
+                    frame = self._action(
+                        frame, lambda f: () if can_exit(f) else None, escape, advanced,
+                        "按 ESC 后未确认货币战争退出或结算界面", seconds=8, attempts=2,
+                    )
+                    break
+                except CurrencyWarsReconnect as error:
+                    frame = self._recover_network(error.frame, resume_match=False)
+            if frame.page not in ending:
+                self.mode_confirmed = mode_confirmed
+                return frame, False
+            frame = self._settle_saved_match(frame)
+            if not start_new:
+                return frame, False
+            if (reopened := self._enter_with_recovery(frame, resume=False)) is not None:
+                return reopened, True
+            raise CurrencyWarsUnavailable(f"{location} 旧对局已结束，未确认新对局成功进入")
+        except CurrencyWarsRecoverable as error:
+            raise CurrencyWarsUnavailable(f"{location} 货币战争重开未完成：{error}") from error
+        finally:
+            self.in_match = in_match
 
     def _launch(self, frame, resume):
         if frame.page == Page.END_MATCH_CONFIRM:
@@ -1504,13 +1554,14 @@ class CurrencyWars:
         previous = None
         pressed = False
         confirmed = False
+        labels = ("免费刷新",) if self.default_strategy else ui.SHOP_REFRESH_LABELS
 
         def current_shop(f):
             return f.page == Page.SHOP and f.stage in (None, stage)
 
         def locate(f):
             if f.gold == before.gold and f.shop_refresh_price == price and not f.shop_catalog_changed(before):
-                if label := f.find(*ui.SHOP_REFRESH_LABELS, area=ui.SHOP_REFRESH):
+                if label := f.find(*labels, area=ui.SHOP_REFRESH):
                     return (label.point,)
             return None
 
@@ -1552,24 +1603,29 @@ class CurrencyWars:
             if frame.page != Page.SHOP or frame.stage not in (None, board.stage):
                 break
             shop_board = replace(board, gold=frame.gold)
-            if offer := strategy.shop_purchase(shop_board, frame.offers, experience_price=experience_price):
+            offer = (strategy.default_front_offer(shop_board, frame.offers) if self.default_strategy
+                     else strategy.shop_purchase(shop_board, frame.offers, experience_price=experience_price))
+            if offer:
                 before = frame
                 minimum_gold = before.gold - offer.cost
                 merge_pair = strategy.merge_purchase(shop_board, offer)
                 pressed = False
 
                 def same_offer(f):
-                    return next((card.point for card in f.offers if (card.name, card.cost, card.column)
+                    return next((card for card in f.offers if (card.name, card.cost, card.column)
                                  == (offer.name, offer.cost, offer.column) and card.stars == offer.stars), None)
 
                 def locate(f):
-                    if f.gold == before.gold and (point := same_offer(f)) is not None:
-                        return (point,)
+                    if (f.gold == before.gold and (card := same_offer(f)) is not None
+                            and (not self.default_strategy or card.front)):
+                        return (card.point,)
 
                 def buy(f, point):
                     nonlocal pressed
                     self._check_budget()
                     pressed = True
+                    if self.default_strategy:
+                        self.deferred_operations.add((board.stage, DEFAULT_OPENING_RECRUITMENT))
                     return self._tap(f, point)
 
                 def sold(f):
@@ -1604,11 +1660,15 @@ class CurrencyWars:
                     frame = self._verify_merge(board, offer.name)
                 return frame, refreshes, confirmed
             price = frame.shop_refresh_price
-            if price is None or not strategy.should_refresh(shop_board, price, refreshes,
-                                                            experience_price=experience_price):
-                break
-            if not board.lineup and price > 0 and strategy.should_buy_exp(shop_board, experience_price):
-                break
+            if self.default_strategy:
+                if refreshes or price != 0 or not frame.has("免费刷新", area=ui.SHOP_REFRESH):
+                    break
+            else:
+                if price is None or not strategy.should_refresh(shop_board, price, refreshes,
+                                                                experience_price=experience_price):
+                    break
+                if not board.lineup and price > 0 and strategy.should_buy_exp(shop_board, experience_price):
+                    break
             frame, pressed = self._refresh_shop(frame, price, refreshes, board.stage)
             refreshes += int(pressed)
         if frame.page == Page.SHOP:
@@ -2366,10 +2426,11 @@ class CurrencyWars:
             zones = ("front", "back") if isinstance(error, CurrencyWarsDuplicateUnit) else (zone,)
             self.default_deployment_skips.update((stage, source.point, skipped_zone) for skipped_zone in zones)
 
-    def _prepare_default_team(self, frame, *, make_space=False, deploy_only=False):
+    def _prepare_default_team(self, frame, *, make_space=False, deploy_only=False, minimum_free=1):
         stage = frame.stage
         board_page = frame.page
         overflow = board_page == Page.BENCH_FULL
+        opening = self.default_strategy and not overflow and stage == "1-1"
         deferred_moves = set()
         for _ in range(DEFAULT_PREPARE_LIMIT):
             layout = frame.slots() if overflow else ()
@@ -2378,7 +2439,7 @@ class CurrencyWars:
             frame, board = self._read_default_board(frame, bench_only=bench_only)
             if board is None or frame.page != board_page or board.stage != stage:
                 return frame
-            if make_space and not overflow and board.has_bench_space:
+            if make_space and not overflow and len(board.empty_bench) >= minimum_free:
                 return frame
             copies = {slot: copy for slot in strategy.default_bench(board)
                       if (copy := frame.deployed_copy(slot, board.field)) and copy.unit is not None}
@@ -2386,7 +2447,8 @@ class CurrencyWars:
                 (point, zone) for saved_stage, point, zone in self.default_deployment_skips if saved_stage == stage
             }
             move = strategy.default_deployment(board, copies, skipped, overflow=make_space)
-            if deploy_only and move is None and not board.front_count and board.used < board.capacity:
+            if ((deploy_only or opening and not make_space)
+                    and move is None and not board.front_count and board.used < board.capacity):
                 target = next((s for s in board.slots if s.zone == "front" and not s.occupied and not s.blocked), None)
                 source = next((s for s in board.slots if s.zone == "bench" and not s.blocked and s.unit
                                and s not in copies and (s.point, "front") not in skipped
@@ -2424,9 +2486,12 @@ class CurrencyWars:
                         return frame
                     continue
 
-            if board.used > board.capacity and board.has_bench_space and not overflow:
+            needs_front_seat = (opening and not make_space and not board.front_count and board.used == board.capacity
+                                and strategy.default_deployment(replace(board, capacity=board.capacity + 1),
+                                                                copies, skipped, overflow=True))
+            if (board.used > board.capacity or needs_front_seat) and board.has_bench_space and not overflow:
                 retreat = next((s for s in sorted((s for s in board.field if s.unit), key=strategy.default_priority)
-                                if not s.unit.has_halo and (s.zone == "back" or board.front_count > 1)
+                                if not s.blocked and not s.unit.has_halo and (s.zone == "back" or board.front_count > 1)
                                 and (s.point, "bench") not in skipped), None)
                 if retreat is not None:
                     try:
@@ -2541,6 +2606,33 @@ class CurrencyWars:
                 break
         return frame, True
 
+    def _recruit_default_opening_front(self, frame, board):
+        stage = board.stage
+        key = stage, DEFAULT_OPENING_RECRUITMENT
+        if key in self.deferred_operations:
+            raise CurrencyWarsOpeningBlocked(frame, "开局缺少可上阵的前台角色，商店补位未成功")
+        retire_one = board.used == board.capacity
+        front_open = any(s.zone == "front" and not s.occupied and not s.blocked for s in board.slots)
+        can_retreat = any(s.unit and not s.blocked and not s.unit.has_halo for s in board.field)
+        if not front_open or board.used > board.capacity or retire_one and not can_retreat:
+            raise CurrencyWarsOpeningBlocked(frame, "开局缺少前台角色且没有可用部署位")
+        minimum_free = 2 if retire_one else 1
+        if len(board.empty_bench) < minimum_free:
+            try:
+                return self._prepare_default_team(frame, make_space=True, minimum_free=minimum_free)
+            except CurrencyWarsBenchBlocked as error:
+                raise CurrencyWarsOpeningBlocked(frame, "开局缺少前台角色且无法腾出备战位") from error
+
+        try:
+            frame, _, bought = self._shop(frame, board, self.stage_refreshes.get(stage, 0))
+        except CurrencyWarsRecoverable as error:
+            return self._recover_preparation(stage, DEFAULT_OPENING_RECRUITMENT, error)
+        if frame.page == Page.BOARD and frame.stage == stage:
+            self.deferred_operations.add(key)
+            if bought:
+                self.preparation_progress += 1
+        return frame
+
     def _prepare(self, frame):
         stage = frame.stage
         frame = self._settle_board(frame)
@@ -2559,7 +2651,13 @@ class CurrencyWars:
             if frame.page != Page.BOARD or frame.stage != stage:
                 return frame
             frame, board = self._read_default_board(frame)
-            return self._finish_preparation(frame, board) if board is not None else frame
+            if board is None:
+                return frame
+            if (stage == "1-1" and not board.front_count and frame.board_advance
+                    and frame.board_advance.text == "出战"
+                    and not any(s.unit and s.unit.front and not s.blocked for s in board.slots)):
+                return self._recruit_default_opening_front(frame, board)
+            return self._finish_preparation(frame, board)
         refreshes = self.stage_refreshes.get(stage, 0)
         shop_needed = True
         shop_space_checks = 0
@@ -2663,6 +2761,27 @@ class CurrencyWars:
     def _front_ready(frame, stage):
         return (frame is not None and frame.page == Page.BOARD and frame.stage == stage
                 and any(slot.zone == "front" and slot.occupied for slot in frame.slots()))
+
+    def _opening_front_empty(self, frame):
+        if not self.default_strategy or frame.page != Page.BOARD or frame.stage != "1-1":
+            return False
+        fight = frame.board_advance
+        if fight is None or fight.text != "出战" or frame.preparation_banner:
+            return False
+        field = frame.field_slots()
+        front = tuple(s for s in field if s.zone == "front")
+        return bool(front and frame.field_count_matches(field) and not any(s.occupied for s in front))
+
+    @staticmethod
+    def _opening_can_continue(frame):
+        if frame.page != Page.BOARD:
+            return frame.page in (Page.BATTLE, Page.NODE_RESULT, Page.CONFIRM_FIGHT)
+        if not frame.stage:
+            return False
+        if frame.stage != "1-1":
+            return True
+        field = frame.field_slots()
+        return frame.field_count_matches(field) and any(s.zone == "front" and s.occupied for s in field)
 
     def _finish_preparation(self, frame, board):
         stage = board.stage
@@ -4111,6 +4230,31 @@ class CurrencyWars:
         time.sleep(0.35)
         return self._observe()
 
+    def _play_with_opening_restarts(self, frame):
+        restarts = 0
+        while True:
+            self.in_match = True
+            try:
+                return self._play(frame)
+            except CurrencyWarsOpeningBlocked as error:
+                frame, reason = error.frame, str(error)
+            finally:
+                self.in_match = False
+                self.unidentified_since = None
+            retry = restarts < MAX_OPENING_RESTARTS
+            if retry:
+                log.warning(f"1-1 {reason}，尝试重开（{restarts + 1}/{MAX_OPENING_RESTARTS}）")
+            else:
+                log.warning(f"1-1 {reason}，已达重开上限，尝试结束当前对局")
+            frame, restarted = self._restart_match(
+                frame, can_exit=self._opening_front_empty, recovered=self._opening_can_continue, start_new=retry,
+            )
+            if not retry and frame.page == Page.MODES:
+                raise CurrencyWarsUnavailable(
+                    f"1-1 已达开局重开上限（{MAX_OPENING_RESTARTS} 次），{reason}，已结束最后一局"
+                )
+            restarts += int(restarted)
+
     def _play(self, frame):
         self.slot_cache.clear()
         self.stage_refreshes.clear()
@@ -4173,6 +4317,8 @@ class CurrencyWars:
                         log.warning(f"节点 {stage or '开局'} 转场较慢，优先推进现有阵容")
                 if frame.page == Page.BOARD and (same_stage > 16 or prepare_failures >= 2):
                     if preparation_fallbacks >= MAX_PREPARATION_FALLBACKS:
+                        if self._opening_front_empty(frame):
+                            raise CurrencyWarsOpeningBlocked(frame, "多次复核后仍无法部署前台角色")
                         raise CurrencyWarsUnavailable(f"节点 {stage or '开局'} 多次复核后仍无法完成备战并推进，已保留当前现场")
                     preparation_fallbacks += 1
                     frame = self._advance_existing_team()
@@ -4183,7 +4329,7 @@ class CurrencyWars:
             except CurrencyWarsEquipmentReplan as error:
                 log.info(error)
                 frame = self.frame
-            except CurrencyWarsTerminalError:
+            except (CurrencyWarsTerminalError, CurrencyWarsOpeningBlocked):
                 raise
             except Exception as error:
                 if before.page == Page.BOARD:
@@ -4539,12 +4685,7 @@ class CurrencyWars:
                     matches += 1
                     if loop:
                         self._loop_matches += 1
-                    self.in_match = True
-                    try:
-                        frame = self._play(frame)
-                    finally:
-                        self.in_match = False
-                        self.unidentified_since = None
+                    frame = self._play_with_opening_restarts(frame)
                     if self.result is None:
                         log.warning("已离开对局，整局胜负仍待核对")
                     frame, latest_score, just_claimed = self._check_weekly_reward(frame)

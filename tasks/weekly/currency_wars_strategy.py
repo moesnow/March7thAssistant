@@ -310,6 +310,15 @@ def default_bench(board: Board) -> tuple[Slot, ...]:
                         key=default_priority, reverse=True))
 
 
+def default_front_offer(board: Board, offers: tuple[Offer, ...]) -> Offer | None:
+    if board.gold is None or board.front_count or not board.has_bench_space:
+        return None
+    return min(
+        (offer for offer in offers if offer.front and offer.name not in SPECIAL and 0 < offer.cost <= board.gold),
+        key=lambda offer: (offer.cost, -offer.stars, offer.column), default=None,
+    )
+
+
 def _default_fits(source: Slot, zone: Zone) -> bool:
     return zone == "front" and source.unit.front or zone == "back" and source.unit.back
 
@@ -335,6 +344,12 @@ def default_deployment(board: Board, copies: dict[Slot, Slot], skipped: set[tupl
                     _default_fits(other, target.zone) and not (other.unit.front and other.unit.back)
                     for other in deployable if other != source
                 ))
+                return source, target
+        if (overflow and board.stage == "1-1" and not board.front_count and board.used + 1 < board.capacity
+                and (target := empty["back"]) is not None):
+            # 开局腾备战位时可以先上一个后台角色，留出一个名额给前台。
+            source = next((s for s in deployable if s.unit.back and (s.point, "back") not in skipped), None)
+            if source is not None:
                 return source, target
     if overflow or board.used > board.capacity:
         return None
