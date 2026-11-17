@@ -5,7 +5,7 @@ from module.logger import log
 from module.screen import screen
 from tasks.base.task_steps import FATAL_GAME_ERRORS, run_steps
 from tasks.daily.buildtarget import BuildTarget
-from tasks.power.instance import Instance, TeamPresetUnavailable
+from tasks.power.instance import ChallengePageUnavailable, Instance, TeamPresetUnavailable
 from tasks.power.policy import (
     ECHO, ORNAMENT, INSTANCE_LIMITS, BattleDefeat, InstanceUnavailable, RelicBagFull, PowerError, SupportDemand,
     DEFEAT_RETRIES, batch_limit, parse_pc_power, plan_paid_batch, run_plan,
@@ -177,13 +177,24 @@ class Power:
                         Instance.complete_run(instance_type)
                         enter()
                         previous = 0
-                    selected = Instance.select_waves(instance_type, waves)
-                    if selected != waves:
-                        # 支持只提供单场挑战的历战余响界面。
-                        waves, cost = selected, selected * cost_per_wave
-                    borrowed = Instance.start_instance(
-                        instance_type, name, support, practice=practice, world_team=world_team,
-                    )
+                    for attempt in range(1, 4):
+                        try:
+                            selected = Instance.select_waves(instance_type, waves)
+                            if selected != waves:
+                                # 支持只提供单场挑战的历战余响界面。
+                                waves, cost = selected, selected * cost_per_wave
+                            borrowed = Instance.start_instance(
+                                instance_type, name, support, practice=practice, world_team=world_team,
+                            )
+                        except ChallengePageUnavailable as error:
+                            if attempt == 3:
+                                raise
+                            log.warning(f"开打前准备失败，重新进入副本 {attempt}/2：{error}")
+                            # 先退出当前页面，重新进入后从默认一场设置波次。
+                            screen.change_to("main", max_recursion=1)
+                            enter()
+                        else:
+                            break
                 if not Instance.wait_fight(repeated=repeated):
                     Instance.exit_defeat()
                     raise BattleDefeat("副本挑战失败")
@@ -248,8 +259,8 @@ class Power:
 
         balance = read()
         if use_supplement:
-            balance = supplement(auto, screen, cfg, balance, lambda: auto.click_element(
+            balance = supplement(auto, screen, cfg, balance, lambda: auto.find_element(
                 "./assets/images/share/power/trailblaze_power/trailblaze_power.png", "image", 0.9, crop=MAP_POWER,
-            ), read, return_screen="map")
+            ), read, return_screen="map", desktop=True)
         log.info(f"开拓力：{balance}/300")
         return balance

@@ -29,6 +29,15 @@ def can_collect(config):
     return config.reward_enable and config.reward_quest_enable
 
 
+def claimable_milestones(automation, template, crop):
+    """查找礼盒栏中下一个可领取的图标。一次点击可能领完多档。"""
+    for index in range(5):
+        button = automation.find_element(template, "image", 0.9, crop=crop, max_retries=10 if index == 0 else 1)
+        if not button:
+            return
+        yield button
+
+
 def record_progress(config, activity):
     if activity == TARGET_ACTIVITY:
         config.save_timestamp("last_run_timestamp")

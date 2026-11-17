@@ -1,6 +1,9 @@
 import sys
+from types import SimpleNamespace
+
 import pytest
 
+from utils import admin
 from utils.admin import is_user_admin, run_as_admin
 
 
@@ -18,6 +21,26 @@ class TestRunAsAdmin:
     def test_raises_on_non_windows(self):
         with pytest.raises(RuntimeError, match="Windows"):
             run_as_admin(["echo", "test"])
+
+
+class TestDescribeComError:
+    def test_uses_excepinfo_scode_and_text(self):
+        error = SimpleNamespace(
+            hresult=-2147352567, strerror="发生意外。",
+            excepinfo=(0, None, "任务被禁用。", None, 0, -2147216602),
+        )
+        assert admin.describe_com_error(error) == "任务被禁用。（0x80041326）"
+
+    def test_looks_up_text_when_excepinfo_has_none(self, monkeypatch):
+        monkeypatch.setattr(admin, "_system_message", lambda code: "拒绝访问。")
+        error = SimpleNamespace(
+            hresult=-2147352567, strerror="发生意外。",
+            excepinfo=(0, None, None, None, 0, -2147024891),
+        )
+        assert admin.describe_com_error(error) == "拒绝访问。（0x80070005）"
+
+    def test_plain_exception(self):
+        assert admin.describe_com_error(OSError("服务不可用")) == "服务不可用"
 
 
 class TestCurrentCommandLine:

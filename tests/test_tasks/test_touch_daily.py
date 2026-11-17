@@ -53,20 +53,6 @@ def test_reuses_pc_card_parser_at_720p_without_overwriting_progress_with_clipped
     assert not tasks.parse_ocr([ocr_line("本日活跃度已满")])
 
 
-@pytest.mark.parametrize("activity, ready, pending", [
-    (0, (), set()),
-    (100, (True,), {100}),
-    (100, (False,), set()),
-    (500, (False, False, False, False, True), {500}),
-])
-def test_checks_only_unsettled_eligible_milestone_buttons(monkeypatch, activity, ready, pending):
-    find_element = Mock(side_effect=[((10, 20), (30, 40)) if visible else None for visible in ready])
-    monkeypatch.setattr(daily, "auto", SimpleNamespace(find_element=find_element))
-    assert dict(daily.claimable_milestones(activity)).keys() == pending
-    assert find_element.call_count == len(ready)
-    assert all(entry.args[0].endswith("milestone_ready.png") for entry in find_element.call_args_list)
-
-
 @pytest.mark.parametrize("reward_enable, quest_enable", [(False, True), (True, False)])
 def test_disabling_rewards_preserves_reading_and_prevents_claiming(monkeypatch, reward_enable, quest_enable):
     monkeypatch.setattr(daily, "cfg", SimpleNamespace(reward_enable=reward_enable, reward_quest_enable=quest_enable, daily_enable=True, daily_material_enable=False))

@@ -1,9 +1,10 @@
-from module.automation.input_base import InputBase
+from module.automation.input_base import InputBase, begin_input_dispatch, input_deadline_reached
 from utils.pause import pause_ctl
 import time
 
 
 class CdpInput(InputBase):
+    reports_dispatch = True
     KEY_ALIAS_MAP = {
         "escape": "esc",
         "return": "enter",
@@ -82,6 +83,13 @@ class CdpInput(InputBase):
         self.last_y = 0
         self.active_modifiers = 0
 
+    def _has_driver(self):
+        return getattr(self.cloud_game, "driver", True) is not None
+
+    def _begin_dispatch(self):
+        pause_ctl.check_stop()
+        return self._has_driver() and begin_input_dispatch(time.monotonic())
+
     def focus(self):
         """当鼠标移浏览器时，失去焦点时，键盘输入命令可能失效，这时候需要让浏览器判定鼠标还留在云游戏内"""
         try:
@@ -130,9 +138,12 @@ class CdpInput(InputBase):
 
         for index in range(repeats):
             pause_ctl.check_stop()
+            if not self._has_driver() or input_deadline_reached(time.monotonic()):
+                return False
             self.last_x, self.last_y = start_x, start_y
             dispatch("mouseMoved", 0)
-            pause_ctl.check_stop()
+            if not self._begin_dispatch():
+                return False
             try:
                 dispatch("mousePressed", 1)
                 started = time.monotonic()
@@ -166,6 +177,11 @@ class CdpInput(InputBase):
         return True
 
     def mouse_down(self, x, y):
+        if not self._begin_dispatch():
+            return False
+        return self._send_mouse_down(x, y)
+
+    def _send_mouse_down(self, x, y):
         self.last_x, self.last_y = x, y
         try:
             self.cloud_game.execute_cdp_cmd("Input.dispatchMouseEvent", {
@@ -177,8 +193,12 @@ class CdpInput(InputBase):
                 "pointerType": "mouse"
             })
             self.logger.debug(f"鼠标按下 ({x}, {y})")
+            return True
         except Exception as e:
             self.logger.error(f"鼠标按下出错：{e}")
+            # 请求可能已在浏览器内执行。调用方收到 False 后不会再释放。
+            self.mouse_up()
+            return False
 
     def mouse_up(self):
         try:
@@ -191,12 +211,17 @@ class CdpInput(InputBase):
                 "pointerType": "mouse"
             })
             self.logger.debug(f"鼠标释放 ({self.last_x}, {self.last_y})")
+            return True
         except Exception as e:
             self.logger.error(f"鼠标释放出错：{e}")
+            return False
 
     def mouse_click(self, x, y):
-        self.mouse_down(x, y)
-        self.mouse_up()
+        if not self._begin_dispatch():
+            return False
+        if self._send_mouse_down(x, y):
+            self.mouse_up()
+        # 短点击已尝试派发，沿用 None 返回值。待核对的操作由调用方读取画面确认。
         self.logger.debug(f"鼠标点击 ({x}, {y})")
 
     def mouse_scroll(self, count, direction=-1, pause=True):
@@ -257,6 +282,8 @@ class CdpInput(InputBase):
         if payload is None:
             return False
 
+        if event_type == "keyDown" and not self._begin_dispatch():
+            return False
         self.cloud_game.execute_cdp_cmd("Input.dispatchKeyEvent", {"type": event_type, **payload})
         if event_type == "keyDown":
             self.active_modifiers = payload["modifiers"]
@@ -265,18 +292,25 @@ class CdpInput(InputBase):
         return True
 
     def press_key(self, key, wait_time=0.2):
+        if not self._has_driver() or input_deadline_reached(time.monotonic()):
+            return False
         self.focus()
+        pause_ctl.check_stop()
         if self._get_key_payload(key) is None:
             self.logger.error(f"未知按键：{key}")
-            return
+            return False
 
         try:
-            self._dispatch_key_event(key, "keyDown")
+            if not self._dispatch_key_event(key, "keyDown"):
+                return False
             time.sleep(wait_time)
-            self._dispatch_key_event(key, "keyUp")
+            if not self._dispatch_key_event(key, "keyUp"):
+                return False
             self.logger.debug(f"按键按下：{key}, 持续 {wait_time}s")
+            return True
         except Exception as e:
             self.logger.error(f"按键 {key} 出错：{e}")
+            return False
 
     def press_key_down(self, key):
         self.focus()
@@ -285,8 +319,8 @@ class CdpInput(InputBase):
             return
 
         try:
-            self._dispatch_key_event(key, "keyDown")
-            self.logger.debug(f"按键按下：{key}")
+            if self._dispatch_key_event(key, "keyDown"):
+                self.logger.debug(f"按键按下：{key}")
         except Exception as e:
             self.logger.error(f"按键按下 {key} 出错：{e}")
 

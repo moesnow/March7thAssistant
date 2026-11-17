@@ -56,6 +56,10 @@ def task_is_supported(task_id, config=None):
     backend = get_control_backend(config)
     if task_id == "adb_check":
         return backend == "adb"
+    if task_id == "app_update":
+        from utils.desktop_twin import in_desktop_twin
+
+        return not in_desktop_twin()
     if task_id in HOST_TASKS:
         return True
     if backend == "adb":
@@ -70,6 +74,20 @@ def task_is_supported(task_id, config=None):
 def supported_tasks(config=None, *, include_cli=False):
     tasks = AVAILABLE_TASKS | CLI_ONLY_TASKS if include_cli else AVAILABLE_TASKS
     return {task_id: name for task_id, name in tasks.items() if task_is_supported(task_id, config)}
+
+
+def tasks_for_listing(*, include_cli=False):
+    import sys
+    from module.config.platform import InvalidGameConnection, get_ui_profile
+
+    try:
+        get_ui_profile()
+        return supported_tasks(include_cli=include_cli)
+    except InvalidGameConnection as error:
+        # 配置待修复时仍可查看原有任务目录，诊断单独写到 stderr。
+        print(error, file=sys.stderr)
+        return AVAILABLE_TASKS
+
 
 # 任务名称映射（兼容旧名称调用方）
 TASK_NAMES = AVAILABLE_TASKS

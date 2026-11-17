@@ -23,12 +23,15 @@ from .common.icon import UiIcon
 from .common.schedule import (task_trigger_mode, scheduled_task_slot,
                               scheduled_task_payload, find_scheduled_task, scheduled_task_chain,
                               split_task_arguments, milliseconds_to_next_minute,
-                              next_scheduled_datetime, schedule_weekday_labels)
+                              next_scheduled_datetime, schedule_weekday_labels, task_launch_block_reason)
 from module.config import cfg
 from module.game import get_game_controller
+from module.logger import log
+from utils.admin import is_user_admin
 from utils.tasks import TASK_NAMES, PAUSABLE_TASKS
 from utils.pause import (COMMAND_PAUSE, COMMAND_RESUME, COMMAND_STOP, STATE_PAUSING, STATE_PAUSED,
                          STATE_RUNNING, STATE_STOPPING, write_command, read_state, reset_files)
+from utils.runs import STATUS_BLOCKED, load_run, new_run_id
 from utils.desktop import open_log_folder
 from utils.desktop_twin import in_desktop_twin
 from .schedule_dialog import ScheduleManagerDialog
@@ -646,6 +649,8 @@ class LogInterface(ScrollArea):
                 text = tr('正在运行：{name}').format(name=name)
         elif self._task_status == 'completed':
             text = tr('任务完成')
+        elif self._task_status == 'blocked':
+            text = tr('未执行')
         elif self._task_status == 'stopped':
             text = tr('任务已停止')
         else:
@@ -1015,10 +1020,23 @@ class LogInterface(ScrollArea):
     def _hasActiveStartedProcess(self) -> bool:
         return bool(self.process and self.process.state() != QProcess.NotRunning) or self._external_task_active
 
+    def _reportBlockedTaskLaunch(self, reason):
+        self.appendLog(reason + '\n')
+        log.warning(reason)
+
+    def _linkScheduledRun(self, process, arguments):
+        # Windows 的未提权入口会在转交时自行分配编号。
+        if self._pending_task_meta and (sys.platform != 'win32' or is_user_admin()):
+            process._scheduled_run_id = new_run_id()
+            arguments.extend(['--run-id', process._scheduled_run_id])
+
     def runScheduledTask(self, task, tasks=None, manual=False) -> bool:
         if getattr(self, "_desktop_twin_hosting", False):
             return False
         task_dict = self._buildScheduledTaskPayload(task)
+        if reason := task_launch_block_reason(task_dict, cfg):
+            self._reportBlockedTaskLaunch(reason)
+            return False
         chain = self._buildScheduledTaskChain(task, tasks)
 
         if manual and task.get('id'):
@@ -1174,6 +1192,10 @@ class LogInterface(ScrollArea):
                 continue
             if task_id:
                 self._last_triggered_ts[task_id] = slot
+            task_dict = self._buildScheduledTaskPayload(task)
+            if reason := task_launch_block_reason(task_dict, cfg):
+                self._reportBlockedTaskLaunch(reason)
+                continue
             time_str = task.get('time', '00:00')
             self.appendLog(f"\n========== 定时任务触发 ({task.get('name', '未命名')} @ {time_str}) ==========\n")
 
@@ -1183,11 +1205,14 @@ class LogInterface(ScrollArea):
                     self.appendLog("已有任务在运行，按配置跳过计划任务: {}".format(task.get('name')) + "\n")
                     continue
                 if conflict_mode == 'stop':
+                    if reason := task_launch_block_reason(task_dict, cfg, check_saved_config=True):
+                        self._reportBlockedTaskLaunch(reason)
+                        continue
                     self.appendLog("已有任务在运行，按配置停止当前任务并在其结束后启动: {}".format(task.get('name')) + "\n")
                     try:
                         metadata = deepcopy(task)
                         self._pending_start_task_after_stop = (
-                            metadata, scheduled_task_payload(metadata), scheduled_task_chain(metadata, tasks)
+                            metadata, task_dict, scheduled_task_chain(metadata, tasks)
                         )
                         self._suppress_chain_continuation_once = True
                         self.stopTask(user_initiated=False)
@@ -1257,6 +1282,9 @@ class LogInterface(ScrollArea):
         """启动任务"""
         if getattr(self, "_desktop_twin_hosting", False):
             self.appendLog("当前由分身内的小助手运行任务\n")
+            return
+        if reason := task_launch_block_reason(command_or_task, cfg):
+            self._reportBlockedTaskLaunch(reason)
             return
         # 如果有正在运行的任务，先停止
         if self.process and self.process.state() == QProcess.Running:
@@ -1336,6 +1364,8 @@ class LogInterface(ScrollArea):
                 args_list = split_task_arguments(args, posix=workflow_launch or self._pause_supported)
             except Exception:
                 args_list = [args] if args else []
+            if workflow_launch:
+                self._linkScheduledRun(proc, args_list)
 
             executable_path = os.path.abspath(program)
             if not os.path.exists(executable_path):
@@ -1491,7 +1521,6 @@ class LogInterface(ScrollArea):
             except Exception:
                 pass
             arguments = [command]
-            self.appendLog(f"命令: {executable_path} {command}\n")
         else:
             executable_path = sys.executable
             main_script = os.path.abspath("main.py")
@@ -1504,8 +1533,9 @@ class LogInterface(ScrollArea):
             except Exception:
                 pass
             arguments = [main_script, command]
-            self.appendLog(f"命令: {executable_path} {main_script} {command}\n")
 
+        self._linkScheduledRun(proc, arguments)
+        self.appendLog(f"命令: {executable_path} {' '.join(arguments)}\n")
         self._armTaskTimeout(proc, timeout)
         proc.start(executable_path, arguments)
 
@@ -2095,7 +2125,6 @@ class LogInterface(ScrollArea):
             process._task_finalized = True
         # taskkill/进程崩溃不会执行子进程 finally；只恢复已确认退出的备份。
         from utils.temporary_graphics import recover_temporary_graphics
-        from module.logger import log
         recover_temporary_graphics(log)
         # 终止并清理任何和当前任务绑定的超时定时器
         self._clearTaskTimeout()
@@ -2109,7 +2138,19 @@ class LogInterface(ScrollArea):
             self._user_initiated_stop = False
         except Exception:
             user_stop = False
-        if exit_status == QProcess.NormalExit and exit_code == 0:
+        run_block = None
+        run_id = getattr(process, '_scheduled_run_id', None)
+        if run_id and exit_status == QProcess.NormalExit and exit_code != 0:
+            record = load_run(run_id)
+            if (record and record.get('status') == STATUS_BLOCKED and
+                    record.get('reason') in ('unsupported_backend', 'invalid_game_connection')):
+                run_block = record
+        if run_block is not None:
+            message = run_block.get('error')
+            if run_block['reason'] == 'invalid_game_connection' or not message:
+                message = f"{tr('未执行')}：{message}" if message else tr('未执行')
+            self._reportBlockedTaskLaunch(message)
+        elif exit_status == QProcess.NormalExit and exit_code == 0:
             self.appendLog(f"任务完成，退出码: {exit_code}\n")
         else:
             if user_stop:
@@ -2137,6 +2178,7 @@ class LogInterface(ScrollArea):
         )
         self._suppress_chain_continuation_once = False
         next_chain_task = None
+        continue_on_failure = False
         try:
             if self._active_task_chain:
                 continue_on_failure = cfg.get_value('scheduled_chain_continue_on_failure', True)
@@ -2172,14 +2214,14 @@ class LogInterface(ScrollArea):
             except Exception:
                 pass
 
-        self._updateFinishedStatus(exit_code)
+        self._updateFinishedStatus(exit_code, blocked=run_block is not None)
         self._hideLogOverlay()
         self.taskFinished.emit(exit_code)
 
         # 如果此次运行是由定时任务触发并且有上下文信息，则在进程结束后发送通知与记录完成后操作
         try:
             pm = getattr(self, '_pending_task_meta', None)
-            if pm:
+            if pm and run_block is None:
                 # 终止指定进程（若有）
                 try:
                     kp = pm.get('kill_processes', []) or []
@@ -2260,6 +2302,7 @@ class LogInterface(ScrollArea):
                 except Exception:
                     pass
             else:
+                self._pending_task_meta = None
                 # 清理异常停止标记（若存在）
                 try:
                     self._stopped_abnormally = False
@@ -2280,12 +2323,26 @@ class LogInterface(ScrollArea):
                 self.process = None
             process.deleteLater()
 
-        if next_chain_task:
+        blocked_launches = []
+        while next_chain_task:
+            next_meta, next_task_dict = next_chain_task
+            if reason := task_launch_block_reason(next_task_dict, cfg):
+                blocked_launches.append(reason)
+                sequence.succeeded = False
+                if continue_on_failure and self._active_task_chain:
+                    next_chain_task = self._active_task_chain.pop(0)
+                    continue
+                if self._active_task_chain:
+                    remaining = self._formatScheduledTaskChain(self._active_task_chain)
+                    blocked_launches.append('链式任务已中断，未继续执行: {}'.format(remaining))
+                    self._active_task_chain = []
+                break
             try:
-                next_meta, next_task_dict = next_chain_task
                 self._pending_task_meta = next_meta
                 self.startTask(next_task_dict, _sequence=sequence)
                 if self._hasActiveStartedProcess():
+                    for reason in blocked_launches:
+                        self._reportBlockedTaskLaunch(reason)
                     name = next_meta.get('name') or tr('未命名')
                     self.appendLog('链式启动下一任务: {}'.format(name) + "\n")
                     remaining = self._formatScheduledTaskChain(self._active_task_chain)
@@ -2301,6 +2358,9 @@ class LogInterface(ScrollArea):
                 self._active_task_chain = []
                 sequence.succeeded = False
                 self.appendLog(f"链式启动任务失败: {e}\n")
+            break
+        for reason in blocked_launches:
+            self._reportBlockedTaskLaunch(reason)
 
         # 如果有排队的延迟启动任务（由于冲突设置导致在停止当前任务后再启动），在进程结束处理完成后启动它
         try:
@@ -2318,6 +2378,10 @@ class LogInterface(ScrollArea):
                     pass
                 # 记录 pending meta 并启动任务
                 try:
+                    if reason := task_launch_block_reason(task_dict, cfg):
+                        self._reportBlockedTaskLaunch(reason)
+                        self._finishTaskSequence(sequence)
+                        return
                     self._pending_task_meta = t_meta
                     self._active_task_chain = chain
                     self.startTask(task_dict)
@@ -2456,7 +2520,7 @@ class LogInterface(ScrollArea):
             except Exception:
                 pass
 
-    def _updateFinishedStatus(self, exit_code):
+    def _updateFinishedStatus(self, exit_code, *, blocked=False):
         """更新完成状态
 
         如果存在等待的完成后操作（_pending_post_action_timer），保持停止按钮可用以便用户取消；否则禁用。
@@ -2480,7 +2544,10 @@ class LogInterface(ScrollArea):
         except Exception:
             pass
 
-        self._task_status = 'completed' if exit_code == 0 else 'stopped'
+        if blocked:
+            self._task_status = 'blocked'
+        else:
+            self._task_status = 'completed' if exit_code == 0 else 'stopped'
         self._refreshTaskStatus()
 
     def isTaskRunning(self):

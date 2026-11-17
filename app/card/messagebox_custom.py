@@ -540,8 +540,8 @@ class MessageBoxDisclaimer(MessageBoxHtml):
 
 
 class MessageBoxEdit(MessageBox):
-    def __init__(self, title: str, content: str, parent=None):
-        super().__init__(title, content, parent)
+    def __init__(self, title: str, content: str, parent=None, *, password=False):
+        super().__init__(title, "" if password else content, parent)
 
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
@@ -550,7 +550,9 @@ class MessageBoxEdit(MessageBox):
         self.cancelButton.setText(tr('取消'))
 
         self.lineEdit = LineEdit(self)
-        self.lineEdit.setText(self.content)
+        if password:
+            self.lineEdit.setEchoMode(LineEdit.EchoMode.Password)
+        self.lineEdit.setText(content)
         self.textLayout.addWidget(self.lineEdit, 0, Qt.AlignmentFlag.AlignTop)
 
         self.buttonGroup.setMinimumWidth(480)

@@ -377,6 +377,7 @@
     <string name="service_connected_detail">负责取游戏画面和模拟点按</string>
     <string name="service_cleaning_detail">正在关闭会话并释放虚拟屏</string>
     <string name="log_wake_lock_renewal_failed">未能续期任务唤醒锁：%1$s</string>
+    <string name="log_task_cleanup_unconfirmed">任务清理未确认：%1$s</string>
     <string name="log_task_progress_write_failed">任务进度未能保存到本机</string>
     <string name="status_display">虚拟屏</string>
     <string name="status_display_on">已创建</string>
@@ -432,6 +433,7 @@
     <string name="error_code">错误码：%1$s</string>
     <string name="error_busy_title">上一轮还没有完全退出</string>
     <string name="error_busy_advice">1. 等十几秒再点开始。\n2. 还是不行，就在 Shizuku 里停止服务后重新启动，或者重启手机。</string>
+    <string name="error_cleanup_pending_title">本轮清理尚未确认</string>
     <string name="error_service_title">设备端服务没有启动成功</string>
     <string name="error_service_advice">1. 打开 Shizuku，确认它显示「正在运行」；手机重启过就需要重新启动它。\n2. 回到权限引导，确认状态是「已就绪」。\n3. 再点开始。</string>
     <string name="error_root_title">没有拿到 Root 权限</string>
@@ -442,6 +444,7 @@
     <string name="error_game_exited_advice">可以直接从小助手重新启动游戏。若反复退出，请导出日志反馈。</string>
     <string name="error_game_start_timeout_title">等待游戏就绪超时</string>
     <string name="error_game_start_timeout_advice">打开游戏确认是否需要登录或更新，然后重新开始任务。反复超时可导出日志反馈。</string>
+    <string name="error_honor_smart_resolution_advice">如果后台游戏画面异常或一直卡在启动界面，可在手机系统设置中搜索并关闭「智能分辨率」，再试一次。</string>
     <string name="error_login_title">需要你先登录游戏</string>
     <string name="error_login_advice">1. 在手机上打开游戏，完成登录，进到能操作角色的界面。\n2. 回到小助手重新开始。</string>
     <string name="error_locked_title">手机处于锁屏状态</string>

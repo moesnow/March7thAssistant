@@ -124,6 +124,23 @@ class RootAccessTest {
     }
 
     @Test
+    fun startupFailureKeepsItsCodeWhenRootCleanupTimesOut() {
+        val process = FakeSu(exitsOnStdinClose = false) {
+            if (lines.size == 1) {
+                emit(AppServer.ROOT_STDIN_READY)
+            } else {
+                emit("M7A_APP_BUSY")
+            }
+        }
+        val failure = assertThrows(DeviceFailure::class.java) { rootAccess(process).open(APK, TOKEN) }
+        assertEquals(AppServer.BUSY, failure.code)
+        val cleanup = failure.suppressed.single() as DeviceFailure
+        assertEquals("cleanup_pending", cleanup.code)
+        assertTrue(cleanup.message.orEmpty().contains("等待 Root 设备端服务退出超时"))
+        assertTrue(process.stdinClosed)
+    }
+
+    @Test
     fun audioRecoveryUsesItsOwnEntryWithoutStartingATask() {
         val process = FakeSu { line ->
             assertTrue(line.endsWith("org.march7th.deviceservice.AppServer '$APK' --recover-audio"))
@@ -150,7 +167,10 @@ class RootAccessTest {
         process
     }, warn = {})
 
-    private class FakeSu(private val onInput: FakeSu.(String) -> Unit) : Process() {
+    private class FakeSu(
+        private val exitsOnStdinClose: Boolean = true,
+        private val onInput: FakeSu.(String) -> Unit,
+    ) : Process() {
         val lines = mutableListOf<String>()
         var stdinClosed = false
             private set
@@ -168,7 +188,7 @@ class RootAccessTest {
 
             override fun close() {
                 stdinClosed = true
-                exit(0)
+                if (exitsOnStdinClose) exit(0)
             }
         }
 
@@ -191,7 +211,8 @@ class RootAccessTest {
             exited.await()
             return code
         }
-        override fun waitFor(timeout: Long, unit: TimeUnit) = exited.await(timeout, unit)
+        override fun waitFor(timeout: Long, unit: TimeUnit) =
+            if (stdinClosed && !exitsOnStdinClose) !isAlive else exited.await(timeout, unit)
         override fun exitValue(): Int {
             if (exited.count != 0L) throw IllegalThreadStateException()
             return code

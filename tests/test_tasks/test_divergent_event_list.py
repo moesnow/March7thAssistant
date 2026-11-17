@@ -26,9 +26,9 @@ def test_visible_confirmation_does_not_drag_or_click(monkeypatch):
 
 
 def test_confirmation_is_checked_after_last_allowed_drag(monkeypatch):
-    auto, drag = setup_list(monkeypatch, [False] * 6 + [True])
+    auto, drag = setup_list(monkeypatch, [False, False, True])
     assert module.DivergentUniverse.reveal_event_confirm()
-    assert drag.call_count == 6
+    assert drag.call_count == 2
     for call in drag.call_args_list:
         start, end = call.args
         x, y, width, height = (1320 / 1920, 170 / 1080, 515 / 1920, 765 / 1080)
@@ -39,9 +39,9 @@ def test_confirmation_is_checked_after_last_allowed_drag(monkeypatch):
 
 
 def test_missing_confirmation_stops_at_limit(monkeypatch):
-    auto, drag = setup_list(monkeypatch, [False] * 7)
+    auto, drag = setup_list(monkeypatch, [False] * 3)
     assert module.DivergentUniverse.reveal_event_confirm() is False
-    assert drag.call_count == 6
+    assert drag.call_count == 2
     auto.click_element.assert_not_called()
 
 

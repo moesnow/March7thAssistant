@@ -7998,7 +7998,6 @@ msgstr ""
 msgid "确认合并"
 msgstr "確認合併"
 
-
 #: app/warp_interface.py:142
 msgid "选择导入方式"
 msgstr "選擇匯入方式"
@@ -8094,3 +8093,31 @@ msgstr "總時限"
 #: app/setting_interface.py:616
 msgid "单次运行的分钟数，0 表示不限时"
 msgstr "單次執行的分鐘數，0 表示不限時"
+
+#: app/setting_interface.py:2658
+msgid "GitHub Token"
+msgstr "GitHub Token"
+
+#: module/update/version_check.py:374
+msgid "读取 GitHub Releases 页面失败（GitHub API 返回 HTTP 403）"
+msgstr "讀取 GitHub Releases 頁面失敗（GitHub API 傳回 HTTP 403）"
+
+#: module/game/adb.py:515
+msgid "检测到多个显示器，无法确定模拟器 display 0 对应的 SurfaceFlinger ID"
+msgstr "偵測到多個顯示器，無法確定模擬器 display 0 對應的 SurfaceFlinger ID"
+
+#: module/game/adb.py:524
+msgid "模拟器 display 0 的截图输出为空"
+msgstr "模擬器 display 0 的截圖輸出為空"
+
+#: module/game/adb.py:526
+msgid "模拟器 display 0 的截图输出不符合 PNG 格式（{size} 字节）"
+msgstr "模擬器 display 0 的截圖輸出不符合 PNG 格式（{size} 位元組）"
+
+#: app/tools/desktop_twin.py:713
+msgid "查看排查方法"
+msgstr "查看排查方法"
+
+#: app/setting_interface.py:2569
+msgid "后台操作模式已移至「游戏连接」"
+msgstr "背景操作模式已移至「遊戲連線」"

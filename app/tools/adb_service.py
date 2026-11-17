@@ -119,7 +119,7 @@ def backend_changes(backend, config=None):
         changes["cloud_game_enable"] = cloud
     profile = config.get_value("ui_profile")
     if profile not in (None, "pc_1080", "touch_720") or (
-            (cloud or current_backend(config) == "adb") and profile == "touch_720"):
+            current_backend(config) == "adb" and profile == "touch_720"):
         changes["ui_profile"] = "pc_1080"
     return changes
 

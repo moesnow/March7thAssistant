@@ -120,11 +120,7 @@ class Daily:
         log.info("差分宇宙固定次数已全部完成，记录本轮执行时间")
 
     @staticmethod
-    def currency_wars_due():
-        return cfg.currencywars_enable and Date.is_next_mon_x_am(cfg.currencywars_timestamp, cfg.refresh_hour)
-
-    @staticmethod
-    def start(*, currency_wars_first=False):
+    def start():
         steps = [("日常准备", Daily.prepare_daily)]
 
         if cfg.asset_manager_enable:
@@ -133,9 +129,7 @@ class Daily:
             if any(cfg.get_value(item.enable_key, False) for item in EmberExchange.ITEMS):
                 steps.append(("余烬兑换", EmberExchange.start))
 
-        if currency_wars_first:
-            steps.insert(0, ("货币战争", Daily._run_currency_wars))
-        elif Daily.currency_wars_due():
+        if cfg.currencywars_enable and Date.is_next_mon_x_am(cfg.currencywars_timestamp, cfg.refresh_hour):
             steps.append(("货币战争", Daily._run_currency_wars))
 
         if cfg.weekly_divergent_enable and Date.is_next_mon_x_am(cfg.weekly_divergent_timestamp, cfg.refresh_hour):
