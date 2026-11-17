@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw
 
 from tasks.power.fuel_ticket import FuelTicketBatch
 from tasks.power.fuel_ticket_ui import (
-    Word, confirm_dialog, entry_button, receipt_dialog, ticket_icon,
+    Word, confirm_dialog, entry_button, receipt_dialog, ticket_icon, refine_cost_words,
 )
 from tasks.power.policy import GOLDEN_CALYX, CRIMSON_CALYX, STAGNANT_SHADOW
 from tasks.power import power
@@ -58,7 +58,7 @@ def confirmation():
 def result():
     return words(
         ("快速刷取",.50,.18),("刷取次数",.46,.28),("1/1",.55,.28),
-        ("第1次刷取",.19,.36),("消耗",.71,.36),("10",.79,.36),("1",.845,.36),
+        ("·第1次刷取",.19,.36),("消耗",.71,.36),("10",.79,.36),("1",.845,.36),
         ("欢愉之蕾·拟造花萼（赤）",.34,.48),("关闭",.35,.93),
         ("再来一次",.64,.93))
 
@@ -167,3 +167,14 @@ def test_support_training_uses_one_normal_wave_before_ticket_clears(monkeypatch)
         call("power_plan",[[GOLDEN_CALYX,"回忆之蕾",2]]),
         call("power_plan",[[GOLDEN_CALYX,"回忆之蕾",1]]),
         call("power_plan",[])]
+
+def test_cost_crop_recovers_missing_small_number_and_refuses_conflict():
+    im=Image.new("RGB",(1920,1080),"white")
+    full=confirmation()
+    initial=[w for w in full if w.text!="1"]
+    def read(crop):
+        return words(("消耗",.14,.50),("10",.42,.50),("1",.70,.50))
+    refined=refine_cost_words(im,initial,read)
+    assert confirm_dialog(refined,BATCH,DISPLAY)
+    wrong=changed(initial,"10","20")
+    assert confirm_dialog(refine_cost_words(im,wrong,read),BATCH,DISPLAY) is None

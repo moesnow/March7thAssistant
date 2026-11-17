@@ -100,6 +100,52 @@ def _costs(words, anchor):
     return tuple(int(normalized(w.text)) for w in nums) if len(nums)==2 else None
 
 
+def refine_cost_words(image, words, recognize):
+    """Read small numbers again from the SAME frame, never from plan data."""
+    anchor = exact(words, "消耗", region=(.26,.15,.86,.90))
+    if not anchor or _costs(words, anchor) is not None:
+        return words
+    width,height=image.size
+    # Different UI panels render the small ticket count against slightly
+    # different backgrounds. Try two bounded crops; conflicting reads fail.
+    options=[]
+    prior=[w for w in words if w.confidence>=.75 and
+           re.fullmatch(r"[0-9]{1,3}",normalized(w.text)) and
+           anchor.x+.012<w.x<anchor.x+.16 and abs(w.y-anchor.y)<.018]
+    regions=[(anchor.x-left,anchor.y-half,anchor.x+right,anchor.y+half,False)
+             for left,right,half in ((.025,.155,.020),(.030,.144,.022))]
+    # Observed 1920x1080 PC single-result panel; only when its cost label
+    # is in the verified position. A separate grayscale read guards tiny digits.
+    if .665<anchor.x<.685 and .36<anchor.y<.38:
+        regions.extend(((.645,.348,.818,.392,False),(.646,.345,.800,.394,True)))
+    for left,top,right,bottom,contrast in regions:
+        x1,x2=max(0,round(left*width)),min(width,round(right*width))
+        y1,y2=max(0,round(top*height)),min(height,round(bottom*height))
+        if x2<=x1 or y2<=y1:
+            continue
+        crop=image.crop((x1,y1,x2,y2))
+        enlarged=crop.resize((crop.width*4,crop.height*4))
+        if contrast:
+            from PIL import ImageOps
+            enlarged=ImageOps.autocontrast(enlarged.convert("L")).convert("RGB")
+        refined=[Word(w.text,(x1+w.x*crop.width)/width,(y1+w.y*crop.height)/height,w.confidence)
+                 for w in recognize(enlarged)]
+        label=exact(refined,"消耗")
+        if not label or abs(label.x-anchor.x)>.018 or abs(label.y-anchor.y)>.012:
+            continue
+        values=_costs(refined,label)
+        if values is None:
+            continue
+        if any(not any(normalized(w.text)==normalized(old.text) and abs(w.x-old.x)<.015
+                       for w in refined) for old in prior):
+            return words
+        options.append((values,refined,(x1,y1,x2,y2)))
+    if not options or len({v for v,_,_ in options})!=1:
+        return words
+    _,refined,(x1,y1,x2,y2)=options[0]
+    return [w for w in words if not (x1/width<=w.x<=x2/width and y1/height<=w.y<=y2/height)]+refined
+
+
 def confirm_dialog(words, batch, display_name):
     title = exact(words, "快速刷取", region=(.3,.13,.7,.40))
     cancel = exact(words, "取消", region=(.22,.48,.52,.88))
@@ -170,12 +216,15 @@ class PCFuelTicketScreen:
         image, origin, scale=self.auto.take_screenshot()
         if not image or not scale:
             raise RuntimeError("未取得速刷画面")
-        width,height=image.size
-        words=[]
-        for box,(text,confidence) in ocr.recognize_multi_lines(image) or []:
-            xs=[float(p[0]) for p in box]; ys=[float(p[1]) for p in box]
-            words.append(Word(text,(min(xs)+max(xs))/2/width,
-                              (min(ys)+max(ys))/2/height,float(confidence)))
+        def recognize(frame):
+            width,height=frame.size
+            words=[]
+            for box,(text,confidence) in ocr.recognize_multi_lines(frame) or []:
+                xs=[float(p[0]) for p in box]; ys=[float(p[1]) for p in box]
+                words.append(Word(text,(min(xs)+max(xs))/2/width,
+                                  (min(ys)+max(ys))/2/height,float(confidence)))
+            return words
+        words=refine_cost_words(image,recognize(image),recognize)
         return image,origin,scale,words
 
     def _click(self, frame, x, y):
