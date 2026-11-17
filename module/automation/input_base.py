@@ -1,6 +1,54 @@
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
+from contextvars import ContextVar
 import sys
 from module.config.platform import get_control_backend
+
+
+input_deadline = ContextVar("input_dispatch_deadline", default=None)
+_dispatch_observer = ContextVar("input_dispatch_observer", default=None)
+
+
+def input_deadline_reached(now):
+    deadline = input_deadline.get()
+    return deadline is not None and now >= deadline
+
+
+@contextmanager
+def limit_input_deadline(deadline):
+    previous = input_deadline.get()
+    if previous is not None:
+        deadline = previous if deadline is None else min(previous, deadline)
+    token = input_deadline.set(deadline)
+    try:
+        yield
+    finally:
+        input_deadline.reset(token)
+
+
+@contextmanager
+def observe_input_dispatch(callback, *, deadline=None):
+    """报告当前操作首次调用鼠标或键盘派发 API 的时间。"""
+    token = _dispatch_observer.set(callback)
+    try:
+        with limit_input_deadline(deadline):
+            yield
+    finally:
+        _dispatch_observer.reset(token)
+
+
+def record_input_dispatch(now):
+    if (observer := _dispatch_observer.get()) is not None:
+        observer(now)
+        _dispatch_observer.set(None)
+
+
+def begin_input_dispatch(now):
+    """检查时限，并在调用派发 API 前记录尝试。结果仍需另行核对。"""
+    if input_deadline_reached(now):
+        return False
+    record_input_dispatch(now)
+    return True
 
 
 def background_enabled(config):
@@ -12,6 +60,8 @@ def background_enabled(config):
 class InputBase(ABC):
     handles_pause = False
     is_background = False
+    # 支持普通按键、点击和拖动的投递记录。
+    reports_dispatch = False
 
     def release_all(self):
         """释放后端持有的输入；无状态后端无需处理。"""

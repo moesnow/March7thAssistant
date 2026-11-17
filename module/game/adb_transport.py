@@ -208,6 +208,12 @@ class Adb:
     def shell(self, command: str, *, timeout: float = 5) -> str:
         return self.run("shell", command, timeout=timeout)
 
+    def primary_physical_display_id(self) -> str | None:
+        """从逻辑 display 0 的 uniqueId 取得 screencap 所用的 SurfaceFlinger ID。"""
+        output = self.shell("cmd display get-displays")
+        display = re.search(r'^[ \t]*Display id 0:[^\r\n]*\buniqueId "local:([0-9]+)"', output, re.MULTILINE)
+        return display[1] if display else None
+
     def focused_window(self, display_id: int) -> str | None:
         output = self.shell("dumpsys -t 2 window displays", timeout=3)
         on_display = False

@@ -452,6 +452,96 @@ def test_user_mouse_motion_retries_before_click_and_carries_motion_back(backend)
     assert not b.api.protections
 
 
+def test_currency_wars_records_only_gameplay_input_attempted_by_background_backend(backend, monkeypatch):
+    from tasks.weekly import currency_wars
+
+    b = backend
+    war = currency_wars.CurrencyWars()
+    monkeypatch.setattr(currency_wars, "auto", SimpleNamespace(input_handler=b.input))
+    monkeypatch.setattr(currency_wars, "time", SimpleNamespace(monotonic=lambda: b.clock.now))
+    monkeypatch.setattr(currency_wars, "pause_ctl", Mock())
+    mark_sent, mark_operation = Mock(), Mock()
+
+    def moved(_point):
+        b.api.on_move = None
+        nudge(b.api, 40, 25)
+
+    b.api.on_move = moved
+    with module.input_wait_limit(3, deadline=b.clock.now + 3):
+        result = war._dispatch_input(b.input.mouse_click, 300, 400,
+                                     mark_sent=mark_sent, before_input=mark_operation)
+    assert result is False
+    assert not posts(b.api, 0x201)
+    mark_sent.assert_not_called()
+    mark_operation.assert_not_called()
+
+    send_mouse = b.api.send_mouse
+
+    def reject_press(window, message, *args):
+        if message == 0x201:
+            raise PermissionError("系统拒绝发送鼠标按下")
+        return send_mouse(window, message, *args)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(b.api, "send_mouse", reject_press)
+        with module.input_wait_limit(3, deadline=b.clock.now + 3), pytest.raises(PermissionError):
+            war._dispatch_input(b.input.mouse_click, 300, 400,
+                                mark_sent=mark_sent, before_input=mark_operation)
+    assert not posts(b.api, 0x201)
+    assert not posts(b.api, 0x202)
+    mark_sent.assert_not_called()
+    mark_operation.assert_not_called()
+
+    def missing_receipt(message, *_args):
+        if message == 0x201:
+            raise TimeoutError("点击已投递，回执超时")
+
+    b.api.on_post = missing_receipt
+    with module.input_wait_limit(3, deadline=b.clock.now + 3):
+        result = war._dispatch_input(b.input.mouse_click, 300, 400,
+                                     mark_sent=mark_sent, before_input=mark_operation)
+    assert result is False
+    assert len(posts(b.api, 0x201)) == 1
+    mark_sent.assert_called_once()
+    mark_operation.assert_called_once_with()
+
+    b.api.on_post = None
+    mark_sent.reset_mock()
+    mark_operation.reset_mock()
+    assert war._dispatch_input(b.input.press_key, "f", mark_sent=mark_sent, before_input=mark_operation)
+    assert len(posts(b.api, 0x100)) == 1
+    mark_sent.assert_called_once()
+    mark_operation.assert_called_once_with()
+
+
+@pytest.mark.parametrize("rejected", [True, False])
+def test_currency_wars_background_key_records_only_posted_or_uncertain_input(backend, monkeypatch, rejected):
+    from tasks.weekly import currency_wars
+
+    b = backend
+    war = currency_wars.CurrencyWars()
+    monkeypatch.setattr(currency_wars, "auto", SimpleNamespace(input_handler=b.input))
+    monkeypatch.setattr(currency_wars, "time", SimpleNamespace(monotonic=lambda: b.clock.now))
+    monkeypatch.setattr(currency_wars, "pause_ctl", Mock())
+    original_post = b.api.post
+    mark_sent, mark_operation = Mock(), Mock()
+
+    def post(window, message, wparam=0, lparam=0):
+        if rejected and message == 0x0100:
+            raise WindowGoneError("窗口已重建，按键未入队")
+        original_post(window, message, wparam, lparam)
+        if message == 0x0100:
+            raise TimeoutError("按键回执超时")
+
+    monkeypatch.setattr(b.api, "post", post)
+    with module.input_wait_limit(3, deadline=b.clock.now + 3):
+        assert war._dispatch_input(b.input.press_key, "f", mark_sent=mark_sent,
+                                   before_input=mark_operation) is False
+    expected = 0 if rejected else 1
+    assert len(posts(b.api, 0x0100)) == len(posts(b.api, 0x0101)) == expected
+    assert mark_sent.call_count == mark_operation.call_count == expected
+
+
 def test_exception_after_mouse_down_releases_it(backend):
     b=backend
     def fail(msg,*_):
@@ -1457,6 +1547,16 @@ def test_gui_thread_idle_limit_gives_up_quickly_without_clicking(backend, monkey
     assert b.clock.now < 1
     assert not posts(b.api, 0x201) and not b.api.protections
     b.input.logger.warning.assert_not_called()
+
+
+def test_input_deadline_expires_during_mouse_idle_wait_without_clicking(backend):
+    b = backend
+    with module.input_wait_limit(.5, deadline=b.clock.now + .1):
+        with pytest.raises(InputInterrupted, match="达到任务总时限"):
+            b.input.mouse_down(300, 400)
+    assert not posts(b.api, 0x201)
+    assert b.input._session is None
+    assert b.input.mouse_click(300, 400) is True
 
 
 def test_locked_desktop_reports_clear_reason_and_releases_inputs(backend):

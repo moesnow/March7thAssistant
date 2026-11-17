@@ -13,6 +13,10 @@ def test_scheduled_epic_failure_restores_settings_without_replaying(monkeypatch)
     controller.switch_to_game.return_value = False
     controller.start_game_process.side_effect = EpicLaunchError("Epic 启动[等待游戏]超时")
     monkeypatch.setattr(game, "StarRailController", Mock(return_value=controller))
+    controller.is_game_running.return_value = False
+    windows = Mock()
+    windows.return_value.process_running.return_value = False
+    monkeypatch.setattr(game, "WindowsInputApi", windows)
     monkeypatch.setattr(game, "cfg", SimpleNamespace(cloud_game_enable=False, auto_set_resolution_enable=True,
                                                    auto_battle_detect_enable=True))
     # 渠道启动失败的处理不区分操作模式，不随本机配置的本地操作模式变化（后台模式见 test_background_integration）

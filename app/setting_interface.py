@@ -2652,6 +2652,13 @@ class SettingInterface(ScrollArea):
             "update_download_proxy",
             empty_content=tr("留空则使用系统代理；支持 http:// 和 socks5://")
         )
+        self.githubTokenCard = PushSettingCardStr(
+            tr('修改'),
+            UiIcon.KEY,
+            tr('GitHub Token'),
+            'github_token',
+            password=True,
+        )
         self.mirrorchyanCdkCard = PushSettingCardMirrorchyan(
             tr('修改'),
             UiIcon.KEY,
@@ -2916,7 +2923,8 @@ class SettingInterface(ScrollArea):
         self.updateSourceCard.addSettingCards([
             self.checkUpdateCard,
             self.updateFullEnableCard,
-            self.updateDownloadProxyCard
+            self.updateDownloadProxyCard,
+            self.githubTokenCard,
         ])
         self.AboutGroup.addSettingCard(self.mirrorchyanCdkCard)
         self.AboutGroup.addSettingCard(self.languageCard)

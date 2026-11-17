@@ -8,6 +8,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from tasks.base.task_steps import GameRecoveryError
+
 
 class EndRun(BaseException):
     pass
@@ -83,6 +85,24 @@ def test_sleep_resume_uses_wall_clock(loop):
     assert loop.events[-1] == "reload"
 
 
+def test_preserved_local_game_wait_releases_resources_and_honors_stop(loop, monkeypatch):
+    from utils.pause import RunStopRequested
+
+    def check_stop():
+        if loop.clock.now:
+            raise RunStopRequested
+
+    monkeypatch.setattr(loop.game, "pause_ctl", SimpleNamespace(enabled=True, check_stop=check_stop))
+
+    with pytest.raises(RunStopRequested):
+        loop.game.after_finish_is_loop(preserve_game=True)
+
+    assert loop.clock.sleeps == [1]
+    assert loop.events == ["release_power", "release"]
+    loop.game.get_game_controller.assert_not_called()
+    loop.game.ocr.exit_ocr.assert_called_once_with()
+
+
 @pytest.mark.parametrize("trigger", ["startup", "finished", "failed", "zero_duration"])
 def test_main_loop_waits_then_starts_next_run(loop, trigger):
     game = loop.game
@@ -108,9 +128,9 @@ def test_main_loop_waits_then_starts_next_run(loop, trigger):
                  cfg=loop.cfg, version=MagicMock(), Daily=MagicMock(), reward=MagicMock(),
                  notif=game.notif, telemetry=MagicMock(), time=game.time,
                  CloudGameZeroDurationError=game.CloudGameZeroDurationError,
+                 GameRecoveryError=GameRecoveryError,
                  get_ui_profile=lambda cfg: SimpleNamespace(name="pc_1080"),
                  is_gui_started=game.is_gui_started, _game_connection=lambda _: nullcontext())
-    scope["Daily"].currency_wars_due.return_value = False
     scope["Daily"].start.return_value = trigger != "failed"
     exec(compile(ast.Module(body=[run], type_ignores=[]), str(source), "exec"), scope)
     with pytest.raises(EndRun):
@@ -178,8 +198,8 @@ def test_loop_rebinds_game_connection_for_the_next_round(loop, monkeypatch, init
                                       wait_after_cloud_zero_duration=game.wait_after_cloud_zero_duration,
                                       prepare_game_connection=game.prepare_game_connection),
                  version=MagicMock(), Daily=MagicMock(), notif=game.notif, telemetry=MagicMock(), time=game.time,
-                 CloudGameZeroDurationError=game.CloudGameZeroDurationError)
-    scope["Daily"].currency_wars_due.return_value = False
+                 CloudGameZeroDurationError=game.CloudGameZeroDurationError,
+                 GameRecoveryError=GameRecoveryError)
     scope["Daily"].start.return_value = True
     exec(compile(ast.Module(body=nodes, type_ignores=[]), str(source), "exec"), scope)
     with pytest.raises(EndRun):

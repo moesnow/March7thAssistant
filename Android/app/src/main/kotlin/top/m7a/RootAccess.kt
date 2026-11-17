@@ -95,13 +95,15 @@ internal class RootAccess(
         } catch (error: Exception) {
             val cleanup = runCatching { shell.close() }.exceptionOrNull()
             reader.join(OUTPUT_DRAIN_MS)
-            val code = (cleanup as? DeviceFailure)?.code ?: (error as? DeviceFailure)?.code ?: "service_start"
+            val code = (error as? DeviceFailure)?.code ?: "service_start"
             val reason = if (error is TimeoutException) {
                 if (tokenRequested.getNow(false)) "等待监听端口超时" else "等待设备端请求令牌超时"
             } else {
                 error.message ?: error.javaClass.simpleName
             }
-            throw DeviceFailure(code, shell.diagnostic(reason))
+            val failure = DeviceFailure(code, shell.diagnostic(reason))
+            if (cleanup != null) failure.addSuppressed(cleanup)
+            throw failure
         }
     }
 
@@ -181,7 +183,7 @@ private class RootShell(val process: java.lang.Process, private val token: Strin
         runCatching { process.outputStream.close() }
         if (!process.waitFor(9, TimeUnit.SECONDS)) {
             process.destroy()
-            throw DeviceFailure("cleanup_pending")
+            throw DeviceFailure("cleanup_pending", "等待 Root 设备端服务退出超时")
         }
     }
 }

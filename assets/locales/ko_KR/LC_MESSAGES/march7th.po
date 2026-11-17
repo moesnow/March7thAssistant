@@ -8082,7 +8082,6 @@ msgstr ""
 msgid "确认合并"
 msgstr "병합 확인"
 
-
 #: app/warp_interface.py:142
 msgid "选择导入方式"
 msgstr "가져오기 방식 선택"
@@ -8178,3 +8177,27 @@ msgstr "총 제한 시간"
 #: app/setting_interface.py:616
 msgid "单次运行的分钟数，0 表示不限时"
 msgstr "1회 실행 시간(분). 0이면 제한 없음"
+
+#: app/setting_interface.py:2658
+msgid "GitHub Token"
+msgstr "GitHub 토큰"
+
+#: module/update/version_check.py:374
+msgid "读取 GitHub Releases 页面失败（GitHub API 返回 HTTP 403）"
+msgstr "GitHub Releases 페이지를 불러오지 못했습니다(GitHub API가 HTTP 403을 반환함)"
+
+#: module/game/adb.py:515
+msgid "检测到多个显示器，无法确定模拟器 display 0 对应的 SurfaceFlinger ID"
+msgstr "디스플레이가 여러 개 감지되어 에뮬레이터 display 0에 해당하는 SurfaceFlinger ID를 확인할 수 없습니다"
+
+#: module/game/adb.py:524
+msgid "模拟器 display 0 的截图输出为空"
+msgstr "에뮬레이터 display 0의 스크린샷 출력이 비어 있습니다"
+
+#: module/game/adb.py:526
+msgid "模拟器 display 0 的截图输出不符合 PNG 格式（{size} 字节）"
+msgstr "에뮬레이터 display 0의 스크린샷 출력이 PNG 형식과 일치하지 않습니다({size}바이트)"
+
+#: app/tools/desktop_twin.py:713
+msgid "查看排查方法"
+msgstr "해결 방법 보기"

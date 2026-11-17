@@ -395,6 +395,9 @@ class DesktopTwinDialog(QDialog):
         # 错误放在说明页里完整显示；连接后画面区域固定，改由底栏显示
         self._errorHolder = QWidget(intro)
         self._errorBar = NoticeBar(InfoBarIcon.ERROR, self._errorHolder, closable=True)
+        self._error_docs_button = HyperlinkButton(self._errorBar)
+        self._error_docs_button.setIcon(FIF.HELP)
+        self._errorBar.addWidget(self._error_docs_button)
         self._errorBar.closed.connect(self._dismiss_error)
         errorLayout = QVBoxLayout(self._errorHolder)
         errorLayout.setContentsMargins(0, 12, 0, 0)
@@ -707,6 +710,8 @@ class DesktopTwinDialog(QDialog):
         self._docs_button.setText(tr("常见问题") if self._error else tr("使用文档"))
         self._docs_button.setUrl(docs_url(self._error_doc_section if self._error else None))
         self._docs_button.setToolTip(tr("在浏览器中打开桌面分身的使用文档"))
+        self._error_docs_button.setText(tr("查看排查方法"))
+        self._error_docs_button.setUrl(self._docs_button.getUrl())
 
         closing = self._quit_until is not None or self._logoff_until is not None
         opening = self._launcher is not None or self._launch_until is not None
@@ -765,7 +770,10 @@ class DesktopTwinDialog(QDialog):
             self._errorBar.setContent(self._error)
             self._errorBar.show()
         self._errorHolder.setVisible(show_error)
-        if error_changed:
+        if error_changed or show_error:
+            # 排查按钮会压缩文字宽度；更换错误或切换语言后也要按换行重新计算高度。
+            for widget in (self._errorBar, self._errorHolder, self._intro):
+                widget.updateGeometry()
             self._fit_intro()
         self._update_bar_layout()  # 显示哪些按钮、按钮文字都会影响侧栏宽度
 

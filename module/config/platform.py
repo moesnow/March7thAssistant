@@ -1,9 +1,11 @@
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Literal
 
 from module.config import cfg
+from module.config.config import _get_env_override
 from module.localization import tr
 
 
@@ -52,6 +54,18 @@ _UI_PROFILES = {
 _pinned_connection = None
 
 
+def read_game_connection_config(config):
+    """读取磁盘上供新进程使用的连接设置，保留当前进程的配置。"""
+    status, values, _ = config._read_config_file(config.config_path)
+    if status != "ok":
+        raise InvalidGameConnection(tr("配置加载失败"))
+    connection = {}
+    for key in ("control_backend", "cloud_game_enable", "ui_profile"):
+        overridden, value = _get_env_override(key)
+        connection[key] = value if overridden else values.get(key)
+    return SimpleNamespace(**connection)
+
+
 @contextmanager
 def pin_game_connection(config, *, connection=None):
     """本轮完成前固定实际使用的游戏连接，配置保存仍可合并外部改动。"""
@@ -87,8 +101,12 @@ def get_ui_profile(config=None) -> UIProfile:
     if _pinned_connection is not None and _pinned_connection[0] is config:
         return _pinned_connection[2]
     name = getattr(config, "ui_profile", None)
-    if getattr(config, "control_backend", None) == "adb" and name in (None, "pc_1080"):
+    backend = getattr(config, "control_backend", None)
+    if backend == "adb" and name in (None, "pc_1080"):
         return _UI_PROFILES["touch_720"]
+    if backend is None and name == "touch_720" and getattr(config, "cloud_game_enable", False):
+        # GUI 沿用旧开关切换云游戏，配置中的触屏形态留给切回本地时使用。
+        return _UI_PROFILES["pc_1080"]
     if name is None:
         name = "pc_1080"
     if isinstance(name, str) and name in _UI_PROFILES:

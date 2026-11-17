@@ -9,7 +9,10 @@ from module.notification.notification import NotificationLevel
 from module.screen import screen
 from tasks.base.base import Base
 from tasks.base.list_drag import drag_to_edge
+from tasks.base.task_steps import FATAL_GAME_ERRORS
 from utils.date import Date
+from utils.pause import pause_ctl
+from utils.wait import wait_until
 
 
 @dataclass(frozen=True)
@@ -23,8 +26,15 @@ class EmberExchangeItem:
 class EmberExchange:
     FULL_SCREEN_CROP = (0, 0, 1, 1)
     MENU_TEXT_CROP = (1240 / 1920, 0, 680 / 1920, 1)
+    SHOP_HEADER_CROP = (0, 0, 550 / 1920, 116 / 1080)
+    SHOP_MENU_CROP = (0, 0, 550 / 1920, 1)
+    SHOP_ENTRY_TEXTS = ("兑换商店", "常驻商店")
+    SHOP_ENTRY_ATTEMPTS = 3
     ITEM_LIST_CROP = (120 / 1920, 120 / 1080, 1680 / 1920, 820 / 1080)
-    EMBER_TAB_CROP = (571 / 1920, 110 / 1080, 186 / 1920, 42 / 1080)
+    EMBER_TABS_CROP = (460 / 1920, 98 / 1080, 331 / 1920, 109 / 1080)
+    LEGACY_EMBER_TAB_CROP = (571 / 1920, 110 / 1080, 186 / 1920, 42 / 1080)
+    UNDERLINED_EMBER_TAB_IMAGE = "./assets/images/zh_CN/ember_exchange/underlined_tab.png"
+    UNDERLINED_EMBER_TAB_CROP = (460 / 1920, 132 / 1080, 253 / 1920, 76 / 1080)
     ITEM_INFO_WIDTH = 132 / 1920
     ITEM_INFO_HEIGHT = 204 / 1080
     PLUS_BUTTON_IMAGE = "./assets/images/share/ember_exchange/plus.png"
@@ -83,7 +93,6 @@ class EmberExchange:
 
         try:
             if not cls._navigate_to_ember_exchange():
-                log.error("进入余烬兑换失败")
                 return False
 
             for item in pending_items:
@@ -115,33 +124,56 @@ class EmberExchange:
             log.error(f"余烬兑换每月自动购买失败: {e}")
             return False
         finally:
+            pause_ctl.check_stop()
             cls._restore_main_screen()
 
         return completed_count == len(pending_items)
 
     @classmethod
     def _navigate_to_ember_exchange(cls):
-        if not cls._return_to_known_screen():
+        if not cls._open_shop():
+            log.warning("多次尝试后仍未能从手机菜单进入商店")
             return False
 
-        if screen.current_screen != "menu":
-            screen.change_to("menu")
-            time.sleep(1)
-
-        if not cls._click_text_and_wait("商店", "兑换商店", click_crop=cls.MENU_TEXT_CROP):
-            log.error("从手机菜单进入商店失败")
+        if not cls._click_text_and_wait("常驻商店", "兑换商店", cls.SHOP_HEADER_CROP, cls.SHOP_MENU_CROP):
+            log.warning("多次尝试后仍未找到兑换商店入口")
             return False
-
-        if not cls._click_text_and_wait("兑换商店", "余烬兑换"):
-            log.error("进入兑换商店失败")
+        if not cls._click_text_and_wait("兑换商店", "余烬兑换", cls.SHOP_MENU_CROP, cls.EMBER_TABS_CROP):
+            log.warning("多次尝试后仍未找到余烬兑换标签")
             return False
 
         if not cls._select_ember_exchange_tab():
-            log.error("进入余烬兑换失败")
+            log.warning("多次尝试后仍未确认余烬兑换标签已选中")
             return False
 
         time.sleep(cls.ITEM_CLICK_PAUSE)
         return True
+
+    @classmethod
+    def _open_shop(cls):
+        for _ in range(cls.SHOP_ENTRY_ATTEMPTS):
+            if not cls._return_to_known_screen():
+                return False
+            if screen.current_screen == "main":
+                auto.press_key("esc")
+                if not wait_until(lambda: screen.check_screen("menu"), cls.DIALOG_TIMEOUT, cls.POLL_PAUSE):
+                    continue
+
+            shop = cls._find_shop_text("商店", cls.MENU_TEXT_CROP, max_retries=3)
+            if not shop:
+                continue
+
+            auto.click_element_with_pos(shop)
+            if cls._wait_for_text(cls.SHOP_ENTRY_TEXTS, cls.SHOP_MENU_CROP):
+                return True
+            if cls._check_known_screen():
+                continue
+
+            log.info("尚未看到商店，尝试按 ESC 关闭入口动画")
+            auto.press_key("esc")
+            if cls._wait_for_text(cls.SHOP_ENTRY_TEXTS, cls.SHOP_MENU_CROP):
+                return True
+        return False
 
     @classmethod
     def _purchase_item(cls, item: EmberExchangeItem, accept_sold_out=False):
@@ -190,16 +222,26 @@ class EmberExchange:
     @classmethod
     def _select_ember_exchange_tab(cls):
         for _ in range(5):
-            if auto.is_rgb_ratio_above_threshold(cls.EMBER_TAB_CROP, (224, 224, 225), 0.7, tolerance=0.01):
+            if cls._ember_tab_selected():
                 return True
 
-            auto.click_element(cls.EMBER_TAB_CROP, "crop")
+            if tab := cls._find_shop_text("余烬兑换", cls.EMBER_TABS_CROP):
+                auto.click_element_with_pos(tab)
             time.sleep(0.8)
+        return cls._ember_tab_selected()
 
-            if auto.is_rgb_ratio_above_threshold(cls.EMBER_TAB_CROP, (224, 224, 225), 0.7, tolerance=0.01):
+    @classmethod
+    def _ember_tab_selected(cls):
+        # 新版标签有下划线，旧版标签用灰白底高亮。
+        try:
+            if auto.find_element(cls.UNDERLINED_EMBER_TAB_IMAGE, "image", 0.92, crop=cls.UNDERLINED_EMBER_TAB_CROP):
                 return True
-
-        return False
+            return auto.is_rgb_ratio_above_threshold(cls.LEGACY_EMBER_TAB_CROP, (224, 224, 225), 0.7, tolerance=0.01)
+        except FATAL_GAME_ERRORS:
+            raise
+        except RuntimeError as error:
+            log.debug(f"暂时无法确认余烬兑换标签：{error}")
+            return False
 
     @classmethod
     def _find_purchasable_item(cls, item: EmberExchangeItem, accept_sold_out=False):
@@ -332,28 +374,32 @@ class EmberExchange:
         return True
 
     @classmethod
-    def _click_text_and_wait(cls, click_target, wait_target, click_crop=None, wait_crop=None, timeout=8):
-        if not auto.click_element(
-            click_target,
-            "text",
-            max_retries=8,
-            crop=click_crop or cls.FULL_SCREEN_CROP,
-            include=True,
-            retry_delay=0.8,
-        ):
-            return False
-
-        time.sleep(cls.ITEM_CLICK_PAUSE)
-        return cls._wait_for_text(wait_target, crop=wait_crop or cls.FULL_SCREEN_CROP, timeout=timeout)
+    def _click_text_and_wait(cls, click_target, wait_target, click_crop, wait_crop):
+        for _ in range(cls.SHOP_ENTRY_ATTEMPTS):
+            if cls._find_shop_text(wait_target, wait_crop):
+                return True
+            if position := cls._find_shop_text(click_target, click_crop):
+                auto.click_element_with_pos(position)
+                if cls._wait_for_text(wait_target, wait_crop):
+                    return True
+            else:
+                time.sleep(cls.POLL_PAUSE)
+        return False
 
     @classmethod
-    def _wait_for_text(cls, targets, crop=None, timeout=8):
-        end_time = time.time() + timeout
-        while time.time() < end_time:
-            if auto.find_element(targets, "text", crop=crop or cls.FULL_SCREEN_CROP, include=True):
-                return True
-            time.sleep(cls.POLL_PAUSE)
-        return False
+    def _wait_for_text(cls, targets, crop):
+        return wait_until(lambda: cls._find_shop_text(targets, crop), cls.DIALOG_TIMEOUT, cls.POLL_PAUSE)
+
+    @classmethod
+    def _find_shop_text(cls, targets, crop, *, max_retries=1):
+        try:
+            return auto.find_element(targets, "text", crop=crop, include=True,
+                                     max_retries=max_retries, retry_delay=cls.POLL_PAUSE)
+        except FATAL_GAME_ERRORS:
+            raise
+        except RuntimeError as error:
+            log.debug(f"读取商店文字时画面暂时不可用：{error}")
+            return None
 
     @classmethod
     def _close_success_popup(cls, item_name):
@@ -393,26 +439,29 @@ class EmberExchange:
         auto.press_key("esc")
         time.sleep(1.2)
 
+    @staticmethod
+    def _check_known_screen():
+        auto.take_screenshot()
+        return screen.check_screen("menu", take_screenshot=False) or screen.check_screen("main", take_screenshot=False)
+
     @classmethod
     def _return_to_known_screen(cls):
         for _ in range(6):
-            if screen.get_current_screen(autotry=False, max_retries=1) and screen.current_screen in {"main", "menu"}:
+            if cls._check_known_screen():
                 return True
             auto.press_key("esc")
             time.sleep(1.2)
-        log.warning("未能回到可识别界面，无法继续执行余烬兑换")
-        return False
+        return cls._check_known_screen()
 
     @classmethod
     def _restore_main_screen(cls):
-        if not cls._return_to_known_screen():
-            log.warning("余烬兑换结束后未能回到主界面，请检查当前游戏画面")
-            return False
-
-        if screen.current_screen == "menu":
-            try:
-                screen.change_to("main")
-            except Exception as e:
-                log.warning(f"余烬兑换结束后返回主界面失败: {e}")
+        try:
+            if not cls._return_to_known_screen():
+                log.warning("余烬兑换结束后未能回到主界面，请检查当前游戏画面")
                 return False
+            if screen.current_screen == "menu":
+                screen.change_to("main")
+        except Exception as e:
+            log.warning(f"余烬兑换结束后返回主界面失败: {e}")
+            return False
         return True

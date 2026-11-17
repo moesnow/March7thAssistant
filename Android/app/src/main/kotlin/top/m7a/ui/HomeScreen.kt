@@ -438,7 +438,7 @@ private fun ErrorCard(error: ErrorInfo, code: String, actions: AppActions, navig
             Text(tr(error.title), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
         }
         Spacer(Modifier.height(8.dp))
-        Text(tr(error.advice), style = MaterialTheme.typography.bodyMedium)
+        Text(error.adviceText(), style = MaterialTheme.typography.bodyMedium)
         Spacer(Modifier.height(6.dp))
         Text(tr(R.string.error_code, code), style = MaterialTheme.typography.labelSmall, color = scheme.onSurfaceVariant)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {

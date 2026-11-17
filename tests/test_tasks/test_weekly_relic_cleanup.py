@@ -60,8 +60,15 @@ def _load_power(cleanup_module):
         "module.config": _stub("module.config", cfg=cleanup_module.cfg),
         "module.logger": _stub("module.logger", log=cleanup_module.log),
         "module.screen": _stub("module.screen", screen=cleanup_module.screen),
-        "tasks.power.instance": _stub("tasks.power.instance", Instance=MagicMock(), TeamPresetUnavailable=RuntimeError),
+        "tasks.base.task_steps": _stub("tasks.base.task_steps", FATAL_GAME_ERRORS=(), run_steps=MagicMock()),
         "tasks.daily.buildtarget": _stub("tasks.daily.buildtarget", BuildTarget=MagicMock()),
+        "tasks.power.instance": _stub(
+            "tasks.power.instance",
+            Instance=MagicMock(),
+            TeamPresetUnavailable=RuntimeError,
+            ChallengePageUnavailable=RuntimeError,
+        ),
+        "tasks.power.supplement": _stub("tasks.power.supplement", supplement=MagicMock()),
         "tasks.power.weekly_relic_cleanup": cleanup_module,
     }
     path = Path(__file__).parents[2] / "tasks" / "power" / "power.py"

@@ -156,12 +156,13 @@ def _reenter_instance(instance_type, name):
     _enter_instance(instance_type, name)
 
 
-def _supplement(power, *, plus=(1720, 55), power_crop=POWER_VALUE):
+def _supplement(power, *, plus=(1720, 55), power_crop=POWER_VALUE, can_continue=False):
     def open_dialog():
-        _tap(*plus)
-        return True
+        x, y = plus
+        return auto.click_element((x / 1920, y / 1080, 0, 0), "crop")
 
-    return supplement(auto, screen, cfg, power, open_dialog, lambda: read_power(power_crop), return_screen="guide3")
+    return supplement(auto, screen, cfg, power, open_dialog, lambda: read_power(power_crop),
+                      return_screen="guide3", can_continue=can_continue)
 
 
 def _select_team(instance_type, name):
@@ -466,7 +467,8 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
             return
     power = 0
     if quota != 0:
-        power = _supplement(read_power())
+        power = read_power()
+        power = _supplement(power, can_continue=power >= cost)
         if power < cost:
             log.info("开拓力不足，结束本副本项")
             screen.change_to("main", max_recursion=1)

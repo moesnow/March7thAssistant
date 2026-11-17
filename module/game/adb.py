@@ -15,12 +15,15 @@ from module.game.adb_transport import (
 )
 from module.game.base import FrameCapture, GameControllerBase
 from module.localization import tr
+from utils.pause import pause_ctl
 
 
 _GAME_ACTIVITY = "com.mihoyo.combosdk.ComboSDKActivity"
 _GAME_COMPONENT = f"{GAME_PACKAGE}/{_GAME_ACTIVITY}"
 _TEMPORARY_INPUT_ERRORS = {"game_not_on_display", "sdk_window_active"}
 _STARTUP_TASK_MISSING_MS = 1000
+_PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+_MULTI_DISPLAY_WARNING = b"[Warning] Multiple displays were found"
 
 
 @dataclass
@@ -70,6 +73,7 @@ class AdbGameController(GameControllerBase):
         self._on_event = None
         self._startup = None
         self._display_id = None
+        self._emulator_physical_display_id = None
         self._game_display_id = None
         self._watching = False
         self._sdk_window = False
@@ -473,17 +477,60 @@ class AdbGameController(GameControllerBase):
     def _capture_emulator(self, pixels):
         # S1 的 ImageReader 只接虚拟屏。screencap 在输入应答之后才启动，
         # 本地序号只统计成功的采样。是否切换界面仍由调用方检查画面。
-        try:
-            data = self._service.adb.run("exec-out", "screencap", "-p", binary=True)
-        except AdbError as error:
-            self._failure = error
-            raise
+        for attempt in range(2):
+            pause_ctl.check_stop()
+            try:
+                data = self._read_emulator_png(refresh_display=attempt > 0)
+                pause_ctl.check_stop()
+                image = self._decode_emulator_png(data, pixels)
+            except AdbError as error:
+                self._landscape = False
+                pause_ctl.check_stop()
+                if attempt or error.code not in {"adb_failed", "invalid_response"}:
+                    if error.code != "invalid_response":
+                        self._failure = error
+                    raise
+            else:
+                self._landscape = image is not None
+                return (self._frame_seq + 1, image) if image is not None else False
+
+            self._poll_events(force=True)
+            if not self._display_available():
+                return False
+
+    def _read_emulator_png(self, *, refresh_display):
+        adb = self._service.adb
+        command = ("exec-out", "screencap", "-p")
+        display_id = self._emulator_physical_display_id
+        if display_id is None:
+            data = adb.run(*command, binary=True)
+            # exec-out 会把设备端警告混进 PNG。多屏时默认捕获的画面也可能来自其他屏。
+            if data.startswith(_PNG_SIGNATURE) or _MULTI_DISPLAY_WARNING not in data[:512]:
+                return data
+
+        if display_id is None or refresh_display:
+            pause_ctl.check_stop()
+            display_id = adb.primary_physical_display_id()
+            if display_id is None:
+                raise AdbError("invalid_response", tr("检测到多个显示器，无法确定模拟器 display 0 对应的 SurfaceFlinger ID"))
+            self._emulator_physical_display_id = display_id
+
+        pause_ctl.check_stop()
+        return adb.run(*command, "-d", display_id, binary=True)
+
+    @staticmethod
+    def _decode_emulator_png(data, pixels):
+        if not data:
+            raise AdbError("invalid_response", tr("模拟器 display 0 的截图输出为空"))
+        if not data.startswith(_PNG_SIGNATURE):
+            raise AdbError("invalid_response", tr("模拟器 display 0 的截图输出不符合 PNG 格式（{size} 字节）").format(
+                size=len(data),
+            ))
         try:
             with Image.open(BytesIO(data)) as image:
-                self._landscape = image.size == RESOLUTION
-                if not self._landscape:
-                    return False
+                if image.size != RESOLUTION:
+                    return None
                 x, y, w, h = pixels
-                return self._frame_seq + 1, image.crop((x, y, x + w, y + h)).convert("RGB")
-        except OSError as error:
+                return image.crop((x, y, x + w, y + h)).convert("RGB")
+        except (OSError, SyntaxError, Image.DecompressionBombError) as error:
             raise AdbError("invalid_response", tr("无法解码模拟器 display 0 的截图")) from error

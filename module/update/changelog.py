@@ -13,7 +13,7 @@ from urllib.parse import quote, parse_qs, urljoin, urlsplit
 import requests
 
 from module.update.download_proxy import get_update_download_requests_proxies
-from module.update.version_check import GITHUB_API_BASES
+from module.update.version_check import GITHUB_API_BASE, GITHUB_API_BASES, GITHUB_REPO, get_github_api_auth_headers
 from utils.version import Version
 
 
@@ -107,9 +107,9 @@ def collect_update_notes(document: str, current_version: str, target_version: st
     return UpdateNotes(tuple(result), partial)
 
 
-def fetch_changelog(target_version: str, *, preferred_base: str = "", timeout: float = 5,
+def fetch_changelog(target_version: str, *, preferred_base: str | None = "", timeout: float = 5,
                     cancelled=lambda: False) -> str:
-    """读取目标 tag 的普通 JSON Contents 响应；失败不写缓存。"""
+    """读取目标 tag 的更新记录。来自 Releases 页面时使用 GitHub 原始文件。"""
     Version(target_version, strict=True)
     if cancelled():
         raise ChangelogCancelled()
@@ -119,7 +119,7 @@ def fetch_changelog(target_version: str, *, preferred_base: str = "", timeout: f
             _CACHE.move_to_end(target_version)
             return cached[1]
 
-    bases = list(GITHUB_API_BASES)
+    bases = [None] if preferred_base is None else list(GITHUB_API_BASES)
     if preferred_base in bases:
         bases.remove(preferred_base)
         bases.insert(0, preferred_base)
@@ -133,8 +133,16 @@ def fetch_changelog(target_version: str, *, preferred_base: str = "", timeout: f
         if remaining <= 0:
             break
         try:
-            url = base + "/contents/assets/docs/Changelog.md"
-            params = {"ref": target_version}
+            if base is None:
+                tag = quote(target_version, safe="")
+                url = f"https://raw.githubusercontent.com/{GITHUB_REPO}/{tag}/assets/docs/Changelog.md"
+                params, headers = None, {}
+            else:
+                url = base + "/contents/assets/docs/Changelog.md"
+                params = {"ref": target_version}
+                headers = {"Accept": "application/vnd.github+json"}
+                if base == GITHUB_API_BASE:
+                    headers.update(get_github_api_auth_headers())
             for _ in range(3):
                 remaining = deadline - time.monotonic()
                 if cancelled():
@@ -143,15 +151,15 @@ def fetch_changelog(target_version: str, *, preferred_base: str = "", timeout: f
                     raise TimeoutError("获取历史更新记录超时")
                 with requests.get(
                     url, params=params,
-                    headers={"Accept": "application/vnd.github+json"},
+                    headers=headers,
                     timeout=(min(1, remaining), min(1, remaining)),
                     proxies=proxies, stream=True, allow_redirects=False,
                 ) as response:
                     if response.status_code in (301, 302, 303, 307, 308):
                         redirected = urljoin(url, response.headers.get("Location", ""))
                         parts = urlsplit(redirected)
-                        if (parts.scheme != "https" or parts.netloc != "api.github.com"
-                                or parts.path != "/repos/moesnow/March7thAssistant/contents/assets/docs/Changelog.md"
+                        if (base is None or parts.scheme != "https" or parts.netloc != "api.github.com"
+                                or parts.path != f"/repos/{GITHUB_REPO}/contents/assets/docs/Changelog.md"
                                 or parse_qs(parts.query).get("ref") != [target_version]):
                             raise ValueError("历史更新记录重定向丢失目标版本或地址无效")
                         url, params = redirected, None
@@ -166,11 +174,13 @@ def fetch_changelog(target_version: str, *, preferred_base: str = "", timeout: f
                         body.extend(chunk)
                         if len(body) > _MAX_BYTES:
                             raise ValueError("累计更新日志响应过大")
-                    data = json.loads(body)
-                    if data.get("type") != "file" or data.get("encoding") != "base64":
-                        raise ValueError("累计更新日志响应格式无效")
-                    encoded = "".join(data["content"].split())
-                    document = base64.b64decode(encoded, validate=True).decode("utf-8-sig")
+                    if base is not None:
+                        data = json.loads(body)
+                        if data.get("type") != "file" or data.get("encoding") != "base64":
+                            raise ValueError("累计更新日志响应格式无效")
+                        encoded = "".join(data["content"].split())
+                        body = base64.b64decode(encoded, validate=True)
+                    document = body.decode("utf-8-sig")
                     parsed = parse_changelog(document)
                     target = Version(target_version, strict=True)
                     if (not parsed or any(version > target for version in parsed)

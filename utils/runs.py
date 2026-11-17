@@ -24,7 +24,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from typing import NamedTuple, Optional
 
-from utils.pause import CONTROL_FILE_ENV, STATE_FILE_SUFFIX, _atomic_write_json, _read_json, reset_files
+from utils.pause import CONTROL_FILE_ENV, STATE_FILE_SUFFIX, _atomic_write_json, _read_json, pause_ctl, reset_files
 
 # ---------- 退出码约定（--help、AGENTS.md 与 Agent Skill 同步说明）----------
 EXIT_OK = 0
@@ -559,6 +559,7 @@ def idle_without_run_lock(on_wait=None, on_unavailable=None, poll_seconds: float
     finally:
         notified = False
         while True:
+            pause_ctl.check_stop()
             result = session.acquire_lock()
             if result.status == LOCK_UNAVAILABLE and on_unavailable is not None:
                 try:
@@ -573,7 +574,7 @@ def idle_without_run_lock(on_wait=None, on_unavailable=None, poll_seconds: float
                     on_wait(result.holder)
                 except Exception:
                     pass
-            time.sleep(poll_seconds)
+            time.sleep(min(1, poll_seconds) if pause_ctl.enabled else poll_seconds)
 
 
 def describe_run(info) -> str:

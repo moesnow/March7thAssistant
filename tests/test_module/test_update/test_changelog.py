@@ -87,6 +87,7 @@ def test_partial_history_and_missing_target():
 def network(monkeypatch):
     changelog._CACHE.clear()
     monkeypatch.setattr(changelog, 'get_update_download_requests_proxies', lambda: {'https': 'http://proxy:1234'})
+    monkeypatch.setattr(changelog, 'get_github_api_auth_headers', lambda: {'Authorization': 'Bearer test-token'})
     get = Mock()
     monkeypatch.setattr(changelog.requests, 'get', get)
     yield get
@@ -116,8 +117,21 @@ def test_fetch_pinned_ref_preferred_mirror_proxy_and_cache(network):
     assert kwargs['params'] == {'ref': 'v2026.10.16'}
     assert kwargs['proxies'] == {'https': 'http://proxy:1234'}
     assert kwargs['headers']['Accept'] == 'application/vnd.github+json'
+    assert 'Authorization' not in kwargs['headers']
     assert changelog.fetch_changelog('v2026.10.16') == NETWORK_DOCUMENT
     assert network.call_count == 1
+
+
+def test_releases_page_uses_official_raw_changelog(network):
+    raw = response()
+    raw.iter_content.return_value = [NETWORK_DOCUMENT.encode()]
+    network.return_value = raw
+
+    assert changelog.fetch_changelog('v2026.10.16', preferred_base=None) == NETWORK_DOCUMENT
+    url = 'https://raw.githubusercontent.com/moesnow/March7thAssistant/v2026.10.16/assets/docs/Changelog.md'
+    assert network.call_args.args == (url,)
+    assert network.call_args.kwargs['headers'] == {}
+    assert network.call_args.kwargs['allow_redirects'] is False
 
 
 def test_bad_response_falls_back_without_caching_failure(network):

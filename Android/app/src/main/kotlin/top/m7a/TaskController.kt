@@ -57,6 +57,25 @@ data class TaskState(
         )
 }
 
+internal class TaskCleanup(private val onUnconfirmed: (Throwable) -> Unit) {
+    var confirmed = true
+        private set
+
+    fun unconfirmed(error: Throwable) {
+        confirmed = false
+        onUnconfirmed(error)
+    }
+
+    fun finish(taskResult: String, close: () -> Unit): String {
+        try {
+            close()
+        } catch (error: Exception) {
+            unconfirmed(error)
+        }
+        return if (!confirmed && (taskResult == "success" || taskResult == "stopped")) "cleanup_pending" else taskResult
+    }
+}
+
 /** 界面操作在主线程调用，任务和设备 I/O 串行执行。 */
 class TaskController private constructor(private val context: Context) {
     private val main = Handler(Looper.getMainLooper())
@@ -306,6 +325,9 @@ class TaskController private constructor(private val context: Context) {
         internal val stopTimeout = Runnable { if (active === this) Process.killProcess(Process.myPid()) }
         private var device: DeviceLease? = null
         private var deviceError: String? = null
+        private val cleanup = TaskCleanup { error ->
+            appLog(LogLevel.ERROR, context.getString(R.string.log_task_cleanup_unconfirmed, error))
+        }
         private var audioPending = marker.baseFile.exists()
         private var movingBack = false
         private var usageRun: UsageTelemetry.Run? = null
@@ -332,7 +354,6 @@ class TaskController private constructor(private val context: Context) {
                 },
             )
             var result = "runtime_error"
-            var cleanupConfirmed = true
             try {
                 usageRun = usage.startTask(snapshot.task, snapshot.privilege, snapshot.config.panelOff)
                 synchronized(logLock) {
@@ -354,15 +375,15 @@ class TaskController private constructor(private val context: Context) {
                 appLog(LogLevel.ERROR, "任务执行失败：${error.message}")
                 result = if (isCancelled()) "stopped" else "runtime_error"
             } finally {
+                val taskResult = result
                 try {
-                    cleaning()
-                    device?.close()
-                } catch (error: Exception) {
-                    cleanupConfirmed = false
-                    result = "cleanup_pending"
-                    appLog(LogLevel.ERROR, "设备端服务清理超时：${error.message}")
+                    result = cleanup.finish(taskResult) {
+                        renewal.use {
+                            cleaning()
+                            device?.close()
+                        }
+                    }
                 } finally {
-                    renewal.close()
                     val steps = state.value.steps
                     val outcome = when {
                         result == "success" -> UsageOutcome.SUCCESS
@@ -371,10 +392,10 @@ class TaskController private constructor(private val context: Context) {
                         else -> UsageOutcome.FAILED
                     }
                     usage.finishTask(
-                        usageRun, outcome, if (cleanupConfirmed) usageStage else UsageStage.CLEANUP,
+                        usageRun, outcome, if (result == taskResult) usageStage else UsageStage.CLEANUP,
                         result, steps.firstOrNull { it.status == StepStatus.FAILED }?.step, timings,
                     )
-                    if (cleanupConfirmed && !audioPending) marker.delete()
+                    if (cleanup.confirmed && !audioPending) marker.delete()
                 }
                 val level = if (result == "success" || result == "stopped") LogLevel.INFO else LogLevel.ERROR
                 appLog(level, "本轮结束：$result")
@@ -471,6 +492,7 @@ class TaskController private constructor(private val context: Context) {
                 return opened.port
             } catch (error: DeviceFailure) {
                 deviceError = error.code
+                error.suppressed.forEach(cleanup::unconfirmed)
                 throw error
             }
         }
