@@ -225,7 +225,7 @@ class HomeInterface(ScrollArea):
     def _refresh_task_icons(self):
         for widget, original_icon, full_run in self._task_cards:
             source = EVERNIGHT_AVATAR if self._evernight_active and full_run else original_icon
-            widget.iconWidget.setArtwork(*portrait_artwork(source, isDarkTheme()))
+            widget.iconWidget.setPixmap(portrait_artwork(source, isDarkTheme()))
 
     def _build_card_action(self, card_data):
         """根据卡片配置数据构建动作"""

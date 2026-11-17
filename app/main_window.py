@@ -431,13 +431,12 @@ class MainWindow(MSFluentWindow):
         self.logInterface.autoplotToggleRequested.connect(self._onAutoplotToggleRequested)
 
     def initNavigation(self):
-        # 页面入口可滚动，为最小窗口尺寸下的底部固定按钮保留空间。
-        self.addSubInterface(self.homeInterface, FIF.HOME, tr('主页'), position=NavigationItemPosition.SCROLL)
-        self.addSubInterface(self.helpInterface, FIF.BOOK_SHELF, tr('帮助'), position=NavigationItemPosition.SCROLL)
+        self.addSubInterface(self.homeInterface, FIF.HOME, tr('主页'))
+        self.addSubInterface(self.helpInterface, FIF.BOOK_SHELF, tr('帮助'))
         # self.addSubInterface(self.changelogInterface, FIF.UPDATE, '更新日志')
-        self.addSubInterface(self.warpInterface, FIF.SHARE, tr('抽卡记录'), position=NavigationItemPosition.SCROLL)
-        self.addSubInterface(self.toolsInterface, FIF.DEVELOPER_TOOLS, tr('工具箱'), position=NavigationItemPosition.SCROLL)
-        self.addSubInterface(self.workflowInterface, FIF.CODE, tr('流程编排'), position=NavigationItemPosition.SCROLL)
+        self.addSubInterface(self.warpInterface, FIF.SHARE, tr('抽卡记录'))
+        self.addSubInterface(self.toolsInterface, FIF.DEVELOPER_TOOLS, tr('工具箱'))
+        self.addSubInterface(self.workflowInterface, FIF.CODE, tr('流程编排'))
 
         self.navigationInterface.addWidget(
             'startGameButton',

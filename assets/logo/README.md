@@ -7,11 +7,11 @@
 | 图标组 | 使用时机 | 左上角标题栏 | 任务栏、托盘及原生窗口 |
 |---|---|---|---|
 | 三月七 | 普通深浅色模式，或首次彩蛋动画尚未到中点 | 原版 [March7th.ico](March7th.ico) | 同一原版图标 |
-| 长夜月 | 彩蛋激活后的深色模式 | [evernight/titlebar.png](evernight/titlebar.png)，豆豆眼、黑灰色装饰底 | [evernight/icon.png](evernight/icon.png)，豆豆眼、白色装饰底 |
+| 长夜月 | 彩蛋激活后的深色模式 | [evernight/titlebar.ico](evernight/titlebar.ico)，豆豆眼、黑灰色装饰底 | [evernight/icon.ico](evernight/icon.ico)，豆豆眼、白色装饰底 |
 
 原版 `March7th.ico` 保持不变，不制作深色或闭眼变体。仅当彩蛋角色出现或还原时同步更新图标及 Windows 任务栏标识。
 
-PNG 保存彩蛋生成素材，运行时使用同名 ICO。ICO 通过 Qt 缩放并封装 16、20、24、32、40、48、64、128、256 像素图层；不在运行时生成或修改文件。
+仓库仅保留运行时使用的 ICO；生成用的 PNG 源稿不随应用分发。ICO 通过 Qt 缩放并封装 16、20、24、32、40、48、64、128、256 像素图层；不在运行时生成或修改文件。
 
 长夜月素材使用内置 OpenAI image_gen 编辑，参考此前的豆豆眼彩蛋图标；角色和原美术的权利归原权利方所有，不重新声明为项目代码许可证。角色参考来源见 [彩蛋素材说明](../app/images/evernight/README.md)。
 

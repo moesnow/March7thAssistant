@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QWidget
 from qfluentwidgets import Theme, isDarkTheme, setTheme
 
 from app.common.evernight import EVEY_ANIMATION, EVERNIGHT_AVATAR, EVERNIGHT_BANNER, EvernightEasterEgg
-from app.common.theme_assets import application_icon_path, themed_icon_path
+from app.common.theme_assets import application_icon_path
 from app.common.window_icon import set_application_icon
 from app.components.evey_animation import EveyAnimation
 from module.config import cfg
@@ -98,7 +98,7 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
     assert window.windowTitle() == 'Evernight Assistant'
     assert window.titleBar.titleLabel.text() == f'Evernight Assistant {cfg.version}'
     assert page.banner.banner_image is not original_banner
-    assert card.iconWidget.pixmap().toImage() == QPixmap(themed_icon_path(EVERNIGHT_AVATAR, True)).toImage()
+    assert card.iconWidget.pixmap().toImage() == QPixmap(EVERNIGHT_AVATAR).toImage()
     assert window.windowIcon().pixmap(32, 32).toImage() != original_icon
     assert window.windowIcon().pixmap(32, 32).toImage() == QIcon(
         application_icon_path(True)).pixmap(32, 32).toImage()
@@ -205,7 +205,7 @@ def test_custom_assets_survive_language_and_card_refresh(window, qtbot, monkeypa
     assert window._evey_animation is None
     assert page.banner.galleryLabel.text() == 'Evernight Assistant'
     assert first_card(page).titleLabel.text() == '我的运行卡片'
-    assert first_card(page).iconWidget.pixmap().toImage() == QPixmap(themed_icon_path(EVERNIGHT_AVATAR, True)).toImage()
+    assert first_card(page).iconWidget.pixmap().toImage() == QPixmap(EVERNIGHT_AVATAR).toImage()
     setTheme(Theme.LIGHT)
     assert page.banner.banner_image is custom_image
     assert first_card(page).iconWidget.pixmap().toImage() == custom_icon
@@ -277,8 +277,7 @@ def test_floating_sprite_can_be_dismissed(qtbot, cancel):
 
 def test_evernight_artwork_is_loadable_and_transparent(qtbot):
     assert not QPixmap(EVERNIGHT_BANNER).isNull()
-    assert not QPixmap(EVERNIGHT_AVATAR).isNull()
-    dark = QPixmap(themed_icon_path(EVERNIGHT_AVATAR, True))
+    dark = QPixmap(EVERNIGHT_AVATAR)
     assert not dark.isNull() and dark.hasAlphaChannel()
     sprite = QPixmap(EVEY_ANIMATION)
     assert not sprite.isNull() and sprite.hasAlphaChannel()
