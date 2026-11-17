@@ -97,8 +97,7 @@ def run_instance(name, planned, batch_limit, borrow_for_daily, on_settlement):
     immersifiers = read_immersifier_stock(auto, INDEX_IMMERSIFIERS)
     available = power.read_power(INDEX_POWER)
     if cfg.use_reserved_trailblaze_power or cfg.use_fuel:
-        available = power._supplement(available, plus=(1510, 55), power_crop=INDEX_POWER,
-                                      can_continue=immersifiers > 0 or available >= cost_per_wave)
+        available = power._supplement(available, plus=(1510, 55), power_crop=INDEX_POWER)
     if not immersifiers and available < cost_per_wave:
         log.info("饰品提取资源不足，结束本副本项")
         if on_settlement is not None:
