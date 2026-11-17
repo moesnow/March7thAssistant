@@ -384,6 +384,8 @@ class AdbGameController(GameControllerBase):
             raise
 
     def send_input(self, command, *, timeout=4, **params):
+        from module.automation.input_base import begin_input_dispatch
+
         with self._lock:
             action = params.get("action")
             if action in ("up", "move") and not self._pointer_down:
@@ -406,6 +408,9 @@ class AdbGameController(GameControllerBase):
                     # SDK 迁移或手动登录期间也要允许结束已经按下的触点。
                     response, _ = self._service.request(command, display_id=self._display_id, **params)
                 else:
+                    pause_ctl.check_stop()
+                    if not begin_input_dispatch(time.monotonic()):
+                        return False
                     response, _ = self._call(command, timeout=timeout, display_id=self._display_id, **params)
             except AdbError as error:
                 if error.code in _TEMPORARY_INPUT_ERRORS:

@@ -7870,3 +7870,7 @@ msgstr ""
 #: app/tools/desktop_twin.py:713
 msgid "查看排查方法"
 msgstr ""
+
+#: module/game/adb_ready.py:118
+msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
+msgstr ""
