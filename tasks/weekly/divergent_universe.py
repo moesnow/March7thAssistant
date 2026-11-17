@@ -268,7 +268,6 @@ class DivergentUniverse:
                 minutes = int(elapsed_time // 60)
                 seconds = int(elapsed_time % 60)
                 log.info(f"本次差分宇宙用时：{minutes} 分钟 {seconds} 秒")
-                time.sleep(4)
                 screen.wait_for_screen_change("divergent_main")
                 log.info("已返回差分宇宙首页")
                 result = self.result if self.result is not None else False

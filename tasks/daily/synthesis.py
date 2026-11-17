@@ -9,6 +9,9 @@ from tasks.power.policy import normalize
 import re
 import time
 
+# 输入后的界面动画等待：后续动作自带重试与截图轮询，这里只留最小稳定时间。
+_SETTLE = 0.2
+
 
 class Synthesis:
 
@@ -19,27 +22,27 @@ class Synthesis:
                 log.hr("准备合成材料", 2)
                 screen.change_to('material')
                 # 筛选规则
-                time.sleep(2)
+                time.sleep(_SETTLE)
                 if auto.click_element("./assets/images/share/synthesis/filter.png", "image", 0.9, max_retries=10):
                     # 等待筛选界面弹出
-                    time.sleep(2)
+                    time.sleep(_SETTLE)
                     if auto.click_element("通用培养材料", "text", max_retries=10, crop=(478.0 / 1920, 350.0 / 1080, 981.0 / 1920, 399.0 / 1080)):
-                        time.sleep(2)
+                        time.sleep(_SETTLE)
                         if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
-                            time.sleep(2)
+                            time.sleep(_SETTLE)
                             # 多次重试避免选中没反应
                             for _ in range(4):
                                 auto.click_element("./assets/images/share/synthesis/nuclear.png", "image", 0.85, max_retries=10)
-                                time.sleep(2)
+                                time.sleep(_SETTLE)
                                 if auto.find_element("./assets/images/share/synthesis/nuclear_selected.png", "image", 0.85, max_retries=10):
                                     if not Synthesis._verify_training_recipe():
                                         return False
                                     if auto.click_element("./assets/images/zh_CN/synthesis/synthesis_button.png", "image", 0.9, max_retries=10):
-                                        time.sleep(2)
+                                        time.sleep(_SETTLE)
                                         if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
-                                            time.sleep(2)
+                                            time.sleep(_SETTLE)
                                             if auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10):
-                                                time.sleep(2)
+                                                time.sleep(_SETTLE)
                                                 log.info("合成材料完成")
                                                 return True
                                     break
@@ -68,13 +71,13 @@ class Synthesis:
         try:
             log.hr("准备合成自塑尘脂", 2)
             screen.change_to("material")
-            time.sleep(2)
+            time.sleep(_SETTLE)
             if auto.click_element("./assets/images/share/synthesis/filter.png", "image", 0.9, max_retries=10):
-                time.sleep(2)
+                time.sleep(_SETTLE)
                 if auto.click_element("遗器培养材料", "text", max_retries=10, crop=(478.0 / 1920, 350.0 / 1080, 981.0 / 1920, 399.0 / 1080)):
-                    time.sleep(2)
+                    time.sleep(_SETTLE)
                     if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
-                        time.sleep(2)
+                        time.sleep(_SETTLE)
                         resin_crop = (75 / 1920, 103 / 1080, 421 / 1920, 331 / 1080)
                         if auto.click_element("./assets/images/share/synthesis/resin.png", "image", 0.9, crop=resin_crop) or auto.click_element("./assets/images/share/synthesis/resin2.png", "image", 0.9, crop=resin_crop):
                             time.sleep(1)
@@ -89,16 +92,16 @@ class Synthesis:
                                     log.warning("自塑尘脂合成材料不足，保留本月任务，下次运行重试")
                                     return None
                                 if auto.click_element("./assets/images/share/synthesis/plus.png", "image", 0.9, crop=(1520 / 1920, 832 / 1080, 86 / 1920, 69 / 1080)):
-                                    time.sleep(2)
+                                    time.sleep(_SETTLE)
                                 if auto.click_element("./assets/images/zh_CN/synthesis/synthesis_button.png", "image", 0.9, max_retries=10):
-                                    time.sleep(2)
+                                    time.sleep(_SETTLE)
                                     if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
-                                        time.sleep(2)
+                                        time.sleep(_SETTLE)
                                         if coordinates := auto.find_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10):
                                             Base.send_notification_with_screenshot("自塑尘脂合成完成", NotificationLevel.ALL)
                                             time.sleep(1)
                                             auto.click_element_with_pos(coordinates)
-                                            time.sleep(2)
+                                            time.sleep(_SETTLE)
                                             cfg.save_timestamp("asset_self_molding_resin_timestamp")
                                             log.info("自塑尘脂合成完成")
                                             return True
@@ -115,10 +118,10 @@ class Synthesis:
             # 筛选规则
             if auto.click_element("./assets/images/share/synthesis/filter.png", "image", 0.9, max_retries=10):
                 # 等待筛选界面弹出
-                time.sleep(2)
+                time.sleep(_SETTLE)
                 if auto.click_element("防御类消耗品", "text", max_retries=10, crop=(472.0 / 1920, 347.0 / 1080, 970.0 / 1920, 268.0 / 1080)):
                     if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
-                        time.sleep(2)
+                        time.sleep(_SETTLE)
                         # 多次重试避免选中没反应
                         for _ in range(4):
                             auto.click_element("./assets/images/share/synthesis/defensive_medicine.png", "image", 0.8, max_retries=10)
@@ -142,10 +145,10 @@ class Synthesis:
             # 筛选规则
             if auto.click_element("./assets/images/share/synthesis/filter.png", "image", 0.9, max_retries=10):
                 # 等待筛选界面弹出
-                time.sleep(2)
+                time.sleep(_SETTLE)
                 if auto.click_element("防御类消耗品", "text", max_retries=10, crop=(472.0 / 1920, 347.0 / 1080, 970.0 / 1920, 268.0 / 1080)):
                     if auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, max_retries=10):
-                        time.sleep(2)
+                        time.sleep(_SETTLE)
                         # 多次重试避免选中没反应
                         for _ in range(4):
                             if auto.click_element("./assets/images/share/synthesis/defensive_medicine.png", "image", 0.8, max_retries=10):

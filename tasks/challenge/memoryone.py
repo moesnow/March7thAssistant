@@ -58,7 +58,6 @@ class MemoryOne(BaseChallenge):
             self.success = False
             return False
 
-        time.sleep(2)
         screen.wait_for_screen_change('memory')
 
         return True

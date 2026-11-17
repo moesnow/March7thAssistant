@@ -368,7 +368,7 @@ class Apocalyptic(BaseChallenge):
             return
         if self.max_level > 0:
             self.save_timestamp_into_config()
-        time.sleep(2)
+        # 结算动画由 wait_for_screen_change 轮询确认，不再固定等待
         screen.wait_for_screen_change('apocalyptic')
         # 领取星琼
         if auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, max_retries=5, crop=(24.0 / 1920, 769.0 / 1080, 221.0 / 1920, 138.0 / 1080)):
