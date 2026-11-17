@@ -8198,3 +8198,7 @@ msgstr "エミュレーターの display 0 のスクリーンショット出力�
 #: app/tools/desktop_twin.py:713
 msgid "查看排查方法"
 msgstr "対処方法を見る"
+
+#: app/setting_interface.py:2569
+msgid "后台操作模式已移至「游戏连接」"
+msgstr "バックグラウンド操作モードは「ゲーム接続」に移動しました"

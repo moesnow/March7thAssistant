@@ -8531,3 +8531,7 @@ msgstr ""
 #: app/tools/desktop_twin.py:713
 msgid "查看排查方法"
 msgstr "Troubleshooting"
+
+#: app/setting_interface.py:2569
+msgid "后台操作模式已移至「游戏连接」"
+msgstr "Background mode moved to Game connection"
