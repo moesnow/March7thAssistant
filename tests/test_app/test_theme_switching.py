@@ -16,7 +16,7 @@ from module.config import cfg
 from tests.test_app.test_language_switch import window, switch_language
 
 
-def test_theme_button_preserves_custom_assets_and_does_not_start_tasks(window, qtbot, monkeypatch):
+def test_title_logo_preserves_custom_assets_and_does_not_start_tasks(window, qtbot, monkeypatch):
     from app import home_interface
     custom_cards = [{'icon': './assets/app/images/bg37.jpg', 'title': '自定义卡片',
                      'action_type': 'single', 'task_id': 'main', 'menu_items': []}]
@@ -33,14 +33,15 @@ def test_theme_button_preserves_custom_assets_and_does_not_start_tasks(window, q
     cfg.set_value.reset_mock()
     setTheme(Theme.LIGHT)
     for expected_dark in (True, False):
-        qtbot.mouseClick(window.navigationInterface.widget('themeButton'), Qt.MouseButton.LeftButton)
+        qtbot.mouseClick(window.titleBar.iconLabel, Qt.MouseButton.LeftButton)
         qtbot.wait(10)
         assert isDarkTheme() is expected_dark
         assert page.banner.banner_image is banner
         assert page._task_cards[0][0].iconWidget.pixmap().toImage() == foreground
         assert window.windowTitle() == 'March7th Assistant'
     switch_language(qtbot, window, 'en_US')
-    assert window.navigationInterface.widget('themeButton').text() == 'Theme'
+    assert window.titleBar.iconLabel.toolTip() == 'Switch theme'
+    assert window.titleBar.iconLabel.accessibleName() == 'Switch theme'
     assert page.banner.banner_image is banner
     assert page._task_cards[0][0].titleLabel.text() == '自定义卡片'
     assert cfg.config['home_cards'] == custom_cards
@@ -64,7 +65,7 @@ def window_size_case(request, monkeypatch):
 
 
 @pytest.mark.parametrize('window_size_case', [
-    ('size', None, 720), ('size', 680, 680), ('none', None, 720),
+    ('size', None, 640), ('size', 680, 680), ('none', None, 640),
 ], indirect=True)
 def test_default_size_memory_and_scrollable_navigation(window_size_case, window):
     assert window.height() == window_size_case
@@ -72,7 +73,29 @@ def test_default_size_memory_and_scrollable_navigation(window_size_case, window)
     navigation = window.navigationInterface
     for route in ('homeInterface', 'helpInterface', 'warpInterface', 'toolsInterface', 'workflowInterface'):
         assert navigation.widget(route).parentWidget() is navigation.scrollWidget
-    assert navigation.bottomLayout.indexOf(navigation.widget('themeButton')) >= 0
+    assert 'themeButton' not in navigation.items
+
+
+def test_title_logo_click_release_drag_cancel_and_double_click(window, qtbot):
+    setTheme(Theme.LIGHT)
+    logo = window.titleBar.iconLabel
+    position = window.pos()
+    state = window.windowState()
+    qtbot.mouseClick(logo, Qt.MouseButton.RightButton)
+    assert not isDarkTheme()
+    qtbot.mousePress(logo, Qt.MouseButton.LeftButton)
+    assert not isDarkTheme()
+    outside = QPoint(-10, logo.height() // 2)
+    qtbot.mouseMove(logo, outside)
+    qtbot.mouseRelease(logo, Qt.MouseButton.LeftButton, pos=outside)
+    assert not isDarkTheme()
+    assert window.pos() == position
+    qtbot.mouseClick(logo, Qt.MouseButton.LeftButton)
+    assert isDarkTheme()
+    qtbot.mouseDClick(logo, Qt.MouseButton.LeftButton)
+    qtbot.mouseRelease(logo, Qt.MouseButton.LeftButton)
+    assert not isDarkTheme()
+    assert window.windowState() == state
 
 
 def test_every_task_portrait_and_window_icon_follow_dark_theme(window, qtbot):
@@ -90,6 +113,8 @@ def test_every_task_portrait_and_window_icon_follow_dark_theme(window, qtbot):
         assert widget.action is action
     assert window.windowIcon().pixmap(32, 32).toImage().pixelColor(0, 0).alpha() == 0
     assert window.windowIcon().pixmap(32, 32).toImage() == QIcon(application_icon_path(True)).pixmap(32, 32).toImage()
+    assert window.titleBar.iconLabel.pixmap().toImage() == QIcon(
+        application_icon_path(True, titlebar=True)).pixmap(window.titleBar.iconLabel.size()).toImage()
     page.refreshBackendTasks()
     for widget, *_ in page._task_cards:
         assert not widget.iconWidget._pattern.isNull()
@@ -97,6 +122,23 @@ def test_every_task_portrait_and_window_icon_follow_dark_theme(window, qtbot):
     setTheme(Theme.LIGHT)
     assert [widget.iconWidget.pixmap().toImage() for widget, *_ in page._task_cards] == originals
     assert all(widget.iconWidget._pattern.isNull() for widget, *_ in page._task_cards)
+    assert window.titleBar.iconLabel.pixmap().toImage() == QIcon(
+        application_icon_path(False)).pixmap(window.titleBar.iconLabel.size()).toImage()
+
+
+@pytest.mark.parametrize('dark', [False, True])
+def test_icon_tiles_keep_white_shell_and_contrasting_dark_titlebar(qtbot, dark):
+    shell = QIcon(application_icon_path(dark)).pixmap(256, 256).toImage()
+    titlebar = QIcon(application_icon_path(dark, titlebar=True)).pixmap(256, 256).toImage()
+    for image in (shell, titlebar):
+        assert not image.isNull()
+        assert image.pixelColor(128, 16).alpha() >= 245
+        assert image.pixelColor(0, 0).alpha() == 0
+    assert shell.pixelColor(128, 16).lightness() > 225
+    if dark:
+        assert 55 < titlebar.pixelColor(128, 16).lightness() < 140
+    else:
+        assert shell == titlebar
 
 
 
@@ -169,6 +211,7 @@ def test_shell_group_rebuilds_for_each_icon_and_restores_original_identity(qtbot
     set_application_icon(owner, application_icon_path(False), 'March7th Assistant')
     owner.destroy()  # Surface teardown must release shell properties first.
     assert owner._taskbar_properties.store is None
+
 
 
 
