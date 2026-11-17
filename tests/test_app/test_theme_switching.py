@@ -93,6 +93,8 @@ def test_theme_setting_preserves_custom_assets_and_does_not_start_tasks(window, 
     monkeypatch.setattr(home_interface, 'start_task', start_task)
     cfg.set_value.reset_mock()
     monkeypatch.setattr(cfg, 'set_value', Mock(side_effect=lambda key, value: cfg.config.__setitem__(key, value)))
+    combo = window.settingInterface.themeCard.comboBox
+    combo.setCurrentIndex(combo.findData('light'))
     setTheme(Theme.LIGHT)
     for expected_dark in (True, False):
         combo = window.settingInterface.themeCard.comboBox

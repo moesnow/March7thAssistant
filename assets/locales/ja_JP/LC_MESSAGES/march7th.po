@@ -8230,3 +8230,7 @@ msgstr "ライト"
 #: app/setting_interface.py:1165
 msgid "深色"
 msgstr "ダーク"
+
+#: app/card/comboboxsettingcard2.py:58 app/main_window.py:452
+msgid "长夜"
+msgstr "長夜"

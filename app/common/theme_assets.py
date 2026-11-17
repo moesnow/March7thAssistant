@@ -28,9 +28,8 @@ def portrait_artwork(path, dark):
     return QPixmap(path)
 
 
-def application_icon_path(evernight=False, *, titlebar=False):
+def application_icon_path(evernight=False):
     """Keep the original March 7th icon until the Easter egg is displayed."""
     if not evernight:
         return './assets/logo/March7th.ico'
-    filename = 'titlebar.ico' if titlebar else 'icon.ico'
-    return str(Path('./assets/logo/evernight') / filename)
+    return './assets/logo/evernight/icon.ico'

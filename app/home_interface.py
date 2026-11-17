@@ -1,8 +1,8 @@
 # coding:utf-8
 import copy
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QPainter, QPainterPath, QImage, QAction
+from PySide6.QtCore import QEvent, QEasingCurve, QRectF, Qt, QVariantAnimation
+from PySide6.QtGui import QColor, QPainter, QPainterPath, QImage, QAction
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowEffect, QFileDialog, QDialog
 
 from qfluentwidgets import ScrollArea, FluentIcon, RoundMenu, PushButton, isDarkTheme
@@ -23,6 +23,73 @@ from PIL import Image
 import numpy as np
 import os
 import sys
+
+
+class FloatingLogoHint(QLabel):
+    """Float above the banner without changing the page layout."""
+    def __init__(self, parent):
+        super().__init__('别晃啦！本姑娘头好晕( ꩜ ᯅ ꩜;)', parent)
+        self.setTextFormat(Qt.TextFormat.PlainText)
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setStyleSheet('color: #ff91c1; font-family: "Sans Serif Collection", "Microsoft YaHei UI"; '
+                           'font-size: 18px; font-weight: 600;')
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self._progress = 0.0
+        self._text_path = QPainterPath()
+        self._motion = QEasingCurve(QEasingCurve.Type.OutCubic)
+        self.animation = QVariantAnimation(self)
+        self.animation.setStartValue(0.0)
+        self.animation.setEndValue(1.0)
+        self.animation.setDuration(5000)
+        self.animation.valueChanged.connect(self._advance)
+        self.animation.finished.connect(self.hide)
+        parent.installEventFilter(self)
+        self.hide()
+
+    def play(self):
+        self.animation.stop()
+        self.ensurePolished()
+        # Cache the glyph outlines, then translate at subpixel precision each frame.
+        self._text_path = QPainterPath()
+        self._text_path.addText(0, 0, self.font(), self.text())
+        bounds = self._text_path.boundingRect()
+        self._text_path.translate(-bounds.left(), -bounds.top())
+        self.setGeometry(self.parentWidget().rect())
+        self._advance(0.0)
+        self.show()
+        self.raise_()
+        self.animation.start()
+
+    def dismiss(self):
+        self.animation.stop()
+        self.hide()
+
+    def _advance(self, progress):
+        self._progress = float(progress)
+        self.update()
+
+    def textRect(self):
+        bounds = self._text_path.boundingRect()
+        travel = self._motion.valueForProgress(self._progress)
+        start_y = self.height() * 0.82
+        # The banner is scaled to its width and cropped vertically; eye level
+        # therefore follows the width, rather than the visible cropped height.
+        eye_y = min(self.width() * 0.10, self.height() * 0.5)
+        center_y = start_y + (eye_y - start_y) * travel
+        return QRectF((self.width() - bounds.width()) / 2,
+                      max(0.0, center_y - bounds.height() / 2), bounds.width(), bounds.height())
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setOpacity(1.0 - self._progress)
+        painter.translate(self.textRect().topLeft())
+        painter.fillPath(self._text_path, QColor('#ff91c1'))
+
+    def eventFilter(self, watched, event):
+        if event.type() == QEvent.Type.Resize:
+            self.setGeometry(watched.rect())
+        return super().eventFilter(watched, event)
 
 
 class BannerWidget(QWidget):
@@ -120,6 +187,7 @@ class BannerWidget(QWidget):
         self.vBoxLayout.setContentsMargins(0, 20, 0, 10)
         self.vBoxLayout.addWidget(self.galleryLabel)
         self.vBoxLayout.addStretch(1)  # 添加弹性空间，将下方任务卡片推到底部
+        self.logoHint = FloatingLogoHint(self)
 
     def retranslateTitle(self):
         title = tr('长夜月小助手') if self._evernight_active else tr('三月七小助手')

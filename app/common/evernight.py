@@ -11,25 +11,34 @@ EVEY_ANIMATION = './assets/app/images/evernight/evey-floating.png'
 class EvernightEasterEgg:
     def __init__(self, clock=monotonic):
         self._clock = clock
-        self._clicks = deque(maxlen=3)
+        self._clicks = deque(maxlen=5)
+        self._warning_until = None
         self.unlocked = False
+        self.selected = False
         self.animation_played = False
 
     def record_click(self):
-        """Return True only for the click that unlocks this session's egg."""
+        """Five quick clicks warn; five more within the warning unlock the egg."""
         if self.unlocked:
-            return False
+            return None
         now = self._clock()
-        self._clicks.append(now)
-        if len(self._clicks) == 3 and now - self._clicks[0] <= 5:
-            self.unlocked = True
+        if self._warning_until is not None and now > self._warning_until:
+            self._warning_until = None
             self._clicks.clear()
-            return True
-        return False
+        self._clicks.append(now)
+        if len(self._clicks) == 5 and now - self._clicks[0] <= 5:
+            self._clicks.clear()
+            if self._warning_until is None:
+                self._warning_until = now + 5
+                return 'warning'
+            self.unlocked = True
+            self._warning_until = None
+            return 'unlocked'
+        return None
 
-    def consume_animation(self, dark):
-        """Claim the one playback only when the unlocked dark UI is visible."""
-        if not dark or not self.unlocked or self.animation_played:
+    def consume_animation(self, selected):
+        """Claim the one playback only when the session theme is selected."""
+        if not selected or not self.unlocked or self.animation_played:
             return False
         self.animation_played = True
         return True
