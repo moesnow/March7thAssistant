@@ -55,13 +55,15 @@ RANK_CLICK_BATCH = 80
 RANK_CLICK_HOLD = 0.03
 PROMOTION_CAP_ENEMY_RANK = 28  # 入画奇航超频博弈 A4 冰钛 6
 PREP_OVERLAYS = frozenset((Page.SHOP, Page.TIMED_SHOP, Page.RAIL_SHOP, Page.BLACK_MARKET, Page.REVEAL, Page.CHOICE,
-                           Page.DANCE, Page.RANGER, Page.SVAROG_MODIFICATION, Page.GARDEN, Page.HACK,
+                           Page.DANCE, Page.RANGER, Page.SVAROG_MODIFICATION, Page.DRAGON_CLEANSE,
+                           Page.GARDEN, Page.HACK,
                            Page.BENCH_FULL, Page.HALO_TIP, Page.HALO_INFO, Page.HALO_MENTOR, Page.EMPTY_FRONT))
 PLAY_PAGES = PREP_OVERLAYS | {Page.BOARD, Page.BATTLE, Page.NODE_RESULT, Page.MATCH_RESULT,
                              Page.HALO, Page.HALO_DETAIL, Page.HALO_REPLACE, Page.TEA}
 ACTIVE_PAGES = PLAY_PAGES | {Page.DETAIL, Page.PARTNER_DETAIL, Page.EQUIPMENT, Page.CONFIRM_FIGHT}
 BATTLE_RESULT_PAGES = {Page.BATTLE, Page.NODE_RESULT, Page.MATCH_RESULT}
-ESC_RECOVERY_PAGES = (ACTIVE_PAGES - BATTLE_RESULT_PAGES - {Page.BLACK_MARKET, Page.HALO_REPLACE, Page.HALO_MENTOR}
+ESC_RECOVERY_PAGES = (ACTIVE_PAGES - BATTLE_RESULT_PAGES
+                      - {Page.BLACK_MARKET, Page.HALO_REPLACE, Page.HALO_MENTOR, Page.DRAGON_CLEANSE}
                       | {Page.UNKNOWN, Page.CONFLICT})
 HALO_EXIT_PAGES = (ACTIVE_PAGES | {Page.HOME, Page.WEEKLY}) - {Page.HALO}
 REWARD_PAGES = {Page.HOME, Page.WEEKLY, Page.REWARD_RECEIPT, Page.REWARD_LIMIT}
@@ -4079,6 +4081,29 @@ class CurrencyWars:
                     raise CurrencyWarsPageBlocked(self.frame, f"{message}，已保留当前现场") from error
                 log.warning(f"{event.value}仍在等待选择，复核后重试：{error}")
 
+    def _choose_dragon_cleanse(self, frame):
+        stage = frame.stage
+
+        def option(f, attempt):
+            cards = f.dragon_affixes
+            return cards[attempt % len(cards)] if cards else None
+
+        def confirm(f):
+            return ui.point(f.dragon_confirm())
+
+        def advanced(f):
+            return f.page in ACTIVE_PAGES - {Page.DRAGON_CLEANSE}
+
+        message = "苍龙濯世选择敌人词缀后未确认继续对局"
+        try:
+            return self._choose_single(frame, option, confirm, advanced, message, ready_confirm=confirm)
+        except (CurrencyWarsActionUnready, CurrencyWarsReceiptTimeout) as error:
+            current = self.frame
+            if (current is not None and current.page == Page.DRAGON_CLEANSE
+                    and (stage is None or current.stage in (None, stage))):
+                raise CurrencyWarsPageBlocked(current, f"{message}，已保留当前现场") from error
+            raise
+
     def _choose_board_effect(self, frame):
         event = frame.page
         stage = frame.stage
@@ -4742,6 +4767,8 @@ class CurrencyWars:
             return self._employee_event(frame)
         if page == Page.SVAROG_MODIFICATION:
             return self._choose_special_event(frame)
+        if page == Page.DRAGON_CLEANSE:
+            return self._choose_dragon_cleanse(frame)
         if page in (Page.GARDEN, Page.HACK):
             return self._choose_board_effect(frame)
         if page == Page.HALO_TIP:

@@ -5618,6 +5618,159 @@ def test_wangwangdan_choice_uses_the_confirm_in_its_own_row(monkeypatch, world):
     assert state.clicks == [(Page.TEA, (1270, 532)), (Page.TEA, (1762, 604))]
 
 
+def dragon_cleanse_dialog(centers, *, selected=False, read_names=True, read_confirm=True):
+    image = CANVAS.copy()
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((380, 30, 1710, 437), fill=(31, 31, 37))
+    entries = [
+        ("备战阶段", 322, 71), ("1-9", 322, 108), ("苍龙濯世", 1046, 59),
+        ("汪汪丹会帮你冲洗掉一个敌人词缀。", 1046, 100),
+        ("请选择一个词缀", 1492, 462), ("后台区域", 981, 575),
+        ("选择主角", 1808, 751), ("商店", 1624, 982),
+    ]
+    if read_confirm:
+        entries.append(("确认选择", 1492, 516))
+    for index, x in enumerate(centers):
+        draw.rectangle((x - 149, 136, x + 149, 405), fill=(129, 37, 49))
+        draw.rectangle((x - 149, 136, x + 149, 180), fill=(18, 17, 21))
+        if selected and not index:
+            draw.rectangle((x - 149, 136, x + 149, 405), outline=(235, 88, 95), width=3)
+        if read_names:
+            entries.append((("榜样激励", "永久创伤")[index], x, 159))
+    draw.rounded_rectangle((1302, 487, 1682, 545), radius=28,
+                           fill=(238, 242, 250) if selected else (61, 64, 103))
+    return Frame(image, labels(*entries))
+
+
+@pytest.mark.parametrize(("centers", "read_controls", "preselected", "from_tea"), (
+    ((1046,), True, False, True),
+    ((888, 1204), False, False, False),
+    ((1046,), True, True, False),
+))
+def test_dragon_cleanse_removes_one_affix_and_resumes_the_same_node(
+        monkeypatch, world, centers, read_controls, preselected, from_tea):
+    pending = dragon_cleanse_dialog(centers, read_names=read_controls, read_confirm=read_controls)
+    selected = dragon_cleanse_dialog(centers, selected=True, read_names=read_controls, read_confirm=read_controls)
+    tea_option = ("使出苍龙濯世吧！！！", 1270, 532)
+    tea = page(Page.TEA, tea_option, stage="1-8")
+    tea_selected = page(Page.TEA, tea_option, ("确认", 1762, 604), stage="1-8")
+    unreadable = Frame(CANVAS, ())
+    ready = Frame(CANVAS, labels(("备战阶段", 322, 71), ("1-9", 322, 108),
+                                ("前台区域", 970, 315), ("后台区域", 981, 575),
+                                ("出战", 1818, 751), ("商店", 1624, 982)))
+    result = Frame(CANVAS, labels(("对局胜利", 960, 233), ("返回货币战争", 960, 899)))
+    lobby = home()
+    assert pending.page == selected.page == Page.DRAGON_CLEANSE
+    assert pending.stage == selected.stage == ready.stage == "1-9"
+    assert ready.page == Page.BOARD
+
+    initial = tea if from_tea else selected if preselected else pending
+    state = SimpleNamespace(frame=initial, clicks=[], unreadable_frames=0)
+
+    def capture():
+        if state.frame is unreadable:
+            state.unreadable_frames += 1
+            if state.unreadable_frames > 2:
+                state.frame = ready
+        return state.frame
+
+    def click(point, *, press_duration):
+        frame = state.frame
+        state.clicks.append((frame.page, point))
+        if frame is tea:
+            assert point == tea_option[1:]
+            state.frame = tea_selected
+        elif frame is tea_selected:
+            assert point == (1762, 604)
+            state.frame = pending
+        elif frame is pending:
+            x, y = point
+            assert abs(x - centers[0]) < 100 and 136 < y < 405
+            state.frame = selected
+        elif frame is selected:
+            assert point[0] == 1492 and abs(point[1] - 516) <= 2
+            state.frame = unreadable
+        elif frame is ready:
+            assert point == (1818, 751)
+            state.frame = result
+        else:
+            assert frame is result and point == (960, 899)
+            state.frame = lobby
+        return True
+
+    def prepare(frame):
+        assert frame is ready
+        return world.war._advance_board(frame, frame.board_advance)
+
+    monkeypatch.setattr(world.war, "_capture", capture)
+    monkeypatch.setattr(world.war, "_prepare", prepare)
+    monkeypatch.setattr(world.war, "_check_weekly_reward", lambda f: (f, (18000, 18000), False))
+    world.auto.click_element_with_pos.side_effect = click
+
+    assert world.war.start(resume=True) is True
+    assert state.frame is lobby and state.unreadable_frames == 3
+    assert [kind for kind, _ in state.clicks] == (
+        [Page.TEA] * (2 if from_tea else 0)
+        + [Page.DRAGON_CLEANSE] * (1 if preselected else 2)
+        + [Page.BOARD, Page.MATCH_RESULT]
+    )
+    world.auto.press_key.assert_not_called()
+
+
+@pytest.mark.parametrize("read_confirm", (True, False))
+def test_dragon_cleanse_confirms_when_only_affix_is_unselectable(monkeypatch, world, read_confirm):
+    template = dragon_cleanse_dialog((), selected=True, read_confirm=read_confirm)
+    image = template.image.copy()
+    ImageDraw.Draw(image).rectangle((897, 136, 1195, 405), fill=(68, 70, 77))
+    initial = Frame(image, (*template.labels, *labels(("吸星魔王", 1046, 157), ("已禁用", 1046, 375))))
+    assert initial.page == Page.DRAGON_CLEANSE
+    assert not initial.dragon_affixes
+    assert initial.dragon_confirm() is not None
+    ready = page(Page.BOARD, stage="1-9")
+    state = drive(monkeypatch, world, initial, lambda s, _: setattr(s, "frame", ready))
+
+    assert world.war._play_step(initial) is ready
+    assert state.clicks == [(Page.DRAGON_CLEANSE, (1492, 516))]
+    assert not state.keys
+
+
+def test_dragon_cleanse_name_outside_dialog_keeps_the_board():
+    frame = Frame(CANVAS, labels(("备战阶段", 322, 71), ("1-9", 322, 108),
+                                 ("苍龙濯世", 110, 210), ("前台区域", 970, 315),
+                                 ("后台区域", 981, 575), ("选择主角", 1808, 751),
+                                 ("商店", 1624, 982)))
+    assert frame.page == Page.BOARD
+
+
+@pytest.mark.parametrize(("centers", "outcome"), (((), "no_cards"), ((1046,), "no_receipt"),
+                                                   ((1046,), "stopped"), ((1046,), "timed_out")))
+def test_dragon_cleanse_never_confirms_an_unselected_affix(monkeypatch, world, centers, outcome):
+    initial = dragon_cleanse_dialog(centers)
+    world.war.deadline = 60
+
+    def click(_, point):
+        assert abs(point[0] - centers[0]) < 100 and 136 < point[1] < 405
+        if outcome == "stopped":
+            task.pause_ctl.checkpoint.side_effect = RunStopRequested()
+        elif outcome == "timed_out":
+            world.now[0] = world.war.deadline
+        return False
+
+    state = drive(monkeypatch, world, initial, click)
+    error = {"stopped": RunStopRequested, "timed_out": task.CurrencyWarsBudgetExceeded}.get(
+        outcome, task.CurrencyWarsUnavailable,
+    )
+    with pytest.raises(error):
+        world.war._play_step(initial)
+    if outcome == "no_cards":
+        assert not state.clicks
+    elif outcome == "no_receipt":
+        assert 1 <= len(state.clicks) <= 3
+    else:
+        assert len(state.clicks) == 1
+    assert state.frame is initial and not state.keys
+
+
 def test_tea_meal_continues_when_ocr_misses_the_card_name_and_health(monkeypatch, world):
     label = ("美餐时间", 1200, 411)
     effect = ("回复20小队生命值", 1240, 480)

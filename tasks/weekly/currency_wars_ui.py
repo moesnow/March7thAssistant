@@ -117,6 +117,10 @@ BOARD_EFFECT_CONFIRM = (1310, 566, 1667, 633)
 GARDEN_COLUMNS = ((444, 832), (852, 1240), (1260, 1649))
 HACK_COLUMNS = ((563, 1017), (1070, 1534))
 BOARD_EFFECT_PROMPT = (1300, 515, 1680, 566)
+DRAGON_TITLE = (900, 30, 1190, 90)
+DRAGON_SUBTITLE = (790, 76, 1330, 135)
+DRAGON_PROMPT = (1280, 423, 1725, 584)
+DRAGON_CONFIRM = (1280, 451, 1725, 655)
 SUPPLY_CENTERS = (250, 605, 960, 1315, 1670)
 SUPPLY_FOUR_CENTERS = (428, 783, 1137, 1492)
 RAIL_TITLE = (655, 51, 1450, 108)
@@ -214,6 +218,7 @@ class Page(Enum):
     DANCE = "梦境交织共舞"
     RANGER = "巡海游侠任命"
     SVAROG_MODIFICATION = "机心巧匠改装"
+    DRAGON_CLEANSE = "苍龙濯世"
     GARDEN = "奇兽花园"
     HACK = "骇入效果"
     HALO = "主角光环"
@@ -628,6 +633,8 @@ class Frame:
             return Page.HALO_MENTOR
         if self.svarog_modification:
             return Page.SVAROG_MODIFICATION
+        if self.dragon_cleanse:
+            return Page.DRAGON_CLEANSE
 
         if self.has("主角光环与奇遇详情", area=(420, 27, 1065, 104), contains=True) and (
                 self.has("前往重选", area=(640, 164, 1360, 260), contains=True)
@@ -1301,6 +1308,23 @@ class Frame:
                 return label
         return None
 
+    def _wide_confirm(self, button: Label | None, area: Area, center_x: int) -> Label | None:
+        x = button.point[0] if button else center_x
+        top, bottom = area[1], area[3]
+        # 从文字两侧识别点亮的按钮底色，文字漏读时用横条推定按钮高度。
+        sides = (self.crop((x - 125, top, x - 57, bottom)), self.crop((x + 57, top, x + 125, bottom)))
+        bright = np.logical_and.reduce([
+            (cv2.cvtColor(side, cv2.COLOR_RGB2GRAY) >= 178).mean(axis=1) > 0.55 for side in sides
+        ])
+        edges = np.flatnonzero(np.diff(np.r_[False, bright, False])) + top
+        buttons = [(int(start), int(end)) for start, end in zip(edges[::2], edges[1::2]) if 22 <= end - start <= 75]
+        if button:
+            return button if any(start <= button.point[1] < end for start, end in buttons) else None
+        if len(buttons) == 1:
+            start, end = buttons[0]
+            return Label("确认选择", (x, (start + end) // 2))
+        return None
+
     def choice_confirm(self) -> Label | None:
         return self.enabled_button(self.find("确认", "确认选择", "选定", "选择", area=CHOICE_CONFIRM))
 
@@ -1469,6 +1493,36 @@ class Frame:
         if self.unlabeled_dance_confirm and self.dance_pair_selected:
             return self.unlabeled_dance_confirm
         return None
+
+    @cached_property
+    def dragon_cleanse(self) -> bool:
+        subtitle = "".join(label.text for label in self.texts(DRAGON_SUBTITLE))
+        if re.search(r"洗掉[一1]个敌人词缀", subtitle):
+            return True
+        return self.has("苍龙濯世", "苍龙灌世", area=DRAGON_TITLE) and (
+            self.has("请选择一个词缀", "请选择1个词缀", area=DRAGON_PROMPT)
+            or self.has("确认选择", area=DRAGON_CONFIRM)
+        )
+
+    @cached_property
+    def dragon_affixes(self) -> tuple[Label, ...]:
+        # 卡片数量可变，用红色卡身定位实际可选区域，词缀名只用于日志。
+        left, right = 400, 1690
+        red, green, blue = self.crop((left, 300, right, 372)).astype(np.int16).transpose(2, 0, 1)
+        colored = (red >= 70) & (red - green >= 24) & (red - blue >= 17)
+        columns = colored.mean(axis=0) >= 0.55
+        edges = np.flatnonzero(np.diff(np.r_[0, columns, 0])) + left
+        cards = []
+        for start, end in zip(edges[::2], edges[1::2]):
+            if end - start < 140:
+                continue
+            title = "".join(label.text for label in self.texts((start, 126, end, 200)))
+            cards.append(Label(title or "敌人词缀", (int((start + end) // 2), 336)))
+        return tuple(cards)
+
+    def dragon_confirm(self) -> Label | None:
+        button = self.find("确认选择", area=DRAGON_CONFIRM)
+        return self._wide_confirm(button, DRAGON_CONFIRM, 1492)
 
     @cached_property
     def board_effect_cards(self) -> tuple[tuple[Label, str], ...]:
@@ -1727,22 +1781,7 @@ class Frame:
     def mentor_confirm(self) -> Label | None:
         if self.mentor_selection_prompt:
             return None
-        button = self.mentor_confirm_label
-        x = button.point[0] if button else MENTOR_CONFIRM_X
-        top, bottom = MENTOR_CONFIRM[1], MENTOR_CONFIRM[3]
-        # 取文字两侧的亮色底，兼容按钮文字漏读和不同画幅下的按钮高度差。
-        sides = (self.crop((x - 125, top, x - 57, bottom)), self.crop((x + 57, top, x + 125, bottom)))
-        bright = np.logical_and.reduce([
-            (cv2.cvtColor(side, cv2.COLOR_RGB2GRAY) >= 178).mean(axis=1) > 0.55 for side in sides
-        ])
-        edges = np.flatnonzero(np.diff(np.r_[False, bright, False])) + top
-        buttons = [(int(start), int(end)) for start, end in zip(edges[::2], edges[1::2]) if 22 <= end - start <= 75]
-        if button:
-            return button if any(start <= button.point[1] < end for start, end in buttons) else None
-        if len(buttons) == 1:
-            start, end = buttons[0]
-            return Label("确认选择", (x, (start + end) // 2))
-        return None
+        return self._wide_confirm(self.mentor_confirm_label, MENTOR_CONFIRM, MENTOR_CONFIRM_X)
 
     @cached_property
     def mentor_candidates(self) -> tuple[Label, ...]:
