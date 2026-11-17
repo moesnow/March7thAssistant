@@ -25,6 +25,7 @@ class LocalGameController(GameControllerBase):
         self.process_name = ""
         self.window_name = ""
         self.window_class = 'UnityWndClass'
+        self.launched_new_process: bool | None = None
         self.reload_config(cfg)
 
     def reload_config(self, cfg: Config) -> None:
@@ -102,11 +103,13 @@ class LocalGameController(GameControllerBase):
                                  original, winreg.REG_BINARY)
 
     def start_game_process(self) -> bool:
-        """启动游戏"""
+        """启动游戏。直启标记为 True，复用窗口标记为 False，渠道启动的归属待确认。"""
+        self.launched_new_process = None
         # 包括图形界面的“启动游戏”：先恢复已退出任务的备份，不给手动启动降画质。
         if self.logger is not None:
             recover_temporary_graphics(self.logger)
         if self.is_game_running():
+            self.launched_new_process = False
             self.log_info("游戏已运行，复用现有游戏窗口")
             return True
 
@@ -128,6 +131,7 @@ class LocalGameController(GameControllerBase):
 
         game_folder = self.game_path.rpartition('\\')[0]
         if not os.system(f'cmd /C start "" /D "{game_folder}" "{self.game_path}"'):
+            self.launched_new_process = True
             self.log_info(f"游戏启动：{self.game_path}")
             return True
         else:
@@ -135,6 +139,7 @@ class LocalGameController(GameControllerBase):
             try:
                 # 为什么有的用户环境变量内没有cmd呢？
                 subprocess.Popen(self.game_path)
+                self.launched_new_process = True
                 self.log_info(f"游戏启动：{self.game_path}")
                 return True
             except Exception as e:

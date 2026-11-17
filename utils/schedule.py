@@ -1,6 +1,8 @@
 import os
 import sys
-import getpass
+
+from utils.admin import current_user_sid
+
 if sys.platform == 'win32':
     import win32com.client
 
@@ -30,14 +32,15 @@ def apply_task_settings(task_def):
     settings.AllowHardTerminate = True  # 请求停止后允许强杀
 
 
-def apply_task_principal(task_def):
+def apply_task_principal(task_def, user_sid=None):
     """
     以当前用户、交互式令牌、最高权限运行：用户登录后在其桌面会话中静默提权，不保存密码。
 
     参数:
     - task_def: Schedule.Service.NewTask 返回的任务定义对象。
+    - user_sid: 已读取的当前进程用户 SID，省略时从令牌读取。
     """
-    task_def.Principal.UserId = getpass.getuser()  # 指定为当前用户
+    task_def.Principal.UserId = current_user_sid() if user_sid is None else user_sid
     task_def.Principal.LogonType = 3  # 3 表示交互用户登录
     task_def.Principal.RunLevel = 1  # 1 表示以最高权限运行
 
@@ -54,6 +57,8 @@ def create_task(task_name, program_path, program_args=None, delay_seconds=30):
     - program_args (str): 程序启动参数，默认为 None。
     - delay_seconds (int): 延迟时间，单位为秒，默认为30秒。
     """
+    user_sid = current_user_sid()
+
     # 创建任务服务对象并连接到任务计划服务
     task_service = win32com.client.Dispatch("Schedule.Service")
     task_service.Connect()
@@ -66,7 +71,7 @@ def create_task(task_name, program_path, program_args=None, delay_seconds=30):
 
     # 配置任务触发器（登录时触发）
     trigger = task_def.Triggers.Create(9)  # 9 表示“当用户登录时”触发
-    trigger.UserId = f"{os.getenv('USERDOMAIN')}\\{os.getenv('USERNAME')}"  # 当前用户
+    trigger.UserId = user_sid
     trigger.Delay = f"PT{delay_seconds}S"  # 设置触发延迟时间（ISO 8601 格式）
 
     # 配置任务操作（启动程序）
@@ -77,7 +82,7 @@ def create_task(task_name, program_path, program_args=None, delay_seconds=30):
 
     # 配置任务的运行设置
     task_def.RegistrationInfo.Description = f"启动 {os.path.basename(program_path)}"
-    apply_task_principal(task_def)
+    apply_task_principal(task_def, user_sid)
 
     # 配置运行时长等运行设置（显式写全，不依赖默认值）
     apply_task_settings(task_def)
@@ -87,7 +92,7 @@ def create_task(task_name, program_path, program_args=None, delay_seconds=30):
         task_name,
         task_def,
         6,  # 6 表示覆盖同名任务
-        None,  # 无需用户名
+        None,  # 使用任务定义中的用户 SID
         None,  # 无需密码
         3,  # 3 表示交互用户
         None
@@ -95,7 +100,9 @@ def create_task(task_name, program_path, program_args=None, delay_seconds=30):
     # print(f"任务计划 '{task_name}' 已成功创建！")
 
 
-def create_on_demand_task(task_name, program_path, program_args=None, working_dir=None, description=None, sddl=None):
+def create_on_demand_task(
+    task_name, program_path, program_args=None, working_dir=None, description=None, sddl=None, *, user_sid=None
+):
     """
     创建按需运行的计划任务：没有触发器，只在调用 run_task 时启动。
 
@@ -110,6 +117,7 @@ def create_on_demand_task(task_name, program_path, program_args=None, working_di
     - description (str): 任务描述，默认为 None。
     - sddl (str): 任务的安全描述符（SDDL），默认为 None。按需运行需要对任务有执行权限，
       而默认权限只允许当前用户读取，要让未提权的进程启动任务，需要在这里授予。
+    - user_sid (str): 已读取的当前进程用户 SID，可与 SDDL 共用。
     """
     # 创建任务服务对象并连接到任务计划服务
     task_service = win32com.client.Dispatch("Schedule.Service")
@@ -131,7 +139,7 @@ def create_on_demand_task(task_name, program_path, program_args=None, working_di
 
     # 配置任务的运行设置
     task_def.RegistrationInfo.Description = description or f"启动 {os.path.basename(program_path)}"
-    apply_task_principal(task_def)
+    apply_task_principal(task_def, user_sid)
     apply_task_settings(task_def)
     task_def.Settings.AllowDemandStart = True  # 允许按需运行
     task_def.Settings.MultipleInstances = 0  # 0 表示允许多个实例并行运行
@@ -141,7 +149,7 @@ def create_on_demand_task(task_name, program_path, program_args=None, working_di
         task_name,
         task_def,
         6,  # 6 表示覆盖同名任务
-        None,  # 无需用户名
+        None,  # 使用任务定义中的用户 SID
         None,  # 无需密码
         3,  # 3 表示交互用户
         sddl

@@ -72,11 +72,16 @@ class TestUacFreeSettingCard:
         assert card.switchButton.isChecked() is True
 
     def test_enable_failure_reverts_switch(self, qapp, monkeypatch, fake_uac_free):
+        import app.card.uac_free_setting_card as card_module
+
         fake_uac_free["result"] = False
+        errors = []
+        monkeypatch.setattr(card_module.InfoBar, "error", lambda **kwargs: errors.append(kwargs["content"]))
         card = _make_card(monkeypatch, confirm=True)
         card.switchButton.setChecked(True)
         assert fake_uac_free["calls"] == ["enable"]
         assert card.switchButton.isChecked() is False
+        assert errors == [card_module.tr("请检查日志后重试")]
 
     def test_turn_off_without_confirm(self, qapp, monkeypatch, fake_uac_free):
         fake_uac_free["enabled"] = True

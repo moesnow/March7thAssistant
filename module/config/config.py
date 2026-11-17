@@ -71,7 +71,7 @@ def _file_fingerprint(path):
     except OSError as e:
         return f"<读取失败: {e}>"
     digest = hashlib.sha256(data).hexdigest()[:12]
-    return f"size={len(data)} sha256={digest} head={data[:120]!r}"
+    return f"size={len(data)} sha256={digest}"
 
 
 # 读取重试：并发读写冲突（如另一进程正在 os.replace）只持续毫秒级，重试几次即可避开
@@ -529,7 +529,8 @@ class Config(metaclass=SingletonMeta):
 
     def set_value(self, key, value):
         """设置配置项的值并保存"""
-        _diag("debug", f"set_value: {key}={value!r}")
+        logged_value = "***" if key == "github_token" else repr(value)
+        _diag("debug", f"set_value: {key}={logged_value}")
         # 读取外部改动但不再多写一次：save_config 只在最后落盘一次
         self._load_config(save=False)
         if isinstance(value, (list, dict, set)):

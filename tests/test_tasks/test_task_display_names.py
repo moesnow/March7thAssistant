@@ -55,4 +55,4 @@ class TestTaskDisplayNames:
         root = pathlib.Path(__file__).resolve().parents[2]
         for name in ("main.py", "app.py"):
             source = (root / name).read_text(encoding="utf-8")
-            assert "task_display_names(supported_tasks(" in source, name
+            assert "task_display_names(tasks_for_listing(" in source, name

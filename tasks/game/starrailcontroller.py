@@ -8,6 +8,11 @@ if sys.platform == 'win32':
     from utils.registry.game_auto_hdr import get_game_auto_hdr, set_game_auto_hdr
     from utils.registry.gameaccount import gamereg_uid
 from utils.logger.logger import Logger
+from utils.pause import pause_ctl
+
+
+class GameResolutionMismatch(ValueError):
+    """游戏窗口的实际分辨率持续与目标不符。"""
 
 
 class StarRailController(LocalGameController):
@@ -83,8 +88,10 @@ class StarRailController(LocalGameController):
         screen_width, screen_height = self.screen_resolution
 
         for attempt in range(1, max_checks + 1):
+            pause_ctl.checkpoint()
             resolution = self.get_resolution()
-            if not resolution:
+            pause_ctl.checkpoint()
+            if not resolution or min(resolution) <= 0:
                 raise RuntimeError("游戏分辨率获取失败")
             window_width, window_height = resolution
 
@@ -102,7 +109,9 @@ class StarRailController(LocalGameController):
                 self.log_error(f"将在 {check_interval} 秒后重新检查分辨率（第 {attempt}/{max_checks} 次）")
                 time.sleep(check_interval)
 
-        raise ValueError("游戏分辨率不正确")
+        raise GameResolutionMismatch(
+            f"游戏分辨率不正确（当前 {window_width}x{window_height}，需要 {target_width}x{target_height}）"
+        )
 
     def check_resolution_ratio(self, target_width: int, target_height: int) -> None:
         """

@@ -70,7 +70,10 @@ class UacFreeSettingCard(SettingCard):
             self.setValue(not isChecked)
             InfoBar.error(
                 title=tr('免 UAC 运行设置失败'),
-                content=tr('请确认小助手以管理员权限运行，并且没有被安全软件拦截'),
+                content=(
+                    tr('请检查日志后重试') if isChecked
+                    else tr('请确认小助手以管理员权限运行，并且没有被安全软件拦截')
+                ),
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,

@@ -112,6 +112,17 @@ class TestAutostartSettingCard:
         assert not card.switchButton.isHidden()
         assert not card.configButton.isHidden()
 
+    def test_enable_failure_reverts_switch(self, qapp, monkeypatch, fake_cfg):
+        import app.card.autostart_setting_card as card_module
+
+        errors = []
+        monkeypatch.setattr(card_module.autostart, "enable", lambda: False)
+        monkeypatch.setattr(card_module.InfoBar, "error", lambda **kwargs: errors.append(kwargs["content"]))
+        card = self._make_card(qapp, monkeypatch, legacy=False)
+        card.switchButton.setChecked(True)
+        assert card.switchButton.isChecked() is False
+        assert errors == [card_module.tr("请检查日志后重试")]
+
     def test_programmatic_set_value_does_not_toggle(self, qapp, monkeypatch, fake_cfg):
         """回归：程序化同步开关状态不得触发 checkedChanged（曾误弹「开机启动已开启」并重复写配置）"""
         from qfluentwidgets import FluentIcon as FIF

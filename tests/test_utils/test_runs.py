@@ -12,7 +12,7 @@ from types import SimpleNamespace
 import pytest
 
 from utils import runs
-from utils.pause import CONTROL_FILE_ENV, COMMAND_RESUME, _read_json
+from utils.pause import CONTROL_FILE_ENV, COMMAND_RESUME, RunStopRequested, _read_json
 
 
 @pytest.fixture
@@ -356,6 +356,25 @@ class TestRunLockUnavailable:
         with runs.idle_without_run_lock():
             pass
         assert runs.read_active_run() is None
+
+    def test_idle_stop_does_not_wait_for_another_tasks_lock(self, workdir, monkeypatch):
+        session = _begin()
+        assert session.acquire_lock().status == runs.LOCK_ACQUIRED
+        other_run_id = "20261030-000002-bbbb"
+        sleeps = []
+
+        def check_stop():
+            if sleeps:
+                raise RunStopRequested
+
+        monkeypatch.setattr(runs, "pause_ctl", SimpleNamespace(enabled=True, check_stop=check_stop))
+        monkeypatch.setattr(runs, "time", SimpleNamespace(sleep=sleeps.append))
+        with pytest.raises(RunStopRequested):
+            with runs.idle_without_run_lock():
+                assert runs.acquire_run_lock(self._info(other_run_id)) == (True, None)
+        assert sleeps == [1]
+        assert not session.lock_held
+        assert runs.read_active_run()["run_id"] == other_run_id
 
 
 class TestOutputCapture:

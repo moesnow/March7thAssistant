@@ -228,7 +228,7 @@ class AutostartSettingCard(SettingCard):
             self.setValue(not isChecked)
             InfoBar.error(
                 title=tr('开机启动设置失败'),
-                content=tr('请以管理员权限运行后重试'),
+                content=tr('请检查日志后重试') if isChecked else tr('请以管理员权限运行后重试'),
                 orient=Qt.Orientation.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,

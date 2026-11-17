@@ -13,6 +13,7 @@ from module.logger import log
 from module.localization import tr
 from module.update.update_engine import build_independent_process_env
 from module.update.version_check import check_for_update
+from utils.runs import EXIT_FAILED
 
 
 def start_minimized_to_tray() -> bool:
@@ -44,9 +45,7 @@ def start():
         # 启动更新程序
         updater = os.path.abspath("./March7th Updater.exe")
         if not os.path.exists(updater):
-            log.error("未找到更新程序 March7th Updater.exe")
-            log.hr("完成", 2)
-            return
+            raise FileNotFoundError("未找到更新程序 March7th Updater.exe")
 
         log.info("启动更新器")
         creationflags = (
@@ -70,3 +69,4 @@ def start():
     except Exception as e:
         log.error(f"更新失败: {e}")
         log.hr("完成", 2)
+        sys.exit(EXIT_FAILED)

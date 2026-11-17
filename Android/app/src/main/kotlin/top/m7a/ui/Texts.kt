@@ -1,5 +1,6 @@
 package top.m7a.ui
 
+import android.os.Build
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
@@ -166,17 +167,40 @@ internal val InstanceType.title: Int
 /** 出错后界面能直接带用户去的地方。 */
 internal enum class ErrorFix { NONE, GUIDE, LOGS, APP_SETTINGS }
 
-internal class ErrorInfo(@StringRes val title: Int, @StringRes val advice: Int, val fix: ErrorFix)
+internal class ErrorInfo(
+    @param:StringRes val title: Int,
+    @param:StringRes val advice: Int,
+    val fix: ErrorFix,
+    @param:StringRes val additionalAdvice: Int? = null,
+)
+
+@Composable
+@ReadOnlyComposable
+internal fun ErrorInfo.adviceText(): String {
+    val base = tr(advice)
+    val extra = additionalAdvice ?: return base
+    return "$base\n${tr(extra)}"
+}
 
 /** 契约里列出的错误码各有标题和处理步骤，其余错误码走通用说明并引导看日志。 */
-internal fun errorInfo(code: String?): ErrorInfo? = when (code) {
+internal fun errorInfo(
+    code: String?,
+    brand: String? = Build.BRAND,
+    manufacturer: String? = Build.MANUFACTURER,
+): ErrorInfo? = when (code) {
     null -> null
-    "service_busy", "cleanup_pending" -> ErrorInfo(R.string.error_busy_title, R.string.error_busy_advice, ErrorFix.NONE)
+    "service_busy" -> ErrorInfo(R.string.error_busy_title, R.string.error_busy_advice, ErrorFix.NONE)
+    "cleanup_pending" -> ErrorInfo(R.string.error_cleanup_pending_title, R.string.error_busy_advice, ErrorFix.NONE)
     "service_start" -> ErrorInfo(R.string.error_service_title, R.string.error_service_advice, ErrorFix.GUIDE)
     "root_unavailable" -> ErrorInfo(R.string.error_root_title, R.string.error_root_advice, ErrorFix.GUIDE)
     "game_not_installed" -> ErrorInfo(R.string.error_game_title, R.string.error_game_advice, ErrorFix.NONE)
     "game_exited" -> ErrorInfo(R.string.error_game_exited_title, R.string.error_game_exited_advice, ErrorFix.LOGS)
-    "game_start_timeout" -> ErrorInfo(R.string.error_game_start_timeout_title, R.string.error_game_start_timeout_advice, ErrorFix.LOGS)
+    "game_start_timeout" -> ErrorInfo(
+        R.string.error_game_start_timeout_title, R.string.error_game_start_timeout_advice, ErrorFix.LOGS,
+        additionalAdvice = R.string.error_honor_smart_resolution_advice.takeIf {
+            brand?.trim().equals("HONOR", ignoreCase = true) || manufacturer?.trim().equals("HONOR", ignoreCase = true)
+        },
+    )
     "manual_action_required" -> ErrorInfo(R.string.error_login_title, R.string.error_login_advice, ErrorFix.NONE)
     "keyguard_locked" -> ErrorInfo(R.string.error_locked_title, R.string.error_locked_advice, ErrorFix.NONE)
     "device_asleep" -> ErrorInfo(R.string.error_asleep_title, R.string.error_asleep_advice, ErrorFix.NONE)

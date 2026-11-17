@@ -8,6 +8,10 @@ from module.screen import screen
 class GameRecoveryError(RuntimeError):
     """当前游戏画面无法安全恢复，后续任务需要停止。"""
 
+    reason = None
+    screenshot = None
+    preserve_game = True
+
 
 FATAL_GAME_ERRORS = (AdbError, GameWindowLost, InputInterrupted, ProfileAssetNotFoundError,
                      TouchProfileInputError, GameRecoveryError)

@@ -125,17 +125,19 @@ def test_ornament_final_batch_skips_result_balance_and_exits(monkeypatch, waves)
     config.set_value.assert_called_once_with("power_plan", [])
 
 
-def test_touch_power_plan_records_the_selected_batch_on_victory(monkeypatch):
+@pytest.mark.parametrize("use_fuel", [False, True], ids=["no-supplement", "supplement-entry-miss"])
+def test_touch_power_plan_records_the_selected_batch_on_victory(monkeypatch, use_fuel):
     cfg = SimpleNamespace(
         power_plan=[[power.GOLDEN_CALYX, "回忆之蕾", 4]], power_plan_keep=False,
         power_plan_continue=False, instance_names_challenge_count={}, set_value=Mock(),
+        use_reserved_trailblaze_power=False, use_fuel=use_fuel,
     )
     read_waves = Mock(side_effect=power.PowerError("结算波次 OCR 不可用"))
     start = Mock(return_value=(4, False))
     monkeypatch.setattr(power, "cfg", cfg)
-    monkeypatch.setattr(power, "screen", Mock())
+    monkeypatch.setattr(power, "screen", Mock(check_screen=Mock(return_value=True)))
+    monkeypatch.setattr(power, "auto", Mock(click_element=Mock(return_value=False)))
     monkeypatch.setattr(power, "_select_category", Mock())
-    monkeypatch.setattr(power, "_supplement", lambda balance: balance)
     monkeypatch.setattr(power, "_enter_instance", Mock())
     monkeypatch.setattr(power, "_start_challenge", start)
     monkeypatch.setattr(power, "_wait_battle", Mock())
@@ -154,14 +156,17 @@ def test_touch_power_plan_records_the_selected_batch_on_victory(monkeypatch):
     power._exit_result.assert_called_once_with("calyx")
     balance.assert_called_once_with()
     read_waves.assert_not_called()
+    assert power.screen.check_screen.call_args_list == ([call("guide3")] if use_fuel else [])
+    assert power.auto.click_element.call_count == int(use_fuel)
 
 
-@pytest.mark.parametrize("use_fuel", [False, True])
-def test_touch_ornament_repeats_mixed_payment_and_keeps_unfunded_plan(monkeypatch, use_fuel):
+@pytest.mark.parametrize("supplement_mode", ["disabled", "success", "entry-miss"])
+def test_touch_ornament_repeats_mixed_payment_and_keeps_unfunded_plan(monkeypatch, supplement_mode):
     instance_type, name = power.ORNAMENT, "浴火钢心"
     next_item = [power.GOLDEN_CALYX, "回忆之蕾", 1]
     config = SimpleNamespace(
-        borrow_enable=False, instance_team_enable=False, use_reserved_trailblaze_power=False, use_fuel=use_fuel,
+        borrow_enable=False, instance_team_enable=False, use_reserved_trailblaze_power=False,
+        use_fuel=supplement_mode != "disabled",
         power_plan=[[instance_type, name, 15], next_item], power_plan_keep=False, power_plan_continue=False,
         instance_names_challenge_count={instance_type: 6}, set_value=Mock(),
     )
@@ -173,7 +178,7 @@ def test_touch_ornament_repeats_mixed_payment_and_keeps_unfunded_plan(monkeypatc
     monkeypatch.setattr(power, "_wait_battle", Mock())
     exit_result = Mock()
     monkeypatch.setattr(power, "_exit_result", exit_result)
-    initial_power = 114 if use_fuel else 174
+    initial_power = 114 if supplement_mode == "success" else 174
     balance = Mock(side_effect=[initial_power, power.PowerError("重复读余额")])
     stock = Mock(side_effect=[10, power.PowerError("重复读库存")])
     fill = Mock(return_value=174)
@@ -181,7 +186,9 @@ def test_touch_ornament_repeats_mixed_payment_and_keeps_unfunded_plan(monkeypatc
     select = Mock()
     plan_batch = Mock(wraps=plan_paid_batch)
     monkeypatch.setattr(power, "read_power", balance)
-    monkeypatch.setattr(power, "_supplement", fill)
+    monkeypatch.setattr(power, "auto", Mock(click_element=Mock(return_value=True), find_element=Mock(return_value=False)))
+    if supplement_mode == "success":
+        monkeypatch.setattr(power, "_supplement", fill)
     monkeypatch.setattr(power, "_click_text", click)
     monkeypatch.setattr(power, "_set_challenge_waves", select)
     monkeypatch.setattr(ornament, "read_immersifier_stock", stock)
@@ -203,7 +210,11 @@ def test_touch_ornament_repeats_mixed_payment_and_keeps_unfunded_plan(monkeypatc
     balance.assert_called_once_with(ornament.INDEX_POWER)
     stock.assert_called_once_with(ornament.auto, ornament.INDEX_IMMERSIFIERS)
     assert exit_result.call_count == 2
-    assert fill.call_args_list == ([call(114, plus=(1510, 55), power_crop=ornament.INDEX_POWER)] if use_fuel else [])
+    assert fill.call_args_list == (
+        [call(114, plus=(1510, 55), power_crop=ornament.INDEX_POWER, can_continue=True)]
+        if supplement_mode == "success" else []
+    )
+    assert power.screen.check_screen.call_args_list == ([call("guide3")] if supplement_mode == "entry-miss" else [])
 
 
 @pytest.mark.parametrize("ocr_error", [False, True])
@@ -484,7 +495,7 @@ def test_echo_single_challenge_deducts_one_paid_wave_and_respects_weekly_rewards
     monkeypatch.setattr(power, "_select_category", Mock())
     quota = Mock(side_effect=[2, power.PowerError("结算后不应再识别额度")])
     monkeypatch.setattr(power, "_read_echo_rewards", quota)
-    monkeypatch.setattr(power, "_supplement", lambda value: value)
+    monkeypatch.setattr(power, "_supplement", lambda value, **_kwargs: value)
     balance = Mock(side_effect=[60, power.PowerError("重复读余额")])
     monkeypatch.setattr(power, "read_power", balance)
     monkeypatch.setattr(power, "_enter_instance", Mock())
@@ -808,6 +819,30 @@ def test_supplement_uses_maximum_even_above_300_and_checks_zero_reserve(monkeypa
     confirms = [c for c in auto.click_element.call_args_list if c.args[0] == "确认"]
     assert len(confirms) == 2
     navigate.wait_for_screen_change.assert_called_once_with("guide3", max_recursion=0)
+
+
+def test_supplement_does_not_skip_a_submitted_exchange_without_confirmed_receipt(monkeypatch):
+    cfg = SimpleNamespace(use_reserved_trailblaze_power=True, use_fuel=False)
+    auto = Mock()
+    dialog_titles = iter([True, False])
+
+    def find(label, *_args, **_kwargs):
+        if label == "开拓力补充":
+            return next(dialog_titles)
+        return label != "获得物品"
+
+    auto.find_element.side_effect = find
+    screen = Mock()
+    unchanged_balance = Mock(return_value=80)
+    monkeypatch.setattr(supplement, "read_number", Mock(side_effect=[30, 20, 20]))
+
+    with pytest.raises(power.PowerError, match="补充开拓力后余额未确认"):
+        supplement.supplement(auto, screen, cfg, 80, Mock(return_value=True), unchanged_balance,
+                              return_screen="guide3", can_continue=True)
+
+    assert [c.args[0] for c in auto.click_element.call_args_list].count("确认") == 2
+    unchanged_balance.assert_called_once_with()
+    screen.check_screen.assert_not_called()
 
 
 def test_support_portrait_match_keeps_rows_separate():

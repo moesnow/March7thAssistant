@@ -343,6 +343,63 @@ def _run_main(*args):
     return subprocess.run([sys.executable, str(REPO / "main.py"), *args], capture_output=True, timeout=120, env=env)
 
 
+def _run_with_invalid_game_connection(tmp_path, values, entry, *args):
+    script = """
+import json
+import runpy
+import sys
+
+from module.config import cfg
+from utils import admin, cli_entry, runs
+
+values, runs_path, entry, *args = sys.argv[1:]
+cfg.set_values(json.loads(values))
+runs.runs_dir = lambda: runs_path
+admin.is_user_admin = lambda: False
+
+def unexpected_elevation(*args, **kwargs):
+    raise AssertionError("无效配置不应启动提权")
+
+cli_entry.run_task_elevated = unexpected_elevation
+sys.argv = [entry, *args]
+runpy.run_path(entry, run_name="__main__")
+"""
+    # 复现 Windows CI 重定向输出时的编码。
+    env = dict(os.environ, MARCH7TH_CONFIG_READONLY="1", PYTHONIOENCODING="cp1252")
+    env.pop("MARCH7TH_DESKTOP_TWIN", None)
+    return subprocess.run(
+        [sys.executable, "-c", script, json.dumps(values), str(tmp_path), entry, *args],
+        cwd=REPO, capture_output=True, timeout=30, env=env,
+    )
+
+
+@pytest.mark.parametrize("values, invalid_key", [
+    ({"control_backend": "bad_backend", "ui_profile": "pc_1080"}, "control_backend"),
+    ({"control_backend": "adb", "ui_profile": "bad_profile"}, "ui_profile"),
+])
+def test_invalid_game_connection_keeps_task_listing_and_records_blocked_run(tmp_path, values, invalid_key):
+    result = _run_with_invalid_game_connection(tmp_path, values, "main.py", "--list", "--json")
+    assert result.returncode == 0, result.stderr
+    assert "daily" in {task["id"] for task in json.loads(result.stdout)}
+    assert invalid_key.encode() in result.stderr and values[invalid_key].encode() in result.stderr
+
+    launcher = _run_with_invalid_game_connection(tmp_path, values, "app.py", "--list")
+    assert launcher.returncode == 0, launcher.stderr
+    assert "可用的任务列表" in launcher.stdout.decode("utf-8")
+    assert b"daily" in launcher.stdout
+    assert values[invalid_key].encode() in launcher.stderr
+    assert not list(tmp_path.glob("*.json"))
+
+    run = _run_with_invalid_game_connection(tmp_path, values, "main.py", "daily", "--non-interactive", "--json")
+    assert run.returncode == runs.EXIT_FAILED, run.stderr
+    record = json.loads(run.stdout)
+    assert record["reason"] == "invalid_game_connection"
+    assert record["status"] == runs.STATUS_BLOCKED
+    assert record["screenshot"] is None
+    assert values[invalid_key] in record["error"]
+    assert json.loads(next(tmp_path.glob("*.json")).read_text(encoding="utf-8")) == record
+
+
 class TestReadOnlyCommands:
     """查询类命令无需管理员权限、不运行任务、不改动配置。"""
 

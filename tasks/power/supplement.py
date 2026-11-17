@@ -28,10 +28,14 @@ def _crop(rect):
     return (x / 1280, y / 720, w / 1280, h / 720)
 
 
-def supplement(auto, screen, config, balance, open_dialog, read_balance, *, return_screen):
+def supplement(auto, screen, config, balance, open_dialog, read_balance, *, return_screen, can_continue=False):
     if not (config.use_reserved_trailblaze_power or config.use_fuel):
         return balance
     if not open_dialog() or not auto.find_element("开拓力补充", "text", crop=TITLE, max_retries=8, retry_delay=0.3):
+        # 尚未选择或确认任何补充方式，且能继续使用已读到的资源。
+        if can_continue and screen.check_screen(return_screen):
+            log.warning("未找到开拓力补充弹窗，按现有资源继续挑战")
+            return balance
         raise PowerError("未找到开拓力补充弹窗")
 
     def click_label(label, crop):

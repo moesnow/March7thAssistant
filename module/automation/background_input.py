@@ -5,7 +5,7 @@ import time
 from contextlib import contextmanager
 from contextvars import ContextVar
 
-from .input_base import InputBase
+from .input_base import InputBase, input_deadline_reached, limit_input_deadline, record_input_dispatch
 from .windows_input import (WINDOW_EMPTY, WINDOW_EXITED, WINDOW_HIDDEN, WINDOW_MINIMIZED, WINDOW_MISSING,
                             CursorUnavailable, WindowGoneError)
 from utils.pause import pause_ctl
@@ -111,11 +111,12 @@ _input_wait_limit = ContextVar('background_input_wait_limit', default=None)
 
 
 @contextmanager
-def input_wait_limit(seconds):
-    """临时限制后台输入的阻塞等待：图形界面线程里的调用不能长时间阻塞，超时按未完成返回或报告原因。"""
+def input_wait_limit(seconds, *, deadline=None):
+    """限制后台输入的阻塞等待，并按可选的单调时钟截止时间检查输入。"""
     token = _input_wait_limit.set(max(0.0, float(seconds)))
     try:
-        yield
+        with limit_input_deadline(deadline):
+            yield
     finally:
         _input_wait_limit.reset(token)
 
@@ -123,6 +124,7 @@ def input_wait_limit(seconds):
 class BackgroundInput(InputBase):
     handles_pause = True
     is_background = True
+    reports_dispatch = True
 
     def __init__(self, logger, title, process_name, *, protect_mouse=False, api=None, banner=None, controller=None):
         self.logger, self.title, self.process_name = logger, title, process_name
@@ -236,6 +238,8 @@ class BackgroundInput(InputBase):
 
     def _check(self):
         self._pause.check_stop()
+        if input_deadline_reached(time.monotonic()):
+            raise InputInterrupted('后台输入等待已达到任务总时限')
         if self._closed:
             raise InputInterrupted('后台输入已取消')
         if self._pause.is_paused():
@@ -539,7 +543,7 @@ class BackgroundInput(InputBase):
                             # 重试前已释放所有输入，恢复显式按住的键（例如 Alt + 点击）。
                             for vk in held_keys:
                                 if vk not in self._keys:
-                                    self._key(vk, True)
+                                    self._key(vk, True, report_dispatch=False)
                             outcome = operation()
                             done = True
                             if pointer:
@@ -628,13 +632,30 @@ class BackgroundInput(InputBase):
                 self._wait(max(0, started + .1*step/steps - time.monotonic()))
         return self._perform(move, pointer=True)
 
+    def _dispatch_time(self):
+        self._pause.check_stop()
+        now = time.monotonic()
+        if input_deadline_reached(now):
+            raise InputInterrupted('后台输入等待已达到任务总时限')
+        return now
+
     def _down(self):
         self._check()
-        # 先登记，再投递；投递过程出错也会尝试释放。
-        self._committed = True
-        self._mouse_interrupted = False
-        self._mouse_down = True
-        self.api.send_mouse(self._session[0], 0x0201, 1, _position(self._point))
+        attempted_at = self._dispatch_time()
+        was_committed, was_down = self._committed, self._mouse_down
+        self._committed = self._mouse_down = True
+        rejected = False
+        try:
+            self.api.send_mouse(self._session[0], 0x0201, 1, _position(self._point))
+        except PermissionError:
+            # 系统明确拒绝发送。超时或窗口在处理时消失仍可能已经投递。
+            rejected = True
+            self._committed, self._mouse_down = was_committed, was_down
+            raise
+        finally:
+            if not rejected:
+                self._mouse_interrupted = False
+                record_input_dispatch(attempted_at)
         self._last_click = (self._session[0], self._point, self._session[4])
 
     def mouse_down(self, x, y):
@@ -727,12 +748,9 @@ class BackgroundInput(InputBase):
             return True
         return self._perform(drag, pointer=True)
 
-    def _key(self, vk, down, cleanup=False):
+    def _key(self, vk, down, cleanup=False, *, report_dispatch=True):
         if not cleanup:
             self._check()
-        if down and vk not in self._keys:
-            # 通过切窗/暂停检查后才登记；发送过程失败仍会尝试释放。
-            self._keys.append(vk)
         flags = (self.api.scan_code(vk) << 16) | 1
         if vk in (33,34,35,36,37,38,39,40,45,46,163,165):
             flags |= 1 << 24
@@ -741,7 +759,23 @@ class BackgroundInput(InputBase):
             flags |= 1 << 29
         if not down:
             flags |= (1 << 30) | (1 << 31)
-        self.api.post(self._session[0], (0x0104 if down else 0x0105) if alt else (0x0100 if down else 0x0101), vk, flags)
+        attempted_at = self._dispatch_time() if down and report_dispatch else None
+        added = down and vk not in self._keys
+        if added:
+            self._keys.append(vk)
+        rejected = False
+        try:
+            self.api.post(self._session[0], (0x0104 if down else 0x0105) if alt else (0x0100 if down else 0x0101),
+                          vk, flags)
+        except OSError as error:
+            # PostMessageW 同步报告是否入队。回执超时仍可能已经投递。
+            rejected = not isinstance(error, TimeoutError)
+            if rejected and added:
+                self._keys.remove(vk)
+            raise
+        finally:
+            if attempted_at is not None and not rejected:
+                record_input_dispatch(attempted_at)
         if not down and not cleanup:
             self._settle_until = time.monotonic() + .12
 
