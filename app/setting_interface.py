@@ -37,6 +37,7 @@ from tasks.weekly.currency_wars_strategy import (
 from tasks.weekly.divergent_universe import DivergentUniverse
 from tasks.base.tasks import start_task
 from .tools.check_update import checkUpdate
+from .tools.check_theme_change import applyTheme
 from .tools.adb_service import display_connection
 from .tools.agent_prompt import build_agent_prompt
 from utils import clipboard
@@ -1156,6 +1157,14 @@ class SettingInterface(ScrollArea):
             tr('任务完成后列车长唱歌提示帕！'),
             "play_audio"
         )
+        self.themeCard = ComboBoxSettingCard2(
+            'ui_theme',
+            FIF.BRUSH,
+            tr('界面主题'),
+            tr('选择应用的显示主题'),
+            texts={tr('跟随系统'): 'auto', tr('浅色'): 'light', tr('深色'): 'dark'},
+        )
+        self.themeCard.comboBox.currentIndexChanged.connect(lambda _: applyTheme(self.parent))
         self.closeWindowActionCard = ComboBoxSettingCard2(
             "close_window_action",
             FIF.CLOSE,
@@ -2895,6 +2904,7 @@ class SettingInterface(ScrollArea):
         ])
         self.ProgramGroup.addSettingCard(self.exitAppAfterSuccess)
         self.ProgramGroup.addSettingCard(self.playAudioCard)
+        self.ProgramGroup.addSettingCard(self.themeCard)
         self.ProgramGroup.addSettingCard(self.closeWindowActionCard)
         self.ProgramGroup.addSettingCard(self.windowMemoryCard)
 

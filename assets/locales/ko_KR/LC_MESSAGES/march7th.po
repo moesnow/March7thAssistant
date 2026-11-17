@@ -81,10 +81,6 @@ msgstr "임무 완료"
 msgid "任务已停止"
 msgstr "임무 중지됨"
 
-#: app/main_window.py:338
-msgid "切换主题"
-msgstr "테마 전환"
-
 #: app/main_window.py:326
 msgid "赞赏"
 msgstr "후원"
@@ -8205,3 +8201,23 @@ msgstr "해결 방법 보기"
 #: app/setting_interface.py:2569
 msgid "后台操作模式已移至「游戏连接」"
 msgstr "백그라운드 조작 모드가 ‘게임 연결’로 이동했습니다"
+
+#: app/setting_interface.py:1163
+msgid "界面主题"
+msgstr "앱 테마"
+
+#: app/setting_interface.py:1164
+msgid "选择应用的显示主题"
+msgstr "앱의 표시 테마를 선택합니다"
+
+#: app/setting_interface.py:1165
+msgid "跟随系统"
+msgstr "시스템 설정 따르기"
+
+#: app/setting_interface.py:1165
+msgid "浅色"
+msgstr "밝게"
+
+#: app/setting_interface.py:1165
+msgid "深色"
+msgstr "어둡게"

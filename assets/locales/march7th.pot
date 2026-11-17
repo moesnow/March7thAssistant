@@ -1054,10 +1054,6 @@ msgstr ""
 msgid "日志"
 msgstr ""
 
-#: app/main_window.py:338
-msgid "切换主题"
-msgstr ""
-
 #: app/main_window.py:326
 msgid "赞赏"
 msgstr ""
@@ -7873,4 +7869,24 @@ msgstr ""
 
 #: app/tools/desktop_twin.py:713
 msgid "查看排查方法"
+msgstr ""
+
+#: app/setting_interface.py:1163
+msgid "界面主题"
+msgstr ""
+
+#: app/setting_interface.py:1164
+msgid "选择应用的显示主题"
+msgstr ""
+
+#: app/setting_interface.py:1165
+msgid "跟随系统"
+msgstr ""
+
+#: app/setting_interface.py:1165
+msgid "浅色"
+msgstr ""
+
+#: app/setting_interface.py:1165
+msgid "深色"
 msgstr ""

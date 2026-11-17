@@ -1,4 +1,4 @@
-"""Verify theme switching, portrait rendering and native Windows icon updates."""
+"""Verify theme preferences, portrait rendering and unchanged application icons."""
 from copy import deepcopy
 from pathlib import Path
 from unittest.mock import Mock
@@ -6,17 +6,80 @@ from unittest.mock import Mock
 import pytest
 from PySide6.QtCore import QPoint, Qt
 from PySide6.QtGui import QIcon, QImage, QPainter, QPixmap, QRegion
-from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QWidget
+from PySide6.QtWidgets import QWidget
 from qfluentwidgets import Theme, isDarkTheme, setTheme
 
-from app.common.theme_assets import application_icon_path, portrait_artwork, portrait_texture, themed_icon_path
-from app.common.window_icon import set_application_icon
+from app.common.theme_assets import portrait_artwork, portrait_texture, themed_icon_path
 from app.components.portrait_label import PortraitLabel
 from module.config import cfg
 from tests.test_app.test_language_switch import window, switch_language
 
 
-def test_title_logo_preserves_custom_assets_and_does_not_start_tasks(window, qtbot, monkeypatch):
+@pytest.fixture
+def startup_theme(request, monkeypatch):
+    from app.tools import check_theme_change
+    preference, system_dark, expected_dark = request.param
+    config = deepcopy(cfg.config)
+    if preference is None:
+        config.pop('ui_theme', None)
+    else:
+        config['ui_theme'] = preference
+    monkeypatch.setattr(cfg, 'config', config)
+    monkeypatch.setattr(check_theme_change.darkdetect, 'isDark', lambda: system_dark)
+    return preference or 'auto', expected_dark
+
+
+@pytest.mark.parametrize('startup_theme', [
+    (None, True, True), ('auto', False, False),
+    ('light', True, False), ('dark', False, True),
+], indirect=True)
+def test_startup_restores_saved_theme_or_defaults_to_system(startup_theme, window):
+    preference, expected_dark = startup_theme
+    assert isDarkTheme() is expected_dark
+    assert window.settingInterface.themeCard.comboBox.currentData() == preference
+    assert window.titleBar.iconLabel.pixmap().toImage() == QIcon(
+        './assets/logo/March7th.ico').pixmap(window.titleBar.iconLabel.size()).toImage()
+
+
+def test_theme_preferences_follow_system_only_in_auto_without_icon_refresh(window, qtbot, monkeypatch):
+    from app.tools import check_theme_change
+    monkeypatch.setattr(cfg, 'set_value', Mock(side_effect=lambda key, value: cfg.config.__setitem__(key, value)))
+    monkeypatch.setattr(check_theme_change.darkdetect, 'isDark', lambda: True)
+    refresh_icon = Mock()
+    monkeypatch.setattr(window, 'setWindowIcon', refresh_icon)
+    # The shared window fixture disables the real tray during UI tests.
+    window.tray_icon = Mock()
+    window.tray_icon.isVisible.return_value = False
+    window.tray_icon.setIcon = refresh_icon
+    monkeypatch.setattr(window.titleBar, 'setIcon', refresh_icon)
+    combo = window.settingInterface.themeCard.comboBox
+    assert [combo.itemData(i) for i in range(combo.count())] == ['auto', 'light', 'dark']
+    combo.setCurrentIndex(combo.findData('auto'))
+    for mode, expected_dark in [('light', False), ('dark', True), ('auto', True)]:
+        combo.setCurrentIndex(combo.findData(mode))
+        assert cfg.config['ui_theme'] == mode
+        cfg.set_value.assert_called_with('ui_theme', mode)
+        assert isDarkTheme() is expected_dark
+        check_theme_change.applyTheme(window, Theme.LIGHT if expected_dark else Theme.DARK)
+        assert isDarkTheme() is (not expected_dark if mode == 'auto' else expected_dark)
+    refresh_icon.assert_not_called()
+    assert window.windowIcon().pixmap(32, 32).toImage() == QIcon('./assets/logo/March7th.ico').pixmap(32, 32).toImage()
+
+
+def test_external_config_reload_applies_theme_and_updates_setting(window, monkeypatch):
+    from module import notification
+    from app.tools import check_theme_change
+    monkeypatch.setattr(notification, 'init_notifiers', lambda: None)
+    monkeypatch.setattr(cfg, '_load_config', lambda *a, **kw: cfg.config.__setitem__('ui_theme', 'dark'))
+    monkeypatch.setattr(check_theme_change.darkdetect, 'isDark', lambda: False)
+    setTheme(Theme.LIGHT)
+    window.hide()
+    window._on_config_file_changed()
+    assert isDarkTheme()
+    assert window.settingInterface.themeCard.comboBox.currentData() == 'dark'
+
+
+def test_theme_setting_preserves_custom_assets_and_does_not_start_tasks(window, qtbot, monkeypatch):
     from app import home_interface
     custom_cards = [{'icon': './assets/app/images/bg37.jpg', 'title': '自定义卡片',
                      'action_type': 'single', 'task_id': 'main', 'menu_items': []}]
@@ -31,17 +94,21 @@ def test_title_logo_preserves_custom_assets_and_does_not_start_tasks(window, qtb
     start_task = Mock()
     monkeypatch.setattr(home_interface, 'start_task', start_task)
     cfg.set_value.reset_mock()
+    monkeypatch.setattr(cfg, 'set_value', Mock(side_effect=lambda key, value: cfg.config.__setitem__(key, value)))
     setTheme(Theme.LIGHT)
     for expected_dark in (True, False):
-        qtbot.mouseClick(window.titleBar.iconLabel, Qt.MouseButton.LeftButton)
+        combo = window.settingInterface.themeCard.comboBox
+        combo.setCurrentIndex(combo.findData('dark' if expected_dark else 'light'))
         qtbot.wait(10)
         assert isDarkTheme() is expected_dark
         assert page.banner.banner_image is banner
         assert page._task_cards[0][0].iconWidget.pixmap().toImage() == foreground
         assert window.windowTitle() == 'March7th Assistant'
     switch_language(qtbot, window, 'en_US')
-    assert window.titleBar.iconLabel.toolTip() == 'Switch theme'
-    assert window.titleBar.iconLabel.accessibleName() == 'Switch theme'
+    combo = window.settingInterface.themeCard.comboBox
+    assert [combo.itemText(i) for i in range(combo.count())] == ['Follow system', 'Light', 'Dark']
+    assert combo.currentData() == 'light'
+    assert window.titleBar.iconLabel.toolTip() == ''
     assert page.banner.banner_image is banner
     assert page._task_cards[0][0].titleLabel.text() == '自定义卡片'
     assert cfg.config['home_cards'] == custom_cards
@@ -76,28 +143,6 @@ def test_default_size_memory_and_scrollable_navigation(window_size_case, window)
     assert 'themeButton' not in navigation.items
 
 
-def test_title_logo_click_release_drag_cancel_and_double_click(window, qtbot):
-    setTheme(Theme.LIGHT)
-    logo = window.titleBar.iconLabel
-    position = window.pos()
-    state = window.windowState()
-    qtbot.mouseClick(logo, Qt.MouseButton.RightButton)
-    assert not isDarkTheme()
-    qtbot.mousePress(logo, Qt.MouseButton.LeftButton)
-    assert not isDarkTheme()
-    outside = QPoint(-10, logo.height() // 2)
-    qtbot.mouseMove(logo, outside)
-    qtbot.mouseRelease(logo, Qt.MouseButton.LeftButton, pos=outside)
-    assert not isDarkTheme()
-    assert window.pos() == position
-    qtbot.mouseClick(logo, Qt.MouseButton.LeftButton)
-    assert isDarkTheme()
-    qtbot.mouseDClick(logo, Qt.MouseButton.LeftButton)
-    qtbot.mouseRelease(logo, Qt.MouseButton.LeftButton)
-    assert not isDarkTheme()
-    assert window.windowState() == state
-
-
 def test_every_task_portrait_and_window_icon_follow_dark_theme(window, qtbot):
     setTheme(Theme.LIGHT)
     page = window.homeInterface
@@ -112,9 +157,9 @@ def test_every_task_portrait_and_window_icon_follow_dark_theme(window, qtbot):
         assert not widget.iconWidget._pattern.isNull()
         assert widget.action is action
     assert window.windowIcon().pixmap(32, 32).toImage().pixelColor(0, 0).alpha() == 0
-    assert window.windowIcon().pixmap(32, 32).toImage() == QIcon(application_icon_path(True)).pixmap(32, 32).toImage()
+    assert window.windowIcon().pixmap(32, 32).toImage() == QIcon('./assets/logo/March7th.ico').pixmap(32, 32).toImage()
     assert window.titleBar.iconLabel.pixmap().toImage() == QIcon(
-        application_icon_path(True, titlebar=True)).pixmap(window.titleBar.iconLabel.size()).toImage()
+        './assets/logo/March7th.ico').pixmap(window.titleBar.iconLabel.size()).toImage()
     page.refreshBackendTasks()
     for widget, *_ in page._task_cards:
         assert not widget.iconWidget._pattern.isNull()
@@ -123,23 +168,7 @@ def test_every_task_portrait_and_window_icon_follow_dark_theme(window, qtbot):
     assert [widget.iconWidget.pixmap().toImage() for widget, *_ in page._task_cards] == originals
     assert all(widget.iconWidget._pattern.isNull() for widget, *_ in page._task_cards)
     assert window.titleBar.iconLabel.pixmap().toImage() == QIcon(
-        application_icon_path(False)).pixmap(window.titleBar.iconLabel.size()).toImage()
-
-
-@pytest.mark.parametrize('dark', [False, True])
-def test_icon_tiles_keep_white_shell_and_contrasting_dark_titlebar(qtbot, dark):
-    shell = QIcon(application_icon_path(dark)).pixmap(256, 256).toImage()
-    titlebar = QIcon(application_icon_path(dark, titlebar=True)).pixmap(256, 256).toImage()
-    for image in (shell, titlebar):
-        assert not image.isNull()
-        assert image.pixelColor(128, 16).alpha() >= 245
-        assert image.pixelColor(0, 0).alpha() == 0
-    assert shell.pixelColor(128, 16).lightness() > 225
-    if dark:
-        assert 55 < titlebar.pixelColor(128, 16).lightness() < 140
-    else:
-        assert shell == titlebar
-
+        './assets/logo/March7th.ico').pixmap(window.titleBar.iconLabel.size()).toImage()
 
 
 def test_pattern_keeps_coordinates_and_original_tones_without_opaque_background(qtbot):
@@ -169,52 +198,6 @@ def test_pattern_keeps_coordinates_and_original_tones_without_opaque_background(
 
 
 
-def test_shell_group_rebuilds_for_each_icon_and_restores_original_identity(qtbot):
-    """Read actual Windows window properties, not just the Qt icon getter."""
-    import sys
-    if sys.platform != 'win32':
-        pytest.skip('Windows taskbar integration')
-    from win32com.propsys import propsys, pscon
-
-    owner = QWidget()
-    qtbot.addWidget(owner)
-    owner.tray_icon = QSystemTrayIcon(owner)
-    identities = {}
-    native_id = int(owner.winId())
-    for dark in (False, True, False):
-        path = application_icon_path(dark)
-        name = 'March7th Assistant'
-        set_application_icon(owner, path, name)
-        expected = QIcon(path).pixmap(32, 32).toImage()
-        assert owner.windowIcon().pixmap(32, 32).toImage() == expected
-        assert QApplication.windowIcon().pixmap(32, 32).toImage() == expected
-        assert owner.tray_icon.icon().pixmap(32, 32).toImage() == expected
-        store = propsys.SHGetPropertyStoreForWindow(int(owner.winId()))
-        assert store.GetValue(pscon.PKEY_AppUserModel_RelaunchIconResource).GetValue() == str(Path(path).resolve()) + ',0'
-        assert store.GetValue(pscon.PKEY_AppUserModel_RelaunchDisplayNameResource).GetValue() == name
-        assert str(Path('app.py').resolve()) in store.GetValue(pscon.PKEY_AppUserModel_RelaunchCommand).GetValue()
-        current_id = store.GetValue(pscon.PKEY_AppUserModel_ID).GetValue()
-        assert current_id.startswith('March7thAssistant.')
-        assert int(owner.winId()) == native_id  # no window recreation/focus loss
-        if path in identities:
-            assert current_id == identities[path]  # switching back restores it
-        else:
-            assert current_id not in identities.values()  # invalidate cached group tile
-            identities[path] = current_id
-    assert len(identities) == 2
-    owner._taskbar_properties.clear()
-    for key in (pscon.PKEY_AppUserModel_RelaunchCommand,
-                pscon.PKEY_AppUserModel_RelaunchDisplayNameResource,
-                pscon.PKEY_AppUserModel_RelaunchIconResource,
-                pscon.PKEY_AppUserModel_ID):
-        assert store.GetValue(key).GetValue() is None
-    set_application_icon(owner, application_icon_path(False), 'March7th Assistant')
-    owner.destroy()  # Surface teardown must release shell properties first.
-    assert owner._taskbar_properties.store is None
-
-
-
-
 def test_bundled_artwork_is_loadable_and_cutouts_are_transparent(qtbot):
     portraits = [f'./assets/app/images/{name}.jpg' for name in (
         'March7th', 'JingYuan', 'Yanqing', 'Herta', 'SilverWolf', 'Bronya',
@@ -224,10 +207,9 @@ def test_bundled_artwork_is_loadable_and_cutouts_are_transparent(qtbot):
         dark = QPixmap(themed_icon_path(source, True))
         assert not original.isNull(), source
         assert not dark.isNull() and dark.hasAlphaChannel(), source
-    for dark in (False, True):
-        icon = QIcon(application_icon_path(dark))
-        assert not icon.isNull()
-        assert not icon.pixmap(32, 32).isNull()
+    icon = QIcon('./assets/logo/March7th.ico')
+    assert not icon.isNull()
+    assert not icon.pixmap(32, 32).isNull()
 
 
 

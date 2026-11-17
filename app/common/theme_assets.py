@@ -1,4 +1,4 @@
-"""Transparent dark portraits and separate small application icons."""
+"""Transparent dark portraits with textures from the original artwork."""
 from functools import lru_cache
 from pathlib import Path
 
@@ -43,11 +43,3 @@ def portrait_artwork(path, dark):
         return _builtin_portrait_artwork(source, dark)
     # Custom files are re-read when cards are rebuilt, including edits in place.
     return QPixmap(path), QPixmap()
-
-
-def application_icon_path(dark, *, titlebar=False):
-    """Use sleeping March 7th with a background suited to each surface."""
-    if not dark:
-        return './assets/logo/March7th.ico'
-    filename = 'titlebar.ico' if titlebar else 'icon.ico'
-    return str(Path('./assets/logo/march7th-night') / filename)
