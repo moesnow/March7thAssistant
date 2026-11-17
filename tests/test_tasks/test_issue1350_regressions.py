@@ -237,7 +237,7 @@ def test_power_supplement_closes_visible_reward_and_reuses_confirmed_amount(
     monkeypatch, dropped_dismissal, late_receipt, receipt_delay, return_delay, return_screen,
 ):
     original = SimpleNamespace(use_reserved_trailblaze_power=True, use_fuel=False)
-    auto = Mock(input_handler=SimpleNamespace(reports_dispatch=True))
+    auto = Mock(input_handler=SimpleNamespace(reports_dispatch=True), screenshot=SimpleNamespace(width=1280))
     page = return_screen
     now = 0.0
     receipt_at = 0.0
@@ -253,8 +253,10 @@ def test_power_supplement_closes_visible_reward_and_reuses_confirmed_amount(
         if page == "transition" and now >= return_at:
             page = return_screen
 
-    def find(text, kind, *, crop=None, **kwargs):
+    def find(text, kind, *_args, crop=None, **kwargs):
         nonlocal receipt_checks
+        if kind == "image":
+            return ((497, 290), (603, 360))
         if text == "获得物品":
             receipt_checks += 1
             if page == "awaiting_receipt":
