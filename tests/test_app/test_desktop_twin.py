@@ -928,3 +928,42 @@ def test_twin_notice_icon_uses_theme_color(qtbot):
         close = all(abs(a - b) < 40 for a, b in ((color.red(), expected.red()), (color.green(), expected.green()),
                                                  (color.blue(), expected.blue())))
         assert close is accent
+
+
+@pytest.mark.parametrize("twin", [True, False])
+def test_startup_checks_follow_desktop_twin_mode(qtbot, monkeypatch, tmp_path, twin):
+    """桌面分身子会话里不重复检查更新与公告；主会话保持原有启动检查。"""
+    from copy import deepcopy
+
+    from app import main_window as module
+    from module.config import cfg
+    from tasks import tool
+
+    monkeypatch.setattr(cfg, "config", deepcopy(cfg.config))
+    monkeypatch.setattr(cfg, "config_path", str(tmp_path / "config.yaml"))
+    monkeypatch.setattr(cfg, "save_config", Mock())
+    monkeypatch.setattr(cfg, "writes_suspended", False)
+    monkeypatch.setattr(tool, "start", Mock())
+    monkeypatch.setattr(tool, "stop_plot", Mock())
+    monkeypatch.setattr(module, "checkThemeChange", lambda _: Mock())
+    monkeypatch.setattr(module, "disclaimer", lambda *args, **kwargs: None)
+    monkeypatch.setattr(module.MainWindow, "initSystemTray",
+                        lambda self: setattr(self, "_tray_actions", [Mock() for _ in range(4)]))
+    monkeypatch.setattr(module.MainWindow, "closeEvent", lambda self, event: event.accept())
+    monkeypatch.setattr(module.LogInterface, "_LogInterface__initShortcut", lambda _: None)
+    monkeypatch.setattr(module.LogInterface, "_migrate_legacy_schedule", lambda _: None)
+    monkeypatch.setattr(module.LogInterface, "_startScheduleTimer", lambda _: None)
+    monkeypatch.setattr(module.LogInterface, "_initOverlayMonitor", lambda _: None)
+    check_update = Mock()
+    check_announcement = Mock()
+    monkeypatch.setattr(module, "checkUpdate", check_update)
+    monkeypatch.setattr(module, "checkAnnouncement", check_announcement)
+    monkeypatch.setattr(module, "in_desktop_twin", lambda: twin)
+
+    window = module.MainWindow(start_minimized_to_tray=False)
+    qtbot.addWidget(window)
+    window.show()
+    qtbot.wait(30)
+
+    assert check_update.called is not twin
+    assert check_announcement.called is not twin

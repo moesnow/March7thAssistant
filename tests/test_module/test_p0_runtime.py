@@ -101,11 +101,12 @@ class TestFrameCache:
 
         assert first[0] is not None and second[0] is not None
         assert first[0] == second[0] == (40, 30)
-        assert len(frame_conversions) == 1  # 同一帧只转换一次
+        # 同一帧只做一次 BGR 与一次灰度转换（灰度预筛与彩色复核共用缓存）。
+        assert frame_conversions == [cv2.COLOR_RGB2BGR, cv2.COLOR_BGR2GRAY]
 
         auto.screenshot = Image.new("RGB", (320, 200), "white")
         auto.find_image_element(str(template_path), 0.9, None)
-        assert len(frame_conversions) == 2  # 新截图重新转换
+        assert frame_conversions == [cv2.COLOR_RGB2BGR, cv2.COLOR_BGR2GRAY] * 2  # 新截图重新转换
 
 
 class TestScreenMatchWorkers:

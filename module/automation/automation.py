@@ -23,6 +23,10 @@ from module.config.platform import InvalidGameConnection, TouchProfileInputError
 
 
 _screenshot_retry_timeout = ContextVar("screenshot_retry_timeout", default=60.0)
+# 灰度预筛的余量：同一模板在渲染噪声下的灰度与彩色相似度差异实测约 ±0.03，
+# 灰度分数低于阈值 0.12 以上时可判定目标不存在，跳过整帧彩色匹配。
+_GRAY_MATCH_MARGIN = 0.12
+_GRAY_MATCH_MISS = object()
 _TOUCH_UNSUPPORTED_INPUTS = (
     "press_key", "press_key_down", "press_key_up", "secretly_press_key", "press_mouse", "mouse_scroll",
 )
@@ -129,10 +133,12 @@ class Automation(metaclass=SingletonMeta):
         if self.screenshot is None:
             raise RuntimeError("尚未获取游戏截图")
         if getattr(self, "_frame_screenshot", None) is not self.screenshot:
-            self._frame_screenshot = self.screenshot
-            self._frame_rgb = np.array(self.screenshot)
+            # 先构建数组再发布截图身份，避免并发查找读到半初始化的缓存。
+            rgb = np.array(self.screenshot)
+            self._frame_rgb = rgb
             self._frame_bgr = None
             self._frame_gray = None
+            self._frame_screenshot = self.screenshot
         return self._frame_rgb
 
     def frame_bgr(self):
@@ -320,6 +326,46 @@ class Automation(metaclass=SingletonMeta):
         bottom_right = (top_left[0] + int(width / scale_factor), top_left[1] + int(height / scale_factor))
         return top_left, bottom_right
 
+    def _gray_template(self, target, template):
+        """取模板的灰度图，模板缓存命中时一并缓存灰度版本。"""
+        entry = self.img_cache.get(target)
+        if entry is None:
+            return ImageUtils.to_gray(template)
+        gray = entry.get('gray_template')
+        if gray is None:
+            gray = ImageUtils.to_gray(template)
+            entry['gray_template'] = gray
+        return gray
+
+    def _color_match_at(self, template, location):
+        """在整帧的指定位置取同尺寸色块做彩色复核，返回该位置的相似度。"""
+        height, width = template.shape[:2]
+        frame = self.frame_bgr()
+        left, top = int(location[0]), int(location[1])
+        patch = frame[top:top + height, left:left + width]
+        if patch.shape[0] != height or patch.shape[1] != width:
+            return None
+        score, _ = ImageUtils.match_template(patch, template)
+        return score
+
+    def _find_image_gray_first(self, target, threshold, template):
+        """灰度整帧定位后在同一位置做彩色复核。
+
+        返回 (score, location) 表示命中；_GRAY_MATCH_MISS 表示灰度分数远低于阈值、
+        可判定目标不存在；None 表示需要退回原彩色整帧匹配（灰度或颜色复核不够自信）。
+        """
+        if threshold is None:
+            return None
+        score, location = ImageUtils.match_template(self.frame_gray(), self._gray_template(target, template))
+        if math.isinf(score):
+            return None
+        if score < threshold - _GRAY_MATCH_MARGIN:
+            return _GRAY_MATCH_MISS
+        color_score = self._color_match_at(template, location)
+        if color_score is not None and color_score >= threshold:
+            return color_score, location
+        return None
+
     @pause_guard
     def find_image_element(self, target, threshold, scale_range, relative=False, cacheable=True):
         """
@@ -349,7 +395,18 @@ class Automation(metaclass=SingletonMeta):
             if mask is not None:
                 matchVal, matchLoc = ImageUtils.scale_and_match_template(screenshot, template, threshold, scale_range, mask)  # 执行缩放并匹配模板
             else:
-                matchVal, matchLoc = ImageUtils.scale_and_match_template(screenshot, template, threshold, scale_range)  # 执行缩放并匹配模板
+                candidate = None
+                if scale_range is None:
+                    candidate = self._find_image_gray_first(target, threshold, template)
+                if candidate is _GRAY_MATCH_MISS:
+                    self.logger.debug(
+                        f"目标图片：{target.replace('./assets/images/', '')} 灰度预筛未命中"
+                    )
+                    return None, None, None
+                if candidate is not None:
+                    matchVal, matchLoc = candidate
+                else:
+                    matchVal, matchLoc = ImageUtils.scale_and_match_template(screenshot, template, threshold, scale_range)  # 执行缩放并匹配模板
 
             # 这里的相似度文本说明有问题，对于无mask匹配相似度越高越好。有mask匹配则是越低越好
             self.logger.debug(f"目标图片：{target.replace('./assets/images/', '')} 相似度：{matchVal:.2f} 匹配阈值：{threshold}")
@@ -1075,7 +1132,11 @@ class Automation(metaclass=SingletonMeta):
         """
         for i in range(max_retries):
             self.take_screenshot(crop)
-            ocr_result = ocr.recognize_single_line(self._frame_rgb_array(), blacklist)
+            frame = self._frame_rgb_array()
+            # 单行 crop 直接走识别模型，省掉整幅文本检测；失败时回退到完整 OCR。
+            ocr_result = ocr.recognize_single_line(frame, blacklist, recognition_only=True)
+            if not ocr_result:
+                ocr_result = ocr.recognize_single_line(frame, blacklist)
             if ocr_result:
                 return ocr_result[0]
             if retry_delay > 0 and i < max_retries - 1:

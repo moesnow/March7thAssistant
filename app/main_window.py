@@ -165,7 +165,9 @@ class MainWindow(MSFluentWindow):
         elif self.start_minimized_to_tray:
             # 最小化到托盘启动：不弹出任何窗口，检查更新与公告推迟到主窗口首次显示
             self._defer_startup_checks = True
-        else:
+        elif not in_desktop_twin():
+            # 桌面分身里的小助手只负责执行任务与预览：更新检查与公告留给主会话，
+            # 避免在隐藏的子会话里重复请求和弹窗。
             # 检查更新
             checkUpdate(self, flag=True)
             checkAnnouncement(self)
@@ -473,8 +475,9 @@ class MainWindow(MSFluentWindow):
         super().showEvent(event)
         if self._defer_startup_checks:
             self._defer_startup_checks = False
-            checkUpdate(self, flag=True)
-            checkAnnouncement(self)
+            if not in_desktop_twin():
+                checkUpdate(self, flag=True)
+                checkAnnouncement(self)
 
     def _show_main_window(self):
         """显示主界面，macOS 下确保窗口置顶"""

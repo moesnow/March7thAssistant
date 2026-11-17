@@ -418,9 +418,10 @@ def test_touch_image_matching_uses_native_template_without_pc_fallback(monkeypat
     legacy_path.touch()
     touch_path = get_ui_profile(config).images_root / "zh_CN/main.png"
     read_image = Mock(return_value=np.zeros((2, 2, 3), dtype=np.uint8))
+    read_mask = Mock(return_value=None)
     match = Mock(return_value=(0, (0, 0)))
     monkeypatch.setattr(automation.ImageUtils, "read_image", read_image)
-    monkeypatch.setattr(automation.ImageUtils, "read_template_with_mask", Mock(return_value=None))
+    monkeypatch.setattr(automation.ImageUtils, "read_template_with_mask", read_mask)
     monkeypatch.setattr(automation.ImageUtils, "scale_and_match_template", match)
     auto = object.__new__(automation.Automation)
     auto.img_cache = {}
@@ -430,9 +431,10 @@ def test_touch_image_matching_uses_native_template_without_pc_fallback(monkeypat
     with pytest.raises(ProfileAssetNotFoundError, match=r"touch_720.*main\.png"):
         auto.find_image_element(str(legacy_path), 0.9, (0.5, 1.5))
     read_image.assert_not_called()
+    read_mask.assert_not_called()
 
     touch_path.parent.mkdir(parents=True)
     touch_path.touch()
     auto.find_image_element(str(legacy_path), 0.9, (0.5, 1.5))
     read_image.assert_called_once_with(str(touch_path))
-    assert match.call_args.args[-1] is None
+    read_mask.assert_called_once_with(str(touch_path))

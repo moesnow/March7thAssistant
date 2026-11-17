@@ -960,9 +960,13 @@ class OCR:
         else:
             self.logger.debug(f"OCR识别结果: {modified_dict}")
 
-    def recognize_single_line(self, image, blacklist=None):
-        """识别图片中的单行文本，支持黑名单过滤"""
-        results = self.convert_format(self.run(image))
+    def recognize_single_line(self, image, blacklist=None, *, recognition_only=False):
+        """识别图片中的单行文本，支持黑名单过滤。
+
+        recognition_only=True 时跳过文本检测，直接把整图送识别模型：
+        已知 crop 只含一行文字时比完整检测快一个量级。
+        """
+        results = self.convert_format(self.run(image, recognition_only=recognition_only))
         if results:
             for text, score in (item[1] for item in results):
                 if not blacklist or all(char != text for char in blacklist):
