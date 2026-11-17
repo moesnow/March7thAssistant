@@ -79,6 +79,7 @@ SAFE_BENEFITS = ("免费刷新", "额外金币", "获得金币", "简易装备",
                  "伤害提高", "伤害增幅", "额外造成", "回复生命值", "经验", "治疗",
                  "前台强度", "后台强度", "速度增幅提高", "战利品晶矿")
 EVENT_RISKS = ("失去", "消耗", "出售", "替换", "变为", "无法上场", "随机移除", "敌人难度", "扣除", "损失")
+INVESTMENT_BLACKLIST = ("全员晋升",)
 INVESTMENT_RESTRICTIONS = ("节省工位", "只有3个备战", "奋斗协议", "钻石商人", "长线空头", "无法合成")
 
 
@@ -2302,12 +2303,18 @@ class CurrencyWars:
         return confirmed if confirmed is not None else stable_board, False
 
     def _enter_halo(self, frame, board):
-        fronts = [slot for slot in board.slots if slot.zone == "front" and slot.unit
-                  and (slot.point if self.default_strategy else slot.unit.name) not in self.halo_excluded
-                  and not frame.assigned_halo(slot.point)]
+        available = [slot for slot in board.slots if slot.zone == "front" and slot.occupied and not slot.blocked
+                     and (board.stage, slot.point) not in self.halo_excluded
+                     and not frame.assigned_halo(slot.point)]
+        fronts = [slot for slot in available if slot.unit
+                  and (slot.point if self.default_strategy else slot.unit.name) not in self.halo_excluded]
         if not fronts:
-            raise CurrencyWarsError("主角光环节点没有可确认的前台角色")
-        if self.default_strategy:
+            # 姓名或站位标记漏读时，仍能用已占用且未分配光环的真实卡位进入选主角页。
+            fronts = [slot for slot in available if slot.unit is None and frame.slot_occupied(slot.point)]
+            if not fronts:
+                raise CurrencyWarsError("主角光环节点没有可确认的前台角色")
+            target = fronts[0]
+        elif self.default_strategy:
             target = max(fronts, key=strategy.default_priority)
             stage = frame.stage
             try:
@@ -3093,6 +3100,18 @@ class CurrencyWars:
             score -= 3 if plane < 3 else 7
         return score
 
+    @staticmethod
+    def _blacklisted_investment_columns(frame):
+        blocked = set()
+        for group in frame.investment_groups:
+            for index in group:
+                text = "".join(label.text for label in frame.investment_card_texts(index))
+                if any(name in text for name in INVESTMENT_BLACKLIST):
+                    # 泡泡狼右侧卡片会成组领取，同组另一张也不能代选。
+                    blocked.update(group)
+                    break
+        return blocked
+
     def _choice_option(self, frame):
         title = frame.choice
         labels = frame.texts((200, 220, 1735, 835))
@@ -3100,10 +3119,11 @@ class CurrencyWars:
             self.lineup.preferences if self.lineup else (strategy.CORE, *strategy.BACK, *strategy.FRONT[1:])
         )
         investment = title == "投资环境" or title in ui.INVESTMENT_CHOICES
+        blocked_columns = self._blacklisted_investment_columns(frame) if investment else set()
         catalog_first = investment and (
             self.default_strategy or cfg.get_value("currencywars_investment_priority", "strategy") == "catalog"
         )
-        uncollected = frame.uncollected_investment_columns if catalog_first else ()
+        uncollected = frame.uncollected_investment_columns - blocked_columns if catalog_first else ()
         environments = ()
         preferred_environment = None
         if title == "补给阶段":
@@ -3173,6 +3193,8 @@ class CurrencyWars:
         columns = ((195, 700), (700, 1225), (1225, 1740))
         groups = frame.investment_groups if investment else ((0,), (1,), (2,))
         for group in groups:
+            if group[0] in blocked_columns:
+                continue
             if investment:
                 effect = "。".join("".join(label.text for label in frame.investment_card_texts(index))
                                   for index in group)
@@ -3355,8 +3377,14 @@ class CurrencyWars:
             return f.page == Page.CHOICE and f.choice == title and (stage is None or f.stage in (None, stage))
 
         def option(f, _):
-            if previous_titles is None:
-                return self._choice_option(f) or ui.Label("中间卡片", f.investment_card_point(1))
+            if previous_titles is not None:
+                return None
+            if candidate := self._choice_option(f):
+                return candidate
+            blocked = self._blacklisted_investment_columns(f)
+            for column in (1, 0, 2):
+                if column not in blocked:
+                    return ui.Label("投资卡牌", f.investment_card_point(column))
             return None
 
         def remember_confirmation(f):
@@ -3406,18 +3434,20 @@ class CurrencyWars:
             if previous_titles is not None:
                 return None
             if button := enabled_confirmation(f):
-                return button.point, True
-            if next_column < len(ui.INVESTMENT_CENTERS):
-                return f.investment_card_point(next_column), False
+                return button.point, None
+            blocked = self._blacklisted_investment_columns(f)
+            for column in range(next_column, len(ui.INVESTMENT_CENTERS)):
+                if column not in blocked:
+                    return f.investment_card_point(column), column
             return None
 
-        def mark_card():
+        def mark_card(column):
             nonlocal next_column
-            next_column += 1
+            next_column = column + 1
             log.info(f"「{title}」尝试第 {next_column} 张卡的固定位置")
 
-        def send_fixed(f, point, is_confirm, *, mark_sent):
-            before_click = (lambda: remember_confirmation(f)) if is_confirm else mark_card
+        def send_fixed(f, point, column, *, mark_sent):
+            before_click = (lambda: remember_confirmation(f)) if column is None else (lambda: mark_card(column))
             return self._tap(f, point, mark_sent=mark_sent, before_click=before_click)
 
         try:
@@ -3664,9 +3694,10 @@ class CurrencyWars:
         target, _ = selection.cards[0]
         stage = selection.stage
         readings = " / ".join(f"{score:.3f}" for score in scores) or "未取得"
-        log.warning(f"{stage} 前台第 {target.index + 1} 格「{target.unit.name}」{reason}，前台相似度 {readings}")
+        name = f"「{target.unit.name}」" if target.unit else ""
+        log.warning(f"{stage} 前台第 {target.index + 1} 格{name}{reason}，前台相似度 {readings}")
         attempts = self.halo_identity_retries.get(stage, 0)
-        if attempts >= MAX_HALO_IDENTITY_RETRIES:
+        if target.unit is None or attempts >= MAX_HALO_IDENTITY_RETRIES:
             return self._place_halo_by_position(frame, selection)
 
         self.halo_identity_retries[stage] = attempts + 1
@@ -3761,9 +3792,9 @@ class CurrencyWars:
             if portrait_matches(frame):
                 break
             if frame.halo_target_present():
-                if self.default_strategy and placed_target:
+                if placed_target and (self.default_strategy or target.unit is None):
                     break
-                if not self.default_strategy or not target.unit.name.endswith("格角色"):
+                if target.unit is not None and (not self.default_strategy or not target.unit.name.endswith("格角色")):
                     try:
                         frame, matches = self._inspect_halo_target(frame, target.unit.name)
                     except CurrencyWarsRecoverable as error:
@@ -3823,7 +3854,7 @@ class CurrencyWars:
             allowed = tuple(index for index in allowed if not frame.halo_uses_extra_capacity(index))
         retry_refresh = (not self.default_strategy or not allowed) and (stage, "光环刷新") not in self.deferred_operations
         max_difficulty = 5 if (self.lineup is None and cfg.currencywars_rank_difficulty == "lowest"
-                               and (target.unit.stars or 0) >= 2) else 0
+                               and target.unit is not None and (target.unit.stars or 0) >= 2) else 0
         effect = frame.halo_effect(allowed=allowed)
         if self.lineup:
             effect = effect or frame.halo_effect(allow_support=True)
@@ -4180,7 +4211,10 @@ class CurrencyWars:
     def _cancel_halo_replacement(self, frame):
         if self.halo_candidate is not None:
             target, _ = self.halo_candidate.cards[0]
-            self.halo_excluded.add(target.point if self.default_strategy else target.unit.name)
+            if target.unit is None:
+                self.halo_excluded.add((self.halo_candidate.stage, target.point))
+            else:
+                self.halo_excluded.add(target.point if self.default_strategy else target.unit.name)
         self.halo_candidate = None
         return self._dismiss_event_overlay(
             frame, lambda f: ui.point(f.find("取消", area=(552, 631, 930, 720))),
