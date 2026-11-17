@@ -8539,3 +8539,5 @@ msgstr "Background mode moved to Game connection"
 #: module/game/adb_ready.py:118
 msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
 msgstr ""
+"Timed out waiting for the Express Supply pop-up to close and the main "
+"screen to return. Check in-game whether you received the reward."
