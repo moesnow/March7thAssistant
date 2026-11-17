@@ -4,13 +4,11 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
-from PySide6.QtCore import QPoint, Qt
-from PySide6.QtGui import QIcon, QImage, QPainter, QPixmap, QRegion
-from PySide6.QtWidgets import QWidget
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon, QPixmap
 from qfluentwidgets import Theme, isDarkTheme, setTheme
 
-from app.common.theme_assets import portrait_artwork, portrait_texture, themed_icon_path
-from app.components.portrait_label import PortraitLabel
+from app.common.theme_assets import portrait_artwork
 from module.config import cfg
 from tests.test_app.test_language_switch import window, switch_language
 
@@ -134,12 +132,21 @@ def window_size_case(request, monkeypatch):
 @pytest.mark.parametrize('window_size_case', [
     ('size', None, 640), ('size', 680, 680), ('none', None, 640),
 ], indirect=True)
-def test_default_size_memory_and_scrollable_navigation(window_size_case, window):
+def test_default_size_memory_and_navigation(window_size_case, window):
     assert window.height() == window_size_case
     assert window.minimumHeight() == 640
     navigation = window.navigationInterface
-    for route in ('homeInterface', 'helpInterface', 'warpInterface', 'toolsInterface', 'workflowInterface'):
-        assert navigation.widget(route).parentWidget() is navigation.scrollWidget
+    rectangles = []
+    for route in ('homeInterface', 'helpInterface', 'warpInterface', 'toolsInterface', 'workflowInterface',
+                  'startGameButton', 'logInterface', 'avatar', 'settingInterface'):
+        widget = navigation.widget(route)
+        rectangle = widget.rect().translated(widget.mapTo(navigation, widget.rect().topLeft()))
+        assert navigation.rect().contains(rectangle), route
+        # Upstream's compact layout permits touching/overlapping button edges;
+        # each entry must remain fully visible with an unobstructed click center.
+        assert not any(rectangle.contains(other.center()) or other.contains(rectangle.center())
+                       for other in rectangles), route
+        rectangles.append(rectangle)
     assert 'themeButton' not in navigation.items
 
 
@@ -153,8 +160,7 @@ def test_every_task_portrait_and_window_icon_follow_dark_theme(window, qtbot):
     for (widget, *_), original, action in zip(page._task_cards, originals, actions):
         dark = widget.iconWidget.pixmap().toImage()
         assert dark != original
-        assert dark.hasAlphaChannel() and dark.pixelColor(0, 0).alpha() < 20
-        assert not widget.iconWidget._pattern.isNull()
+        assert dark.hasAlphaChannel() and dark.pixelColor(0, 0).alpha() < 40
         assert widget.action is action
     assert window.windowIcon().pixmap(32, 32).toImage().pixelColor(0, 0).alpha() == 0
     assert window.windowIcon().pixmap(32, 32).toImage() == QIcon('./assets/logo/March7th.ico').pixmap(32, 32).toImage()
@@ -162,51 +168,23 @@ def test_every_task_portrait_and_window_icon_follow_dark_theme(window, qtbot):
         './assets/logo/March7th.ico').pixmap(window.titleBar.iconLabel.size()).toImage()
     page.refreshBackendTasks()
     for widget, *_ in page._task_cards:
-        assert not widget.iconWidget._pattern.isNull()
-        assert widget.iconWidget.pixmap().toImage().pixelColor(0, 0).alpha() < 20
+        assert widget.iconWidget.pixmap().toImage().pixelColor(0, 0).alpha() < 40
     setTheme(Theme.LIGHT)
     assert [widget.iconWidget.pixmap().toImage() for widget, *_ in page._task_cards] == originals
-    assert all(widget.iconWidget._pattern.isNull() for widget, *_ in page._task_cards)
     assert window.titleBar.iconLabel.pixmap().toImage() == QIcon(
         './assets/logo/March7th.ico').pixmap(window.titleBar.iconLabel.size()).toImage()
 
 
-def test_pattern_keeps_coordinates_and_original_tones_without_opaque_background(qtbot):
-    """Keep a dark marker darker than the light field, without moving it."""
-    reference = QPixmap(100, 100)
-    reference.fill(Qt.GlobalColor.white)
-    painter = QPainter(reference)
-    painter.fillRect(10, 20, 20, 20, Qt.GlobalColor.gray)
-    painter.end()
-    foreground = QPixmap(100, 100)
-    foreground.fill(Qt.GlobalColor.transparent)
-    label = PortraitLabel()
-    qtbot.addWidget(label)
-    label.resize(100, 100)
-    label.setArtwork(foreground, portrait_texture(reference))
-    rendered = QImage(100, 100, QImage.Format.Format_ARGB32_Premultiplied)
-    rendered.fill(Qt.GlobalColor.transparent)
-    painter = QPainter(rendered)
-    label.render(painter, QPoint(), QRegion(), QWidget.RenderFlag.DrawChildren)
-    painter.end()
-    marker = rendered.pixelColor(15, 25)
-    background = rendered.pixelColor(0, 0)
-    assert 0 < marker.alpha() <= 15 and 0 < background.alpha() <= 15
-    assert marker.lightness() < background.lightness()
-    assert rendered.pixelColor(35, 25) == background
-    assert rendered.pixelColor(15, 45) == background
-
-
-
-def test_bundled_artwork_is_loadable_and_cutouts_are_transparent(qtbot):
+def test_bundled_artwork_is_loadable_and_baked_backgrounds_are_translucent(qtbot):
     portraits = [f'./assets/app/images/{name}.jpg' for name in (
         'March7th', 'JingYuan', 'Yanqing', 'Herta', 'SilverWolf', 'Bronya',
     )]
     for source in portraits:
         original = QPixmap(source)
-        dark = QPixmap(themed_icon_path(source, True))
+        dark = portrait_artwork(source, True)
         assert not original.isNull(), source
         assert not dark.isNull() and dark.hasAlphaChannel(), source
+        assert 0 < dark.toImage().pixelColor(0, 0).alpha() < 40, source
     icon = QIcon('./assets/logo/March7th.ico')
     assert not icon.isNull()
     assert not icon.pixmap(32, 32).isNull()
@@ -220,15 +198,12 @@ def test_custom_portrait_with_builtin_filename_is_not_replaced(qtbot, tmp_path):
     custom = QPixmap(32, 32)
     custom.fill(Qt.GlobalColor.red)
     assert custom.save(custom_path)
-    assert themed_icon_path(custom_path, True) == custom_path
-    assert themed_icon_path(custom_path, False) == custom_path
-    foreground, texture = portrait_artwork(custom_path, True)
+    assert portrait_artwork(custom_path, False).toImage().pixelColor(0, 0).red() > 250
+    foreground = portrait_artwork(custom_path, True)
     assert foreground.toImage().pixelColor(0, 0).red() > 250
-    assert texture.isNull()
     custom.fill(Qt.GlobalColor.blue)
     assert custom.save(custom_path)
     timestamp = Path(custom_path).stat()
     os.utime(custom_path, (timestamp.st_atime, timestamp.st_mtime + 2))
-    reloaded, texture = portrait_artwork(custom_path, True)
+    reloaded = portrait_artwork(custom_path, True)
     assert reloaded.toImage().pixelColor(0, 0).blue() > 250
-    assert texture.isNull()

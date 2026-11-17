@@ -193,7 +193,7 @@ class HomeInterface(ScrollArea):
 
     def refreshTheme(self):
         for widget, original_icon in self._task_cards:
-            widget.iconWidget.setArtwork(*portrait_artwork(original_icon, isDarkTheme()))
+            widget.iconWidget.setPixmap(portrait_artwork(original_icon, isDarkTheme()))
 
     def _build_card_action(self, card_data):
         """根据卡片配置数据构建动作"""

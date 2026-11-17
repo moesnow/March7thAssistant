@@ -1,8 +1,8 @@
-"""Transparent dark portraits with textures from the original artwork."""
+"""Load bundled portraits with their backgrounds already baked into the images."""
 from functools import lru_cache
 from pathlib import Path
 
-from PySide6.QtGui import QImage, QPainter, QPixmap
+from PySide6.QtGui import QPixmap
 
 
 
@@ -13,33 +13,14 @@ _DARK_PORTRAITS = {
 }
 
 
-def themed_icon_path(path, dark):
-    if not path or not dark:
-        return path
-    return _DARK_PORTRAITS.get(str(Path(path).resolve()), path)
-
-
-def portrait_texture(reference):
-    """Strengthen the original colours without moving or inverting the artwork."""
-    pattern = reference.toImage().convertToFormat(QImage.Format.Format_ARGB32_Premultiplied)
-    painter = QPainter(pattern)
-    painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_Multiply)
-    for _ in range(7):
-        painter.drawPixmap(0, 0, reference)
-    painter.end()
-    return QPixmap.fromImage(pattern)
-
-
 @lru_cache(maxsize=12)  # Six bundled portraits, each with a light/dark variant.
-def _builtin_portrait_artwork(source, dark):
-    foreground = QPixmap(themed_icon_path(source, dark))
-    texture = portrait_texture(QPixmap(source)) if dark else QPixmap()
-    return foreground, texture
+def _builtin_portrait_artwork(path):
+    return QPixmap(path)
 
 
 def portrait_artwork(path, dark):
     source = str(Path(path).resolve()) if path else path
     if source in _DARK_PORTRAITS:
-        return _builtin_portrait_artwork(source, dark)
+        return _builtin_portrait_artwork(_DARK_PORTRAITS[source] if dark else source)
     # Custom files are re-read when cards are rebuilt, including edits in place.
-    return QPixmap(path), QPixmap()
+    return QPixmap(path)
