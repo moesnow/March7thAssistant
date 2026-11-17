@@ -16,6 +16,17 @@ from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputE
 from module.localization import tr
 
 
+# 界面匹配是 CPU 密集的模板匹配。60 多个界面图并发扫描时，线程数超过约 8 个不会
+# 更快，却会让同时驻留的匹配临时缓冲成倍增长（实测 8 线程约 0.5GB，16 线程约
+# 1.2GB）；因此按 8 个 worker 封顶，兼顾整轮扫描耗时与瞬时内存。
+_SCREEN_MATCH_WORKERS = 8
+
+
+def _screen_match_workers(screen_count):
+    """按界面数量决定并发匹配的线程数，最多 _SCREEN_MATCH_WORKERS 个。"""
+    return max(1, min(_SCREEN_MATCH_WORKERS, screen_count))
+
+
 class Screen(metaclass=SingletonMeta):
     """
     界面管理类
@@ -192,7 +203,7 @@ class Screen(metaclass=SingletonMeta):
             import psutil
             mem = psutil.virtual_memory()
             if mem.available > 2 * 1024**3:
-                executor = ThreadPoolExecutor(max_workers=len(screen_map))
+                executor = ThreadPoolExecutor(max_workers=_screen_match_workers(len(screen_map)))
                 try:
                     futures = [executor.submit(find_screen, name, screen) for name, screen in screen_map.items()]
                     for future in as_completed(futures):

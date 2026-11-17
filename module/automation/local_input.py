@@ -5,6 +5,12 @@ from math import ceil
 from module.automation.input_base import InputBase
 from utils.pause import pause_ctl
 
+# 自动化不需要 pyautogui 为保护人手操作设置的 0.1 秒默认停顿：每次调用都会固定等
+# 一次，单次鼠标点击因此多花约 100ms。这里统一关掉，改由各方法保留必要的最小间隔。
+pyautogui.PAUSE = 0
+# 按下与释放之间保留最小间隔，避免游戏在同一次轮询里把按下和释放合并而丢点击。
+_CLICK_HOLD = 0.02
+
 
 class LocalInput(InputBase):
     # 禁用pyautogui的失败安全特性，防止意外中断
@@ -16,7 +22,12 @@ class LocalInput(InputBase):
     def mouse_click(self, x, y):
         '''在屏幕上的（x，y）位置执行鼠标点击操作'''
         try:
-            pyautogui.click(x, y)
+            pyautogui.moveTo(x, y, _pause=False)
+            pyautogui.mouseDown(_pause=False)
+            try:
+                time.sleep(_CLICK_HOLD)
+            finally:
+                pyautogui.mouseUp(_pause=False)
             self.logger.debug(f"鼠标点击 ({x}, {y})")
         except Exception as e:
             self.logger.error(f"鼠标点击出错：{e}")
@@ -91,7 +102,10 @@ class LocalInput(InputBase):
     def mouse_scroll(self, count, direction=-1, pause=True):
         '''滚动鼠标滚轮，方向和次数由参数指定'''
         for _ in range(count):
-            pyautogui.scroll(direction, _pause=pause)
+            pyautogui.scroll(direction, _pause=False)
+            if pause:
+                # 保持与原先 pyautogui.PAUSE 相同的每格间隔，避免一次发出多格滚轮。
+                time.sleep(0.1)
         self.logger.debug(f"滚轮滚动 {count * direction} 次")
 
     def press_key(self, key, wait_time=0.2):
