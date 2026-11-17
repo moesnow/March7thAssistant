@@ -8201,3 +8201,7 @@ msgstr "에뮬레이터 display 0의 스크린샷 출력이 PNG 형식과 일치
 #: app/tools/desktop_twin.py:713
 msgid "查看排查方法"
 msgstr "해결 방법 보기"
+
+#: app/setting_interface.py:2569
+msgid "后台操作模式已移至「游戏连接」"
+msgstr "백그라운드 조작 모드가 ‘게임 연결’로 이동했습니다"

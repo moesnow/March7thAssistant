@@ -5,6 +5,7 @@ import numpy as np
 from PIL import Image
 import pytest
 
+from module.automation import automation
 from module.localization import tr
 from tasks.touch import ornament, power, rewards
 from tasks.power import readout, supplement
@@ -136,7 +137,7 @@ def test_touch_power_plan_records_the_selected_batch_on_victory(monkeypatch, use
     start = Mock(return_value=(4, False))
     monkeypatch.setattr(power, "cfg", cfg)
     monkeypatch.setattr(power, "screen", Mock(check_screen=Mock(return_value=True)))
-    monkeypatch.setattr(power, "auto", Mock(click_element=Mock(return_value=False)))
+    monkeypatch.setattr(power, "auto", Mock(find_element=Mock(return_value=None)))
     monkeypatch.setattr(power, "_select_category", Mock())
     monkeypatch.setattr(power, "_enter_instance", Mock())
     monkeypatch.setattr(power, "_start_challenge", start)
@@ -156,8 +157,69 @@ def test_touch_power_plan_records_the_selected_batch_on_victory(monkeypatch, use
     power._exit_result.assert_called_once_with("calyx")
     balance.assert_called_once_with()
     read_waves.assert_not_called()
-    assert power.screen.check_screen.call_args_list == ([call("guide3")] if use_fuel else [])
-    assert power.auto.click_element.call_count == int(use_fuel)
+    assert power.screen.check_screen.call_args_list == ([call("guide3")] * 3 if use_fuel else [])
+    power.auto.click_element_with_pos.assert_not_called()
+
+
+def test_touch_power_supplement_keeps_the_callers_frame_retry_window(monkeypatch):
+    entry = (1720 / 1920, 55 / 1080, 0, 0)
+    reserve = supplement._crop((528, 327, 0, 0))
+    page = "guide3"
+    now = 0.0
+    frame = Image.new("RGB", (1280, 720))
+    capture = object.__new__(automation.Automation)
+    capture.window_title = "test-game"
+    capture.logger = Mock()
+    capture._is_debug_enabled = lambda: False
+
+    def sleep(seconds):
+        nonlocal now
+        now += seconds
+
+    def screenshot(*_args, **_kwargs):
+        if page == "supplement" and now < 3:
+            return False
+        return frame, (0, 0, 1280, 720), 1
+
+    def find(target, kind, **_kwargs):
+        capture.take_screenshot()
+        if kind == "crop" or page == "supplement":
+            return target
+
+    def click(target):
+        nonlocal page
+        if target == entry:
+            page = "supplement"
+        elif target == "取消":
+            page = "guide3"
+
+    clock = SimpleNamespace(monotonic=lambda: now, sleep=sleep)
+    auto = Mock(find_element=Mock(side_effect=find), click_element_with_pos=Mock(side_effect=click))
+    stock = Mock(return_value=0)
+    cfg = SimpleNamespace(
+        power_plan=[[power.GOLDEN_CALYX, "回忆之蕾", 3]], power_plan_keep=False, power_plan_continue=False,
+        instance_names_challenge_count={}, set_value=Mock(), use_reserved_trailblaze_power=True, use_fuel=False,
+    )
+    monkeypatch.setattr(automation, "time", clock)
+    monkeypatch.setattr(automation, "get_control_backend", lambda _cfg: "adb")
+    monkeypatch.setattr(automation.Screenshot, "take_screenshot", screenshot)
+    monkeypatch.setattr(supplement, "time", clock)
+    monkeypatch.setattr(supplement, "read_number", stock)
+    monkeypatch.setattr(power, "cfg", cfg)
+    monkeypatch.setattr(power, "auto", auto)
+    monkeypatch.setattr(power, "screen", Mock(check_screen=Mock(side_effect=lambda target: target == page)))
+    monkeypatch.setattr(power, "read_power", Mock(return_value=34))
+    monkeypatch.setattr(power, "_select_category", Mock())
+    monkeypatch.setattr(power, "_enter_instance", Mock())
+    monkeypatch.setattr(power, "_start_challenge", Mock(return_value=(3, False)))
+    monkeypatch.setattr(power, "_wait_battle", Mock())
+    monkeypatch.setattr(power, "_exit_result", Mock(return_value="main"))
+
+    assert power.run()
+    assert auto.click_element_with_pos.call_args_list == [call(entry), call(reserve), call("取消")]
+    assert stock.call_args.args[1] == supplement._crop((492, 364, 72, 26))
+    cfg.set_value.assert_called_once_with("power_plan", [])
+    assert page == "guide3"
 
 
 @pytest.mark.parametrize("supplement_mode", ["disabled", "success", "entry-miss"])
@@ -211,10 +273,10 @@ def test_touch_ornament_repeats_mixed_payment_and_keeps_unfunded_plan(monkeypatc
     stock.assert_called_once_with(ornament.auto, ornament.INDEX_IMMERSIFIERS)
     assert exit_result.call_count == 2
     assert fill.call_args_list == (
-        [call(114, plus=(1510, 55), power_crop=ornament.INDEX_POWER, can_continue=True)]
+        [call(114, plus=(1510, 55), power_crop=ornament.INDEX_POWER)]
         if supplement_mode == "success" else []
     )
-    assert power.screen.check_screen.call_args_list == ([call("guide3")] if supplement_mode == "entry-miss" else [])
+    assert power.screen.check_screen.call_args_list == ([call("guide3")] * 3 if supplement_mode == "entry-miss" else [])
 
 
 @pytest.mark.parametrize("ocr_error", [False, True])
@@ -802,47 +864,31 @@ def test_sms_pending_thread_accepts_sticker_reply(monkeypatch):
 def test_supplement_uses_maximum_even_above_300_and_checks_zero_reserve(monkeypatch, amounts, increase):
     cfg = SimpleNamespace(use_reserved_trailblaze_power=True, use_fuel=True)
     auto = Mock()
-    title_reads = iter([True, False])
-
-    def find(label, *args, **kwargs):
-        if label == "开拓力补充":
-            return next(title_reads)
-        return label != "获得物品"
-
-    auto.find_element.side_effect = find
+    auto.find_element.side_effect = lambda label, *_args, **_kwargs: label if label != "获得物品" else None
     read = Mock(side_effect=amounts)
     monkeypatch.setattr(supplement, "read_number", read)
-    navigate = Mock()
-    assert supplement.supplement(auto, navigate, cfg, 320, Mock(return_value=True),
+    navigate = Mock(check_screen=Mock(return_value=True))
+    assert supplement.supplement(auto, navigate, cfg, 320, Mock(return_value="入口"),
                                  Mock(return_value=320 + increase), return_screen="guide3") == 620
     assert read.call_count == len(amounts)
-    confirms = [c for c in auto.click_element.call_args_list if c.args[0] == "确认"]
-    assert len(confirms) == 2
-    navigate.wait_for_screen_change.assert_called_once_with("guide3", max_recursion=0)
+    assert auto.click_element_with_pos.call_args_list.count(call("确认")) == 2
+    navigate.check_screen.assert_called_once_with("guide3")
 
 
-def test_supplement_does_not_skip_a_submitted_exchange_without_confirmed_receipt(monkeypatch):
+@pytest.mark.parametrize("after", [80, power.PowerError("未能确认当前开拓力")])
+def test_supplement_reuses_previous_budget_without_resending_unconfirmed_exchange(monkeypatch, after):
     cfg = SimpleNamespace(use_reserved_trailblaze_power=True, use_fuel=False)
     auto = Mock()
-    dialog_titles = iter([True, False])
-
-    def find(label, *_args, **_kwargs):
-        if label == "开拓力补充":
-            return next(dialog_titles)
-        return label != "获得物品"
-
-    auto.find_element.side_effect = find
-    screen = Mock()
-    unchanged_balance = Mock(return_value=80)
+    auto.find_element.side_effect = lambda label, *_args, **_kwargs: label if label != "获得物品" else None
+    screen = Mock(check_screen=Mock(return_value=True))
+    read_balance = Mock(side_effect=[after])
     monkeypatch.setattr(supplement, "read_number", Mock(side_effect=[30, 20, 20]))
 
-    with pytest.raises(power.PowerError, match="补充开拓力后余额未确认"):
-        supplement.supplement(auto, screen, cfg, 80, Mock(return_value=True), unchanged_balance,
-                              return_screen="guide3", can_continue=True)
-
-    assert [c.args[0] for c in auto.click_element.call_args_list].count("确认") == 2
-    unchanged_balance.assert_called_once_with()
-    screen.check_screen.assert_not_called()
+    assert supplement.supplement(auto, screen, cfg, 80, Mock(return_value="入口"), read_balance,
+                                 return_screen="guide3") == 80
+    assert auto.click_element_with_pos.call_args_list.count(call("确认")) == 2
+    read_balance.assert_called_once_with()
+    screen.check_screen.assert_called_once_with("guide3")
 
 
 def test_support_portrait_match_keeps_rows_separate():

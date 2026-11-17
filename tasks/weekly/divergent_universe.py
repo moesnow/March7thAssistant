@@ -1514,11 +1514,12 @@ class DivergentUniverse:
 
     @staticmethod
     def reveal_event_confirm():
-        for attempt in range(7):
+        max_drags = 2
+        for attempt in range(max_drags + 1):
             # 与后续点击使用相同的识别范围和包含匹配，兼容按钮位置变化及 OCR 合并文字。
             if auto.find_element("确定", "text", max_retries=2, retry_delay=0.5, include=True):
                 return True
-            if attempt == 6:
+            if attempt == max_drags:
                 break
             # 事件背景和选中框有动画。松手前停顿消除惯性，再重新识别按钮，
             # 避免把背景持续变化误判为列表还在移动。

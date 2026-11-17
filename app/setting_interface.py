@@ -2563,6 +2563,11 @@ class SettingInterface(ScrollArea):
         self.localControlModeCard.currentIndexChanged.connect(refresh_mouse_protection_option)
         refresh_mouse_protection_option()
         if sys.platform == 'win32':
+            self.localControlModeMovedCard = PushSettingCard(
+                tr('立即前往'),
+                FIF.GAME,
+                tr('后台操作模式已移至「游戏连接」'),
+            )
             self.autostartCard = AutostartSettingCard(
                 FIF.GAME,
                 tr('在用户登录时启动'),
@@ -2908,6 +2913,7 @@ class SettingInterface(ScrollArea):
         self.MiscGroup.addSettingCard(self.autoBattleDetectEnableCard)
         self.MiscGroup.addSettingCard(self.ocrGpuAccelerationCard)
         if sys.platform == 'win32':
+            self.MiscGroup.addSettingCard(self.localControlModeMovedCard)
             self.MiscGroup.addSettingCard(self.autostartCard)
             self.MiscGroup.addSettingCard(self.uacFreeCard)
             self.MiscGroup.addSettingCard(self.debugModeEnableCard)
@@ -3040,6 +3046,10 @@ class SettingInterface(ScrollArea):
 
         connect_expand_state(self.afterFinishCard)
         connect_expand_state(self.localControlModeCard)
+        if sys.platform == 'win32':
+            self.localControlModeMovedCard.clicked.connect(
+                lambda: self.stackedWidget.setCurrentWidget(self.GameConnectionGroup)
+            )
 
         self.githubCard.clicked.connect(self.__openUrl("https://github.com/moesnow/March7thAssistant"))
         self.agentPromptCard.clicked.connect(self.__copyAgentPrompt)

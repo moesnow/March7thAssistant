@@ -3272,6 +3272,10 @@ msgstr ""
 msgid "仅保护必要的鼠标操作，保留键盘和暂停热键。"
 msgstr ""
 
+#: app/setting_interface.py:2569
+msgid "后台操作模式已移至「游戏连接」"
+msgstr ""
+
 #: app/setting_interface.py:2502
 msgid "在用户登录时启动"
 msgstr ""
