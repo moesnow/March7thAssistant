@@ -1,6 +1,6 @@
 from utils.game_options import game_option_enabled
 from utils.desktop_twin import in_desktop_twin
-from PySide6.QtCore import Qt, QSize, QPoint, QFileSystemWatcher, Signal, QObject, QTimer, QThread, QSignalBlocker
+from PySide6.QtCore import Qt, QSize, QPoint, QFileSystemWatcher, Signal, QObject, QTimer, QThread, QSignalBlocker, QEvent
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QLabel, QHBoxLayout, QVBoxLayout
 
@@ -117,6 +117,27 @@ class ClickableLabel(QLabel):
         super().mousePressEvent(event)
 
 
+class ThemeToggleFilter(QObject):
+    clicked = Signal()
+
+    def __init__(self, logo):
+        super().__init__(logo)
+        logo.installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        if (event.type() in (QEvent.Type.MouseButtonPress, QEvent.Type.MouseButtonDblClick,
+                             QEvent.Type.MouseButtonRelease)
+                and event.button() == Qt.MouseButton.LeftButton):
+            # 松开时切换；吞掉双击，避免快速连点 LOGO 使窗口最大化。
+            if (event.type() == QEvent.Type.MouseButtonRelease
+                    and obj.rect().contains(event.position().toPoint())):
+                self.clicked.emit()
+            return True
+        if event.type() == QEvent.Type.MouseMove and event.buttons() & Qt.MouseButton.LeftButton:
+            return True
+        return super().eventFilter(obj, event)
+
+
 class MainWindow(MSFluentWindow):
     TASK_EXIT_DELAY_MS = 5000
 
@@ -206,20 +227,24 @@ class MainWindow(MSFluentWindow):
         min_height = 640
         self.setMinimumWidth(min_width)
         self.setMinimumHeight(min_height)
-        default_height = 720
 
         window_memory = cfg.get_value('window_memory', 'size')
         # 从配置文件读取窗口尺寸，确保不低于最小值
         if window_memory in ('size', 'size_and_position'):
             saved_width = cfg.get_value('window_width', min_width)
-            saved_height = cfg.get_value('window_height', default_height)
+            saved_height = cfg.get_value('window_height', min_height)
             window_width = max(saved_width, min_width)
             window_height = max(saved_height, min_height)
             self.resize(window_width, window_height)
         else:
-            self.resize(min_width, default_height)
+            self.resize(min_width, min_height)
 
+        self.titleBar.iconLabel.setCursor(Qt.CursorShape.PointingHandCursor)
+        theme_toggle = ThemeToggleFilter(self.titleBar.iconLabel)
+        theme_toggle.clicked.connect(self._on_manual_theme_toggle)
+        self.titleBar.iconLabel.installEventFilter(ToolTipFilter(self.titleBar.iconLabel, 300, ToolTipPosition.BOTTOM))
         set_application_icon(self, application_icon_path(isDarkTheme()), 'March7th Assistant')
+        self.titleBar.setIcon(application_icon_path(isDarkTheme(), titlebar=True))
         self.setWindowTitle("March7th Assistant")
         # 分离系统窗口标题与应用内标题栏文本
         self._refreshWindowTitleBar()
@@ -310,6 +335,8 @@ class MainWindow(MSFluentWindow):
         return badge
 
     def _refreshWindowTitleBar(self):
+        self.titleBar.iconLabel.setToolTip(tr('切换主题'))
+        self.titleBar.iconLabel.setAccessibleName(tr('切换主题'))
         if hasattr(self, 'titleBar') and hasattr(self.titleBar, 'setTitle'):
             self.titleBar.setTitle(self._baseTitleBarText())
 
@@ -349,6 +376,7 @@ class MainWindow(MSFluentWindow):
             self.setWindowTitle(self._assistant_name())
             self._refreshDesktopTwinIndicators()
         set_application_icon(self, application_icon_path(dark, active), self._assistant_name())
+        self.titleBar.setIcon(application_icon_path(dark, active, titlebar=True))
         self.homeInterface.setEvernightMode(active)
         self._refreshWindowTitleBar()
         # 先让深色三月七界面重绘，再播放首次替换动画。
@@ -423,12 +451,6 @@ class MainWindow(MSFluentWindow):
         #     NavigationBarPushButton(FIF.SYNC, '刷新', isSelectable=False),
         #     self._on_config_file_changed,
         #     NavigationItemPosition.BOTTOM)
-
-        self.navigationInterface.addWidget(
-            'themeButton',
-            NavigationBarPushButton(FIF.BRUSH, tr('主题'), isSelectable=False),
-            self._on_manual_theme_toggle,
-            NavigationItemPosition.BOTTOM)
 
         self.navigationInterface.addWidget(
             'avatar',
@@ -763,7 +785,7 @@ class MainWindow(MSFluentWindow):
             'warpInterface': tr('抽卡记录'), 'toolsInterface': tr('工具箱'),
             'workflowInterface': tr('流程编排'), 'logInterface': tr('日志'),
             'settingInterface': tr('设置'), 'startGameButton': tr('启动游戏'),
-            'themeButton': tr('主题'), 'avatar': tr('赞赏'),
+            'avatar': tr('赞赏'),
         }
         for route, text in labels.items():
             self.navigationInterface.widget(route).setText(text)

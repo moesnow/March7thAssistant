@@ -81,9 +81,9 @@ msgstr "임무 완료"
 msgid "任务已停止"
 msgstr "임무 중지됨"
 
-#: app/main_window.py:377
-msgid "主题"
-msgstr "테마"
+#: app/main_window.py:338
+msgid "切换主题"
+msgstr "테마 전환"
 
 #: app/main_window.py:326
 msgid "赞赏"

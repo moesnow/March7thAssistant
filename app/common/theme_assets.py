@@ -47,8 +47,10 @@ def portrait_artwork(path, dark):
     return QPixmap(path), QPixmap()
 
 
-def application_icon_path(dark, evernight=False):
-    """Use bean-eyed artwork for window, tray and taskbar, never a task portrait."""
+def application_icon_path(dark, evernight=False, *, titlebar=False):
+    """Select March 7th, sleeping March 7th or Evernight for each surface."""
     if not dark:
         return './assets/logo/March7th.ico'
-    return str(_IMAGE_ROOT / ('evernight/icon.ico' if evernight else 'dark/March7th-icon.ico'))
+    group = 'evernight' if evernight else 'march7th-night'
+    filename = 'titlebar.ico' if titlebar else 'icon.ico'
+    return str(Path('./assets/logo') / group / filename)

@@ -1054,8 +1054,8 @@ msgstr ""
 msgid "日志"
 msgstr ""
 
-#: app/main_window.py:377
-msgid "主题"
+#: app/main_window.py:338
+msgid "切换主题"
 msgstr ""
 
 #: app/main_window.py:326

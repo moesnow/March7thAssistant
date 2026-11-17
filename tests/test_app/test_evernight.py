@@ -1,4 +1,4 @@
-"""Exercise the session-only Easter egg through the real theme button."""
+"""Exercise the session-only Easter egg through the title-bar logo."""
 from copy import deepcopy
 from pathlib import Path
 from unittest.mock import Mock
@@ -36,7 +36,7 @@ def test_three_click_window_and_expired_sequence(times, unlocked):
 
 
 def click_theme(window, qtbot, count=1):
-    button = window.navigationInterface.widget('themeButton')
+    button = window.titleBar.iconLabel
     for _ in range(count):
         qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
         qtbot.wait(10)
@@ -67,6 +67,7 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
 
     click_theme(window, qtbot)
     dark_march_icon = window.windowIcon().pixmap(32, 32).toImage()
+    dark_march_titlebar = window.titleBar.iconLabel.pixmap().toImage()
     dark_march_card = card.iconWidget.pixmap().toImage()
     click_theme(window, qtbot)
     assert not window._evernight.unlocked
@@ -82,6 +83,7 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
         assert page.banner.banner_image is original_banner
         assert card.iconWidget.pixmap().toImage() == dark_march_card
         assert window.windowIcon().pixmap(32, 32).toImage() == dark_march_icon
+        assert window.titleBar.iconLabel.pixmap().toImage() == dark_march_titlebar
     from app.common import theme_assets
     with monkeypatch.context() as midpoint:
         midpoint.setattr(theme_assets, 'QPixmap', Mock(side_effect=AssertionError('portrait decoding at midpoint')))
@@ -94,6 +96,10 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
     assert page.banner.banner_image is not original_banner
     assert card.iconWidget.pixmap().toImage() == QPixmap(themed_icon_path(EVERNIGHT_AVATAR, True)).toImage()
     assert window.windowIcon().pixmap(32, 32).toImage() != original_icon
+    assert window.windowIcon().pixmap(32, 32).toImage() == QIcon(
+        application_icon_path(True, True)).pixmap(32, 32).toImage()
+    assert window.titleBar.iconLabel.pixmap().toImage() == QIcon(
+        application_icon_path(True, True, titlebar=True)).pixmap(window.titleBar.iconLabel.size()).toImage()
     assert window.stackedWidget.currentWidget() is current_page
     assert card.action is action
     qtbot.waitUntil(lambda: window._evey_animation is None, timeout=6500)
@@ -106,6 +112,8 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
     assert page.banner.banner_image is original_banner
     assert card.iconWidget.pixmap().toImage() == original_card_icon
     assert window.windowIcon().pixmap(32, 32).toImage() == original_icon
+    assert window.titleBar.iconLabel.pixmap().toImage() == QIcon(
+        application_icon_path(False)).pixmap(window.titleBar.iconLabel.size()).toImage()
     click_theme(window, qtbot)
     assert window._evey_animation is None  # one animation per process/session
     start_task.assert_not_called()

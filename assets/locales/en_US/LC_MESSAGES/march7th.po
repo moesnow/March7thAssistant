@@ -81,9 +81,9 @@ msgstr "Task Completed"
 msgid "任务已停止"
 msgstr "Task Stopped"
 
-#: app/main_window.py:377
-msgid "主题"
-msgstr "Theme"
+#: app/main_window.py:338
+msgid "切换主题"
+msgstr "Switch theme"
 
 #: app/main_window.py:326
 msgid "赞赏"
