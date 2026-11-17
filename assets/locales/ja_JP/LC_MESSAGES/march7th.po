@@ -8234,3 +8234,7 @@ msgstr "ダーク"
 #: app/card/comboboxsettingcard2.py:58 app/main_window.py:452
 msgid "长夜"
 msgstr "長夜"
+
+#: module/game/adb_ready.py:118
+msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
+msgstr "「列車補給」のポップアップから制限時間内にメイン画面に戻れませんでした。ゲーム内で報酬を受け取れたか確認してください。"

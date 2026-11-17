@@ -56,6 +56,57 @@ def first_card(page):
     return page.basicInputView.flowLayout.itemAt(0).widget()
 
 
+def test_home_artwork_crossfades_at_midpoint_without_fading_labels(window, qtbot):
+    window.resize(1100, 800)
+    setTheme(Theme.DARK)
+    click_logo(window, qtbot, 10)
+    intro = window._evey_animation
+    intro.timeline.pause()
+    intro.timeline.setCurrentTime(intro.DURATION_MS // 2 - 1)
+    page = window.homeInterface
+    card = first_card(page)
+    widgets = (page.banner, card.iconWidget)
+    transitions = (page.banner.imageTransition, page._task_icon_transitions[card])
+
+    def pixels(widget):
+        image = widget.grab().toImage()
+        # Sample image areas away from the banner's title, clip edges and hint.
+        return [image.pixelColor(int(image.width() * x), int(image.height() * y)).getRgb()[:3]
+                for x in (0.25, 0.5, 0.75) for y in (0.65, 0.8)]
+
+    before = [pixels(widget) for widget in widgets]
+    intro.timeline.setCurrentTime(intro.DURATION_MS // 2)
+    for transition in transitions:
+        transition.animation.pause()
+    QApplication.processEvents()
+    assert page.banner.galleryLabel.text() == '长夜月小助手\nEvernightAssistant'
+    assert all(transition.testAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+               for transition in transitions)
+
+    frames = []
+    for fraction in (0.0, 0.25, 0.5, 0.75, 1.0):
+        for transition in transitions:
+            transition.animation.setCurrentTime(round(transition.DURATION_MS * fraction))
+        frames.append([pixels(widget) for widget in widgets])
+
+    for i in range(len(widgets)):
+        def difference(a, b):
+            return sum(abs(x - y) for p, q in zip(a, b) for x, y in zip(p, q))
+
+        # The two banner aspect ratios round to heights one pixel apart; allow
+        # that resampling, but require the first frame to retain the old artwork.
+        assert difference(frames[0][i], before[i]) < difference(frames[-1][i], before[i]) * 0.2
+        assert frames[-1][i] != before[i]
+        for samples in zip(*(frame[i] for frame in frames)):
+            for channel in zip(*samples):
+                start, quarter, middle, three_quarter, end = channel
+                assert abs(middle - (start + end) / 2) <= 3, (type(widgets[i]).__name__, channel)
+                assert min(start, end) - 2 <= quarter <= max(start, end) + 2
+                assert min(quarter, end) - 2 <= three_quarter <= max(quarter, end) + 2
+    assert all(transition.isHidden() and transition._previous is None for transition in transitions)
+    assert intro.DURATION_MS == 5200  # The original intro timing is unchanged.
+
+
 
 def test_real_button_changes_all_branding_and_restores_without_starting_tasks(window, qtbot, monkeypatch):
     from app import home_interface
@@ -153,6 +204,8 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
     # Deferred HTML adopts the current accent before the page's first paint.
     window.switchTo(window.helpInterface)
     qtbot.wait(20)
+    assert page.banner.imageTransition.isHidden()
+    assert all(transition.isHidden() for transition in page._task_icon_transitions.values())
     assert themeColor().name() in window.helpInterface.tutorialLabel.toHtml()
     assert MARCH7TH_PINK not in window.helpInterface.tutorialLabel.toHtml()
     window.switchTo(current_page)
@@ -240,6 +293,9 @@ def test_tenth_logo_click_selects_session_theme_without_saving(
         assert window.windowTitle() == 'Evernight Assistant'
     combo.setCurrentIndex(combo.findData(cancel_theme))
     assert window._evey_animation is None
+    assert window.homeInterface.banner.imageTransition.isHidden()
+    assert all(transition.isHidden() and transition._previous is None
+               for transition in window.homeInterface._task_icon_transitions.values())
     assert window.windowTitle() == 'March7th Assistant'
     assert isDarkTheme() is (system_dark if cancel_theme == 'auto' else cancel_theme == 'dark')
     writes_before = cfg.set_value.call_count

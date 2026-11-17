@@ -25,6 +25,8 @@
 
 快速上手，请访问：[使用教程](https://m7a.top/docs/#/assets/docs/Tutorial)
 
+安卓手机用户，请看：[安卓版使用教程](https://m7a.top/docs/#/assets/docs/Android)
+
 遇到问题，请在提问前查看：[FAQ](https://m7a.top/docs/#/assets/docs/FAQ)
 
 </div>
@@ -34,6 +36,7 @@
 - **日常**：清体力、每日实训、领取奖励、委托、锄大地
 - **周常**：历战余响、模拟宇宙、差分宇宙、货币战争、混沌回忆、虚构叙事、末日幻影
 - **云·星穹铁道**：支持后台运行、无窗口运行和 [Docker](https://m7a.top/docs/#/assets/docs/Docker) 运行
+- **安卓版**：直接安装在手机上，游戏在后台虚拟屏中运行，支持日常、每日实训和清体力，详见 [安卓版使用教程](https://m7a.top/docs/#/assets/docs/Android)
 - **抽卡记录导出**：支持 [UIGF](https://uigf.org/zh/standards/uigf.html)/[SRGF](https://uigf.org/zh/standards/srgf.html) 标准
 - **工具箱**：自动对话、解锁帧率、兑换码、触屏模式
 - 每日实训等任务的完成情况支持**消息推送**
@@ -54,6 +57,8 @@
 ## 下载安装
 
 前往 [Releases](https://github.com/moesnow/March7thAssistant/releases/latest) 下载后解压双击三月七图标的 `March7th Launcher.exe` 打开图形界面
+
+安卓手机请在同一页面下载 `March7thAssistant_full_android.apk` 安装，打开后按 App 内的权限引导完成 Shizuku 或 Root 授权，详见 [安卓版使用教程](https://m7a.top/docs/#/assets/docs/Android)
 
 ## 使用 AI 助手操作
 

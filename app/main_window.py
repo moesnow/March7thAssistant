@@ -433,7 +433,7 @@ class MainWindow(MSFluentWindow):
         self._evey_title_decoration.setActive(active)
         self.settingInterface.themeCard.setEvernightMode(active)
         self._evey_settings_decoration.setActive(active)
-        self.homeInterface.setEvernightMode(active)
+        self.homeInterface.setEvernightMode(active, animate=self._evey_animation is not None)
         self._refreshWindowTitleBar()
         # 先让深色三月七界面重绘，再播放首次替换动画。
         if selected and not self._evernight.animation_played:

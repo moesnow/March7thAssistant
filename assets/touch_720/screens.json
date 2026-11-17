@@ -20,6 +20,20 @@
         ]
     },
     {
+        "name": "列车补给",
+        "id": "monthly_card",
+        "image_path": "./assets/touch_720/images/screen/monthly_card.png",
+        "actions": [
+            {
+                "target_screen": "main",
+                "actions_list": [
+                    "auto.find_element('./assets/touch_720/images/screen/monthly_card.png', 'image', 0.9, crop=(822 / 1920, 57 / 1080, 369 / 1920, 1008 / 1080)) and auto.find_element('./assets/touch_720/images/screen/monthly_card_claim.png', 'image', 0.9, take_screenshot=False) and auto.click_element('./assets/touch_720/images/screen/monthly_card_prompt.png', 'image', 0.9, take_screenshot=False)",
+                    "auto.find_element('./assets/touch_720/images/screen/monthly_card_reward.png', 'image', 0.9, max_retries=16, retry_delay=0.35, crop=(822 / 1920, 57 / 1080, 369 / 1920, 1008 / 1080)) and auto.find_element('./assets/touch_720/images/screen/monthly_card.png', 'image', 0.9, take_screenshot=False) and auto.click_element('./assets/touch_720/images/screen/monthly_card_prompt.png', 'image', 0.9, take_screenshot=False)"
+                ]
+            }
+        ]
+    },
+    {
         "name": "手机菜单",
         "id": "menu",
         "image_path": "./assets/touch_720/images/screen/menu.png",

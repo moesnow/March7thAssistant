@@ -10,6 +10,7 @@ from qfluentwidgets import ScrollArea, FluentIcon, RoundMenu, PushButton, isDark
 from .common.style_sheet import StyleSheet
 from .common.evernight import EVERNIGHT_BANNER, EVERNIGHT_AVATAR
 from .common.theme_assets import portrait_artwork
+from .components.image_crossfade import ImageCrossFade
 from .card.samplecardview1 import SampleCardView1
 from .card.card_edit_dialog import DEFAULT_CARDS, HOME_EXTRA_TASKS, CardEditDialog, display_label, migrate_home_cards
 from .tools.adb_service import display_connection
@@ -188,6 +189,7 @@ class BannerWidget(QWidget):
         self.vBoxLayout.addWidget(self.galleryLabel)
         self.vBoxLayout.addStretch(1)  # 添加弹性空间，将下方任务卡片推到底部
         self.logoHint = FloatingLogoHint(self)
+        self.imageTransition = ImageCrossFade(self)
 
     def retranslateTitle(self):
         title = tr('长夜月小助手') if self._evernight_active else tr('三月七小助手')
@@ -195,7 +197,11 @@ class BannerWidget(QWidget):
             title += '\nEvernightAssistant' if self._evernight_active else '\nMarch7thAssistant'
         self.galleryLabel.setText(title)
 
-    def setEvernightMode(self, active):
+    def setEvernightMode(self, active, animate=False):
+        if animate:
+            self.imageTransition.play(self.banner, self.path)
+        else:
+            self.imageTransition.finish()
         self._evernight_active = active
         self.banner_image = self._evernight_banner_image if active else self._regular_banner_image
         self.retranslateTitle()
@@ -237,6 +243,7 @@ class HomeInterface(ScrollArea):
         super().__init__(parent=parent)
         self._evernight_active = False
         self._task_cards = []
+        self._task_icon_transitions = {}
         self.banner = BannerWidget(self)
         self.view = QWidget(self)
         self.vBoxLayout = QVBoxLayout(self.view)
@@ -284,14 +291,23 @@ class HomeInterface(ScrollArea):
         self.editButton.setText(tr('编辑'))
         self.refreshBackendTasks()
 
-    def setEvernightMode(self, active):
+    def setEvernightMode(self, active, animate=False):
+        animate = animate and active and active != self._evernight_active
         if active != self._evernight_active:
             self._evernight_active = active
-            self.banner.setEvernightMode(active)
-        self._refresh_task_icons()
+            self.banner.setEvernightMode(active, animate=animate)
+        self._refresh_task_icons(animate=animate)
 
-    def _refresh_task_icons(self):
+    def _refresh_task_icons(self, animate=False):
         for widget, original_icon, full_run in self._task_cards:
+            transition = self._task_icon_transitions.get(widget)
+            if transition is not None:
+                if animate:
+                    # Cache the small rendered portrait once: bundled PNGs contain
+                    # transparency, so raw old pixels would reveal the new image early.
+                    transition.play(widget.iconWidget.grab().toImage())
+                elif not self._evernight_active:
+                    transition.finish()
             source = EVERNIGHT_AVATAR if self._evernight_active and full_run else original_icon
             widget.iconWidget.setPixmap(portrait_artwork(source, isDarkTheme()))
 
@@ -356,6 +372,7 @@ class HomeInterface(ScrollArea):
     def refreshBackendTasks(self):
         """重建卡片视图"""
         self._task_cards.clear()
+        self._task_icon_transitions.clear()
         self.basicInputView.clearCards()
 
         tasks = supported_tasks(display_connection(cfg))
@@ -379,5 +396,7 @@ class HomeInterface(ScrollArea):
                 action=action
             )
             full_run = card.get('action_type') == 'single' and card.get('task_id', 'main') == 'main'
+            if full_run:
+                self._task_icon_transitions[widget] = ImageCrossFade(widget.iconWidget)
             self._task_cards.append((widget, card.get('icon', ''), full_run))
         self._refresh_task_icons()
