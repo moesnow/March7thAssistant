@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
 
 from qfluentwidgets import ScrollArea
 from .common.style_sheet import StyleSheet
+from .common.accent import accent_html
 from module.localization import tr
 
 import markdown
@@ -35,7 +36,7 @@ a {
         except FileNotFoundError:
             sys.exit(1)
         html_content = html_style + markdown.markdown(self.content).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
-        self.contentLabel.setText(html_content)
+        self.contentLabel.setText(accent_html(html_content))
         self.contentLabel.setOpenExternalLinks(True)
         self.contentLabel.linkActivated.connect(self.open_url)
 

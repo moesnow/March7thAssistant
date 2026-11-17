@@ -11,6 +11,7 @@ from qfluentwidgets import Theme, isDarkTheme, qconfig, setTheme, themeColor
 
 from app.common.evernight import EVEY_ANIMATION, EVERNIGHT_AVATAR, EVERNIGHT_BANNER, EvernightEasterEgg
 from app.common.theme_assets import application_icon_path
+from app.common.accent import EVERNIGHT_RED, MARCH7TH_PINK, accent_color
 from app.common.window_icon import set_application_icon
 from app.components.evey_animation import EveyAnimation
 from module.config import cfg
@@ -119,6 +120,7 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
         assert all(art.isHidden() for art in (
             window._evey_title_decoration, window.settingInterface.themeCard.eveyDecoration,
             window._evey_settings_decoration))
+        assert qconfig.get(qconfig.themeColor).name() == MARCH7TH_PINK
         assert all(label.palette().color(QPalette.ColorRole.WindowText).name() == '#f94e9b' for label in tips)
     from app.common import theme_assets
     with monkeypatch.context() as midpoint:
@@ -134,6 +136,9 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
     assert all(not art.isHidden() for art in (
         window._evey_title_decoration, window.settingInterface.themeCard.eveyDecoration,
         window._evey_settings_decoration))
+    assert qconfig.get(qconfig.themeColor).name() == EVERNIGHT_RED
+    assert all(label.palette().color(QPalette.ColorRole.WindowText).name() == themeColor().name() for label in tips)
+    assert 'rgba(241, 140, 185,' not in overlay.panel.styleSheet()
     assert page.banner.galleryLabel.text() == '长夜月小助手\nEvernightAssistant'
     assert window.windowTitle() == 'Evernight Assistant'
     assert window.titleBar.titleLabel.text() == f'Evernight Assistant {cfg.version}'
@@ -148,6 +153,8 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
     # Deferred HTML adopts the current accent before the page's first paint.
     window.switchTo(window.helpInterface)
     qtbot.wait(20)
+    assert themeColor().name() in window.helpInterface.tutorialLabel.toHtml()
+    assert MARCH7TH_PINK not in window.helpInterface.tutorialLabel.toHtml()
     window.switchTo(current_page)
     assert card.action is action
     qtbot.waitUntil(lambda: window._evey_animation is None, timeout=6500)
@@ -160,10 +167,13 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
     combo = window.settingInterface.themeCard.comboBox
     combo.setCurrentIndex(combo.findData('light'))
     assert not isDarkTheme()
+    assert qconfig.get(qconfig.themeColor).name() == MARCH7TH_PINK
     window.switchTo(window.helpInterface)
     qtbot.wait(20)
+    assert MARCH7TH_PINK in window.helpInterface.tutorialLabel.toHtml()
     window.switchTo(current_page)
     assert all(label.palette().color(QPalette.ColorRole.WindowText).name() == '#f94e9b' for label in tips)
+    assert overlay.panel.styleSheet() == original_overlay_style
     assert page.banner.galleryLabel.text() == '三月七小助手\nMarch7thAssistant'
     assert window.windowTitle() == 'March7th Assistant'
     assert page.banner.banner_image is original_banner
@@ -288,6 +298,7 @@ def test_session_theme_survives_settings_reload_but_not_restart(window, qtbot, m
     assert isDarkTheme() is (system_dark if preference == 'auto' else preference == 'dark')
     assert not restarted._evernight.unlocked and not restarted._evernight.selected
     assert restarted.windowTitle() == 'March7th Assistant'
+    assert qconfig.get(qconfig.themeColor).name() == MARCH7TH_PINK
 
 
 def test_evey_artwork_positions_preserve_controls(window, qtbot, monkeypatch, tmp_path):
@@ -411,9 +422,11 @@ def test_custom_assets_survive_language_and_card_refresh(window, qtbot, monkeypa
     assert window._evey_animation is None
     assert not window.settingInterface.themeCard.eveyDecoration.isHidden()
     assert window._evey_settings_decoration.isVisible()
+    assert qconfig.get(qconfig.themeColor).name() == EVERNIGHT_RED
     window.stackedWidget.setAnimationEnabled(False)
     window.switchTo(window.helpInterface)
     qtbot.wait(20)
+    assert accent_color() in window.helpInterface.tutorialLabel.toHtml()
     window.switchTo(page)
     assert page.banner.galleryLabel.text() == 'Evernight Assistant'
     assert first_card(page).titleLabel.text() == '我的运行卡片'

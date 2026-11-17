@@ -5,6 +5,7 @@ from PySide6.QtGui import QAction, QPainter
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsEffect, QWidget
 
 from .components.evey_decoration import EveyControlDecoration, EveyTitleDecoration
+from .common.accent import MARCH7TH_PINK, EVERNIGHT_RED, set_accent_color
 
 from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, themeColor, qconfig
 from qfluentwidgets import FluentIcon as FIF
@@ -265,7 +266,7 @@ class MainWindow(MSFluentWindow):
         # 要求 PySideSix-Frameless-Window>=0.7.0
         # self.setMicaEffectEnabled(False)
 
-        setThemeColor('#f18cb9', lazy=True)
+        setThemeColor(MARCH7TH_PINK, lazy=True)
         applyTheme(self)
 
         # 禁用最大化
@@ -425,6 +426,7 @@ class MainWindow(MSFluentWindow):
                        or self._evey_animation.timeline.currentValue() >= 0.5))
         if active != self._evernight_active:
             self._evernight_active = active
+            set_accent_color(EVERNIGHT_RED if active else MARCH7TH_PINK)
             self.setWindowTitle(self._assistant_name())
             self._refreshDesktopTwinIndicators()
             set_application_icon(self, application_icon_path(active), self._assistant_name())

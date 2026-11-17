@@ -6,6 +6,7 @@ from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, Da
                             isDarkTheme, PrimaryPushSettingCard, InfoBar, InfoBarPosition, PushButton, CheckBox, SimpleCardWidget,
                             TextBrowser, setCustomStyleSheet)
 from app.components.ascii_spin_box import AsciiSpinBox
+from app.common.accent import accent_html
 from qfluentwidgets import FluentIcon as FIF
 from typing import Optional
 from app.common.scroll_dialog import (SplitFadeDialogMixin, available_host_size,
@@ -200,6 +201,7 @@ class MessageBoxAnnouncement(MessageBoxImage):
 
 class MessageBoxHtml(MessageBox):
     def __init__(self, title: str, content: str, parent=None):
+        content = accent_html(content)
         super().__init__(title, content, parent)
 
         self.buttonLayout.removeWidget(self.yesButton)
@@ -226,6 +228,7 @@ class MessageBoxHtmlUpdate(SplitFadeDialogMixin, MessageBox):
     historyCancelled = Signal()
 
     def __init__(self, title: str, content: str, parent=None):
+        content = accent_html(content)
         super().__init__(title, content, parent)
 
         self.buttonLayout.removeWidget(self.yesButton)
@@ -308,10 +311,10 @@ class MessageBoxHtmlUpdate(SplitFadeDialogMixin, MessageBox):
         self._history_sections = (VersionNote(target, clean_release_body(latest_note)),)
         self.historyStatusLabel.setText(tr("正在加载历史更新记录……"))
         self.historyStatusLabel.show()
-        self.fullHistoryLabel.setText(
+        self.fullHistoryLabel.setText(accent_html(
             '<style>a {color: #f18cb9; font-weight: bold;}</style>'
             '<a href="' + html.escape(changelog_url(target), quote=True) + '">'
-            + html.escape(tr("查看完整更新日志")) + '</a>')
+            + html.escape(tr("查看完整更新日志")) + '</a>'))
         self.fullHistoryLabel.show()
         # 在打开前预留高度，补充历史记录时不移动更新卡片和底部按钮。
         self._scroll.setFixedHeight(self._scroll.maximumHeight())
@@ -350,8 +353,8 @@ class MessageBoxHtmlUpdate(SplitFadeDialogMixin, MessageBox):
             f"### {section.version}\n\n{section.markdown}"
             for section in self._history_sections[:self._history_limit]
         )
-        self.contentLabel.setText(
-            '<style>a {color: #f18cb9; font-weight: bold;}</style>' + markdown.markdown(body))
+        self.contentLabel.setText(accent_html(
+            '<style>a {color: #f18cb9; font-weight: bold;}</style>' + markdown.markdown(body)))
         remaining = len(self._history_sections) - self._history_limit
         if remaining > 0:
             self.moreHistoryButton.setText(tr("继续显示更早的更新记录（还有 {count} 份）").format(count=remaining))
@@ -445,7 +448,7 @@ class MessageBoxTutorial(MessageBox):
 
         # 创建 TextBrowser 显示教程
         self.tutorialBrowser = TextBrowser(self)
-        self.tutorialBrowser.setText(full_html)
+        self.tutorialBrowser.setText(accent_html(full_html))
         self.tutorialBrowser.setOpenExternalLinks(True)
         self.tutorialBrowser.anchorClicked.connect(self._open_url)
         self.tutorialBrowser.setMinimumHeight(400)
@@ -456,7 +459,7 @@ class MessageBoxTutorial(MessageBox):
             QTextBrowser {
                 background: transparent;
                 border: none;
-                selection-background-color: #f18cb9;
+                selection-background-color: --ThemeColorPrimary;
             }
             QScrollBar:vertical {
                 background: transparent;
