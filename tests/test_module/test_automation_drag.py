@@ -255,6 +255,25 @@ def test_interrupted_mouse_down_does_not_sleep_or_claim_a_complete_long_press(mo
     automation.mouse_up.assert_not_called()
 
 
+@pytest.mark.parametrize("failure", (None, "mousePressed", "mouseReleased"))
+def test_cdp_timed_click_reports_dispatch_result(failure):
+    events = []
+
+    def dispatch(_, payload):
+        event = payload["type"]
+        events.append(event)
+        if event == failure:
+            raise RuntimeError("浏览器连接中断")
+
+    backend = CdpInput(SimpleNamespace(execute_cdp_cmd=dispatch), Mock())
+    automation = object.__new__(Automation)
+    automation.input_handler = backend
+    automation.mouse_down = backend.mouse_down
+
+    assert automation.click_element_with_pos(((1, 2), (3, 4)), press_duration=0.001) is (failure is None)
+    assert events == ["mousePressed", "mouseReleased"]
+
+
 def test_timed_click_releases_even_if_interrupted_before_the_pause_checkpoint(monkeypatch):
     import module.automation.automation as module
 

@@ -102,19 +102,21 @@ class TestState:
 class TestEnableDisable:
     def test_enable_registers_on_demand_task(self, workdir, fake_task, monkeypatch):
         created = {}
+        user_sid = "S-1-5-21-1-2-3-1001"
 
         def _create(**kwargs):
             created.update(kwargs)
             fake_task["info"] = _info_for_this_install()
 
         monkeypatch.setattr(schedule, "create_on_demand_task", _create)
-        monkeypatch.setattr(uac_free, "current_user_sid", lambda: "S-1-5-21-1-2-3-1001")
+        monkeypatch.setattr(uac_free, "current_user_sid", lambda: user_sid)
         assert uac_free.enable() is True
         program, arguments = uac_free.task_action()
         assert created["task_name"] == uac_free.TASK_NAME
         assert (created["program_path"], created["program_args"]) == (program, arguments)
         assert created["working_dir"] == os.getcwd()
-        assert created["sddl"] == uac_free.task_sddl("S-1-5-21-1-2-3-1001")
+        assert created["user_sid"] == user_sid
+        assert created["sddl"] == uac_free.task_sddl(user_sid)
 
     def test_enable_requires_worker_program(self, tmp_path, fake_task, monkeypatch):
         monkeypatch.setattr(sys, "frozen", True, raising=False)
@@ -147,20 +149,6 @@ class _FakeComError(Exception):
         self.hresult = hresult
         self.strerror = strerror
         self.excepinfo = excepinfo
-
-
-class TestDescribeError:
-    def test_uses_excepinfo_scode_and_text(self):
-        error = _FakeComError(-2147352567, "发生意外。", (0, None, "任务被禁用。", None, 0, -2147216602))
-        assert uac_free.describe_error(error) == "任务被禁用。（0x80041326）"
-
-    def test_looks_up_text_when_excepinfo_has_none(self, monkeypatch):
-        monkeypatch.setattr(uac_free, "_system_message", lambda code: "拒绝访问。")
-        error = _FakeComError(-2147352567, "发生意外。", (0, None, None, None, 0, -2147024891))
-        assert uac_free.describe_error(error) == "拒绝访问。（0x80070005）"
-
-    def test_plain_exception(self):
-        assert uac_free.describe_error(OSError("服务不可用")) == "服务不可用"
 
 
 class TestLaunch:

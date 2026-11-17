@@ -5,10 +5,12 @@ os.chdir(os.path.dirname(sys.executable) if getattr(sys, 'frozen', False)else os
 
 import ctypes
 import argparse
+from utils.console import ensure_utf8_output
 from utils.dpi import configure_dpi_awareness
 from utils.tasks import AVAILABLE_TASKS
 
 
+ensure_utf8_output()
 configure_dpi_awareness()
 
 
@@ -85,12 +87,12 @@ def parse_args():
     if args.list:
         os.environ["MARCH7TH_CONFIG_READONLY"] = "1"
         from module.localization import load_language
-        from utils.tasks import supported_tasks, task_display_names
+        from utils.tasks import task_display_names, tasks_for_listing
 
         load_language()
         print("\n可用的任务列表:")
         print("-" * 40)
-        for task_id, task_name in task_display_names(supported_tasks()).items():
+        for task_id, task_name in task_display_names(tasks_for_listing()).items():
             print(f"  {task_id:<20} {task_name}")
         print("-" * 40)
         print("\n使用示例:")

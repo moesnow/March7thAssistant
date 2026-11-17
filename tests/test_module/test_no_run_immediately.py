@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from module.config.config import Config
+from tasks.base.task_steps import GameRecoveryError
 
 
 @pytest.mark.parametrize("env_value, cli, expected", [
@@ -37,9 +38,9 @@ def test_startup_wait_uses_cli_or_environment(monkeypatch, env_value, cli, expec
     game.start.side_effect = InterruptedError
     scope.update(game=game, version=MagicMock(), notif=MagicMock(), telemetry=MagicMock(), time=MagicMock(), CloudGameZeroDurationError=type("CloudGameZeroDurationError", (Exception,), {}))
     scope["get_ui_profile"] = lambda _: SimpleNamespace(name="pc_1080")
+    scope["GameRecoveryError"] = GameRecoveryError
     scope["_game_connection"] = lambda _: nullcontext()
     scope["Daily"] = MagicMock()
-    scope["Daily"].currency_wars_due.return_value = False
     exec(compile(ast.Module(body=[run], type_ignores=[]), str(source), "exec"), scope)
     with pytest.raises(InterruptedError):
         scope["run_main_actions"](args.no_run_immediately)

@@ -6,6 +6,7 @@ from PIL import Image
 import pytest
 
 from module.automation import automation
+from module.automation.input_base import record_input_dispatch
 from tasks.base import task_steps
 from tasks.daily import daily, ember_exchange, redemption, synthesis
 from tasks.daily.ember_exchange import EmberExchange
@@ -228,44 +229,85 @@ def test_reward_receipt_can_see_the_full_title(monkeypatch):
     assert find.call_args.args == ("获得物品", "text")
 
 
-@pytest.mark.parametrize("dropped_dismissal", [False, True])
-def test_power_supplement_closes_visible_reward_and_reuses_confirmed_amount(monkeypatch, dropped_dismissal):
+@pytest.mark.parametrize("dropped_dismissal,late_receipt,receipt_delay,return_delay,return_screen", [
+    (False, False, 0, 0, "map"), (True, False, 0, 0, "map"), (False, True, 0, 0, "guide3"),
+    (True, True, 0, 2.5, "guide3"), (False, True, 0, 2.5, "map"), (False, False, 2.5, 0, "map"),
+])
+def test_power_supplement_closes_visible_reward_and_reuses_confirmed_amount(
+    monkeypatch, dropped_dismissal, late_receipt, receipt_delay, return_delay, return_screen,
+):
     original = SimpleNamespace(use_reserved_trailblaze_power=True, use_fuel=False)
-    auto = Mock()
-    screen = Mock()
-    closed = False
+    auto = Mock(input_handler=SimpleNamespace(reports_dispatch=True))
+    page = return_screen
+    now = 0.0
+    receipt_at = 0.0
+    return_at = 0.0
     dismissals = 0
+    receipt_checks = 0
 
-    def find(text, kind, *, crop, **kwargs):
+    def sleep(seconds):
+        nonlocal now, page
+        now += seconds
+        if page == "awaiting_receipt" and now >= receipt_at:
+            page = "receipt"
+        if page == "transition" and now >= return_at:
+            page = return_screen
+
+    def find(text, kind, *, crop=None, **kwargs):
+        nonlocal receipt_checks
         if text == "获得物品":
-            return _receipt_title_fits(crop)
+            receipt_checks += 1
+            if page == "awaiting_receipt":
+                sleep((kwargs["max_retries"] - 1) * kwargs["retry_delay"])
+            if page == "receipt" and _receipt_title_fits(crop) and (not late_receipt or receipt_checks > 1):
+                return text
+            return None
         if text == "开拓力补充":
-            return not closed and not screen.wait_for_screen_change.called and not auto.click_element.called
-        return True
+            return text if page == "supplement" else None
+        if text == "取消":
+            return text if page == "supplement" else None
+        return text
 
-    def click(target, kind, **kwargs):
-        nonlocal closed, dismissals
-        if kind == "crop" and target == supplement._crop((640, 569, 0, 0)):
+    def click(target):
+        nonlocal page, dismissals, receipt_at, return_at
+        if target == "入口":
+            page = "supplement"
+        elif target == "确认":
+            if page == "supplement":
+                page = "amount"
+            elif receipt_delay:
+                receipt_at = now + receipt_delay
+                page = "awaiting_receipt"
+            else:
+                page = "receipt"
+            record_input_dispatch(supplement.time.monotonic())
+        elif target == supplement._crop((640, 569, 0, 0)):
+            assert page == "receipt"
             dismissals += 1
-            closed = not dropped_dismissal or dismissals == 2
-        return True
-
-    def wait_for_map(*args, on_timeout=None, **kwargs):
-        if not closed:
-            assert on_timeout()
-        assert closed, "获得物品仍遮挡地图"
+            if not dropped_dismissal or dismissals == 2:
+                if return_delay:
+                    return_at = now + return_delay
+                    page = "transition"
+                else:
+                    page = "supplement"
+        elif target == "取消":
+            assert page == "supplement"
+            page = return_screen
+        return target != "确认" or page == "amount"
 
     auto.find_element.side_effect = find
-    auto.click_element.side_effect = click
-    screen.wait_for_screen_change.side_effect = wait_for_map
+    auto.click_element_with_pos.side_effect = click
+    screen = Mock(check_screen=Mock(side_effect=lambda target: target == page))
     monkeypatch.setattr(supplement, "read_number", Mock(side_effect=[20, 20, 20]))
-    monkeypatch.setattr(supplement.time, "sleep", Mock())
+    monkeypatch.setattr(supplement, "time", SimpleNamespace(monotonic=lambda: now, sleep=sleep))
 
     read_balance = Mock(side_effect=PowerError("补充后不应再次读取余额"))
-    assert supplement.supplement(auto, screen, original, 300, Mock(return_value=True),
-                                 read_balance, return_screen="map") == 320
+    assert supplement.supplement(auto, screen, original, 300, Mock(return_value="入口"),
+                                 read_balance, return_screen=return_screen, desktop=return_screen == "map") == 320
     assert dismissals == (2 if dropped_dismissal else 1)
-    assert [click.args[0] for click in auto.click_element.call_args_list].count("确认") == 2
+    assert page == return_screen
+    assert auto.click_element_with_pos.call_args_list.count(call("确认")) == 2
+    auto.press_key.assert_not_called()
     read_balance.assert_not_called()
 
 

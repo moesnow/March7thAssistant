@@ -18,6 +18,14 @@ import pytest
 from module.game import adb as backend
 from module.game import adb_ready
 from module.game import adb_transport as transport
+from tasks.game import adb_check
+from utils.pause import RunStopRequested, pause_ctl
+
+
+def _png_bytes(image):
+    output = BytesIO()
+    image.save(output, format="PNG")
+    return output.getvalue()
 
 
 @pytest.mark.parametrize("badge", [(56, 9, 6), (55, 5, 10), (52, 9, 10)])
@@ -163,9 +171,7 @@ class FakeAdb(transport.Adb):
             self.forwarding = False
             return ""
         if args[:2] == ("exec-out", "screencap"):
-            output = BytesIO()
-            self.image.save(output, format="PNG")
-            return output.getvalue()
+            return _png_bytes(self.image)
         raise AssertionError(args)
 
     def shell(self, command, **kwargs):
@@ -488,6 +494,177 @@ def test_emulator_network_address_uses_display_zero_and_checks_actual_orientatio
     assert controller.get_input_handler().mouse_click(38, 59)
     assert s1.requests[-1]["display_id"] == 0
     assert not {"create_display", "frame"}.intersection(r["cmd"] for r in s1.requests)
+
+
+_SCREEN_CAP = ("exec-out", "screencap", "-p")
+_DISPLAY_LIST = ("shell", "cmd display get-displays")
+_MULTI_DISPLAY_OUTPUT = (
+    b"[Warning] Multiple displays were found, but no display id was specified! "
+    b"Defaulting to the first display found.\n"
+)
+
+
+@pytest.fixture
+def emulator_screencap(adb, monkeypatch):
+    controller, fake = adb
+    controller.cfg.adb_serial = "127.0.0.1:16384"
+    controller.cfg.start_game_timeout = 1
+    fake.sdk = 35
+    fake.display_size = "1280x720"
+    adb_output = Mock()
+    fake_run, fake_shell = fake.run, fake.shell
+
+    def run(*args, **kwargs):
+        if args[:3] == _SCREEN_CAP or args == _DISPLAY_LIST:
+            return transport.Adb.run(fake, *args, **kwargs)
+        return fake_run(*args, **kwargs)
+
+    def shell(command, **kwargs):
+        if command == _DISPLAY_LIST[1]:
+            return transport.Adb.shell(fake, command, **kwargs)
+        return fake_shell(command, **kwargs)
+
+    def subprocess_run(command, **kwargs):
+        assert command[:3] == [str(fake.path), "-s", controller.cfg.adb_serial]
+        return CompletedProcess(command, 0, adb_output(tuple(command[3:])), b"")
+
+    monkeypatch.setattr(fake, "run", run)
+    monkeypatch.setattr(fake, "shell", shell)
+    monkeypatch.setattr(transport.subprocess, "run", subprocess_run)
+    monkeypatch.setattr(adb_check, "resolve_adb_path", backend.resolve_adb_path)
+    return controller, adb_output
+
+
+def test_adb_check_uses_display_zero_physical_id_after_move_back(emulator_screencap, s1, monkeypatch, tmp_path):
+    controller, adb_output = emulator_screencap
+    primary_id = "4619827259835644673"
+    explicit_capture = (*_SCREEN_CAP, "-d", primary_id)
+    main_color, menu_color = (12, 34, 56), (23, 45, 67)
+    main_screen = _png_bytes(Image.new("RGB", transport.RESOLUTION, main_color))
+    menu = _png_bytes(Image.new("RGB", transport.RESOLUTION, menu_color))
+    other_screen = _png_bytes(Image.new("RGB", transport.RESOLUTION, (55, 66, 77)))
+    s1.launch_display_id = 2
+    original_reply = s1.reply
+
+    def reply(request):
+        result = original_reply(request)
+        if request["cmd"] == "launch":
+            s1.event("task_display_changed", to=0)
+            s1.event("move_back_succeeded", display_id=0, first_frame_seq=-1)
+        return result
+
+    def output(command):
+        if command == _SCREEN_CAP:
+            return _MULTI_DISPLAY_OUTPUT + other_screen
+        if command == _DISPLAY_LIST:
+            return (b'Displays:\r\n  Display id 2: DisplayInfo{"Other", uniqueId "local:4619827259835644672"}\r\n'
+                    + f'  Display id 0: DisplayInfo{{"Built-in Screen", uniqueId "local:{primary_id}"}}'.encode())
+        assert command == explicit_capture
+        return menu if any(request["cmd"] == "tap" for request in s1.requests) else main_screen
+
+    def match(image, name, template):
+        expected = {"main": main_color, "menu": menu_color}.get(name)
+        return (38, 59) if image.getpixel((0, 0)) == expected else None
+
+    def measure(controller):
+        assert controller.capture_frame()[0].getpixel((0, 0)) == main_color
+        return 1, 1, 0.01
+
+    adb_output.side_effect = output
+    monkeypatch.setattr(s1, "reply", reply)
+    monkeypatch.setattr(adb_check, "_measure_frames", measure)
+    for module in (adb_ready, adb_check):
+        monkeypatch.setattr(module, "_load_template", lambda name: name)
+        monkeypatch.setattr(module, "_match", match)
+    monkeypatch.chdir(tmp_path)
+
+    assert adb_check.run(controller) is True
+    assert [call.args[0] for call in adb_output.call_args_list] == [_SCREEN_CAP, _DISPLAY_LIST] + [explicit_capture] * 3
+    touch_targets = [request["display_id"] for request in s1.requests if request["cmd"] == "tap"]
+    assert touch_targets == [0]
+    screenshot, = (tmp_path / "logs" / "screenshots").glob("adb-check-*.png")
+    with Image.open(screenshot) as frame:
+        assert frame.getpixel((0, 0)) == menu_color
+
+
+def test_emulator_reprobes_cached_physical_id_after_bad_frame(emulator_screencap):
+    controller, adb_output = emulator_screencap
+    first_id, next_id = "4619827259835644672", "4619827259835644673"
+    png = _png_bytes(Image.new("RGB", transport.RESOLUTION, (12, 34, 56)))
+    adb_output.side_effect = [
+        _MULTI_DISPLAY_OUTPUT,
+        f'Display id 0: DisplayInfo{{uniqueId "local:{first_id}"}}'.encode(),
+        png,
+        b"Capturing failed.\n",
+        f'Display id 0: DisplayInfo{{uniqueId "local:{next_id}"}}'.encode(),
+        png,
+    ]
+
+    controller.start_game_process()
+    assert controller.capture_frame()
+    assert controller.capture_frame()[0].getpixel((0, 0)) == (12, 34, 56)
+    assert controller.frame_sequence == 2
+    assert [call.args[0] for call in adb_output.call_args_list] == [
+        _SCREEN_CAP, _DISPLAY_LIST, (*_SCREEN_CAP, "-d", first_id),
+        (*_SCREEN_CAP, "-d", first_id), _DISPLAY_LIST, (*_SCREEN_CAP, "-d", next_id),
+    ]
+
+
+@pytest.mark.parametrize(("data", "message", "display_list"), [
+    (b"", "截图输出为空", None),
+    (b"Capturing failed.\n", "截图输出不符合 PNG 格式", None),
+    (b"\x89PNG\r\n\x1a\n", "无法解码模拟器 display 0 的截图", None),
+    (_MULTI_DISPLAY_OUTPUT, "无法确定模拟器 display 0 对应的 SurfaceFlinger ID",
+     b'Display id 0: DisplayInfo{uniqueId "virtual:default"}\nDisplay id 2: DisplayInfo{uniqueId "local:42"}'),
+])
+def test_adb_check_reports_persistent_screencap_failure(emulator_screencap, s1, data, message, display_list):
+    controller, adb_output = emulator_screencap
+    adb_output.side_effect = lambda command: display_list if command == _DISPLAY_LIST else data
+
+    with pytest.raises(transport.AdbError, match=message) as error:
+        adb_check.run(controller)
+
+    assert error.value.code == "invalid_response"
+    expected = [_SCREEN_CAP] if display_list is None else [_SCREEN_CAP, _DISPLAY_LIST]
+    assert [call.args[0] for call in adb_output.call_args_list] == expected * 2
+    assert all(request["cmd"] != "tap" for request in s1.requests)
+
+
+def test_adb_check_keeps_startup_deadline_after_screencap_retry(emulator_screencap, s1, monkeypatch):
+    controller, adb_output = emulator_screencap
+    controller.cfg.start_game_timeout = 0.1 / 60
+    now = 100.0
+
+    def sleep(seconds):
+        nonlocal now
+        now += seconds
+
+    monkeypatch.setattr(adb_ready, "time", SimpleNamespace(monotonic=lambda: now, sleep=sleep))
+    adb_output.side_effect = [b"", _png_bytes(Image.new("RGB", transport.RESOLUTION))]
+
+    with pytest.raises(transport.AdbError) as error:
+        adb_check.run(controller)
+
+    assert error.value.code == "game_start_timeout"
+    assert [call.args[0] for call in adb_output.call_args_list] == [_SCREEN_CAP, _SCREEN_CAP]
+    assert all(request["cmd"] != "tap" for request in s1.requests)
+
+
+def test_adb_check_stop_skips_screencap_recovery(emulator_screencap, s1, monkeypatch):
+    controller, adb_output = emulator_screencap
+
+    def stop_during_capture(command):
+        monkeypatch.setattr(pause_ctl, "_enabled", True)
+        monkeypatch.setattr(pause_ctl, "_stop_requested", True)
+        return _MULTI_DISPLAY_OUTPUT
+
+    adb_output.side_effect = stop_during_capture
+
+    with pytest.raises(RunStopRequested):
+        adb_check.run(controller)
+
+    adb_output.assert_called_once_with(_SCREEN_CAP)
+    assert not {"tap", "touch", "swipe"}.intersection(request["cmd"] for request in s1.requests)
 
 
 def test_emulator_rejects_wrong_size_before_launch(adb, s1):

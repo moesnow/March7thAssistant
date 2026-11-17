@@ -70,10 +70,25 @@ def test_leaving_adb_restores_legacy_switch_and_pc_profile(backend, legacy):
     assert service.current_backend(config) == backend
 
 
-def test_switching_local_touch_developer_setup_to_cloud_uses_pc_profile():
-    """本地触屏开发环境（touch_720 + local）切到云游戏不改 UI 形态。"""
-    config = FakeConfig(ui_profile="touch_720")
-    assert service.backend_changes("cloud", config) == {"cloud_game_enable": True, "ui_profile": "pc_1080"}
+@pytest.mark.parametrize("backend", [None, "local"])
+def test_switching_local_touch_to_cloud_and_back_preserves_local_profile(backend):
+    from module.config.platform import get_ui_profile
+    from utils.tasks import task_is_supported
+
+    config = FakeConfig(control_backend=backend, ui_profile="touch_720")
+    assert get_ui_profile(config).name == "touch_720"
+    assert not task_is_supported("currencywars", config)
+
+    changes = service.backend_changes("cloud", config)
+    assert "ui_profile" not in changes
+    config.set_values(changes)
+    assert config.ui_profile == "touch_720"
+    assert get_ui_profile(config).name == service.display_connection(config).ui_profile == "pc_1080"
+    assert task_is_supported("currencywars", config)
+
+    config.set_values(service.backend_changes("local", config))
+    assert config.ui_profile == get_ui_profile(config).name == service.display_connection(config).ui_profile == "touch_720"
+    assert not task_is_supported("currencywars", config)
 
 
 # ---------- 设备发现 ----------

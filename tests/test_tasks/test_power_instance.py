@@ -3,8 +3,8 @@ from unittest.mock import Mock, call
 
 import pytest
 
-from module.automation.background_input import GameWindowLost
-from tasks.power import instance, power
+from module.automation.background_input import GameWindowLost, InputInterrupted
+from tasks.power import instance, power, supplement
 from tasks.power.policy import (
     CAVERN, ECHO, GOLDEN_CALYX, ORNAMENT, BattleDefeat, InstanceUnavailable, PowerError, RelicBagFull, SupportDemand,
 )
@@ -69,6 +69,7 @@ def test_pc_power_retries_start_challenge_until_button_disappears(
     monkeypatch.setattr(instance, "auto", auto)
     monkeypatch.setattr(instance, "cfg", cfg)
     monkeypatch.setattr(instance, "time", SimpleNamespace(monotonic=lambda: now, sleep=sleep))
+    monkeypatch.setattr(instance, "battle_speed_visible", Mock(return_value=False))
     monkeypatch.setattr(power, "cfg", cfg)
     monkeypatch.setattr(power.Power, "get", Mock(return_value=65))
     monkeypatch.setattr(instance.Instance, "prepare_instance", Mock(return_value=True))
@@ -210,6 +211,310 @@ def test_pc_repeat_requires_battle_evidence_without_observing_pause(monkeypatch,
         with pytest.raises(PowerError, match="未确认再来一次的结算"):
             instance.Instance.wait_fight(repeated=True)
     auto.click_element.assert_not_called()
+
+
+@pytest.mark.parametrize("repeated", [False, True], ids=["first-battle", "repeat"])
+@pytest.mark.parametrize("auto_disabled", [True, False], ids=["auto-disabled-hint", "speed-hud"])
+def test_pc_battle_hud_confirms_battle_when_pause_is_missing(monkeypatch, repeated, auto_disabled):
+    now = 0.0
+    enable = Mock()
+
+    def sleep(seconds):
+        nonlocal now
+        now += seconds
+
+    def find(target, *_args, **_kwargs):
+        if target == instance.FIGHT_AGAIN:
+            return (repeated and now < 0.5) or (now >= 3 and (enable.called or not auto_disabled))
+        if target == instance.AUTO_DISABLED:
+            assert not repeated or now >= 0.5
+            return auto_disabled and not enable.called
+        return False
+
+    def speed_visible(_auto):
+        assert not repeated or now >= 0.5
+        return not auto_disabled
+
+    monkeypatch.setattr(instance, "auto", Mock(find_element=Mock(side_effect=find), press_key=enable))
+    monkeypatch.setattr(instance, "cfg", SimpleNamespace(get_value=lambda _key, default: default))
+    monkeypatch.setattr(instance, "ENTRY_TIMEOUT", 2)
+    monkeypatch.setattr(instance, "time", SimpleNamespace(monotonic=lambda: now, sleep=sleep))
+    monkeypatch.setattr(instance, "ensure_double_speed", Mock())
+    monkeypatch.setattr(instance, "battle_speed_visible", speed_visible)
+
+    assert instance.Instance.wait_fight(repeated=repeated)
+    assert enable.call_args_list == ([call("v")] if auto_disabled else [])
+
+
+@pytest.mark.parametrize("failure,entries", [("plus", 2), ("challenge", 2), ("team", 2), ("persistent", 3)])
+def test_pc_pre_start_recovers_only_by_entering_a_fresh_page(monkeypatch, failure, entries):
+    name = "回忆之蕾"
+    page = "main"
+    entry = 0
+    waves = 0
+    plus_clicks = []
+    plus = ((1610, 860), (1670, 909))
+    start = ((1720, 985), (1800, 1005))
+
+    def prepare(*_args):
+        nonlocal page, entry, waves
+        assert page == "main"
+        page = "challenge"
+        entry += 1
+        waves = 1
+        return True
+
+    def change_to(target, *, max_recursion):
+        nonlocal page
+        assert target == "main" and max_recursion == 1
+        assert page in ("challenge", "team")
+        page = "main"
+
+    def find(target, *_args, **_kwargs):
+        if target == "./assets/images/screen/guide/plus.png":
+            assert page == "challenge" and waves == 1
+            if failure == "plus" and entry == 1:
+                return None
+            return plus
+        if target == "开始挑战":
+            return start if page == "team" and (entry > 1 or failure != "team") else None
+        return False
+
+    def click(target, *_args, **_kwargs):
+        nonlocal page
+        assert target == "挑战" and page == "challenge" and waves == 3
+        if failure == "persistent" or (failure == "challenge" and entry == 1):
+            return False
+        page = "team"
+        return True
+
+    def click_position(target):
+        nonlocal page, waves
+        if target == plus:
+            assert page == "challenge"
+            plus_clicks.append(entry)
+            waves += 1
+        else:
+            assert target == start and page == "team" and waves == 3
+            page = "battle"
+        return True
+
+    auto = Mock(find_element=Mock(side_effect=find), click_element=Mock(side_effect=click),
+                click_element_with_pos=Mock(side_effect=click_position))
+    cfg = SimpleNamespace(instance_names_challenge_count={}, tp_before_instance=False,
+                          instance_team_enable=False, borrow_enable=False)
+    balance = Mock(return_value=35)
+    finish = Mock()
+    wait_fight = Mock(return_value=True)
+    read_number = Mock(side_effect=PowerError("开打前不应再读费用或波次"))
+    plan_batch = Mock(wraps=power.plan_paid_batch)
+    monkeypatch.setattr(instance, "auto", auto)
+    monkeypatch.setattr(instance, "cfg", cfg)
+    monkeypatch.setattr(instance, "time", SimpleNamespace(sleep=Mock()))
+    monkeypatch.setattr(instance, "read_number", read_number)
+    monkeypatch.setattr(instance.Instance, "prepare_instance", prepare)
+    monkeypatch.setattr(instance.Instance, "complete_run", finish)
+    monkeypatch.setattr(instance.Instance, "wait_fight", wait_fight)
+    monkeypatch.setattr(power, "screen", SimpleNamespace(change_to=change_to))
+    monkeypatch.setattr(power, "cfg", cfg)
+    monkeypatch.setattr(power, "plan_paid_batch", plan_batch)
+    monkeypatch.setattr(power.Power, "get", balance)
+
+    if failure == "persistent":
+        with pytest.raises(PowerError, match="未找到副本的挑战按钮"):
+            power.Power.process(GOLDEN_CALYX, name, planned_attempts=3)
+        wait_fight.assert_not_called()
+        finish.assert_not_called()
+    else:
+        assert power.Power.process(GOLDEN_CALYX, name, planned_attempts=3) == 3
+        wait_fight.assert_called_once_with(repeated=False)
+        finish.assert_called_once_with(GOLDEN_CALYX)
+    expected_entries = range(2 if failure == "plus" else 1, entries + 1)
+    assert plus_clicks == [attempt for attempt in expected_entries for _ in range(2)]
+    balance.assert_called_once_with(use_supplement=True)
+    plan_batch.assert_called_once_with(3, 35, 10, immersifiers=0)
+    read_number.assert_not_called()
+
+
+@pytest.mark.parametrize("use_template", [False, True], ids=["text-fallback", "template"])
+@pytest.mark.parametrize("checkbox_delivered", [False, True])
+def test_pc_echo_checks_do_not_show_again_before_confirming_the_story_prompt(monkeypatch, use_template, checkbox_delivered):
+    name = "毁灭的开端"
+    entry = ((1512, 771), (1640, 799))
+    checkbox = ((742, 708), (888, 747))
+    confirm = ((1053, 773), (1205, 805))
+    actions = []
+    auto = Mock()
+
+    def find(target, *_args, **_kwargs):
+        if target == ("传送", "进入", "追踪"):
+            auto.matched_text = "进入"
+            return entry
+        if target == name:
+            return actions.count(confirm) == 2
+        if isinstance(target, tuple) and "不再弹出" in target:
+            auto.matched_text = target[0]
+            return checkbox
+        if target == instance.CONFIRM:
+            return confirm if use_template else False
+        return False
+
+    def click_label(target, *_args, **_kwargs):
+        if target == "确认":
+            assert actions[:2] == [entry, checkbox]
+            actions.append(confirm)
+        return True
+
+    def click_position(position):
+        actions.append(position)
+        return checkbox_delivered if position == checkbox else True
+
+    auto.find_element.side_effect = find
+    auto.click_element_with_pos.side_effect = click_position
+    auto.click_element.side_effect = click_label
+    monkeypatch.setattr(instance, "auto", auto)
+    monkeypatch.setattr(instance, "time", SimpleNamespace(sleep=Mock()))
+    monkeypatch.setattr(instance.Instance, "select_category", Mock())
+    monkeypatch.setattr(instance, "wait_until", lambda ready, *_args: any(ready() for _ in range(3)))
+
+    assert instance.Instance.prepare_instance(ECHO, name)
+    assert actions == [entry, checkbox, confirm, confirm]
+    assert sum(args.args[0] == "确认" for args in auto.click_element.call_args_list) == (0 if use_template else 2)
+
+
+@pytest.mark.parametrize("fault,balance,inputs,waves", [
+    ("入口漏识别", 34, [], 3),
+    ("点击丢失", 34, ["入口", "入口"], 3),
+    ("标题漏识别", 34, ["入口", "取消"], 3),
+    ("文字完全不可用", 34, ["入口", "副本导航"], 3),
+    ("关闭异常", 34, ["入口", "副本导航"], 3),
+    ("标题漏识别", 9, ["入口", "取消"], 0),
+])
+def test_pc_supplement_entry_miss_reuses_the_available_budget(monkeypatch, fault, balance, inputs, waves):
+    name = "回忆之蕾"
+    actions = []
+    dialog = False
+
+    def find(label, kind, *_args, **_kwargs):
+        if kind == "image" and fault != "入口漏识别":
+            return "入口"
+        if label == "取消" and dialog:
+            if fault == "关闭异常":
+                raise OSError("退出补充弹窗时截图失败")
+            if fault == "标题漏识别":
+                return "取消"
+
+    def send(control):
+        nonlocal dialog
+        actions.append(control)
+        if control == "入口":
+            dialog = fault != "点击丢失"
+        else:
+            dialog = False
+        return fault != "点击丢失"
+
+    def navigate(target):
+        nonlocal dialog
+        if target == "guide3" and dialog:
+            actions.append("副本导航")
+            dialog = False
+
+    def prepare(*_args):
+        screen.change_to("guide3")
+        return True
+
+    auto = Mock(find_element=Mock(side_effect=find), click_element_with_pos=Mock(side_effect=send))
+    screen = Mock(check_screen=Mock(side_effect=lambda target: target == "map" and not dialog),
+                  get_name=Mock(return_value="地图"), change_to=Mock(side_effect=navigate))
+    cfg = SimpleNamespace(use_reserved_trailblaze_power=True, use_fuel=False,
+                          instance_names_challenge_count={}, tp_before_instance=False)
+    meter = Mock(side_effect=[balance, PowerError("不可重复读取余额")])
+    battle = Mock(select_waves=Mock(return_value=3), prepare_instance=Mock(side_effect=prepare),
+                  wait_fight=Mock(return_value=True))
+    monkeypatch.setattr(power, "auto", auto)
+    monkeypatch.setattr(power, "screen", screen)
+    monkeypatch.setattr(power, "cfg", cfg)
+    monkeypatch.setattr(power, "read_number", meter)
+    monkeypatch.setattr(power, "Instance", battle)
+    monkeypatch.setattr(supplement.time, "sleep", Mock())
+
+    assert power.Power.process(GOLDEN_CALYX, name, planned_attempts=3) == waves
+    if waves:
+        battle.select_waves.assert_called_once_with(GOLDEN_CALYX, 3)
+        battle.complete_run.assert_called_once_with(GOLDEN_CALYX)
+    else:
+        battle.prepare_instance.assert_not_called()
+    meter.assert_called_once()
+    assert actions == inputs
+    auto.press_key.assert_not_called()
+
+
+@pytest.mark.parametrize("fault", ["lookup-timeout", "dispatch-timeout", "user-stop"])
+def test_pc_supplement_rechecks_budget_and_stop_after_button_lookup(monkeypatch, fault):
+    page = "map"
+    now = 0.0
+    stop_requested = False
+    actions = []
+
+    def find(label, kind, *_args, **_kwargs):
+        nonlocal now, stop_requested
+        if kind == "image":
+            return "入口"
+        if kind == "crop":
+            return label
+        if label == "确认" and page == "amount":
+            if fault == "user-stop":
+                stop_requested = True
+            elif fault == "lookup-timeout":
+                now = 19.0
+            return "最终确认"
+        return label
+
+    def send(control):
+        nonlocal now, page
+        if control == "最终确认":
+            assert fault == "dispatch-timeout"
+            now = 19.0
+            raise InputInterrupted("后台输入等待已达到任务总时限")
+        actions.append(control)
+        if control == "入口":
+            page = "supplement"
+        elif control == "确认":
+            page = "amount"
+        elif control == "取消":
+            page = "supplement" if page == "amount" else "map"
+
+    def checkpoint():
+        if stop_requested:
+            raise RunStopRequested()
+
+    auto = Mock(find_element=Mock(side_effect=find), click_element_with_pos=Mock(side_effect=send),
+                input_handler=SimpleNamespace(reports_dispatch=True))
+    screen = Mock(check_screen=Mock(side_effect=lambda target: target == page))
+    cfg = SimpleNamespace(use_reserved_trailblaze_power=True, use_fuel=False,
+                          instance_names_challenge_count={}, tp_before_instance=False)
+    battle = Mock(select_waves=Mock(return_value=3), prepare_instance=Mock(return_value=True),
+                  wait_fight=Mock(return_value=True))
+    meter = Mock(side_effect=[34, PowerError("没有提交补充，不应读取余额")])
+    monkeypatch.setattr(power, "auto", auto)
+    monkeypatch.setattr(power, "screen", screen)
+    monkeypatch.setattr(power, "cfg", cfg)
+    monkeypatch.setattr(power, "Instance", battle)
+    monkeypatch.setattr(power, "read_number", meter)
+    monkeypatch.setattr(supplement, "read_number", Mock(side_effect=[30, 20, 20]))
+    monkeypatch.setattr(supplement, "time", SimpleNamespace(monotonic=lambda: now, sleep=Mock()))
+    monkeypatch.setattr(supplement.pause_ctl, "checkpoint", checkpoint)
+
+    if fault == "user-stop":
+        with pytest.raises(RunStopRequested):
+            power.Power.process(GOLDEN_CALYX, "回忆之蕾", planned_attempts=3)
+        battle.prepare_instance.assert_not_called()
+    else:
+        assert power.Power.process(GOLDEN_CALYX, "回忆之蕾", planned_attempts=3) == 3
+        battle.complete_run.assert_called_once_with(GOLDEN_CALYX)
+    meter.assert_called_once()
+    assert actions == ["入口", supplement._crop((550, 327, 0, 0)), "确认",
+                       supplement._crop((941, 460, 0, 0))] + ([] if fault == "user-stop" else ["取消", "取消"])
 
 
 @pytest.mark.parametrize("failure,attempts", [(False, 2), (InstanceUnavailable("未解锁"), 1), (False, 3)])

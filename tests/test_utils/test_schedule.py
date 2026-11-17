@@ -6,6 +6,9 @@ from types import SimpleNamespace
 import pytest
 
 import utils.schedule as schedule
+from utils import autostart, uac_free
+
+TOKEN_USER_SID = "S-1-5-21-1-2-3-1001"
 
 
 class FakeElements:
@@ -94,6 +97,7 @@ def fake_schedule_service(monkeypatch):
 
     fake_win32com = SimpleNamespace(client=SimpleNamespace(Dispatch=lambda _progid: FakeService()))
     monkeypatch.setattr(schedule, "win32com", fake_win32com, raising=False)
+    monkeypatch.setattr(schedule, "current_user_sid", lambda: TOKEN_USER_SID)
     return folder, task_def
 
 
@@ -111,37 +115,46 @@ class TestApplyTaskSettings:
 
 
 class TestCreateTask:
-    def test_create_task_registers_logon_task_with_unlimited_runtime(self, fake_schedule_service):
+    def test_create_task_registers_logon_task_with_unlimited_runtime(self, fake_schedule_service, monkeypatch):
         folder, task_def = fake_schedule_service
+        monkeypatch.setenv("USERNAME", "unqualified")
+        monkeypatch.delenv("USERDOMAIN", raising=False)
         schedule.create_task("TestTask", "C:\\app.exe", "--autostart", delay_seconds=30)
         assert "TestTask" in folder.registered
-        assert task_def.Triggers.created[0].Delay == "PT30S"
+        trigger = task_def.Triggers.created[0]
+        assert trigger.UserId == task_def.Principal.UserId == TOKEN_USER_SID
+        assert trigger.Delay == "PT30S"
         assert task_def.Actions.created[0].Path == "C:\\app.exe"
         assert task_def.Actions.created[0].Arguments == "--autostart"
         # 回归：不限制运行时长，否则默认 PT72H 会在 3 天后强杀长驻的图形界面
         assert task_def.Settings.ExecutionTimeLimit == "PT0S"
         assert task_def.Principal.RunLevel == 1 and task_def.Principal.LogonType == 3
+        assert folder.register_args["TestTask"] == (6, None, None, 3, None)
 
 
 class TestOnDemandTask:
-    def test_registers_without_trigger_and_with_sddl(self, fake_schedule_service):
+    def test_registers_without_trigger_and_with_sddl(self, fake_schedule_service, monkeypatch):
         folder, task_def = fake_schedule_service
+        monkeypatch.setattr(schedule, "current_user_sid", lambda: pytest.fail("应复用已提供的 SID"))
+        sddl = uac_free.task_sddl(TOKEN_USER_SID)
         schedule.create_on_demand_task("Demand", "C:\\worker.exe", "$(Arg0)", working_dir="C:\\m7a",
-                                       description="说明", sddl="D:P(A;;FRFX;;;S-1-5-21-1)")
+                                       description="说明", sddl=sddl, user_sid=TOKEN_USER_SID)
         assert task_def.Triggers.created == []
         action = task_def.Actions.created[0]
         assert (action.Path, action.Arguments, action.WorkingDirectory) == ("C:\\worker.exe", "$(Arg0)", "C:\\m7a")
         assert task_def.RegistrationInfo.Description == "说明"
+        assert task_def.Principal.UserId == TOKEN_USER_SID
         assert task_def.Principal.RunLevel == 1 and task_def.Principal.LogonType == 3
         assert task_def.Settings.AllowDemandStart is True
         # 回归：默认 IgnoreNew 会在已有实例运行时丢弃新的启动请求
         assert task_def.Settings.MultipleInstances == 0
         assert task_def.Settings.ExecutionTimeLimit == "PT0S" and task_def.Settings.Priority == 4
-        assert folder.register_args["Demand"][-1] == "D:P(A;;FRFX;;;S-1-5-21-1)"
+        assert folder.register_args["Demand"] == (6, None, None, 3, sddl)
 
     def test_run_task_passes_params(self, fake_schedule_service):
-        folder, _ = fake_schedule_service
+        folder, task_def = fake_schedule_service
         schedule.create_on_demand_task("Demand", "C:\\worker.exe", "$(Arg0)")
+        assert task_def.Principal.UserId == TOKEN_USER_SID
         schedule.run_task("Demand", 'daily --workflow-name "我的 流程"')
         assert folder.tasks["Demand"].runs == ['daily --workflow-name "我的 流程"']
 
@@ -153,3 +166,25 @@ class TestOnDemandTask:
         info = schedule.get_task_info("Demand")
         assert info == {"enabled": False, "path": "C:\\worker.exe", "arguments": "$(Arg0)",
                         "working_dir": "C:\\m7a", "last_result": 0x41303}
+
+
+@pytest.mark.parametrize("feature", [autostart, uac_free], ids=["autostart", "uac-free"])
+def test_enable_logs_registration_error(feature, fake_schedule_service, monkeypatch):
+    from module.logger import log
+
+    folder, _ = fake_schedule_service
+    messages = []
+    monkeypatch.setattr(log, "error", messages.append)
+    monkeypatch.setattr(feature, "IS_WINDOWS", True)
+    monkeypatch.setattr(uac_free, "current_user_sid", lambda: TOKEN_USER_SID)
+
+    def reject_registration(*args):
+        error = OSError("发生意外。")
+        error.hresult = -2147352567
+        error.excepinfo = (0, None, "(12,8):UserId:", None, 0, -2147024809)
+        raise error
+
+    monkeypatch.setattr(folder, "RegisterTaskDefinition", reject_registration)
+    assert feature.enable() is False
+    assert feature.is_enabled() is False
+    assert messages == [f"开启计划任务 {feature.TASK_NAME} 失败：(12,8):UserId:（0x80070057）"]

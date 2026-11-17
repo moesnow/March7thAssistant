@@ -21,7 +21,8 @@ import json
 from module.config import cfg
 from module.localization import tr
 from app.common.schedule import (parse_schedule_time, task_timeout_seconds, task_trigger_mode,
-                                 task_weekdays, schedule_weekday_labels, format_task_weekdays)
+                                 task_weekdays, schedule_weekday_labels, format_task_weekdays,
+                                 scheduled_task_payload, task_launch_block_reason)
 
 
 def _strip_jsonc_comments(text: str) -> str:
@@ -1096,6 +1097,12 @@ class ScheduleManagerDialog(MessageBox):
             m.exec()
             return
         t = self.scheduled_tasks[row]
+        if reason := task_launch_block_reason(scheduled_task_payload(t), cfg):
+            info = MessageBox(tr('提示'), reason, self)
+            info.cancelButton.hide()
+            info.yesButton.setText(tr('确认'))
+            info.exec()
+            return
         # 确认
         m = MessageBox(tr('确认'), tr('确认立即运行任务 "{name}" 吗？').format(name=t.get("name", "")), self)
         m.yesButton.setText(tr('确认'))

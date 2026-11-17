@@ -63,6 +63,10 @@ def start_game_with(monkeypatch, wait_for_window, running=True):
     monkeypatch.setattr(module,'cfg',SimpleNamespace(cloud_game_enable=False,auto_set_resolution_enable=False,
                                                      auto_battle_detect_enable=False,update_via_launcher=False))
     monkeypatch.setattr(module,'StarRailController',Mock(return_value=controller))
+    windows=Mock()
+    windows.return_value.process_running.return_value=False
+    monkeypatch.setattr(module,'WindowsInputApi',windows)
+    monkeypatch.setattr(module,'process_session_id',lambda: 1)
     monkeypatch.setattr(module,'log',Mock())
     return module,controller,backend
 
@@ -82,10 +86,10 @@ def test_background_start_restarts_game_after_process_exit(monkeypatch):
     """等待期间游戏进程退出：与前台模式找不到窗口一样走原有的关闭游戏后重启流程。"""
     from module.automation.background_input import GameWindowLost
     module,controller,backend=start_game_with(monkeypatch,GameWindowLost('游戏进程已退出'))
-    controller.is_game_running.side_effect=[True,False,False]
+    controller.is_game_running.side_effect=[True,False,False,False,False]
     with pytest.raises(RuntimeError,match='启动游戏失败'):
         module.start_game()
-    assert controller.stop_game.call_count==3
+    assert controller.stop_game.call_count==2
     assert controller.start_game_process.call_count==2
 
 
@@ -172,6 +176,7 @@ def test_background_autoplot_uses_available_window_and_releases_on_stop(monkeypa
 def test_game_start_does_not_kill_game_on_input_interruption(monkeypatch):
     from module.automation.background_input import InputInterrupted
     module,controller,backend=start_game_with(monkeypatch,None)
+    backend.is_background=False
     controller.switch_to_game.side_effect=InputInterrupted('minimized')
     with pytest.raises(InputInterrupted):module.start_game()
     controller.stop_game.assert_not_called()
