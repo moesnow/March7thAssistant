@@ -126,6 +126,40 @@ class Power:
             log.info("饰品提取资源不足，结束本副本项" if is_ornament else "开拓力不足，结束本副本项")
             return
 
+        remaining = planned
+        # Opt-in PC feature. Explicitly pending support training still needs a
+        # real battle; afterwards the remaining paid waves may use tickets.
+        quick_enabled = (getattr(cfg, "prefer_fuel_tickets", False) is True
+                         and not immersifier_only
+                         and instance_type in ("拟造花萼（金）", "拟造花萼（赤）", "凝滞虚影"))
+
+        def quick_batches():
+            nonlocal available, remaining, quick_enabled
+            if not quick_enabled or support.pending:
+                return
+            from tasks.power.fuel_ticket_ui import PCFuelTicketScreen
+            display_name = (get_raw_instance_names()[instance_type][name].replace("2", "")
+                            if instance_type == "拟造花萼（赤）" else name)
+            ui = PCFuelTicketScreen(auto, Instance, display_name)
+            while available >= cost_per_wave and (remaining is None or remaining > 0):
+                done = ui.run_one(instance_type, name, available)
+                if not done:
+                    quick_enabled = False
+                    log.info("助燃券速刷不可用，保留剩余计划并回退普通战斗")
+                    break
+                available -= done * cost_per_wave
+                if remaining is not None:
+                    remaining -= done
+                log.info(f"助燃券已确认结算 {done} 次")
+                # Persist the confirmed paid run before closing the result UI.
+                yield done
+                ui.close_receipt()
+
+        yield from quick_batches()
+        if remaining == 0 or (rewards != 0 and not immersifiers and available < cost_per_wave):
+            screen.change_to("main")
+            return
+
         world_team = False
         if cfg.tp_before_instance:
             # 锚点恢复作用于主世界出战队伍，沿用 PC 已有的先切队再恢复顺序。
@@ -147,7 +181,6 @@ class Power:
                         raise
                     log.warning(f"进入副本失败，重试 {attempt}/2：{error}")
 
-        remaining = planned
         previous = 0
         borrowed = False
         enter()
@@ -156,6 +189,10 @@ class Power:
         while remaining is None or remaining > 0:
             practice = rewards == 0
             requested = limit if remaining is None else min(limit, remaining)
+            if quick_enabled and support.pending and getattr(cfg, "borrow_enable", False):
+                # Only one real battle is needed for support training. The
+                # rest of the paid plan should remain eligible for tickets.
+                requested = min(requested, 1)
             if practice:
                 if planned is None:
                     break
@@ -221,6 +258,7 @@ class Power:
                 previous = 0
                 continue
 
+            was_support_pending = support.pending
             support.won(borrowed)
             available -= cost
             immersifiers -= used_immersifiers
@@ -229,6 +267,14 @@ class Power:
             previous, retries = waves, 0
             if remaining is not None:
                 remaining -= waves
+            if (quick_enabled and was_support_pending and not support.pending
+                    and (remaining is None or remaining > 0) and available >= cost_per_wave):
+                Instance.complete_run(instance_type)
+                previous = 0
+                yield from quick_batches()
+                if remaining == 0 or available < cost_per_wave:
+                    break
+                enter()
             if is_echo and not practice:
                 rewards -= waves
                 if rewards == 0:
