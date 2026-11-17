@@ -29,6 +29,8 @@
 
 快速上手，請訪問：[使用教程](https://m7a.top/docs/#/assets/docs/Tutorial_zh_TW)
 
+安卓手機使用者，請看：[安卓版使用教程](https://m7a.top/docs/#/assets/docs/Android_zh_TW)
+
 遇到問題，請先查看：[FAQ](https://m7a.top/docs/#/assets/docs/FAQ_zh_TW)
 
 </div>
@@ -38,6 +40,7 @@
 - **日常**：清體力、每日實訓、領取獎勵、委託、鋤大地
 - **周常**：歷戰餘響、模擬宇宙、差分宇宙、貨幣戰爭、混沌回憶、虛構敘事、末日幻影
 - **雲·星穹鐵道**：支援背景執行、無視窗執行與 [Docker](https://m7a.top/docs/#/assets/docs/Docker) 執行
+- **安卓版**：直接安裝在手機上，遊戲在背景虛擬螢幕中執行，支援日常、每日實訓與清體力（目前僅支援國服官服，國際服暫不支援），詳見 [安卓版使用教程](https://m7a.top/docs/#/assets/docs/Android_zh_TW)
 - **抽卡記錄導出**：支援 [UIGF](https://uigf.org/zh/standards/uigf.html) / [SRGF](https://uigf.org/zh/standards/srgf.html) 標準
 - **工具箱**：自動對話、解鎖幀率、兌換碼、觸控模式
 - 每日實訓等任務的完成情況支援 **訊息推送**
@@ -58,6 +61,8 @@
 ## 下載安裝
 
 前往 [Releases](https://github.com/moesnow/March7thAssistant/releases/latest) 下載後解壓，雙擊三月七圖示的 `March7th Launcher.exe` 打開圖形介面。
+
+安卓手機請在同一頁面下載 `March7thAssistant_full_android.apk` 安裝，打開後依照 App 內的權限引導完成 Shizuku 或 Root 授權，詳見 [安卓版使用教程](https://m7a.top/docs/#/assets/docs/Android_zh_TW)。
 
 ## 原始碼執行
 
