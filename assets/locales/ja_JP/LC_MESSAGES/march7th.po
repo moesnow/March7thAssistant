@@ -81,10 +81,6 @@ msgstr "タスク完了"
 msgid "任务已停止"
 msgstr "タスク停止"
 
-#: app/main_window.py:338
-msgid "切换主题"
-msgstr "テーマを切り替え"
-
 #: app/main_window.py:326
 msgid "赞赏"
 msgstr "支援"
@@ -8210,3 +8206,27 @@ msgstr "エミュレーターの display 0 のスクリーンショット出力�
 #: app/tools/desktop_twin.py:713
 msgid "查看排查方法"
 msgstr "対処方法を見る"
+
+#: app/setting_interface.py:2569
+msgid "后台操作模式已移至「游戏连接」"
+msgstr "バックグラウンド操作モードは「ゲーム接続」に移動しました"
+
+#: app/setting_interface.py:1163
+msgid "界面主题"
+msgstr "表示テーマ"
+
+#: app/setting_interface.py:1164
+msgid "选择应用的显示主题"
+msgstr "アプリの表示テーマを選択"
+
+#: app/setting_interface.py:1165
+msgid "跟随系统"
+msgstr "システムに従う"
+
+#: app/setting_interface.py:1165
+msgid "浅色"
+msgstr "ライト"
+
+#: app/setting_interface.py:1165
+msgid "深色"
+msgstr "ダーク"

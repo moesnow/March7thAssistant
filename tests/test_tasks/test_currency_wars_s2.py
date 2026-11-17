@@ -5067,6 +5067,48 @@ def test_investment_catalog_falls_back_to_strategy_without_a_badge(world):
     assert world.war._choice_option(frame).text == "全速推进"
 
 
+@pytest.mark.parametrize("preset", (policy.DEFAULT_STRATEGY, policy.STRATEGY_ID, policy.HIGH_ANAXA))
+@pytest.mark.parametrize("paired", (False, True))
+def test_uncollected_all_employee_promotion_is_not_selected(world, preset, paired):
+    world.war.default_strategy = preset == policy.DEFAULT_STRATEGY
+    world.war.lineup = policy.LINEUPS.get(preset)
+    effect = "场上的所有角色会永久升级成比自身高1费的随机角色，获得3个拆装扳手。"
+    if paired:
+        words = (("选择一个", 515, 248), ("两个都带走", 1184, 248),
+                 ("特战资金", 514, 570), ("获得6金币。", 514, 610),
+                 ("马上到账", 1005, 570), ("获得额外金币。", 1005, 610),
+                 ("全员晋升", 1409, 570), (effect, 1409, 610))
+        uncollected = {1, 2}
+    else:
+        words = (("全员晋升", 460, 490), (effect, 460, 540),
+                 ("特战资金", 1460, 490), ("获得6金币。", 1460, 540))
+        uncollected = {0}
+    frame = page(Page.CHOICE, *words, choice="请选择投资策略", uncollected_investment_columns=uncollected)
+    for priority in ("strategy", "catalog"):
+        world.cfg.currencywars_investment_priority = priority
+        assert world.war._choice_option(frame).text == "特战资金"
+
+
+def test_investment_fallback_avoids_blacklisted_position_when_other_titles_are_unreadable(monkeypatch, world):
+    title = "请选择投资策略"
+    frame = page(Page.CHOICE, ("全员晋升", 960, 490), choice=title)
+    selected = enable_investment_confirm(page(Page.CHOICE, ("全员晋升", 960, 490), choice=title))
+    after = page(Page.BOARD)
+    left, middle, right, confirm = (460, 490), (960, 490), (1460, 490), (960, 984)
+
+    def click(state, point):
+        if point == right:
+            state.frame = selected
+        elif point == confirm:
+            assert state.frame is selected
+            state.frame = after
+
+    state = drive(monkeypatch, world, frame, click)
+    assert world.war._choose(frame) is after
+    assert [point for _, point in state.clicks] == [left] * 4 + [right, confirm]
+    assert all(point != middle for _, point in state.clicks)
+
+
 @pytest.mark.parametrize("configured", ("strategy", "catalog"))
 @pytest.mark.parametrize("title,y", (("投资环境", 393), ("请选择投资策略", 490)))
 def test_default_always_selects_uncollected_investment_even_without_the_title(
@@ -5618,6 +5660,159 @@ def test_wangwangdan_choice_uses_the_confirm_in_its_own_row(monkeypatch, world):
     assert state.clicks == [(Page.TEA, (1270, 532)), (Page.TEA, (1762, 604))]
 
 
+def dragon_cleanse_dialog(centers, *, selected=False, read_names=True, read_confirm=True):
+    image = CANVAS.copy()
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((380, 30, 1710, 437), fill=(31, 31, 37))
+    entries = [
+        ("备战阶段", 322, 71), ("1-9", 322, 108), ("苍龙濯世", 1046, 59),
+        ("汪汪丹会帮你冲洗掉一个敌人词缀。", 1046, 100),
+        ("请选择一个词缀", 1492, 462), ("后台区域", 981, 575),
+        ("选择主角", 1808, 751), ("商店", 1624, 982),
+    ]
+    if read_confirm:
+        entries.append(("确认选择", 1492, 516))
+    for index, x in enumerate(centers):
+        draw.rectangle((x - 149, 136, x + 149, 405), fill=(129, 37, 49))
+        draw.rectangle((x - 149, 136, x + 149, 180), fill=(18, 17, 21))
+        if selected and not index:
+            draw.rectangle((x - 149, 136, x + 149, 405), outline=(235, 88, 95), width=3)
+        if read_names:
+            entries.append((("榜样激励", "永久创伤")[index], x, 159))
+    draw.rounded_rectangle((1302, 487, 1682, 545), radius=28,
+                           fill=(238, 242, 250) if selected else (61, 64, 103))
+    return Frame(image, labels(*entries))
+
+
+@pytest.mark.parametrize(("centers", "read_controls", "preselected", "from_tea"), (
+    ((1046,), True, False, True),
+    ((888, 1204), False, False, False),
+    ((1046,), True, True, False),
+))
+def test_dragon_cleanse_removes_one_affix_and_resumes_the_same_node(
+        monkeypatch, world, centers, read_controls, preselected, from_tea):
+    pending = dragon_cleanse_dialog(centers, read_names=read_controls, read_confirm=read_controls)
+    selected = dragon_cleanse_dialog(centers, selected=True, read_names=read_controls, read_confirm=read_controls)
+    tea_option = ("使出苍龙濯世吧！！！", 1270, 532)
+    tea = page(Page.TEA, tea_option, stage="1-8")
+    tea_selected = page(Page.TEA, tea_option, ("确认", 1762, 604), stage="1-8")
+    unreadable = Frame(CANVAS, ())
+    ready = Frame(CANVAS, labels(("备战阶段", 322, 71), ("1-9", 322, 108),
+                                ("前台区域", 970, 315), ("后台区域", 981, 575),
+                                ("出战", 1818, 751), ("商店", 1624, 982)))
+    result = Frame(CANVAS, labels(("对局胜利", 960, 233), ("返回货币战争", 960, 899)))
+    lobby = home()
+    assert pending.page == selected.page == Page.DRAGON_CLEANSE
+    assert pending.stage == selected.stage == ready.stage == "1-9"
+    assert ready.page == Page.BOARD
+
+    initial = tea if from_tea else selected if preselected else pending
+    state = SimpleNamespace(frame=initial, clicks=[], unreadable_frames=0)
+
+    def capture():
+        if state.frame is unreadable:
+            state.unreadable_frames += 1
+            if state.unreadable_frames > 2:
+                state.frame = ready
+        return state.frame
+
+    def click(point, *, press_duration):
+        frame = state.frame
+        state.clicks.append((frame.page, point))
+        if frame is tea:
+            assert point == tea_option[1:]
+            state.frame = tea_selected
+        elif frame is tea_selected:
+            assert point == (1762, 604)
+            state.frame = pending
+        elif frame is pending:
+            x, y = point
+            assert abs(x - centers[0]) < 100 and 136 < y < 405
+            state.frame = selected
+        elif frame is selected:
+            assert point[0] == 1492 and abs(point[1] - 516) <= 2
+            state.frame = unreadable
+        elif frame is ready:
+            assert point == (1818, 751)
+            state.frame = result
+        else:
+            assert frame is result and point == (960, 899)
+            state.frame = lobby
+        return True
+
+    def prepare(frame):
+        assert frame is ready
+        return world.war._advance_board(frame, frame.board_advance)
+
+    monkeypatch.setattr(world.war, "_capture", capture)
+    monkeypatch.setattr(world.war, "_prepare", prepare)
+    monkeypatch.setattr(world.war, "_check_weekly_reward", lambda f: (f, (18000, 18000), False))
+    world.auto.click_element_with_pos.side_effect = click
+
+    assert world.war.start(resume=True) is True
+    assert state.frame is lobby and state.unreadable_frames == 3
+    assert [kind for kind, _ in state.clicks] == (
+        [Page.TEA] * (2 if from_tea else 0)
+        + [Page.DRAGON_CLEANSE] * (1 if preselected else 2)
+        + [Page.BOARD, Page.MATCH_RESULT]
+    )
+    world.auto.press_key.assert_not_called()
+
+
+@pytest.mark.parametrize("read_confirm", (True, False))
+def test_dragon_cleanse_confirms_when_only_affix_is_unselectable(monkeypatch, world, read_confirm):
+    template = dragon_cleanse_dialog((), selected=True, read_confirm=read_confirm)
+    image = template.image.copy()
+    ImageDraw.Draw(image).rectangle((897, 136, 1195, 405), fill=(68, 70, 77))
+    initial = Frame(image, (*template.labels, *labels(("吸星魔王", 1046, 157), ("已禁用", 1046, 375))))
+    assert initial.page == Page.DRAGON_CLEANSE
+    assert not initial.dragon_affixes
+    assert initial.dragon_confirm() is not None
+    ready = page(Page.BOARD, stage="1-9")
+    state = drive(monkeypatch, world, initial, lambda s, _: setattr(s, "frame", ready))
+
+    assert world.war._play_step(initial) is ready
+    assert state.clicks == [(Page.DRAGON_CLEANSE, (1492, 516))]
+    assert not state.keys
+
+
+def test_dragon_cleanse_name_outside_dialog_keeps_the_board():
+    frame = Frame(CANVAS, labels(("备战阶段", 322, 71), ("1-9", 322, 108),
+                                 ("苍龙濯世", 110, 210), ("前台区域", 970, 315),
+                                 ("后台区域", 981, 575), ("选择主角", 1808, 751),
+                                 ("商店", 1624, 982)))
+    assert frame.page == Page.BOARD
+
+
+@pytest.mark.parametrize(("centers", "outcome"), (((), "no_cards"), ((1046,), "no_receipt"),
+                                                   ((1046,), "stopped"), ((1046,), "timed_out")))
+def test_dragon_cleanse_never_confirms_an_unselected_affix(monkeypatch, world, centers, outcome):
+    initial = dragon_cleanse_dialog(centers)
+    world.war.deadline = 60
+
+    def click(_, point):
+        assert abs(point[0] - centers[0]) < 100 and 136 < point[1] < 405
+        if outcome == "stopped":
+            task.pause_ctl.checkpoint.side_effect = RunStopRequested()
+        elif outcome == "timed_out":
+            world.now[0] = world.war.deadline
+        return False
+
+    state = drive(monkeypatch, world, initial, click)
+    error = {"stopped": RunStopRequested, "timed_out": task.CurrencyWarsBudgetExceeded}.get(
+        outcome, task.CurrencyWarsUnavailable,
+    )
+    with pytest.raises(error):
+        world.war._play_step(initial)
+    if outcome == "no_cards":
+        assert not state.clicks
+    elif outcome == "no_receipt":
+        assert 1 <= len(state.clicks) <= 3
+    else:
+        assert len(state.clicks) == 1
+    assert state.frame is initial and not state.keys
+
+
 def test_tea_meal_continues_when_ocr_misses_the_card_name_and_health(monkeypatch, world):
     label = ("美餐时间", 1200, 411)
     effect = ("回复20小队生命值", 1240, 480)
@@ -6106,16 +6301,19 @@ def test_overflow_does_not_count_a_red_locked_slot_as_a_character():
     assert not f.slot_occupied((1173, 667))
 
 
-def test_replacement_prompt_preserves_first_halo(monkeypatch, world):
+@pytest.mark.parametrize("known_name", (True, False))
+def test_replacement_prompt_preserves_first_halo(monkeypatch, world, known_name):
     dialog = Frame(CANVAS, labels(("是否替换该角色原有光环？", 960, 506), ("取消", 763, 672),
                                  ("确认", 1192, 672)))
     assert dialog.page == Page.HALO_REPLACE
     selection = page(Page.HALO)
-    world.war.halo_candidate = halo_selection(slot("front", 0, CORE))
+    target = slot("front", 0, CORE if known_name else None, occupied=True)
+    world.war.halo_candidate = halo_selection(target)
+    key = target.unit.name if known_name else (world.war.halo_candidate.stage, target.point)
     state = drive(monkeypatch, world, dialog, lambda s, _: setattr(s, "frame", selection))
     assert world.war._cancel_halo_replacement(dialog) == selection
     assert state.clicks == [(Page.HALO_REPLACE, (763, 672))]
-    assert CORE.name in world.war.halo_excluded
+    assert key in world.war.halo_excluded
 
 
 @pytest.mark.parametrize(("kind", "next_kind", "close_point"), (
@@ -6493,6 +6691,65 @@ def test_halo_mentor_waits_through_intermediate_board_and_recovers_missing_input
                                 (Page.BOARD, fight), (Page.MATCH_RESULT, (962, 893))]
     assert state.frame is lobby and world.war.result is True
     assert world.war._loop_matches == (1 if entry == "loop" else 0)
+
+
+@pytest.mark.parametrize("entry", ("single", "loop", "takeover", "daily"))
+@pytest.mark.parametrize("portrait_matches", (True, False))
+def test_second_halo_uses_occupied_front_slot_when_name_is_unreadable(monkeypatch, world, entry, portrait_matches):
+    stage, choose = "2-5", (1816, 751)
+    option, confirm, finish = (420, 436), (969, 954), (960, 899)
+    holder = slot("front", 0, replace(CORE, has_halo=True))
+    unnamed = slot("front", 1, occupied=True)
+    team = board(holder, unnamed, stage=stage, used=2, capacity=2, gold=0)
+    before = page(Page.BOARD, ("选择主角", *choose), stage=stage, capacity=(2, 2))
+    ready = page(Page.BOARD, ("出战", *choose), stage=stage, capacity=(2, 2))
+    for f in (before, ready):
+        monkeypatch.setattr(f, "assigned_halo", lambda point: point == holder.point)
+        monkeypatch.setattr(f, "slot_occupied", lambda point: point in (holder.point, unnamed.point))
+    effect = (("前台专家", *option), ("获得40%伤害增幅", 420, 537), ("乱披风拳法", 1490, 436))
+    empty = page(Page.HALO, *effect)
+    placed = page(Page.HALO, *effect, ("确认", *confirm))
+    placed.image = CANVAS.copy()
+    x1, y1, x2, y2 = ui.HALO_TARGET_FACE
+    ImageDraw.Draw(placed.image).rectangle((x1, y1, (x1 + x2) // 2, y2), fill=(186, 93, 124))
+    assert not empty.halo_target_present() and placed.halo_target_present()
+    match_halo_at(monkeypatch, (empty, placed), ui.HALO_FRONT[1] if portrait_matches else None)
+    won = page(Page.MATCH_RESULT, ("对局胜利", 960, 260), ("返回货币战争", *finish))
+    lobby, modes = home(), mode(("进入超频博弈", 1638, 960))
+    rank_page = page(Page.RANK, ("开始对局", 1680, 965), rank_mode="overclock", enemy_rank=1)
+    world.cfg.currencywars_type = "overclock"
+    world.cfg.currencywars_rank_difficulty = "lowest"
+    routes = {(lobby, (1600, 972)): modes, (modes, (1638, 960)): rank_page,
+              (rank_page, (1680, 965)): before, (before, choose): empty, (placed, option): placed,
+              (placed, confirm): ready, (ready, choose): won, (won, finish): lobby}
+    state = drive(monkeypatch, world, before if entry == "takeover" else lobby,
+                  lambda s, point: setattr(s, "frame", routes[s.frame, point]))
+
+    def drag(start, end, **_):
+        assert (start, end) == tuple((x / 1920, y / 1080) for x, y in (ui.HALO_FRONT[1], ui.HALO_TARGET))
+        state.frame = placed
+        return True
+
+    world.auto.drag_mouse.side_effect = drag
+    monkeypatch.setattr(world.war, "_settle_board", lambda f: f)
+    monkeypatch.setattr(world.war, "_collect_preparation_rewards", lambda f: (f, True))
+    monkeypatch.setattr(world.war, "_read_board", lambda f, **_: (f, team))
+    monkeypatch.setattr(world.war, "_equip", lambda f, _: f)
+    monkeypatch.setattr(world.war, "get_reward", lambda f: (
+        f, (18000 if world.war.result else 15000, 18000), False))
+    if entry == "daily":
+        from tasks.daily import daily
+
+        monkeypatch.setattr(daily, "CurrencyWars", lambda: world.war)
+        assert daily.Daily._run_currency_wars()
+    else:
+        assert world.war.start(resume=entry == "takeover", loop=entry == "loop")
+    assert state.frame is lobby and world.war.result is True
+    assert world.war._loop_matches == (1 if entry == "loop" else 0)
+    assert world.auto.drag_mouse.call_count == 1
+    assert not state.keys
+    assert state.clicks[-5:] == [(Page.BOARD, choose), (Page.HALO, option), (Page.HALO, confirm),
+                                 (Page.BOARD, choose), (Page.MATCH_RESULT, finish)]
 
 
 def test_halo_mentor_takeover_confirms_an_existing_selection(monkeypatch, world):

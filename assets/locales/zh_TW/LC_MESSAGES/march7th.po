@@ -81,10 +81,6 @@ msgstr "任務完成"
 msgid "任务已停止"
 msgstr "任務已停止"
 
-#: app/main_window.py:338
-msgid "切换主题"
-msgstr "切換主題"
-
 #: app/main_window.py:326
 msgid "赞赏"
 msgstr "贊助"
@@ -8129,3 +8125,27 @@ msgstr "模擬器 display 0 的截圖輸出不符合 PNG 格式（{size} 位元�
 #: app/tools/desktop_twin.py:713
 msgid "查看排查方法"
 msgstr "查看排查方法"
+
+#: app/setting_interface.py:2569
+msgid "后台操作模式已移至「游戏连接」"
+msgstr "背景操作模式已移至「遊戲連線」"
+
+#: app/setting_interface.py:1163
+msgid "界面主题"
+msgstr "介面主題"
+
+#: app/setting_interface.py:1164
+msgid "选择应用的显示主题"
+msgstr "選擇應用程式的顯示主題"
+
+#: app/setting_interface.py:1165
+msgid "跟随系统"
+msgstr "跟隨系統"
+
+#: app/setting_interface.py:1165
+msgid "浅色"
+msgstr "淺色"
+
+#: app/setting_interface.py:1165
+msgid "深色"
+msgstr "深色"

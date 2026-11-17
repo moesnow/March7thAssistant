@@ -11,18 +11,21 @@ EVEY_ANIMATION = './assets/app/images/evernight/evey-floating.png'
 class EvernightEasterEgg:
     def __init__(self, clock=monotonic):
         self._clock = clock
-        self._toggles = deque(maxlen=3)
+        self._clicks = deque(maxlen=3)
         self.unlocked = False
         self.animation_played = False
 
-    def record_manual_toggle(self):
+    def record_click(self):
+        """Return True only for the click that unlocks this session's egg."""
         if self.unlocked:
-            return
+            return False
         now = self._clock()
-        self._toggles.append(now)
-        if len(self._toggles) == 3 and now - self._toggles[0] <= 5:
+        self._clicks.append(now)
+        if len(self._clicks) == 3 and now - self._clicks[0] <= 5:
             self.unlocked = True
-            self._toggles.clear()
+            self._clicks.clear()
+            return True
+        return False
 
     def consume_animation(self, dark):
         """Claim the one playback only when the unlocked dark UI is visible."""

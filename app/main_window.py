@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt, QSize, QPoint, QFileSystemWatcher, Signal, QObjec
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QLabel, QHBoxLayout, QVBoxLayout
 
-from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, setTheme, toggleTheme, Theme, themeColor, qconfig, isDarkTheme
+from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, themeColor, qconfig, isDarkTheme
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import InfoBar, InfoBarIcon, InfoBarPosition, PrimaryPushButton, SystemTrayMenu, ToolTipFilter, ToolTipPosition
 from app.tools.game_starter import GameStartStatus, GameLaunchThread
@@ -25,7 +25,7 @@ from .components.evey_animation import EveyAnimation
 
 from .card.messagebox_custom import MessageBoxSupport
 from .tools.check_update import checkUpdate
-from .tools.check_theme_change import checkThemeChange
+from .tools.check_theme_change import checkThemeChange, applyTheme
 from .tools.announcement import checkAnnouncement
 from .tools.disclaimer import disclaimer
 
@@ -117,7 +117,7 @@ class ClickableLabel(QLabel):
         super().mousePressEvent(event)
 
 
-class ThemeToggleFilter(QObject):
+class EasterEggClickFilter(QObject):
     clicked = Signal()
 
     def __init__(self, logo):
@@ -128,7 +128,7 @@ class ThemeToggleFilter(QObject):
         if (event.type() in (QEvent.Type.MouseButtonPress, QEvent.Type.MouseButtonDblClick,
                              QEvent.Type.MouseButtonRelease)
                 and event.button() == Qt.MouseButton.LeftButton):
-            # 松开时切换；吞掉双击，避免快速连点 LOGO 使窗口最大化。
+            # 只记录完整点击；吞掉双击，避免快速连点 LOGO 使窗口最大化。
             if (event.type() == QEvent.Type.MouseButtonRelease
                     and obj.rect().contains(event.position().toPoint())):
                 self.clicked.emit()
@@ -211,7 +211,7 @@ class MainWindow(MSFluentWindow):
         # self.setMicaEffectEnabled(False)
 
         setThemeColor('#f18cb9', lazy=True)
-        setTheme(Theme.AUTO, lazy=True)
+        applyTheme(self)
 
         # 禁用最大化
         # self.titleBar.maxBtn.setHidden(True)
@@ -239,12 +239,9 @@ class MainWindow(MSFluentWindow):
         else:
             self.resize(min_width, min_height)
 
-        self.titleBar.iconLabel.setCursor(Qt.CursorShape.PointingHandCursor)
-        theme_toggle = ThemeToggleFilter(self.titleBar.iconLabel)
-        theme_toggle.clicked.connect(self._on_manual_theme_toggle)
-        self.titleBar.iconLabel.installEventFilter(ToolTipFilter(self.titleBar.iconLabel, 300, ToolTipPosition.BOTTOM))
-        set_application_icon(self, application_icon_path(isDarkTheme()), 'March7th Assistant')
-        self.titleBar.setIcon(application_icon_path(isDarkTheme(), titlebar=True))
+        easter_egg_click = EasterEggClickFilter(self.titleBar.iconLabel)
+        easter_egg_click.clicked.connect(self._on_logo_clicked)
+        set_application_icon(self, application_icon_path(), 'March7th Assistant')
         self.setWindowTitle("March7th Assistant")
         # 分离系统窗口标题与应用内标题栏文本
         self._refreshWindowTitleBar()
@@ -335,8 +332,6 @@ class MainWindow(MSFluentWindow):
         return badge
 
     def _refreshWindowTitleBar(self):
-        self.titleBar.iconLabel.setToolTip(tr('切换主题'))
-        self.titleBar.iconLabel.setAccessibleName(tr('切换主题'))
         if hasattr(self, 'titleBar') and hasattr(self.titleBar, 'setTitle'):
             self.titleBar.setTitle(self._baseTitleBarText())
 
@@ -375,17 +370,23 @@ class MainWindow(MSFluentWindow):
             self._evernight_active = active
             self.setWindowTitle(self._assistant_name())
             self._refreshDesktopTwinIndicators()
-        set_application_icon(self, application_icon_path(dark, active), self._assistant_name())
-        self.titleBar.setIcon(application_icon_path(dark, active, titlebar=True))
+            set_application_icon(self, application_icon_path(active), self._assistant_name())
+            self.titleBar.setIcon(application_icon_path(active, titlebar=True))
         self.homeInterface.setEvernightMode(active)
         self._refreshWindowTitleBar()
         # 先让深色三月七界面重绘，再播放首次替换动画。
         if self._evernight.unlocked and dark and not self._evernight.animation_played:
             QTimer.singleShot(0, self._play_evey_animation)
 
-    def _on_manual_theme_toggle(self):
-        self._evernight.record_manual_toggle()
-        toggleTheme(lazy=True)
+    def _on_logo_clicked(self):
+        if not self._evernight.record_click():
+            return
+        if not isDarkTheme():
+            # Reuse the setting's save/apply path; themeChanged starts the animation.
+            combo = self.settingInterface.themeCard.comboBox
+            combo.setCurrentIndex(combo.findData('dark'))
+        else:
+            self._play_evey_animation()
 
     def _play_evey_animation(self):
         if not self.isVisible() or self.isMinimized():
@@ -784,8 +785,7 @@ class MainWindow(MSFluentWindow):
             'homeInterface': tr('主页'), 'helpInterface': tr('帮助'),
             'warpInterface': tr('抽卡记录'), 'toolsInterface': tr('工具箱'),
             'workflowInterface': tr('流程编排'), 'logInterface': tr('日志'),
-            'settingInterface': tr('设置'), 'startGameButton': tr('启动游戏'),
-            'avatar': tr('赞赏'),
+            'settingInterface': tr('设置'), 'startGameButton': tr('启动游戏'), 'avatar': tr('赞赏'),
         }
         for route, text in labels.items():
             self.navigationInterface.widget(route).setText(text)
@@ -947,6 +947,7 @@ class MainWindow(MSFluentWindow):
             # 重新加载配置
             log.info("[config-watch] 重新加载配置文件并刷新界面")
             cfg._load_config(None, save=False)
+            applyTheme(self)
 
             # 重新初始化通知器
             try:

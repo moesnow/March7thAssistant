@@ -1,4 +1,4 @@
-"""Transparent dark portraits and separate small application icons."""
+"""Transparent dark portraits with textures from the original artwork."""
 from functools import lru_cache
 from pathlib import Path
 
@@ -47,10 +47,9 @@ def portrait_artwork(path, dark):
     return QPixmap(path), QPixmap()
 
 
-def application_icon_path(dark, evernight=False, *, titlebar=False):
-    """Select March 7th, sleeping March 7th or Evernight for each surface."""
-    if not dark:
+def application_icon_path(evernight=False, *, titlebar=False):
+    """Keep the original March 7th icon until the Easter egg is displayed."""
+    if not evernight:
         return './assets/logo/March7th.ico'
-    group = 'evernight' if evernight else 'march7th-night'
     filename = 'titlebar.ico' if titlebar else 'icon.ico'
-    return str(Path('./assets/logo') / group / filename)
+    return str(Path('./assets/logo/evernight') / filename)

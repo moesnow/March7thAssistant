@@ -37,6 +37,7 @@ from tasks.weekly.currency_wars_strategy import (
 from tasks.weekly.divergent_universe import DivergentUniverse
 from tasks.base.tasks import start_task
 from .tools.check_update import checkUpdate
+from .tools.check_theme_change import applyTheme
 from .tools.adb_service import display_connection
 from .tools.agent_prompt import build_agent_prompt
 from utils import clipboard
@@ -1156,6 +1157,14 @@ class SettingInterface(ScrollArea):
             tr('任务完成后列车长唱歌提示帕！'),
             "play_audio"
         )
+        self.themeCard = ComboBoxSettingCard2(
+            'ui_theme',
+            FIF.BRUSH,
+            tr('界面主题'),
+            tr('选择应用的显示主题'),
+            texts={tr('跟随系统'): 'auto', tr('浅色'): 'light', tr('深色'): 'dark'},
+        )
+        self.themeCard.comboBox.currentIndexChanged.connect(lambda _: applyTheme(self.parent))
         self.closeWindowActionCard = ComboBoxSettingCard2(
             "close_window_action",
             FIF.CLOSE,
@@ -2563,6 +2572,11 @@ class SettingInterface(ScrollArea):
         self.localControlModeCard.currentIndexChanged.connect(refresh_mouse_protection_option)
         refresh_mouse_protection_option()
         if sys.platform == 'win32':
+            self.localControlModeMovedCard = PushSettingCard(
+                tr('立即前往'),
+                FIF.GAME,
+                tr('后台操作模式已移至「游戏连接」'),
+            )
             self.autostartCard = AutostartSettingCard(
                 FIF.GAME,
                 tr('在用户登录时启动'),
@@ -2890,6 +2904,7 @@ class SettingInterface(ScrollArea):
         ])
         self.ProgramGroup.addSettingCard(self.exitAppAfterSuccess)
         self.ProgramGroup.addSettingCard(self.playAudioCard)
+        self.ProgramGroup.addSettingCard(self.themeCard)
         self.ProgramGroup.addSettingCard(self.closeWindowActionCard)
         self.ProgramGroup.addSettingCard(self.windowMemoryCard)
 
@@ -2908,6 +2923,7 @@ class SettingInterface(ScrollArea):
         self.MiscGroup.addSettingCard(self.autoBattleDetectEnableCard)
         self.MiscGroup.addSettingCard(self.ocrGpuAccelerationCard)
         if sys.platform == 'win32':
+            self.MiscGroup.addSettingCard(self.localControlModeMovedCard)
             self.MiscGroup.addSettingCard(self.autostartCard)
             self.MiscGroup.addSettingCard(self.uacFreeCard)
             self.MiscGroup.addSettingCard(self.debugModeEnableCard)
@@ -3040,6 +3056,10 @@ class SettingInterface(ScrollArea):
 
         connect_expand_state(self.afterFinishCard)
         connect_expand_state(self.localControlModeCard)
+        if sys.platform == 'win32':
+            self.localControlModeMovedCard.clicked.connect(
+                lambda: self.stackedWidget.setCurrentWidget(self.GameConnectionGroup)
+            )
 
         self.githubCard.clicked.connect(self.__openUrl("https://github.com/moesnow/March7thAssistant"))
         self.agentPromptCard.clicked.connect(self.__copyAgentPrompt)

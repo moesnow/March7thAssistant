@@ -121,9 +121,7 @@ class Power:
         immersifiers = Power.get_immersifier_count() if is_ornament else 0
         available = 0
         if rewards != 0 and not only_immersifiers:
-            available = Power.get(
-                use_supplement=not immersifier_only, minimum_power=0 if immersifiers else cost_per_wave,
-            )
+            available = Power.get(use_supplement=not immersifier_only)
         if rewards != 0 and not immersifiers and available < cost_per_wave:
             log.info("饰品提取资源不足，结束本副本项" if is_ornament else "开拓力不足，结束本副本项")
             return
@@ -253,7 +251,7 @@ class Power:
         return read_immersifier_stock(auto, GUIDE_IMMERSIFIERS)
 
     @staticmethod
-    def get(use_supplement=False, *, minimum_power=None):
+    def get(use_supplement=False):
         screen.change_to("map")
 
         def read():
@@ -261,8 +259,8 @@ class Power:
 
         balance = read()
         if use_supplement:
-            balance = supplement(auto, screen, cfg, balance, lambda: auto.click_element(
+            balance = supplement(auto, screen, cfg, balance, lambda: auto.find_element(
                 "./assets/images/share/power/trailblaze_power/trailblaze_power.png", "image", 0.9, crop=MAP_POWER,
-            ), read, return_screen="map", can_continue=minimum_power is not None and balance >= minimum_power)
+            ), read, return_screen="map", desktop=True)
         log.info(f"开拓力：{balance}/300")
         return balance
