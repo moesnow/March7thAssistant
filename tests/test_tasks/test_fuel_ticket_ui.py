@@ -179,13 +179,14 @@ def test_cost_crop_recovers_missing_small_number_and_refuses_conflict():
     wrong=changed(initial,"10","20")
     assert confirm_dialog(refine_cost_words(im,wrong,read),BATCH,DISPLAY) is None
 
-def test_two_wave_batch_requires_real_stock_delta():
+def test_two_wave_batch_uses_progress_and_visible_target_or_stock():
     from tasks.power.fuel_ticket_ui import stock_reading, count_plus
     b=FuelTicketBatch(CRIMSON_CALYX,RED_NAME,2,20,2)
     pre=changed(changed(changed(confirmation(),"刷取次数1","刷取次数2"),"10","20"),"1","2")
     assert confirm_dialog(pre,b,DISPLAY)
     assert not confirm_dialog(pre,BATCH,DISPLAY)
-    assert count_plus(words(("24+",.701,.546))) == (.698,.546)
+    assert count_plus(confirmation()+words(("24+今",.701,.546))) == (.698,.546)
+    assert count_plus(confirmation()) == (.698,.546)
     assert count_plus(words(("+",.62,.704))) is None
     actual=words(("1039/1000",.692,.061),("103/300",.879,.061),
         ("快速刷取",.50,.248),("刷取次数",.475,.313),("2/2",.54,.314),
@@ -196,8 +197,12 @@ def test_two_wave_batch_requires_real_stock_delta():
     assert after==(1039,103)
     assert receipt_dialog(actual,b,DISPLAY,before_stock=(1041,123),after_stock=after).completed==2
     assert receipt_dialog(actual,b,DISPLAY,before_stock=(1041,122),after_stock=after).completed==2
+    # Stock OCR is supplemental when the completed progress and reward name agree.
+    assert receipt_dialog(actual,b,DISPLAY).completed==2
+    hidden=[w for w in actual if w.text!="欢愉之蕾·拟造花萼（赤）"]
+    assert receipt_dialog(hidden,b,DISPLAY,before_stock=(1041,123),after_stock=after).completed==2
     for before in (None,(1040,123),(1041,125),(1041,121)):
-        assert receipt_dialog(actual,b,DISPLAY,before_stock=before,after_stock=after) is None
+        assert receipt_dialog(hidden,b,DISPLAY,before_stock=before,after_stock=after) is None
     assert receipt_dialog(changed(actual,"2/2","1/2"),b,DISPLAY,before_stock=(1041,123),after_stock=after) is None
     assert receipt_dialog(changed(actual,"10","30"),b,DISPLAY,before_stock=(1041,123),after_stock=after) is None
     assert receipt_dialog(changed(actual,"欢愉之蕾·拟造花萼（赤）","毁灭之蕾·拟造花萼（赤）"),b,DISPLAY,before_stock=(1041,123),after_stock=after) is None
@@ -210,7 +215,59 @@ def test_power_plan_batch_only_decrements_verified_count(monkeypatch):
     quick.run_batch.side_effect=[2,1]
     assert power.Power.execute_power_plan()
     assert quick.run_batch.call_args_list==[
-        call(GOLDEN_CALYX,"回忆之蕾",30,2),call(GOLDEN_CALYX,"回忆之蕾",10,1)]
+        call(GOLDEN_CALYX,"回忆之蕾",30,3),call(GOLDEN_CALYX,"回忆之蕾",10,1)]
     assert config.set_value.call_args_list==[
         call("power_plan",[[GOLDEN_CALYX,"回忆之蕾",1]]),call("power_plan",[])]
     battle.prepare_instance.assert_not_called()
+
+
+@pytest.mark.parametrize("balance,stock,requested,expected", [
+    (92,1039,9,9), (300,100,30,24), (92,4,9,4),
+    (92,1039,3,3), (92,1,9,1),
+])
+def test_prepare_max_batch_without_plus_ocr(monkeypatch,balance,stock,requested,expected):
+    from tasks.power import fuel_ticket_ui as ui
+    from tasks.power.fuel_ticket import plan_fuel_ticket_batch
+    screen=ui.PCFuelTicketScreen(Mock(), Mock(), DISPLAY, sleep=lambda _: None)
+    image=Image.new("RGB",(1920,1080))
+    base=confirmation()+words((f"{stock}/1000",.692,.061),(f"{balance}/300",.879,.061),
+                              ("24+今",.701,.546))
+    selected=changed(changed(changed(base,"刷取次数1",f"刷取次数{expected}"),
+                             "10",str(expected*10)),"1",str(expected))
+    frames=iter([[],base,selected])
+    screen._frame=lambda: (image,(0,0),1,next(frames))
+    monkeypatch.setattr(ui,"entry_button",lambda *a: Word("进入",.8,.4))
+    monkeypatch.setattr(ui,"ticket_icon",lambda *a:(.74,.4))
+    screen._click=Mock(return_value=True)
+    batch=plan_fuel_ticket_batch(CRIMSON_CALYX,RED_NAME,requested,balance,balance//10,enabled=True)
+    screen.batch=batch
+    assert screen.prepare(batch)
+    assert screen.batch.waves==expected
+    assert screen._click.call_count==expected  # entry + N-1 slider clicks, no submit
+
+
+@pytest.mark.parametrize("count", [9,24])
+def test_large_receipt_only_visible_rows_needed(count):
+    batch=FuelTicketBatch(CRIMSON_CALYX,RED_NAME,count,count*10,count)
+    visible=words(("快速刷取",.50,.248),("刷取次数",.475,.313),(f"{count}/{count}",.54,.314),
+        ("第4次刷取",.254,.494),("消耗",.674,.493),("10",.726,.494),
+        ("欢愉之蕾·拟造花萼（赤）",.381,.58),("关闭",.402,.756),("再来一次",.619,.756))
+    receipt=receipt_dialog(visible,batch,DISPLAY)
+    assert (receipt.completed,receipt.spent_tickets,receipt.spent_power)==(count,count,count*10)
+    assert receipt_dialog(changed(visible,f"{count}/{count}",f"{count-1}/{count}"),batch,DISPLAY) is None
+
+
+def test_batch_budget_shadows_and_relics(monkeypatch):
+    from tasks.power.fuel_ticket import plan_fuel_ticket_batch
+    assert plan_fuel_ticket_batch(STAGNANT_SHADOW,"虚影",30,300,100,enabled=True).waves==8
+    for category in ("侵蚀隧洞","饰品提取","历战余响"):
+        assert plan_fuel_ticket_batch(category,"任意",30,300,100,enabled=True) is None
+
+
+def test_count_and_power_can_confirm_when_coupon_digit_unreadable():
+    batch=FuelTicketBatch(CRIMSON_CALYX,RED_NAME,9,90,9)
+    pre=changed(changed([w for w in confirmation() if w.text!="1"],"刷取次数1","刷取次数9"),"10","90")
+    pre+=words(("1039/1000",.692,.061),("92/300",.879,.061))
+    assert confirm_dialog(pre,batch,DISPLAY)
+    assert confirm_dialog(changed(pre,"90","80"),batch,DISPLAY) is None
+    assert confirm_dialog(pre+words(("8",.54,.64)),batch,DISPLAY) is None

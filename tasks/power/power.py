@@ -142,7 +142,7 @@ class Power:
                             if instance_type == "拟造花萼（赤）" else name)
             ui = PCFuelTicketScreen(auto, Instance, display_name)
             while available >= cost_per_wave and (remaining is None or remaining > 0):
-                requested = 2 if remaining is None else min(remaining, 2)
+                requested = available // cost_per_wave if remaining is None else min(remaining, available // cost_per_wave)
                 done = (ui.run_batch(instance_type, name, available, requested)
                         if getattr(cfg, "fuel_ticket_batch_enable", False) is True
                         else ui.run_one(instance_type, name, available))

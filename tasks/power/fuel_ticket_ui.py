@@ -9,7 +9,7 @@ import time
 import unicodedata
 
 from tasks.power.fuel_ticket import (
-    FuelTicketReceipt, FuelTicketSettlementUnknown, execute_fuel_ticket_batch,
+    FuelTicketBatch, FuelTicketReceipt, FuelTicketSettlementUnknown, verify_fuel_ticket_receipt,
     parse_clear_progress, plan_fuel_ticket_batch,
 )
 
@@ -166,13 +166,15 @@ def stock_reading(words):
 
 
 def count_plus(words):
-    """The verified count slider row, never the bottom Confirm button."""
-    direct=exact(words,"+",region=(.685,.515,.71,.575))
-    if direct:
-        return (direct.x,direct.y)
-    # The 24 maximum and plus may be one OCR box at initial count 1.
-    merged=exact(words,"24+",region=(.66,.515,.73,.575))
-    return (.698,merged.y) if merged else None
+    """Known PC slider geometry, independent of OCR reading the plus glyph.
+
+    Only use after the actual target/single-run confirmation has been verified.
+    The count label must still be in the known slider row.
+    """
+    labels = [w for w in words if w.confidence >= .75
+              and .30 < w.x < .65 and .43 < w.y < .55
+              and re.fullmatch(r"刷取次数[0-9]{0,2}", normalized(w.text))]
+    return (.698, .546) if len(labels) == 1 else None
 
 
 def confirm_dialog(words, batch, display_name):
@@ -195,8 +197,20 @@ def confirm_dialog(words, batch, display_name):
                             and .005<w.x-n.x<.075 and abs(w.y-n.y)<.015 for w in words):
             return None
     cost = exact(words,"消耗",region=(.30,title.y,.65,cancel.y))
-    if not cost or _costs(words,cost)!=(batch.power,batch.tickets):
+    if not cost:
         return None
+    costs = _costs(words,cost)
+    if costs != (batch.power,batch.tickets):
+        # The tiny coupon digit may disappear in OCR. A clearly read stamina
+        # amount plus sufficient observed coupon inventory is enough; never
+        # accept a contradictory pair of visible costs.
+        nums = [w for w in words if w.confidence >= .75
+                and re.fullmatch(r"[0-9]{1,3}", normalized(w.text))
+                and cost.x+.012 < w.x < cost.x+.20 and abs(w.y-cost.y)<.018]
+        stock = stock_reading(words)
+        if (costs is not None or len(nums)!=1 or int(normalized(nums[0].text))!=batch.power
+                or not stock or stock[0]<batch.tickets or stock[1]<batch.power):
+            return None
     return confirm
 
 
@@ -219,38 +233,35 @@ def receipt_dialog(words, batch, display_name, *, before_stock=None, after_stock
                 progress=tuple(int(v.strip()) for v in values[0].text.split("/"))
     if progress!=(batch.waves,batch.waves):
         return None
-    if batch.waves == 2:
-        # The first row header can scroll offscreen. Confirm both reward
-        # labels and the final row, then independently check stock deltas.
-        label=normalized(display_name+batch.instance_type)
-        targets=[w for w in words if w.confidence>=.75 and normalized(w.text)==label
-                 and title.y<w.y<close.y]
-        final=exact(words,"第2次刷取",region=(.12,.35,.42,.68))
-        if len(targets)!=2 or not final or not(targets[0].y!=targets[1].y):
+    if batch.waves > 1:
+        # Large receipts scroll: the full set of reward rows and the final
+        # row need not be visible. The labelled N/N progress is authoritative.
+        # Cross-check the selected reward name or real stock movement, not
+        # the number of OCR boxes. A known contradictory reward is not valid.
+        label = normalized(display_name+batch.instance_type)
+        targets = [w for w in words if w.confidence >= .75 and title.y < w.y < close.y
+                   and any(normalized(w.text).endswith(normalized(kind)) for kind in
+                           ("拟造花萼（金）", "拟造花萼（赤）", "凝滞虚影"))]
+        if any(normalized(w.text)!=label for w in targets):
             return None
-        if not(any(w.y<final.y for w in targets) and any(w.y>final.y for w in targets)):
+        stock_ok = (before_stock is not None and after_stock is not None
+                    and before_stock[0]-after_stock[0] == batch.tickets
+                    and before_stock[1]-after_stock[1] in (batch.power,batch.power-1))
+        if not targets and not stock_ok:
             return None
-        if (before_stock is None or after_stock is None
-                or before_stock[0]-after_stock[0]!=batch.tickets
-                or before_stock[1]-after_stock[1] not in (batch.power,batch.power-1)):
-            return None
-        # Require agreement with the final displayed row's unit stamina cost.
-        cost=exact(words,"消耗",region=(.55,final.y-.025,.90,final.y+.025))
-        if not cost:
-            return None
-        nums=[w for w in words if w.confidence>=.75 and
-              cost.x+.012<w.x<cost.x+.115 and abs(w.y-cost.y)<.018
-              and re.fullmatch(r"[0-9]{1,3}",normalized(w.text))]
-        nums.sort(key=lambda w:w.x)
-        if not nums or int(normalized(nums[0].text))!=batch.power//2:
-            return None
-        if len(nums)>2 or (len(nums)==2 and int(normalized(nums[1].text))!=batch.tickets//2):
-            return None
-        return FuelTicketReceipt(batch.instance_type,batch.name,2,2,
-                                 (before_stock[0]-after_stock[0])*10,
-                                 before_stock[0]-after_stock[0])
-    if batch.waves != 1:
-        return None
+        # A visible per-wave cost is useful but need not be on-screen.
+        for cost in (w for w in words if normalized(w.text)=="消耗"
+                     and w.confidence>=.75 and .55<w.x<.9 and title.y<w.y<close.y):
+            nums=sorted((w for w in words if w.confidence>=.75
+                         and cost.x+.012<w.x<cost.x+.115 and abs(w.y-cost.y)<.018
+                         and re.fullmatch(r"[0-9]{1,3}",normalized(w.text))),key=lambda w:w.x)
+            if nums and int(normalized(nums[0].text))!=batch.power//batch.waves:
+                return None
+        # The confirmed dialog established unit cost; N/N establishes the
+        # actual completed count. Do not depend on OCR of every reward row.
+        return FuelTicketReceipt(batch.instance_type,batch.name,progress[0],progress[1],
+                                 progress[0]*(batch.power//batch.waves),
+                                 progress[0]*(batch.tickets//batch.waves))
     # The result itself must show the selected displayed title and category.
     label = normalized(display_name+batch.instance_type)
     if len([w for w in words if w.confidence>=.75 and label==normalized(w.text)
@@ -340,20 +351,35 @@ class PCFuelTicketScreen:
                     f=self._frame()
                     if confirm_dialog(f[3],batch,self.display_name):
                         return True
-                    if batch.waves==2:
-                        from tasks.power.fuel_ticket import FuelTicketBatch
-                        single=FuelTicketBatch(batch.instance_type,batch.name,1,batch.power//2,batch.tickets//2)
+                    if batch.waves>1:
+                        single=FuelTicketBatch(batch.instance_type,batch.name,1,
+                                               batch.power//batch.waves,batch.tickets//batch.waves)
                         if confirm_dialog(f[3],single,self.display_name):
                             balances=stock_reading(f[3])
-                            pos=count_plus(f[3])
-                            if not balances or balances[0]<batch.tickets or balances[1]<batch.power or not pos:
-                                return self._cancel()
-                            if not self._click(f,*pos):
-                                self._fatal("助燃券批量次数调整结果不明")
-                            self.sleep(.5)
-                            selected=self._frame()
-                            if confirm_dialog(selected[3],batch,self.display_name):
+                            if balances:
+                                chosen=plan_fuel_ticket_batch(batch.instance_type,batch.name,
+                                    batch.waves,min(batch.power,balances[1]),balances[0],enabled=True)
+                                if chosen is None:
+                                    return self._cancel()
+                                self.batch=chosen
+                                batch=chosen
+                            if batch.waves==1:
                                 return True
+                            pos=count_plus(f[3])
+                            if not pos or not 1.69<f[0].width/f[0].height<1.82:
+                                return self._cancel()
+                            # All these inputs are non-paying slider clicks.
+                            # Verify the actual count and total before confirming.
+                            for _ in range(batch.waves-1):
+                                if not self._click(f,*pos):
+                                    return self._cancel()
+                                self.sleep(.12)
+                            self.sleep(.5)
+                            for _ in range(3):
+                                selected=self._frame()
+                                if confirm_dialog(selected[3],batch,self.display_name):
+                                    return True
+                                self.sleep(.3)
                             return self._cancel()
                     if exact(f[3],"快速刷取",region=(.3,.13,.7,.4)):
                         if exact(f[3],"取消",region=(.22,.48,.52,.88)):
@@ -373,14 +399,14 @@ class PCFuelTicketScreen:
         if not button:
             self._fatal("助燃券消费确认页发生变化，未提交")
         self.before_stock=stock_reading(frame[3])
-        if batch.waves==2 and (not self.before_stock or self.before_stock[0]<batch.tickets or self.before_stock[1]<batch.power):
+        if batch.waves>1 and self.before_stock and (self.before_stock[0]<batch.tickets or self.before_stock[1]<batch.power):
             self._fatal("助燃券批量库存不能核实，未提交")
         if not self._click(frame,button.x,button.y):
             self._fatal("助燃券确认点击结果不明，停止后续消耗")
 
     def read_receipt(self):
         batch=self.batch
-        deadline=time.monotonic()+30
+        deadline=time.monotonic()+max(30, 10+3*batch.waves)
         while time.monotonic()<deadline:
             frame=self._frame()
             if receipt:=receipt_dialog(frame[3],batch,self.display_name,before_stock=self.before_stock,after_stock=stock_reading(frame[3])):
@@ -400,15 +426,14 @@ class PCFuelTicketScreen:
             self._fatal("速刷后未确认返回副本列表")
 
     def run_batch(self,category,name,available,requested):
-        # Start with two paid waves; larger scrollable receipts have not yet
-        # been validated. An unsubmitted/cancelled batch may use a single wave.
+        # Request all affordable waves up to the game's per-dialog limit.
+        # Actual inventory is read from the opened dialog and can reduce this.
         cost=30 if category=="凝滞虚影" else 10
-        if requested>=2 and available>=2*cost:
-            batch=plan_fuel_ticket_batch(category,name,2,available,2*(cost//10),enabled=True)
-            if batch is not None:
-                result=self._run(batch)
-                if result:
-                    return result
+        batch=plan_fuel_ticket_batch(category,name,requested,available,available//10,enabled=True)
+        if batch is not None and batch.waves>1:
+            result=self._run(batch)
+            if result:
+                return result
         return self.run_one(category,name,available)
 
     def run_one(self,category,name,available):
@@ -425,7 +450,10 @@ class PCFuelTicketScreen:
         self.batch=batch
         self.before_stock=None
         try:
-            return execute_fuel_ticket_batch(self,self.batch)
+            if not self.prepare(self.batch):
+                return 0
+            self.submit(self.batch)
+            return verify_fuel_ticket_receipt(self.batch,self.read_receipt())
         except FuelTicketSettlementUnknown as e:
             self._fatal(str(e))
         except Exception as e:
