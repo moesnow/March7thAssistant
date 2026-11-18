@@ -506,7 +506,7 @@ def deployment(board: Board, *, overflow=False) -> tuple[Move, ...]:
         if reserve is not None and (target := next((s for s in rear if can_move(board, reserve, s)), None)):
             return ((reserve, target),)
     if not overflow and not front_output and not need_output:
-        target = next((slot for slot in front if not slot.occupied), None)
+        target = next((slot for slot in front if not slot.occupied and not slot.blocked), None)
         if target is not None:
             source = next((slot for slot in rear if slot.unit and _can_deploy_to(board, slot.unit, "front")
                            and front_damage(slot.unit)

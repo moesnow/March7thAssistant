@@ -56,6 +56,7 @@ BOARD_LEVEL = (242, 881, 352, 932)
 BOARD_XP_COST = (303, 972, 342, 1008)
 BOARD_FIGHT = (1690, 704, 1918, 800)
 FRONT_Y, BACK_Y, BENCH_Y = 405, 667, 912
+FRONT_X = (745, 888, 1030, 1173)
 BENCH_POINTS = tuple((440 + i * 125, BENCH_Y) for i in range(9))
 CARD_COST_PALETTE = np.array(((128, 131, 148), (44, 130, 121), (89, 112, 226), (143, 109, 248),
                               (209, 170, 79)), dtype=np.int16)
@@ -881,6 +882,8 @@ class Frame:
         return None
 
     def slot_occupied(self, point: Point) -> bool:
+        if point[1] == FRONT_Y and point in self.front_markers:
+            return False
         if point[1] == BENCH_Y and point in self.black_hole_slots:
             return False
         # 空卡位只有低对比的背景和细框。采用内区纹理，避免边框、星徽和光环。
@@ -924,17 +927,25 @@ class Frame:
         if not xs:
             return ()
         result = []
-        for zone, centers, y in (("front", (745, 888, 1030, 1173), FRONT_Y),
+        for zone, centers, y in (("front", FRONT_X, FRONT_Y),
                                  ("back", xs, BACK_Y)):
             for i, x in enumerate(centers):
                 point = (x, y)
                 occupied = self.slot_occupied(point)
-                result.append(Slot(zone, i, point, occupied, blocked=occupied and self.fixed_partner(point)))
+                blocked = point in self.front_markers or occupied and self.fixed_partner(point)
+                result.append(Slot(zone, i, point, occupied, blocked=blocked))
         return tuple(result)
 
     def slots(self) -> tuple[Slot, ...]:
         field = self.field_slots()
         return field + self.bench_slots() if field else ()
+
+    @cached_property
+    def front_markers(self) -> frozenset[Point]:
+        # 金色弯月星标既不是人物肖像，也没有可确认的空卡位，不能计入人口或用作拖动目标。
+        return frozenset((x, FRONT_Y) for x in FRONT_X if not any(self._card_role((x, FRONT_Y), 44))
+                         and self.match("screen/currency_wars/s2_front_star_marker.png",
+                                        (x - 52, FRONT_Y - 46, x + 52, FRONT_Y + 46), 0.86))
 
     @cached_property
     def black_hole_slots(self) -> frozenset[Point]:
