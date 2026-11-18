@@ -82,6 +82,9 @@ SAFE_BENEFITS = ("免费刷新", "额外金币", "获得金币", "简易装备",
                  "伤害提高", "伤害增幅", "额外造成", "回复生命值", "经验", "治疗",
                  "前台强度", "后台强度", "速度增幅提高", "战利品晶矿")
 EVENT_RISKS = ("失去", "消耗", "出售", "替换", "变为", "无法上场", "随机移除", "敌人难度", "扣除", "损失")
+# 只确认不会给持有候补设置额外收益或身份的投资。无法核实（含采购专员）的局不主动清席。
+ANAXA_BENCH_NEUTRAL_INVESTMENTS = frozenset((*NEUTRAL_ENVIRONMENTS, "人才下沉", "长线利好", "轮岗",
+                                             "经济过热", "白银时代", "黄金时代", "过剩经费", "全速推进"))
 INVESTMENT_BLACKLIST = ("全员晋升",)
 INVESTMENT_RESTRICTIONS = ("节省工位", "只有3个备战", "奋斗协议", "钻石商人", "长线空头", "无法合成")
 
@@ -249,6 +252,7 @@ class CurrencyWars:
         self.weekly_score = None
         self.weekly_reward_pending = False
         self._start_match_sent = False
+        self.anaxa_bench_history_known = False
         self.supply_attempted: dict[int, tuple[int, int] | None] = {}
         self._reset_supply()
 
@@ -793,6 +797,7 @@ class CurrencyWars:
         )
 
     def _resume_saved_match(self, frame, *, expected_mode=None):
+        self.anaxa_bench_history_known = False
         def resume_button(f, mode):
             if f.page == Page.MODES and f.menu_mode is not None and (mode is None or f.menu_mode == mode):
                 return f.find(*ui.CONTINUE_MATCH, area=ui.BOTTOM_RIGHT)
@@ -1046,10 +1051,13 @@ class CurrencyWars:
                 return self._accept_recovered_match(f)
             return f.page in PLAY_PAGES - {Page.MATCH_RESULT, Page.NODE_RESULT, Page.BATTLE}
 
-        return self._click_to(
+        opened = self._click_to(
             frame, start_button, entered, "未确认开局。请检查是否存在未完成对局",
             seconds=24, attempts=3, retry_after=5, before_click=start_match,
         )
+        self.anaxa_bench_history_known = (not self.default_strategy and self.lineup in (None, strategy.LINEUPS[strategy.HIGH_ANAXA])
+                                         and self._start_match_sent and opened.stage in (None, "1-1"))
+        return opened
 
     @staticmethod
     def _can_take_over(frame, *, resume):
@@ -1061,6 +1069,7 @@ class CurrencyWars:
         return True
 
     def _enter_with_recovery(self, frame, *, resume, weekly_entry=False):
+        self.anaxa_bench_history_known = False
         self._start_match_sent = False
         for attempt in range(MAX_ENTRY_ATTEMPTS):
             try:
@@ -1214,6 +1223,11 @@ class CurrencyWars:
                     return frame, None
                 if name and frame.slot_occupied(slot.point):
                     current_portrait = cv2.resize(frame.slot_mark(slot.point), (12, 12)).astype(np.int16)
+                    if self.anaxa_bench_history_known and np.abs(current_portrait - portrait).mean() > 6:
+                        # 打开/关闭详情之间已经换卡，不能把旧姓名与新肖像配对用作出售依据。
+                        self.slot_cache.pop(key, None)
+                        scanned.append(slot)
+                        continue
                     self.slot_cache[key] = (current_portrait, name, output)
                     if self.lineup:
                         stars = self._card_stars(frame, slot)
@@ -2486,9 +2500,68 @@ class CurrencyWars:
                 retry.append(slot)
         return (*fresh, *retry)
 
-    def _sell_reserve(self, frame, slot, *, identified=False):
+    def _sell_unused_anaxa(self, frame, board):
+        """新增的自愿清席不走溢出兜底。每张仍核对详情和回执，不逐张重新打开全席详情。"""
+        if (not self.anaxa_bench_history_known or self.default_strategy
+                or board.lineup not in (None, strategy.LINEUPS[strategy.HIGH_ANAXA])
+                or self.held_deployment or self.deployment_moves or (board.stage, "部署") in self.deferred_operations
+                or (board.stage, "主动清席") in self.deferred_operations
+                or not any(s.zone == "bench" and s.unit and s.unit.name in strategy.ANAXA_OFF_ROUTE
+                           for s in board.slots)):
+            return None
+        if self._deployment_layout(board) in self.deployment_history and strategy.deployment(board):
+            return None
+        candidates = strategy.anaxa_unused_reserves(board)
+        if not candidates:
+            return None
+        freed = set()
+
+        def same_card(f, s):
+            # _read_board 会跨帧读详情。把支持判定的姓名绑定到它被识别时的肖像，而非最后一帧。
+            cached = self.slot_cache.get((s.zone, s.index))
+            return (cached is not None and cached[1] == s.unit.name
+                    and np.abs(cv2.resize(f.slot_mark(s.point), (12, 12)).astype(np.int16) - cached[0]).mean() <= 6
+                    and self._card_stars(f, s) == s.unit.stars
+                    and f.card_role(s) == (s.unit.front, s.unit.back)
+                    and (s.zone != "front" or f.assigned_halo(s.point) == s.unit.has_halo))
+
+        def same_board(f):
+            if (f.page != Page.BOARD or f.stage != board.stage or f.shop_open or f.preparation_banner
+                    or f.capacity != (board.used, board.capacity)):
+                return False
+            # 只读同帧卡位、锁、肖像、星标，不翻详情；空格补卡/升星/位置变化均须重规划。
+            current = f.slots()
+            return len(current) == len(board.slots) and all(
+                (p.zone, p.index, p.point, p.occupied, p.blocked) ==
+                (s.zone, s.index, s.point, s.occupied and s.point not in freed, s.blocked)
+                and (not p.occupied or same_card(f, s))
+                for p, s in zip(current, board.slots))
+
+        for s in candidates:
+            def ready(f):
+                return same_board(f) and f.card_role(s) == (s.unit.front, s.unit.back)
+            if not ready(frame):
+                break
+            frame, sold = self._sell_reserve(frame, s, identified=True, verify_board=ready)
+            if not sold:
+                # 本节点不重发自愿出售；若输入已发，原有的逐格回执保护仍然有效。
+                self.deferred_operations.add((board.stage, "主动清席"))
+                return frame
+            freed.add(s.point)
+        if not freed:
+            # 尚未点出售时允许重新读一次；持续读盘矛盾也不能占住正常运营循环。
+            retry = board.stage, "主动清席重读"
+            if retry in self.deferred_operations:
+                self.deferred_operations.add((board.stage, "主动清席"))
+            self.deferred_operations.add(retry)
+            self.slot_cache.clear()
+        return frame
+
+    def _sell_reserve(self, frame, slot, *, identified=False, verify_board=None):
         key = frame.stage, slot.point
         previous = self.reserve_sales.get(key)
+        if previous is not None and verify_board is not None:
+            return frame, False
         if previous is not None:
             context = frame.action_context
             unchanged_reads = 0
@@ -2515,7 +2588,7 @@ class CurrencyWars:
             return not f.shop_open and not f.preparation_banner and previous.unchanged(f, slot)
 
         detail = self._open_detail(before, slot, check_portrait=True,
-                                   ready=sale_still_pending if previous is not None else None)
+                                   ready=sale_still_pending if previous is not None else verify_board)
         if detail.page == Page.PARTNER_DETAIL:
             return self._close_detail(detail), False
         if detail.page != Page.DETAIL:
@@ -2526,8 +2599,15 @@ class CurrencyWars:
             current = f.employee_name(local=identified)
             if (f.preparation_banner or f.shop_open or f.employee_deployment_locked()
                     or (current or name) in strategy.SPECIAL
-                    or (name and current and current != name)
-                    or any(mark.std(axis=(0, 1)).max() >= 24 for mark in f.equipped_slots())):
+                    or (verify_board is not None and current != name)
+                    or (name and current and current != name)):
+                return None
+            # 已确认无用途的普通角色出售时装备回栏，不拆装，也不要求识别装备数量/名称。
+            # 特殊伙伴、部署锁及明确的不可售提示仍然挡住输入；原腾位逻辑继续保护装备。
+            if verify_board is not None:
+                if f.has("不可出售", "无法出售", area=ui.DETAIL_SELL, contains=True):
+                    return None
+            elif any(mark.std(axis=(0, 1)).max() >= 24 for mark in f.equipped_slots()):
                 return None
             point = ui.point(f.find("出售", area=ui.DETAIL_SELL))
             return (point,) if point is not None else None
@@ -2535,13 +2615,14 @@ class CurrencyWars:
         def cleared(f):
             return (f.page in BOARD_PAGES and f.stage == before.stage and not f.shop_open
                     and (not f.slot_occupied(slot.point)
-                         or cv2.absdiff(f.slot_mark(slot.point), portrait).mean() > 27))
+                         or verify_board is None and cv2.absdiff(f.slot_mark(slot.point), portrait).mean() > 27))
 
         def advanced(f):
             if f.page in PREP_OVERLAYS - {Page.BENCH_FULL, Page.SHOP}:
                 return True
             return (f.page in BOARD_PAGES | {Page.SHOP} and f.stage == before.stage
-                    and (cleared(f) or f.shop_open or before.page == Page.BENCH_FULL and f.page == Page.BOARD))
+                    and (cleared(f) or f.shop_open or before.page == Page.BENCH_FULL and f.page == Page.BOARD
+                         or verify_board is not None and cv2.absdiff(f.slot_mark(slot.point), portrait).mean() > 27))
 
         def mark_sale():
             count = 1 if previous is None else previous.count + 1
@@ -2870,6 +2951,17 @@ class CurrencyWars:
                 if not board.has_bench_space and move[0].zone == "bench":
                     shop_needed = True
                 continue
+            if board.core == strategy.CORE:
+                try:
+                    cleaned = self._sell_unused_anaxa(frame, board)
+                except CurrencyWarsRecoverable as error:
+                    self.deferred_operations.add((stage, "主动清席"))
+                    cleaned = self._recover_preparation(stage, "主动清席", error)
+                if cleaned is not None:
+                    frame = cleaned
+                    if frame.page != Page.BOARD or frame.stage != stage:
+                        return frame
+                    continue
             if try_disassembly and (stage, "拆装") not in self.deferred_operations:
                 try:
                     disassembled = self._disassemble_for_upgrade(frame, board)
@@ -3342,7 +3434,7 @@ class CurrencyWars:
         return frame
 
     def _choose_single(self, frame, option, confirm, advanced, message, *, seconds=8, retry_after=2.2,
-                       can_confirm=None, ready_confirm=None, on_confirm=None):
+                       can_confirm=None, ready_confirm=None, on_confirm=None, on_pick=None):
         """点选并尝试确认，已有可提交的选项时直接确认，以游戏转场为准。"""
         page, stage, dialog = frame.action_context
         attempts = 3
@@ -3365,6 +3457,8 @@ class CurrencyWars:
         def mark_choice(f, candidate):
             nonlocal attempted
             attempted += 1
+            if candidate is not None and on_pick is not None:
+                on_pick(f, candidate)
             if candidate is not None and dialog == "补给阶段":
                 self.supply_attempted[candidate.point[0]] = f.supply_selection()
 
@@ -3400,6 +3494,17 @@ class CurrencyWars:
         )
 
     def _choose_investment(self, frame):
+        known = self.anaxa_bench_history_known
+        self.anaxa_bench_history_known = False
+        safe_pick = False
+
+        def picked(f, candidate):
+            nonlocal safe_pick
+            column = min(range(3), key=lambda i: abs(f.investment_card_point(i)[0] - candidate.point[0]))
+            group = next(group for group in f.investment_groups if column in group)
+            safe_pick = all((label := f.investment_card_title(i)) and label.text in ANAXA_BENCH_NEUTRAL_INVESTMENTS
+                            for i in group)
+
         title = frame.choice
         if title in ui.INVESTMENT_CHOICES and not self.default_strategy:
             frame = self._refresh_unusable_investments(frame)
@@ -3455,10 +3560,14 @@ class CurrencyWars:
 
         message = f"「{title}」点选并确认后未转场"
         try:
-            return self._choose_single(
+            after = self._choose_single(
                 frame, option, confirm, advanced, message, seconds=10, retry_after=4,
-                ready_confirm=enabled_confirmation, on_confirm=remember_confirmation,
+                ready_confirm=enabled_confirmation, on_confirm=remember_confirmation, on_pick=picked if known else None,
             )
+            # 已预选的按钮、固定坐标兜底、转场前重复选投资，都不能证明哪种效果被选入。
+            self.anaxa_bench_history_known = (known and safe_pick and submitted_frame is not None
+                                              and not same_investment(after))
+            return after
         except (CurrencyWarsActionUnready, CurrencyWarsReceiptTimeout):
             frame = self.frame
             if frame is None or not same_investment(frame):
@@ -4032,6 +4141,8 @@ class CurrencyWars:
         return frame, matches
 
     def _employee_event(self, frame):
+        # 共舞/巡海可无可读姓名完成；不能从棋盘卡面排除已获得的特殊用途。
+        self.anaxa_bench_history_known = False
         event = frame.page
         preferences = () if self.default_strategy else (
             self.lineup.preferences if self.lineup else (*strategy.FRONT, *strategy.BACK)
@@ -4830,6 +4941,8 @@ class CurrencyWars:
 
     def _play_step(self, frame):
         page = frame.page
+        if page in (Page.SVAROG_MODIFICATION, Page.DRAGON_CLEANSE, Page.GARDEN, Page.HACK, Page.HALO_MENTOR, Page.TEA):
+            self.anaxa_bench_history_known = False
         if page != Page.TEA and page in ACTIVE_PAGES:
             self.tea_menu_fallback = None
         if page == Page.MODES:
@@ -4874,6 +4987,8 @@ class CurrencyWars:
         if page == Page.BATTLE:
             return self._watch_battle(frame)
         if page == Page.CHOICE:
+            if frame.choice in ("奇遇伙伴", "选择奇遇", "奇遇效果", "伙伴事件", "遭遇节点"):
+                self.anaxa_bench_history_known = False
             return self._choose(frame)
         if page == Page.TREASURY:
             return self._claim_treasury(frame)
@@ -5097,6 +5212,7 @@ class CurrencyWars:
                 log.warning(f"货币战争旧策略 {configured} 保存失败，本次使用「{label}」（{selected}）。{error}")
             else:
                 log.info(f"货币战争旧策略 {configured} 已自动迁移为「{label}」（{selected}）")
+        self.anaxa_bench_history_known = False  # 直接接管的存档无法还原既有角色任命。
         self.default_strategy = selected == strategy.DEFAULT_STRATEGY
         self.lineup = strategy.LINEUPS.get(selected)
         log.hr(f"准备货币战争·入画奇航 ({selected})", "0")
@@ -5135,6 +5251,7 @@ class CurrencyWars:
                         self.mode = mode
                         self.mode_confirmed = False
                     if self._can_take_over(frame, resume=resume):
+                        self.anaxa_bench_history_known = False
                         log.info(f"从「{frame.choice or frame.page.value}」接管当前货币战争对局")
                     elif self.result is None:
                         match_number = (self._loop_matches if loop else matches) + 1

@@ -281,6 +281,64 @@ def can_move(board: Board, source: Slot, target: Slot, *, replacing_same_name=Fa
     return True
 
 
+# 仅核对过的其它路线单站位卡。名字只是入口；不能凭“不在阵容表”出售。
+ANAXA_OFF_ROUTE = {"流萤": "front", "椒丘": "front", "黑天鹅": "back"}
+
+
+def anaxa_unused_reserves(board: Board) -> tuple[Slot, ...]:
+    """部署收敛后，列出有正向站位证据的一星候选。是否可售仍须复核本局效果、详情和装备。"""
+    if (board.lineup not in (None, LINEUPS[HIGH_ANAXA]) or not board.front_output_count
+            or not 0 < board.used <= board.capacity or len(board.field) != board.used
+            or any(s.occupied and (s.blocked or s.unit is None) for s in board.slots)):
+        return ()
+    names = [u.name for u in board.units]
+    deployed = {s.unit.name for s in board.field}
+    preferred = ({"front": board.lineup.front, "back": board.lineup.back} if board.lineup
+                 else {"front": FRONT, "back": BACK})
+    protected = (set(preferred["front"]) | set(preferred["back"]) | board.sustain | SPECIAL
+                 | {CORE, EVERNIGHT, "阿格莱雅", "瓦尔特", "昔涟", "砂金·戏浪"})
+    if board.lineup:
+        protected.update(board.lineup.preferences)
+    selected = []
+    for s in board.slots:
+        u = s.unit
+        if (s.zone != "bench" or not u or u.name not in ANAXA_OFF_ROUTE or u.name in protected
+                or u.stars != 1 or u.has_halo or names.count(u.name) != 1):
+            continue
+        row = ANAXA_OFF_ROUTE[u.name]
+        if (u.front, u.back) != (row == "front", row == "back"):
+            continue
+        # 本排每个位置都有已持有的阵容成员：场上的本排目标，或不会被另一排借用的目标候补。
+        # 不用其它待卖卡充当替补，不把商店里将来可能抽到的角色算进来。
+        seats = [p for p in board.slots if p.zone == row]
+        other_row = "back" if row == "front" else "front"
+        occupants = {p.unit.name for p in seats if p.unit and p.unit.name in preferred[row]
+                     and (p.unit.name not in preferred[other_row] or not _can_deploy_to(board, p.unit, other_row))}
+        reserves = {p.unit.name for p in _bench_candidates(board)
+                    if p.unit.name in preferred[row] and _can_deploy_to(board, p.unit, row)
+                    and not _can_deploy_to(board, p.unit, other_row)}
+        covered = bool(seats) and not any(p.blocked for p in seats) and len(occupants | reserves) >= len(seats)
+        # 高难部署本来就拒绝已成型阵容的抢点前台，不把该条件硬套在普通策略或后台卡上。
+        competition = (row == "front" and board.lineup and board.core_ready and u.is_output
+                       and u.name not in board.lineup.compatible_front
+                       and bool(deployed & {"寒鸦", "星期日", BACK_LEAD}))
+        # 满级满员的已成型阵容没有下个人口；不要求六至九个后台格全是同一张短名单。
+        maxed = (board.level == 10 and board.used == board.capacity and deployed <= protected
+                 and any(p.zone == "front" and p.unit.name == CORE for p in board.field))
+        if not (covered or competition or maxed):
+            continue
+        # 不只看下一级：逐张模拟移除，不能降低整手已持角色未来可填的总人数。
+        without = replace(board, slots=tuple(_empty(p) if p == s else p for p in board.slots))
+        growth = (board.capacity - board.used + 10 - board.level if board.level in range(1, 11)
+                  else len(board.slots))
+        fillable = _open_field_count(without)
+        if board.used + fillable < board.capacity or min(growth, fillable) < min(growth, _open_field_count(board)):
+            continue
+        selected.append(s)
+        board = without
+    return tuple(selected)
+
+
 def anaxa_front_fallback(board: Board) -> Move | None:
     """常规运营结束后，给仍然空置的前台补一名可出战的角色。"""
     if board.core != CORE or board.front_count or board.used > board.capacity:

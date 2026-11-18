@@ -9081,3 +9081,325 @@ def test_timestamp_write_failure_keeps_the_confirmed_weekly_score_and_match_resu
     assert world.war.result is True
     logger.warning.assert_called_once_with("货币战争周积分与奖励已核对，写入完成时间失败：暂时无法写入配置")
     world.cfg.save_timestamp.assert_called_once_with("currencywars_timestamp")
+
+
+# 主动清席使用正式服棋盘尺寸；不能靠缩减可部署行数让策略“证明”角色没有位置。
+def anaxa_team(front, rear, bench, *, lineup=None, level=None, capacity=None, rear_size=6):
+    occupied = len(front) + len(rear)
+    return board(*(slot("front", i, (front + [None] * 4)[i]) for i in range(4)),
+                 *(slot("back", i, (rear + [None] * rear_size)[i]) for i in range(rear_size)),
+                 *(slot("bench", i, (bench + [None] * 9)[i]) for i in range(9)),
+                 stage="1-6", gold=50, used=occupied, capacity=capacity or occupied,
+                 level=level or occupied, lineup=lineup)
+
+
+def off_route(name):
+    front = policy.ANAXA_OFF_ROUTE[name] == "front"
+    return policy.Unit(name, front, not front, 1, output=front, equipment=0)
+
+
+def named(name, front=False, back=True):
+    return policy.Unit(name, front, back, 1, equipment=0)
+
+
+def mature_anaxa(lineup, bench, *, rear_size=6):
+    front = [replace(CORE, stars=1), named("星期日", True, True), named("花火", True, False),
+             named("知更鸟", True, False)]
+    rear = [named(n) for n in ("刻律德菈", "白露", "寒鸦", "千冶·刃", "雪衣", "长夜月")]
+    return anaxa_team(front, rear, bench, lineup=lineup, rear_size=rear_size)
+
+
+@pytest.mark.parametrize("lineup", [None, policy.LINEUPS[policy.HIGH_ANAXA]])
+@pytest.mark.parametrize("rear_size", [6, 9])
+def test_anaxa_unused_full_level_can_clear_multiple_with_free_bench(lineup, rear_size):
+    b = mature_anaxa(lineup, list(map(off_route, ("流萤", "黑天鹅", "椒丘"))), rear_size=rear_size)
+    assert b.used == b.capacity == b.level == 10 and len(b.empty_bench) == 6
+    assert [s.unit.name for s in policy.anaxa_unused_reserves(b)] == ["流萤", "黑天鹅", "椒丘"]
+
+
+def test_anaxa_unused_starts_before_endgame_and_without_two_star_or_healer():
+    front = [replace(CORE, stars=1), named("星期日", True, True), named("花火", True, False)]
+    b = anaxa_team(front, [], [named("知更鸟", True, False), off_route("流萤")])
+    assert not policy.deployment(b)
+    assert [s.unit.name for s in policy.anaxa_unused_reserves(b)] == ["流萤"]
+
+
+@pytest.mark.parametrize("lineup", [None, policy.LINEUPS[policy.HIGH_ANAXA]])
+def test_anaxa_unused_keeps_a_later_population_filler(lineup):
+    b = anaxa_team([CORE], [CER, BAILU], [named("花火", True, False), off_route("黑天鹅")], lineup=lineup)
+    assert not policy.anaxa_unused_reserves(b)
+    # 花火先上第四人，现有手牌仍能买经验上第五人；黑天鹅并非废牌。
+    later = anaxa_team([CORE, named("花火", True, False)], [CER, BAILU], [off_route("黑天鹅")], lineup=lineup)
+    assert policy.should_buy_exp(later, 4)
+    assert not policy.anaxa_unused_reserves(later)
+
+
+def test_anaxa_unused_high_competitor_preserves_every_reachable_future_slot():
+    lineup = policy.LINEUPS[policy.HIGH_ANAXA]
+    ff, jq = off_route("流萤"), off_route("椒丘")
+    b = anaxa_team([CORE, named("花火", True, False), named("星期日", True, True)], [CER], [ff, jq], lineup=lineup)
+    # 两名同排候补只能填一个前台空位；可卖一张却不能把扩员所需的最后一张也卖掉。
+    chosen = policy.anaxa_unused_reserves(b)
+    assert [s.unit.name for s in chosen] == ["流萤"]
+    without = replace(b, slots=tuple(replace(s, unit=None, occupied=False) if s in chosen else s for s in b.slots))
+    assert policy.should_buy_exp(without, 4)
+    assert not policy.anaxa_unused_reserves(without)
+    # 两个空位可在以后同时用到，没有任何一张可卖；双站位也不能按竞点前台售出。
+    for reserves in ([ff, jq], [replace(ff, back=True)]):
+        b = anaxa_team([CORE, named("星期日", True, True)], [CER], reserves, lineup=lineup)
+        assert not policy.anaxa_unused_reserves(b)
+
+
+@pytest.mark.parametrize("unit", [
+    replace(off_route("流萤"), stars=None), replace(off_route("流萤"), stars=2),
+    replace(off_route("流萤"), has_halo=True), replace(off_route("流萤"), back=True),
+    CORE, BAILU, EVERNIGHT, named("阿格莱雅"), FILLER, named("星神★阿哈"), named("昔涟"), named("陌生文本"),
+])
+def test_anaxa_unused_keeps_unproved_or_useful_cards(unit):
+    for lineup in (None, policy.LINEUPS[policy.HIGH_ANAXA]):
+        assert not policy.anaxa_unused_reserves(mature_anaxa(lineup, [unit]))
+
+
+def test_anaxa_unused_ignores_other_builds_and_unresolved_copies():
+    ff = off_route("流萤")
+    for key in (policy.HIGH_FIREFLY, policy.HIGH_SERVAL):
+        assert not policy.anaxa_unused_reserves(mature_anaxa(policy.LINEUPS[key], [ff]))
+    for b in (mature_anaxa(None, [ff, ff]), mature_anaxa(None, [ff, replace(ff, stars=2)]),
+              mature_anaxa(None, [ff])):
+        bad = replace(b.slots[-1], occupied=True, unit=None)
+        assert not policy.anaxa_unused_reserves(replace(b, slots=(*b.slots[:-1], bad)))
+        if len(b.empty_bench) == 7:
+            assert not policy.anaxa_unused_reserves(b)
+    locked = tuple(replace(s, blocked=True) if s.unit == ff else s for s in b.slots)
+    assert not policy.anaxa_unused_reserves(replace(b, slots=locked))
+
+
+def bench_frame(monkeypatch, war, b, *, remember=False):
+    f = page(Page.BOARD, stage=b.stage, capacity=(b.used, b.capacity), gold=b.gold)
+    occupied = {s.point: s for s in b.slots if s.occupied}
+    monkeypatch.setattr(f, "slots", lambda: tuple(replace(s, unit=None) for s in b.slots))
+    monkeypatch.setattr(f, "slot_occupied", lambda p: p in occupied)
+    monkeypatch.setattr(f, "slot_mark", lambda p: np.full((61, 60, 3), 70 if p in occupied else 0, np.uint8))
+    monkeypatch.setattr(f, "card_stars", lambda s, **kw: occupied[s.point].unit.stars)
+    monkeypatch.setattr(f, "card_equipment", lambda s: occupied[s.point].unit.equipment)
+    monkeypatch.setattr(f, "card_role", lambda s: (occupied[s.point].unit.front, occupied[s.point].unit.back))
+    if remember:
+        for s in occupied.values():
+            war.slot_cache[s.zone, s.index] = (np.full((12, 12, 3), 70, np.int16), s.unit.name, s.unit.output)
+    return f
+
+
+def test_anaxa_unused_batch_reuses_read_board_and_rechecks_each_sale(monkeypatch, world):
+    war = world.war
+    war.anaxa_bench_history_known = True
+    b = mature_anaxa(None, [off_route("流萤"), off_route("黑天鹅")])
+    initial = bench_frame(monkeypatch, war, b, remember=True)
+    fake_read = Mock(side_effect=AssertionError("不能逐张重翻全席详情"))
+    monkeypatch.setattr(war, "_read_board", fake_read)
+    sold = []
+
+    def sell(f, s, *, identified, verify_board):
+        nonlocal b
+        assert identified and verify_board(f)
+        sold.append(s.unit.name)
+        b = replace(b, slots=tuple(replace(p, occupied=False, unit=None) if p.point == s.point else p for p in b.slots))
+        return bench_frame(monkeypatch, war, b), True
+
+    monkeypatch.setattr(war, "_sell_reserve", sell)
+    # 普通棋盘装备数量未知不影响列为候选，是否可售由出售前详情判定。
+    source = replace(b, slots=tuple(replace(s, unit=replace(s.unit, equipment=None))
+                                    if s.zone == "bench" and s.unit else s for s in b.slots))
+    assert war._sell_unused_anaxa(initial, source).page == Page.BOARD
+    assert sold == ["流萤", "黑天鹅"]
+
+
+@pytest.mark.parametrize("change", ("refill", "merge", "portrait", "shop", "no_receipt"))
+def test_anaxa_unused_stops_batch_when_board_changes(monkeypatch, world, change):
+    war = world.war
+    war.anaxa_bench_history_known = True
+    b = mature_anaxa(None, [off_route("流萤"), off_route("黑天鹅")])
+    f = bench_frame(monkeypatch, war, b, remember=True)
+    sold = []
+
+    def sell(frame, s, *, identified, verify_board):
+        assert verify_board(frame)
+        sold.append(s.unit.name)
+        next_slots = tuple(replace(p, occupied=False, unit=None) if p.point == s.point and change != "refill"
+                           else p for p in b.slots)
+        after = bench_frame(monkeypatch, war, replace(b, slots=next_slots))
+        if change == "merge":
+            monkeypatch.setattr(after, "card_stars", lambda p, **kw: 3 if p.zone == "front" else p.unit.stars)
+        if change == "portrait":
+            monkeypatch.setattr(after, "slot_mark", lambda p: np.zeros((61, 60, 3), np.uint8))
+        if change == "shop":
+            after.__dict__["shop_open"] = True
+        return after, change != "no_receipt"
+
+    monkeypatch.setattr(war, "_sell_reserve", sell)
+    assert war._sell_unused_anaxa(f, b) is not None and sold == ["流萤"]
+    if change == "no_receipt":
+        assert war._sell_unused_anaxa(f, b) is None
+
+
+def test_anaxa_unused_rejects_stale_identity_before_first_sale(monkeypatch, world):
+    war = world.war
+    war.anaxa_bench_history_known = True
+    b = mature_anaxa(None, [off_route("黑天鹅")])
+    initial = bench_frame(monkeypatch, war, b, remember=True)
+    war.slot_cache["front", 0][0].fill(0)
+    sell = Mock(side_effect=AssertionError("身份已变不能出售"))
+    monkeypatch.setattr(war, "_sell_reserve", sell)
+    assert war._sell_unused_anaxa(initial, b) is initial
+    assert (b.stage, "主动清席") not in war.deferred_operations
+    assert war._sell_unused_anaxa(initial, b) is initial
+    assert (b.stage, "主动清席") in war.deferred_operations
+
+
+@pytest.mark.parametrize("reason", ["takeover", "default", "held", "pending", "deferred"])
+def test_anaxa_unused_requires_stable_known_preparation(monkeypatch, world, reason):
+    war = world.war
+    b = mature_anaxa(None, [off_route("黑天鹅")])
+    war.anaxa_bench_history_known = reason != "takeover"
+    war.default_strategy = reason == "default"
+    if reason == "held":
+        war.held_deployment = (b.slots[0], b.slots[1])
+    elif reason == "pending":
+        war.deployment_moves = ((b.slots[0], b.slots[1]),)
+    elif reason == "deferred":
+        war.deferred_operations.add((b.stage, "部署"))
+    assert war._sell_unused_anaxa(bench_frame(monkeypatch, war, b, remember=True), b) is None
+
+
+@pytest.mark.parametrize("detail_name,gear,refill", [
+    (None, None, False), ("椒丘", None, False), ("流萤", "未识别", False), ("流萤", "不可出售", False),
+    ("流萤", None, True), ("流萤", None, False), ("流萤", "轮滑鞋", False),
+    ("流萤", "原腾位装备", False), ("流萤", "锁定", False),
+])
+def test_anaxa_unused_real_sale_requires_strict_identity_equipment_and_empty_receipt(
+        monkeypatch, world, detail_name, gear, refill):
+    s = slot("bench", 0, off_route("流萤"))
+    initial = page(Page.BOARD, stage="1-2", capacity=(3, 3), gold=0)
+    detail = page(Page.DETAIL, ("出售", 1768, 915), stage="1-2")
+    done = page(Page.BOARD, stage="1-2", capacity=(3, 3), gold=2)
+    monkeypatch.setattr(initial, "slot_occupied", lambda p: p == s.point)
+    monkeypatch.setattr(done, "slot_occupied", lambda p: p == s.point and refill)
+    monkeypatch.setattr(initial, "slot_mark", lambda p: np.full((61, 60, 3), 100, np.uint8))
+    monkeypatch.setattr(done, "slot_mark", lambda p: np.full((61, 60, 3), 10, np.uint8))
+    monkeypatch.setattr(detail, "employee_name", lambda **kwargs: detail_name)
+    if gear:
+        icon = np.zeros((54, 52, 3), np.uint8)
+        icon[:27] = 255
+        monkeypatch.setattr(detail, "equipped_slots", lambda: (icon,) * 3)
+        monkeypatch.setattr(detail, "equipped_names", Mock(side_effect=AssertionError("无需辨认每件普通装备")))
+        if gear == "不可出售":
+            detail.labels += labels(("当前不可出售", 1770, 915))
+        if gear == "锁定":
+            monkeypatch.setattr(detail, "employee_deployment_locked", lambda: True)
+    routes = {(initial, s.point): detail, (detail, (12, 12)): initial, (detail, (1768, 915)): done}
+    state = drive(monkeypatch, world, initial, lambda st, p: setattr(st, "frame", routes[st.frame, p]))
+    guard = None if gear == "原腾位装备" else lambda f: f is initial
+    frame, sold = world.war._sell_reserve(initial, s, identified=True, verify_board=guard)
+    clicked_sale = detail_name == "流萤" and gear not in ("不可出售", "锁定", "原腾位装备")
+    assert sold == (clicked_sale and not refill)
+    assert frame is (done if clicked_sale else initial)
+    assert state.clicks.count((Page.DETAIL, (1768, 915))) == int(clicked_sale)
+    assert world.war.preparation_progress == int(sold)
+
+
+def test_anaxa_unused_actual_prepare_deploys_first_then_cleans_batch_before_normal_finish(monkeypatch, world):
+    war = world.war
+    war.anaxa_bench_history_known = True
+    b = anaxa_team([replace(CORE, stars=1), named("星期日", True, True), named("花火", True, False)], [],
+                   [named("知更鸟", True, False), off_route("流萤"), off_route("椒丘")], capacity=4)
+    b = replace(b, stage="1-1", gold=0)
+    first = bench_frame(monkeypatch, war, b, remember=True)
+    done = page(Page.BATTLE)
+    actions = []
+    monkeypatch.setattr(war, "_settle_board", lambda f: f)
+    monkeypatch.setattr(war, "_collect_preparation_rewards", lambda f: (f, True))
+    monkeypatch.setattr(war, "_read_board", lambda f: (actions.append("读盘") or f, b))
+    monkeypatch.setattr(war, "_finish_preparation", lambda f, bt: actions.append("出战") or done)
+
+    def move(f, team, src, target):
+        nonlocal b
+        actions.append("部署" + src.unit.name)
+        b = replace(b, used=b.used + 1, slots=tuple(
+            replace(p, occupied=False, unit=None) if p == src else replace(p, occupied=True, unit=src.unit)
+            if p == target else p for p in b.slots))
+        return bench_frame(monkeypatch, war, b, remember=True)
+
+    def sell(f, s, *, identified, verify_board):
+        nonlocal b
+        assert verify_board(f) and identified
+        actions.append("出售" + s.unit.name)
+        b = replace(b, slots=tuple(replace(p, occupied=False, unit=None) if p == s else p for p in b.slots))
+        return bench_frame(monkeypatch, war, b), True
+
+    monkeypatch.setattr(war, "_move", move)
+    monkeypatch.setattr(war, "_sell_reserve", sell)
+    assert war._prepare(first) is done
+    assert actions == ["读盘", "部署知更鸟", "读盘", "出售流萤", "出售椒丘", "读盘", "出战"]
+
+
+def test_anaxa_unused_read_board_does_not_bind_old_detail_to_a_new_portrait(monkeypatch, world):
+    war = world.war
+    war.anaxa_bench_history_known = True
+    s = slot("bench", 0, occupied=True)
+    start = page(Page.BOARD, stage="1-1", capacity=(0, 1))
+    after = page(Page.BOARD, stage="1-1", capacity=(0, 1))
+    detail = page(Page.DETAIL, ("知更鸟", 1538, 231), stage="1-1")
+    monkeypatch.setattr(war, "_board_layout", lambda f, **kw: (f, (s,)))
+    monkeypatch.setattr(war, "_open_detail", lambda f, source: detail)
+    monkeypatch.setattr(war, "_close_detail", lambda f: after)
+    monkeypatch.setattr(detail, "employee_name", lambda **kw: "知更鸟")
+    monkeypatch.setattr(start, "card_role", lambda s: (True, False))
+    monkeypatch.setattr(start, "slot_mark", lambda _: np.zeros((61, 60, 3), np.uint8))
+    monkeypatch.setattr(after, "slot_mark", lambda _: np.full((61, 60, 3), 90, np.uint8))
+    monkeypatch.setattr(after, "slot_occupied", lambda _: True)
+    _, b = war._read_board(start)
+    assert b.slots[0].occupied and b.slots[0].unit is None and not war.slot_cache
+
+
+@pytest.mark.parametrize("title,expected", [("连击概念股", True), ("采购专员", False), ("未知投资", False)])
+def test_anaxa_unused_only_keeps_observed_neutral_investment(monkeypatch, world, title, expected):
+    war = world.war
+    war.anaxa_bench_history_known = True
+    option = page(Page.CHOICE, (title, 460, 393), ("测试说明", 460, 463), ("确认", 960, 984), choice="投资环境")
+    selected = enable_investment_confirm(page(Page.CHOICE, ("确认", 960, 984), choice="投资环境"))
+    after = page(Page.BOARD)
+    monkeypatch.setattr(war, "_choice_option", lambda f: f.find(title))
+    routes = {(option, (460, 393)): selected, (selected, (960, 984)): after}
+    drive(monkeypatch, world, option, lambda st, p: setattr(st, "frame", routes[st.frame, p]))
+    assert war._play_step(option) is after and war.anaxa_bench_history_known == expected
+
+
+@pytest.mark.parametrize("event", (Page.DANCE, Page.RANGER, Page.HALO_MENTOR))
+def test_anaxa_unused_retains_special_employee_bindings(monkeypatch, world, event):
+    war = world.war
+    war.anaxa_bench_history_known = True
+    f = page(event)
+    if event == Page.HALO_MENTOR:
+        monkeypatch.setattr(war, "_halo_mentor", lambda _: page(Page.BOARD))
+    elif event == Page.RANGER:
+        monkeypatch.setattr(war, "_choose_single", lambda *args, **kwargs: page(Page.BOARD))
+    else:
+        monkeypatch.setattr(war, "_wait", lambda *a: page(Page.BOARD))
+    assert war._play_step(f).page == Page.BOARD
+    assert not war.anaxa_bench_history_known
+
+
+@pytest.mark.parametrize("high", (False, True))
+def test_anaxa_unused_does_not_sell_and_rebuy_fillers_while_short(high):
+    ff, jq = off_route("流萤"), off_route("椒丘")
+    sun = named("星期日", True, True)
+    sparkle = named("花火", True, False)
+    if high:
+        b = anaxa_team([CORE, sun, sparkle], [CER], [ff, jq], capacity=6, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
+    else:
+        b = anaxa_team([CORE, sun, sparkle, named("知更鸟", True, False)], [], [ff], capacity=5)
+    b = replace(b, gold=15)
+    assert not policy.deployment(b)
+    assert not policy.anaxa_unused_reserves(b)
+    without = replace(b, slots=tuple(replace(s, unit=None, occupied=False) if s.unit == ff else s for s in b.slots))
+    offer = policy.Offer("流萤", 2, (1, 1), 0, True, False)
+    assert policy.shop_purchase(without, (offer,)) == offer
