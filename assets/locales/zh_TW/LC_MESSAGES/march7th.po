@@ -8141,3 +8141,7 @@ msgstr "淺色"
 #: app/setting_interface.py:1165
 msgid "深色"
 msgstr "深色"
+
+#: module/game/adb_ready.py:118
+msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
+msgstr "未能在時限內從「列車補給」視窗返回主畫面。請在遊戲中確認是否已領取獎勵。"

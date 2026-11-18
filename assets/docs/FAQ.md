@@ -16,6 +16,14 @@ A：March7thAssistant 接入了第三方服务 [Mirror酱](https://mirrorchyan.c
 
 [首次下载可点我前往 Mirror酱 高速下载](https://mirrorchyan.com/zh/download?rid=March7thAssistant&os=&arch=&channel=stable&source=m7a-faq)
 
+### Q：手机上能用小助手吗？
+
+A：安卓手机可以直接安装安卓版（需要 Android 10 及以上的 64 位手机），游戏在后台虚拟屏里运行，运行期间手机可以照常使用。
+
+安卓版需要借助 Shizuku（不需要 Root）或 Root 授权，Android 11 及以上全程只用手机就能完成；目前支持日常、每日实训和清体力，游戏需要是国服官服。
+
+下载和授权步骤见 [安卓版使用教程](https://m7a.top/docs/#/assets/docs/Android)。iPhone 暂不支持。
+
 ### Q：小助手启动慢/未找到可执行文件/进程启动失败/总是被杀毒软件删除 怎么办？
 
 A：请将`小助手文件夹`加入杀毒软件排除项/白名单/信任区，然后重新解压覆盖一次。

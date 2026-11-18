@@ -10,6 +10,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
+from PIL import Image
 from ruamel.yaml import YAML
 
 import module.game
@@ -367,6 +368,140 @@ def test_app_startup_recovers_only_after_confirmed_task_loss(entry, device, monk
         assert 380 <= now < 381
     elif scenario == "dies_again":
         assert now < 210
+
+
+@pytest.fixture(scope="module")
+def monthly_startup_frames():
+    root = ROOT / "assets" / "touch_720" / "images" / "screen"
+    positions = {
+        "monthly_card": (575, 48),
+        "monthly_card_claim": (691, 338),
+        "monthly_card_reward": (606, 316),
+        "monthly_card_prompt": (561, 673),
+        "main": (14, 48),
+    }
+    with_title = ("monthly_card", "monthly_card_prompt")
+    scenes = {
+        "unrelated": ("monthly_card_reward",),
+        "claim": (*with_title, "monthly_card_claim"),
+        "animation": with_title,
+        "reward": (*with_title, "monthly_card_reward"),
+        "main": ("main",),
+    }
+    frames = {}
+    for scene, templates in scenes.items():
+        frame = Image.new("RGB", (1280, 720))
+        for name in templates:
+            with Image.open(root / f"{name}.png") as template:
+                frame.paste(template, positions[name])
+        frames[scene] = frame.tobytes()
+    return frames
+
+
+@pytest.mark.parametrize(("scenario", "outcome", "expected"), [
+    ("animated", "success", ["claim", "reward"]),
+    ("late_receipt", "success", ["claim", "reward"]),
+    ("retry", "success", ["claim", "claim", "reward"]),
+    ("already_claimed", "success", ["reward"]),
+    ("blocked", "game_start_timeout", ["claim", "claim"]),
+    ("deadline", "game_start_timeout", []),
+    ("stopped", "stopped", []),
+])
+def test_app_handles_monthly_card_before_running(
+    entry, device, monkeypatch, monthly_startup_frames, scenario, outcome, expected,
+):
+    from module.game import adb, adb_ready
+
+    now = 200.0
+
+    def sleep(seconds):
+        nonlocal now
+        now += seconds
+
+    clock = SimpleNamespace(monotonic=lambda: now, sleep=sleep, time=lambda: now)
+    for clock_owner in (adb, adb_ready, entry):
+        monkeypatch.setattr(clock_owner, "time", clock)
+    monkeypatch.setattr(adb_ready, "wait_for_game", wait_for_game_frames)
+    device["start_game_timeout"] = 12 / 60
+    controller = AdbGameController(SimpleNamespace(ui_profile="touch_720", adb_tap_ms=None), logger=log)
+    monkeypatch.setattr(module.game, "get_game_controller", lambda backend: controller)
+    bridge = Bridge()
+    client = module.game.adb_transport.ServiceClient.return_value
+    client.closed = False
+    client.close.side_effect = lambda: setattr(client, "closed", True)
+
+    if scenario in {"deadline", "stopped"}:
+        inputs = controller.get_input_handler()
+        click = inputs.mouse_click
+        display_available = controller._display_available
+
+        def check_display():
+            if scenario == "deadline":
+                sleep(12)
+            else:
+                bridge.cancelled = True
+            return display_available()
+
+        def click_after_check(x, y):
+            with monkeypatch.context() as patch:
+                patch.setattr(controller, "_display_available", check_display)
+                return click(x, y)
+
+        monkeypatch.setattr(inputs, "mouse_click", click_after_check)
+
+    taps = []
+    events = []
+    seq = 0
+    claimed_at = None
+    receipt_delay = 6.0 if scenario == "late_receipt" else 3.5
+    scene = None
+    closed = False
+
+    def respond(command, **params):
+        nonlocal seq, scene, claimed_at, closed
+        if command == "create_display":
+            return {"display_id": 65}, None
+        if command == "launch":
+            events.append({"event": "task_display_changed", "to": 65, "event_seq": 1})
+        if command == "events":
+            return {"events": events[params["after"]:], "event_seq": len(events)}, None
+        if command == "frame":
+            seq += 1
+            if seq == 1:
+                scene = "unrelated"
+            elif closed:
+                scene = "main"
+            elif scenario == "already_claimed" or (claimed_at is not None and now - claimed_at >= receipt_delay):
+                scene = "reward"
+            elif claimed_at is None or now - claimed_at < 1.5:
+                scene = "claim"
+            else:
+                scene = "animation"
+                if seq % 2 == 0:
+                    raise module.game.adb_transport.AdbError("timeout", "测试漏帧")
+            return {
+                "seq": seq, "display_id": 65, "crop": params["crop"], "encoding": "rgb",
+                "timestamp_comparable": True, "image_ns": round(now * 1e9) + 1,
+            }, monthly_startup_frames[scene]
+        if command == "tap":
+            assert (params["x"], params["y"]) == (641, 687)
+            taps.append(scene)
+            if scene == "claim":
+                if scenario == "blocked" or (scenario == "retry" and len(taps) == 1):
+                    return {"delivered": False}, None
+                claimed_at = now
+            elif scene == "reward":
+                closed = True
+            return {"delivered": True, "input_ns": round(now * 1e9)}, None
+        return {"original_mode": "allowed"}, None
+
+    client.request.side_effect = respond
+    task = Mock(return_value=True)
+    monkeypatch.setattr(rewards, "run_daily_training", task)
+    assert start(entry, "DAILY", bridge) == outcome
+    assert taps == expected
+    assert task.call_count == (outcome == "success")
+    assert any(call[0] == "gameReady" for call in bridge.calls) == (outcome == "success")
 
 
 @pytest.mark.parametrize("instance_override", [False, True])
