@@ -158,6 +158,7 @@ class SampleCardView1(QWidget):
         """ add sample card """
         card = SampleCard(icon, title, action, self)
         self.flowLayout.addWidget(card)
+        return card
 
     def clearCards(self):
         """ remove all sample cards """

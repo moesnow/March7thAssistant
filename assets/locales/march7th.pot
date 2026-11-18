@@ -7871,6 +7871,26 @@ msgstr ""
 msgid "查看排查方法"
 msgstr ""
 
+#: app/setting_interface.py:1163
+msgid "界面主题"
+msgstr ""
+
+#: app/setting_interface.py:1164
+msgid "选择应用的显示主题"
+msgstr ""
+
+#: app/setting_interface.py:1165
+msgid "跟随系统"
+msgstr ""
+
+#: app/setting_interface.py:1165
+msgid "浅色"
+msgstr ""
+
+#: app/setting_interface.py:1165
+msgid "深色"
+msgstr ""
+
 #: module/game/adb_ready.py:118
 msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
 msgstr ""

@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt, QSize, QPoint, QFileSystemWatcher, Signal, QObjec
 from PySide6.QtGui import QIcon, QAction
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QLabel, QHBoxLayout, QVBoxLayout
 
-from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, setTheme, Theme, themeColor, qconfig
+from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, themeColor, qconfig
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import InfoBar, InfoBarIcon, InfoBarPosition, PrimaryPushButton, SystemTrayMenu, ToolTipFilter, ToolTipPosition
 from app.tools.game_starter import GameStartStatus, GameLaunchThread
@@ -21,7 +21,7 @@ from .common.signal_bus import signalBus
 
 from .card.messagebox_custom import MessageBoxSupport
 from .tools.check_update import checkUpdate
-from .tools.check_theme_change import checkThemeChange
+from .tools.check_theme_change import checkThemeChange, applyTheme
 from .tools.announcement import checkAnnouncement
 from .tools.disclaimer import disclaimer
 
@@ -144,13 +144,13 @@ class MainWindow(MSFluentWindow):
         self._defer_startup_checks = False  # 静默启动时推迟的启动检查（检查更新/公告）
         self.detected_update_version = None
         self.updateVersionBadge = None
-        qconfig.themeChanged.connect(self._on_theme_changed)
 
         self.initWindow()
 
         self.initInterface()
         self.initNavigation()
         self.initSystemTray()
+        qconfig.themeChanged.connect(self._on_theme_changed)
 
         if self.start_minimized_to_tray:
             self.hide()
@@ -183,7 +183,7 @@ class MainWindow(MSFluentWindow):
         # self.setMicaEffectEnabled(False)
 
         setThemeColor('#f18cb9', lazy=True)
-        setTheme(Theme.AUTO, lazy=True)
+        applyTheme(self)
 
         # 禁用最大化
         # self.titleBar.maxBtn.setHidden(True)
@@ -325,6 +325,7 @@ class MainWindow(MSFluentWindow):
                 pass
 
     def _on_theme_changed(self):
+        self.homeInterface.refreshTheme()
         self._refreshWindowTitleBar()
 
     def _on_update_version_badge_clicked(self):
@@ -373,12 +374,6 @@ class MainWindow(MSFluentWindow):
         #     'refreshButton',
         #     NavigationBarPushButton(FIF.SYNC, '刷新', isSelectable=False),
         #     self._on_config_file_changed,
-        #     NavigationItemPosition.BOTTOM)
-
-        # self.navigationInterface.addWidget(
-        #     'themeButton',
-        #     NavigationBarPushButton(FIF.BRUSH, '主题', isSelectable=False),
-        #     lambda: toggleTheme(lazy=True),
         #     NavigationItemPosition.BOTTOM)
 
         self.navigationInterface.addWidget(
@@ -873,6 +868,7 @@ class MainWindow(MSFluentWindow):
             # 重新加载配置
             log.info("[config-watch] 重新加载配置文件并刷新界面")
             cfg._load_config(None, save=False)
+            applyTheme(self)
 
             # 重新初始化通知器
             try:

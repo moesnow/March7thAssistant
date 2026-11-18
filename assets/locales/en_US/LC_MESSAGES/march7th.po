@@ -8536,6 +8536,26 @@ msgstr "Troubleshooting"
 msgid "后台操作模式已移至「游戏连接」"
 msgstr "Background mode moved to Game connection"
 
+#: app/setting_interface.py:1163
+msgid "界面主题"
+msgstr "App theme"
+
+#: app/setting_interface.py:1164
+msgid "选择应用的显示主题"
+msgstr "Choose the application's appearance"
+
+#: app/setting_interface.py:1165
+msgid "跟随系统"
+msgstr "Follow system"
+
+#: app/setting_interface.py:1165
+msgid "浅色"
+msgstr "Light"
+
+#: app/setting_interface.py:1165
+msgid "深色"
+msgstr "Dark"
+
 #: module/game/adb_ready.py:118
 msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
 msgstr ""

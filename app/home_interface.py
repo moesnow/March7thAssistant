@@ -5,9 +5,10 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QPainter, QPainterPath, QImage, QAction
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowEffect, QFileDialog, QDialog
 
-from qfluentwidgets import ScrollArea, FluentIcon, RoundMenu, PushButton
+from qfluentwidgets import ScrollArea, FluentIcon, RoundMenu, PushButton, isDarkTheme
 
 from .common.style_sheet import StyleSheet
+from .common.theme_assets import portrait_artwork
 from .card.samplecardview1 import SampleCardView1
 from .card.card_edit_dialog import DEFAULT_CARDS, HOME_EXTRA_TASKS, CardEditDialog, display_label, migrate_home_cards
 from .tools.adb_service import display_connection
@@ -141,6 +142,7 @@ class HomeInterface(ScrollArea):
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
+        self._task_cards = []
         self.banner = BannerWidget(self)
         self.view = QWidget(self)
         self.vBoxLayout = QVBoxLayout(self.view)
@@ -188,6 +190,10 @@ class HomeInterface(ScrollArea):
         self.basicInputView.titleLabel.setText(tr('任务 >'))
         self.editButton.setText(tr('编辑'))
         self.refreshBackendTasks()
+
+    def refreshTheme(self):
+        for widget, original_icon in self._task_cards:
+            widget.iconWidget.setPixmap(portrait_artwork(original_icon, isDarkTheme()))
 
     def _build_card_action(self, card_data):
         """根据卡片配置数据构建动作"""
@@ -249,6 +255,7 @@ class HomeInterface(ScrollArea):
 
     def refreshBackendTasks(self):
         """重建卡片视图"""
+        self._task_cards.clear()
         self.basicInputView.clearCards()
 
         tasks = supported_tasks(display_connection(cfg))
@@ -265,9 +272,11 @@ class HomeInterface(ScrollArea):
                     continue
                 card = {**card, "menu_items": items}
             action = self._build_card_action(card)
-            self.basicInputView.addSampleCard(
+            widget = self.basicInputView.addSampleCard(
                 icon=card.get("icon", ""),
                 # 内置卡片存的是中文原文，这里按当前语言显示；用户自定义标题原样显示
                 title=display_label(card.get("title", "")),
                 action=action
             )
+            self._task_cards.append((widget, card.get('icon', '')))
+        self.refreshTheme()

@@ -8121,6 +8121,26 @@ msgstr "查看排查方法"
 msgid "后台操作模式已移至「游戏连接」"
 msgstr "后台操作模式已移至「游戏连接」"
 
+#: app/setting_interface.py:1163
+msgid "界面主题"
+msgstr "界面主题"
+
+#: app/setting_interface.py:1164
+msgid "选择应用的显示主题"
+msgstr "选择应用的显示主题"
+
+#: app/setting_interface.py:1165
+msgid "跟随系统"
+msgstr "跟随系统"
+
+#: app/setting_interface.py:1165
+msgid "浅色"
+msgstr "浅色"
+
+#: app/setting_interface.py:1165
+msgid "深色"
+msgstr "深色"
+
 #: module/game/adb_ready.py:118
 msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
 msgstr "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
