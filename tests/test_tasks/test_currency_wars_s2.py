@@ -4602,7 +4602,7 @@ def test_dreamscape_dance_confirms_two_actual_selections_before_returning(monkey
                     ("黑天鹅", 928, 357), ("花火", 1165, 357),
                     ("详情", 938, 412), ("详情", 1176, 412), ("确认选择", 1487, 576))
     bright = CANVAS.copy()
-    ImageDraw.Draw(bright).rectangle((1428, 561, 1550, 592), fill=(235, 235, 235))
+    ImageDraw.Draw(bright).rectangle((1310, 550, 1670, 601), fill=(235, 235, 235))
     open_ = Frame(CANVAS, common)
     first = Frame(CANVAS, common + labels(("已选择", 1118, 192)))
     both = Frame(bright, common + labels(("已选择", 1118, 192), ("已选择", 879, 192)))
@@ -4616,12 +4616,57 @@ def test_dreamscape_dance_confirms_two_actual_selections_before_returning(monkey
     assert state.clicks == [(Page.DANCE, p) for p in ((1165, 357), (928, 357), (1487, 576))]
 
 
+@pytest.mark.parametrize("entry", ("single", "loop", "takeover", "daily"))
+def test_dreamscape_dance_ignores_bright_employee_tab_behind_confirmation(monkeypatch, world, entry):
+    stage = "2-3"
+    confirm, settlement = (1487, 576), (960, 899)
+    left, right = (928, 358), (1166, 359)
+    common = labels(("备战阶段", 316, 70), (stage, 316, 106), ("梦境交织", 1045, 77),
+                    ("选择2个角色进行共舞，为其增加战斗内连携效果", 1045, 136),
+                    ("大丽花", *left), ("黑天鹅", *right), ("详情", 936, 412), ("详情", 1174, 412))
+    overlaid = CANVAS.copy()
+    ImageDraw.Draw(overlaid).rectangle((1404, 569, 1629, 602), fill=(205, 205, 205))
+    waiting = labels(("请选择2名共舞的角色", 1492, 521), ("确订", 1460, 577), ("角色赋能", 1516, 585))
+    before = Frame(overlaid, common + waiting)
+    first_badge = labels(("已选择", 878, 192))
+    first = Frame(overlaid, common + waiting + first_badge)
+    enabled = CANVAS.copy()
+    ImageDraw.Draw(enabled).rectangle((1310, 550, 1670, 601), fill=(235, 235, 235))
+    both = Frame(enabled, common + first_badge + labels(("已选择", 1118, 192)))
+    won = page(Page.MATCH_RESULT, ("对局胜利", 960, 233), ("返回货币战争", *settlement))
+    lobby, modes = home(), mode(("进入超频博弈", 1638, 960))
+    rank_page = page(Page.RANK, ("开始对局", 1680, 965), rank_mode="overclock", enemy_rank=1)
+    routes = {(lobby, (1600, 972)): modes, (modes, (1638, 960)): rank_page, (rank_page, (1680, 965)): before,
+              (before, left): first, (first, right): both, (both, confirm): won, (won, settlement): lobby}
+    world.cfg.currencywars_type = "overclock"
+    world.cfg.currencywars_rank_difficulty = "lowest"
+    world.cfg.currencywars_strategy = "default"
+    world.cfg.currencywars_time_limit = 1
+    state = drive(monkeypatch, world, before if entry == "takeover" else lobby,
+                  lambda s, point: setattr(s, "frame", routes[s.frame, point]))
+    monkeypatch.setattr(world.war, "get_reward", lambda f: (
+        f, (18000 if world.war.result else 15000, 18000), False))
+    assert before.page is Page.DANCE
+
+    if entry == "daily":
+        from tasks.daily import daily
+
+        monkeypatch.setattr(daily, "CurrencyWars", lambda: world.war)
+        assert daily.Daily._run_currency_wars()
+    else:
+        assert world.war.start(resume=entry == "takeover", loop=entry == "loop")
+
+    assert state.clicks[-4:] == [(Page.DANCE, left), (Page.DANCE, right), (Page.DANCE, confirm),
+                                 (Page.MATCH_RESULT, settlement)]
+    assert not state.keys and state.frame is lobby and world.war.result is True
+
+
 def test_dreamscape_dance_uses_card_locations_when_names_and_badges_are_unreadable(monkeypatch, world):
     common = labels(("备战阶段", 287, 70), ("1-2", 287, 106), ("梦境交织", 1044, 77),
                     ("选择2个角色进行共舞", 1044, 136),
                     ("详情", 938, 412), ("详情", 1176, 412), ("确认选择", 1487, 576))
     bright = CANVAS.copy()
-    ImageDraw.Draw(bright).rectangle((1428, 561, 1550, 592), fill=(235, 235, 235))
+    ImageDraw.Draw(bright).rectangle((1310, 550, 1670, 601), fill=(235, 235, 235))
     initial = Frame(CANVAS, common)
     confirmed = Frame(bright, common)
     ready = page(Page.BOARD, stage="1-2")
@@ -4641,7 +4686,7 @@ def test_dreamscape_dance_uses_distinct_names_when_details_are_unreadable(monkey
     confirm_text = labels(("确认选择", *confirm))
     first_badge = labels(("已选择", 1118, 192))
     image = CANVAS.copy()
-    ImageDraw.Draw(image).rectangle((1428, 561, 1550, 592), fill=(235, 235, 235))
+    ImageDraw.Draw(image).rectangle((1310, 550, 1670, 601), fill=(235, 235, 235))
     initial = Frame(CANVAS, common + confirm_text)
     first = Frame(CANVAS, common + confirm_text + first_badge)
     both = Frame(image, common + first_badge + labels(("已选择", 879, 192)))
@@ -4689,7 +4734,7 @@ def test_dreamscape_dance_rechecks_selection_and_button_when_confirm_text_is_unr
     second_badge = labels(("已选择", 879, 192))
     image = CANVAS.copy()
     if receipt != "disabled_button":
-        ImageDraw.Draw(image).rectangle((1428, 561, 1550, 592), fill=(235, 235, 235))
+        ImageDraw.Draw(image).rectangle((1310, 550, 1670, 601), fill=(235, 235, 235))
     initial = Frame(CANVAS, common + confirm_text)
     first = Frame(CANVAS, common + confirm_text + first_badge)
     picked = Frame(image, common + first_badge + (second_badge if receipt != "missing_badge" else ()))

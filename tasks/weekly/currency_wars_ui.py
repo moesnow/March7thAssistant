@@ -101,7 +101,8 @@ EMPLOYEE_EVENT_TITLE = (600, 43, 1465, 102)
 EMPLOYEE_EVENT_SUBTITLE = (636, 103, 1485, 161)
 EMPLOYEE_EVENT_DETAILS = (440, 385, 1650, 436)
 EMPLOYEE_EVENT_CONFIRM = (1280, 541, 1700, 626)
-DANCE_CONFIRM_POINT = (1487, 576)
+DANCE_SELECTION_PROMPT = (1300, 501, 1684, 542)
+DANCE_CONFIRM_X = 1487
 DANCE_MIN_CARD_GAP = 136
 SVAROG_TITLE = (900, 51, 1190, 107)
 SVAROG_SUBTITLE = (880, 114, 1210, 160)
@@ -1478,9 +1479,16 @@ class Frame:
         )
 
     @cached_property
+    def dance_needs_pair(self) -> bool:
+        return self.has("请选择2名共舞的角色", "请选择2个共舞的角色",
+                        area=DANCE_SELECTION_PROMPT, contains=True)
+
+    @cached_property
     def unlabeled_dance_confirm(self) -> Label | None:
-        if self.page == Page.DANCE and not self.has("确认选择", area=EMPLOYEE_EVENT_CONFIRM):
-            return self.enabled_button(Label("确认选择", DANCE_CONFIRM_POINT))
+        if (self.page == Page.DANCE and not self.dance_needs_pair
+                and not self.has("确认选择", area=EMPLOYEE_EVENT_CONFIRM)):
+            # 共舞弹层下可能保留角色详情，中心亮块需和按钮两侧的底色同时吻合。
+            return self._wide_confirm(None, EMPLOYEE_EVENT_CONFIRM, DANCE_CONFIRM_X)
         return None
 
     @cached_property
@@ -1489,6 +1497,10 @@ class Frame:
 
     def employee_event_confirm(self) -> Label | None:
         if button := self.find("确认选择", area=EMPLOYEE_EVENT_CONFIRM):
+            if self.page == Page.DANCE:
+                if self.dance_needs_pair:
+                    return None
+                return self._wide_confirm(button, EMPLOYEE_EVENT_CONFIRM, DANCE_CONFIRM_X)
             return self.enabled_button(button)
         if self.unlabeled_dance_confirm and self.dance_pair_selected:
             return self.unlabeled_dance_confirm
