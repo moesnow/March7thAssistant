@@ -3,11 +3,12 @@ import re
 import sys
 
 import markdown
-from PySide6.QtCore import Qt, QUrl
+from PySide6.QtCore import QEvent, Qt, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QStackedWidget, QScroller, QScrollerProperties, QSizePolicy
 from qfluentwidgets import qconfig, ScrollArea, Pivot, TextBrowser, setCustomStyleSheet, PushButton, FluentIcon
 from .common.style_sheet import StyleSheet
+from .common.accent import accent_html
 from module.localization import tr
 
 
@@ -39,13 +40,17 @@ class HelpInterface(ScrollArea):
         self.backgroundLabel = TextBrowser(parent)
         self.tasksLabel = TextBrowser(parent)
         self.changelogLabel = TextBrowser(parent)
+        self._pending_accent = set()
 
         self.__initWidget()
         self.__initCard()
         self.__initLayout()
         for attr in DOC_OF_TAB:
-            getattr(self, attr).anchorClicked.connect(self.open_url)
+            widget = getattr(self, attr)
+            widget.anchorClicked.connect(self.open_url)
+            widget.installEventFilter(self)
         qconfig.themeChanged.connect(self.__themeChanged)
+        qconfig.themeColorChanged.connect(self._onAccentChanged)
 
     def __initWidget(self):
         self.setWidget(self.scrollWidget)
@@ -99,10 +104,6 @@ th, td {
             sys.exit(1)
         self.tutorial_content = tutorial_style + markdown.markdown(self.content, extensions=['tables']).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
 
-        if qconfig.theme.name == "DARK":
-            self.tutorialLabel.setText(self.tutorial_content.replace("border: 1px solid black;", "border: 1px solid white;"))
-        else:
-            self.tutorialLabel.setText(self.tutorial_content)
         self.tutorialLabel.setOpenExternalLinks(True)
 
         workflow_file = self._get_localized_doc_path("Workflow")
@@ -114,10 +115,6 @@ th, td {
             sys.exit(1)
         self.workflow_content = tutorial_style + markdown.markdown(self.content, extensions=['tables']).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
 
-        if qconfig.theme.name == "DARK":
-            self.workflowLabel.setText(self.workflow_content.replace("border: 1px solid black;", "border: 1px solid white;"))
-        else:
-            self.workflowLabel.setText(self.workflow_content)
         self.workflowLabel.setOpenExternalLinks(True)
 
         faq_style = """
@@ -135,8 +132,7 @@ a {
                 self.content = '\n'.join(self.content.split('\n')[2:])
         except FileNotFoundError:
             sys.exit(1)
-        faq_content = faq_style + markdown.markdown(self.content).replace('<h3>', '<br><h3>').replace('</h3>', '</h3><hr>').replace('<br>', '', 1) + '<br>'
-        self.faqLabel.setText(faq_content)
+        self.faq_content = faq_style + markdown.markdown(self.content).replace('<h3>', '<br><h3>').replace('</h3>', '</h3><hr>').replace('<br>', '', 1) + '<br>'
         self.faqLabel.setOpenExternalLinks(True)
 
         background_file = self._get_localized_doc_path("Background")
@@ -148,10 +144,6 @@ a {
             sys.exit(1)
         self.background_content = tutorial_style + markdown.markdown(self.content, extensions=['tables', 'fenced_code']).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
 
-        if qconfig.theme.name == "DARK":
-            self.backgroundLabel.setText(self.background_content.replace("border: 1px solid black;", "border: 1px solid white;"))
-        else:
-            self.backgroundLabel.setText(self.background_content)
         self.backgroundLabel.setOpenExternalLinks(True)
 
         tasks_style = """
@@ -179,11 +171,6 @@ th, td {
             sys.exit(1)
         self.tasks_content = tasks_style + markdown.markdown(self.content, extensions=['tables'])
 
-        if qconfig.theme.name == "DARK":
-            self.tasksLabel.setText(self.tasks_content.replace("border: 1px solid black;", "border: 1px solid white;"))
-        else:
-            self.tasksLabel.setText(self.tasks_content)
-
         changelog_style = """
 <style>
 a {
@@ -199,9 +186,9 @@ a {
                 self.content = '\n'.join(self.content.split('\n')[1:])
         except FileNotFoundError:
             sys.exit(1)
-        changelog_content = changelog_style + markdown.markdown(self.content).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
-        self.changelogLabel.setText(changelog_content)
+        self.changelog_content = changelog_style + markdown.markdown(self.content).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
         self.changelogLabel.setOpenExternalLinks(True)
+        self.__themeChanged()
 
     def retranslateUi(self):
         StyleSheet.HELP_INTERFACE.apply(self)
@@ -250,17 +237,17 @@ a {
             QTextBrowser {
                 background: transparent;
                 border: none;
-                selection-background-color: #f18cb9;
+                selection-background-color: --ThemeColorPrimary;
             }
             QTextBrowser:hover {
                 background: transparent;
                 border: none;
-                selection-background-color: #f18cb9;
+                selection-background-color: --ThemeColorPrimary;
             }
             QTextBrowser:focus {
                 background: transparent;
                 border: none;
-                selection-background-color: #f18cb9;
+                selection-background-color: --ThemeColorPrimary;
             }
             
             QScrollBar:vertical {
@@ -332,22 +319,28 @@ a {
         return localized_doc_path(base_name)
 
     def __themeChanged(self):
-        if qconfig.theme.name == "DARK":
-            self.tutorialLabel.setText(self.tutorial_content.replace("border: 1px solid black;", "border: 1px solid white;"))
-        else:
-            self.tutorialLabel.setText(self.tutorial_content)
+        for attr in DOC_OF_TAB:
+            self._renderDocument(attr)
 
-        if qconfig.theme.name == "DARK":
-            self.workflowLabel.setText(self.workflow_content.replace("border: 1px solid black;", "border: 1px solid white;"))
-        else:
-            self.workflowLabel.setText(self.workflow_content)
+    def _renderDocument(self, attr):
+        widget = getattr(self, attr)
+        position = widget.verticalScrollBar().value()
+        content = getattr(self, attr.removesuffix('Label') + '_content')
+        if qconfig.theme.name == 'DARK':
+            content = content.replace('border: 1px solid black;', 'border: 1px solid white;')
+        widget.setText(accent_html(content))
+        widget.verticalScrollBar().setValue(position)
+        self._pending_accent.discard(attr)
 
-        if qconfig.theme.name == "DARK":
-            self.backgroundLabel.setText(self.background_content.replace("border: 1px solid black;", "border: 1px solid white;"))
-        else:
-            self.backgroundLabel.setText(self.background_content)
+    def _onAccentChanged(self):
+        # Do not reparse all six hidden documents at the animation midpoint.
+        for attr in DOC_OF_TAB:
+            if getattr(self, attr).isVisible():
+                self._renderDocument(attr)
+            else:
+                self._pending_accent.add(attr)
 
-        if qconfig.theme.name == "DARK":
-            self.tasksLabel.setText(self.tasks_content.replace("border: 1px solid black;", "border: 1px solid white;"))
-        else:
-            self.tasksLabel.setText(self.tasks_content)
+    def eventFilter(self, watched, event):
+        if event.type() == QEvent.Type.Show and watched.objectName() in self._pending_accent:
+            self._renderDocument(watched.objectName())
+        return super().eventFilter(watched, event)

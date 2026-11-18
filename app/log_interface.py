@@ -11,7 +11,7 @@ from qfluentwidgets import (ScrollArea, PrimaryPushButton, PushButton,
                             FluentIcon, InfoBar, InfoBarPosition, CardWidget,
                             BodyLabel, StrongBodyLabel, PlainTextEdit,
                             SwitchButton, IndicatorPosition, TimePicker,
-                            Action, RoundMenu, MenuAnimationType)
+                            Action, RoundMenu, MenuAnimationType, qconfig)
 import sys
 import os
 import locale
@@ -19,6 +19,7 @@ import re
 
 import uuid
 from .common.style_sheet import StyleSheet
+from .common.accent import accent_html
 from .common.icon import UiIcon
 from .common.schedule import (task_trigger_mode, scheduled_task_slot,
                               scheduled_task_payload, find_scheduled_task, scheduled_task_chain,
@@ -91,7 +92,7 @@ class GameLogOverlay(QWidget):
 
         self.panel = QFrame(self)
         self.panel.setObjectName('gameLogOverlayPanel')
-        self.panel.setStyleSheet("""
+        self._panel_style = """
             QFrame#gameLogOverlayPanel {
                 background-color: rgba(16, 20, 28, 186);
                 border: 1px solid rgba(255, 255, 255, 38);
@@ -136,7 +137,10 @@ class GameLogOverlay(QWidget):
                 font-size: 12px;
                 background-color: transparent;
             }
-        """)
+        """
+        self._updateAccent()
+        qconfig.themeColorChanged.connect(self._updateAccent)
+        qconfig.themeChanged.connect(self._updateAccent)
 
         panelLayout = QVBoxLayout(self.panel)
         panelLayout.setContentsMargins(16, 14, 16, 14)
@@ -195,6 +199,9 @@ class GameLogOverlay(QWidget):
 
         self.resize(420, 188)
         self.hide()
+
+    def _updateAccent(self):
+        self.panel.setStyleSheet(accent_html(self._panel_style))
 
     def retranslateUi(self):
         """刷新现有浮窗的文案，不重建窗口或清空任务日志。"""

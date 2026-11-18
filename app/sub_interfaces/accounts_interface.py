@@ -1,12 +1,13 @@
 
 from typing import Union
-from qfluentwidgets import SettingCard, SettingCardGroup, ListWidget, FluentIconBase, CardWidget, FluentStyleSheet
+from qfluentwidgets import SettingCard, SettingCardGroup, ListWidget, FluentIconBase, CardWidget, FluentStyleSheet, qconfig
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QPushButton, QListWidgetItem, QVBoxLayout, QMessageBox, QInputDialog, QLineEdit, QLabel
 from PySide6.QtWidgets import QGridLayout, QFrame
 from qfluentwidgets import FluentIcon as FIF
 from app.common.icon import UiIcon
+from app.common.accent import accent_color
 from module.config import cfg
 from app.tools.account_manager import accounts, reload_all_account_from_files, dump_current_account, delete_account, \
     save_account_name, import_account, save_acc_and_pwd, clear_reg
@@ -30,10 +31,11 @@ class AccountsCard(QFrame):
         self.buttons.setContentsMargins(10, 3, 10, 3)
         self.tipsText = QLabel(tr("重要：请完全进入游戏（看到角色）后再进行导出，否则会读取前一个账号的UID，导致文件和账号不对应"))
         self.tipsText.setWordWrap(True)
-        self.tipsText.setStyleSheet('color: #f94e9b')
         self.tipsText2 = QLabel(tr("该功能不支持云·星穹铁道"))
         self.tipsText2.setWordWrap(True)
-        self.tipsText2.setStyleSheet('color: #f94e9b')
+        self._updateAccent()
+        qconfig.themeColorChanged.connect(self._updateAccent)
+        qconfig.themeChanged.connect(self._updateAccent)
         self.buttons.addWidget(self.tipsText)
         self.buttons.addWidget(self.tipsText2)
         self.tipsText.setFixedHeight(50)
@@ -193,6 +195,11 @@ class AccountsCard(QFrame):
         self.mLayout.setColumnStretch(1, 1)  # 第二列的拉伸因子为1，即均分空间
         #
         self.setLayout(self.mLayout)
+
+    def _updateAccent(self):
+        style = f'color: {accent_color("#f94e9b")}'
+        self.tipsText.setStyleSheet(style)
+        self.tipsText2.setStyleSheet(style)
 
 
 def accounts_interface(tr, scrollWidget) -> SettingCardGroup:

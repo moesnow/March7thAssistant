@@ -8086,6 +8086,14 @@ msgstr "策略優先"
 msgid "图鉴优先"
 msgstr "圖鑑優先"
 
+#: app/components/evey_animation.py:28
+msgid "忆灵「长夜」"
+msgstr "憶靈「長夜」"
+
+#: app/home_interface.py:123
+msgid "长夜月小助手"
+msgstr "長夜月小助手"
+
 #: app/setting_interface.py:615
 msgid "总时限"
 msgstr "總時限"
@@ -8141,6 +8149,10 @@ msgstr "淺色"
 #: app/setting_interface.py:1165
 msgid "深色"
 msgstr "深色"
+
+#: app/card/comboboxsettingcard2.py:58 app/main_window.py:452
+msgid "长夜"
+msgstr "長夜"
 
 #: module/game/adb_ready.py:118
 msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
