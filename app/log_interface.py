@@ -1278,11 +1278,21 @@ class LogInterface(ScrollArea):
         self.stopButton.setEnabled(True)
         timer.start(60000)
 
+    def _prepareTwinGameForTask(self):
+        """桌面分身里开始任务前还原因空闲暂停而最小化的游戏窗口。"""
+        if not in_desktop_twin():
+            return
+        window = self.window()
+        prepare = getattr(window, "prepareTwinGameForTask", None)
+        if callable(prepare):
+            prepare()
+
     def startTask(self, command_or_task, *, _sequence=None):
         """启动任务"""
         if getattr(self, "_desktop_twin_hosting", False):
             self.appendLog("当前由分身内的小助手运行任务\n")
             return
+        self._prepareTwinGameForTask()
         if reason := task_launch_block_reason(command_or_task, cfg):
             self._reportBlockedTaskLaunch(reason)
             return

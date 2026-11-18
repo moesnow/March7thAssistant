@@ -690,6 +690,14 @@ class DesktopTwinDialog(QDialog):
             return
         self._preview_paused = True
         self._log.appendLog("桌面分身：窗口已隐藏，画面传输已暂停（分身继续运行）\n")
+        self._notify_assistant_idle(True)
+
+    def _notify_assistant_idle(self, paused):
+        """通知分身内小助手主机画面已隐藏/恢复，用于空闲时降低游戏占用。"""
+        try:
+            self._contact_assistant(b'{"action":"idle-pause"}' if paused else b'{"action":"idle-resume"}')
+        except Exception:
+            pass
 
     def _resume_preview(self):
         """重新连接画面传输，并交给 _poll_connection 校验会话状态。"""
@@ -704,6 +712,7 @@ class DesktopTwinDialog(QDialog):
             return
         self._connect_until = time.monotonic() + 60
         self._log.appendLog("桌面分身：正在恢复画面…\n")
+        self._notify_assistant_idle(False)
         self.retranslateUi()
 
     def _poll_paused_preview(self):
@@ -1082,6 +1091,10 @@ class DesktopTwinDialog(QDialog):
                 self._replace_assistant = False
                 self._session = None
                 self._cancel_connection()
+            elif (not self._preview_paused and self._connected and not self._connect_until
+                  and not self.isVisible() and read_active_run() is None):
+                # 任务结束且窗口隐藏：重新暂停画面，恢复后台低占用状态
+                self._pause_preview()
             elif self._session is None and self.isVisible() and now >= self._recovery_check_at:
                 self._recovery_check_at = now + 1.0
                 self._refresh_recovery_session()

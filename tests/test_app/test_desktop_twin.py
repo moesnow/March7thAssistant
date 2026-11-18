@@ -1077,6 +1077,46 @@ def test_pause_skipped_while_not_connected(qtbot, monkeypatch):
     dialog._rdp.suspend.assert_not_called()
 
 
+def test_hidden_preview_notifies_twin_to_idle_pause(qtbot, monkeypatch):
+    ui, dialog = _make_twin_dialog(qtbot)
+    monkeypatch.setattr(ui, "read_active_run", lambda: None)
+    monkeypatch.setattr(ui, "session_exists", lambda _: True)
+    contact = Mock(return_value=True)
+    dialog._contact_assistant = contact
+
+    dialog.show()
+    dialog.hide()
+    qtbot.wait(20)
+
+    contact.assert_any_call(b'{"action":"idle-pause"}')
+
+    dialog.show()
+    qtbot.wait(20)
+
+    contact.assert_any_call(b'{"action":"idle-resume"}')
+
+
+def test_hidden_preview_pauses_again_after_task_ends(qtbot, monkeypatch):
+    ui, dialog = _make_twin_dialog(qtbot)
+    monkeypatch.setattr(ui, "read_active_run", lambda: None)
+    monkeypatch.setattr(ui, "session_exists", lambda _: True)
+    dialog.show()
+    dialog.hide()
+    qtbot.wait(20)
+    assert dialog._preview_paused
+
+    # 模拟任务期间画面已恢复（任务运行时不停画面），任务结束后应重新暂停
+    dialog._preview_paused = False
+    dialog._rdp.suspend = Mock(return_value=True)
+    dialog._contact_assistant = Mock(return_value=True)
+
+    dialog._poll()
+
+    assert dialog._preview_paused
+    dialog._rdp.suspend.assert_called_once()
+    dialog._contact_assistant.assert_called_once_with(b'{"action":"idle-pause"}')
+
+
 def test_rdp_control_suspend_and_resume_toggle_client(qtbot):
     from PySide6.QtWidgets import QWidget
     from app.tools.rdp_control import RdpControl

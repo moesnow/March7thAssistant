@@ -113,15 +113,23 @@ class ClickableLabel(QLabel):
         super().mousePressEvent(event)
 
 
+def _twin_idle_pause_enabled():
+    """桌面分身空闲最小化是否启用（配置缺失时默认启用）。"""
+    try:
+        return bool(cfg.get_value("desktop_twin_idle_pause", True))
+    except Exception:
+        return True
+
+
 class MainWindow(MSFluentWindow):
     TASK_EXIT_DELAY_MS = 5000
-
     def __init__(self, task=None, exit_on_complete=False, start_minimized_to_tray=False):
         super().__init__()
         self._desktop_twin_hosting = False
         self._desktop_twin_tray_action = None
         self._desktop_twin_notice = None
         self._desktop_twin_badge = None
+        self._twin_game_paused = False
         self._backend_connection = display_connection(cfg)
         self._pending_ui_language = None
         self._navigation_animation_running = False
@@ -177,6 +185,33 @@ class MainWindow(MSFluentWindow):
         if self.startup_task:
             from tasks.base.tasks import start_task
             start_task(self.startup_task)
+
+    def pauseTwinGame(self):
+        """桌面分身空闲（窗口隐藏且没有任务）时最小化游戏，降低后台占用。"""
+        if not in_desktop_twin() or not _twin_idle_pause_enabled():
+            return
+        if self.logInterface.isTaskRunning():
+            return
+        if self._twin_game_paused:
+            return
+        from utils.twin_resource import minimize_game_window
+        if minimize_game_window(cfg.get_value("game_title_name")):
+            self._twin_game_paused = True
+            self.logInterface.appendLog("桌面分身：窗口隐藏且没有任务，已最小化游戏以降低资源占用\n")
+
+    def resumeTwinGame(self):
+        """恢复因空闲暂停而最小化的游戏窗口。"""
+        if not self._twin_game_paused:
+            return
+        from utils.twin_resource import restore_game_window
+        if restore_game_window(cfg.get_value("game_title_name")):
+            self._twin_game_paused = False
+            self.logInterface.appendLog("桌面分身：已恢复游戏窗口\n")
+
+    def prepareTwinGameForTask(self):
+        """任务开始前恢复游戏窗口，避免任务在最小化窗口上截图失败。"""
+        if in_desktop_twin():
+            self.resumeTwinGame()
 
     def initWindow(self):
         # 开启 “在标题栏和窗口边框上显示强调色” 后，会导致窗口顶部出现异色横条 bug 已经修复
