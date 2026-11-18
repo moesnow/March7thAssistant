@@ -73,7 +73,7 @@ AI 助手使用的是不需要管理员权限的命令行入口 `m7a.exe`（运�
 
 如果你是完全不懂的小白，请通过上面的方式下载安装，可以不用往下看了。
 
-需要 Python 3.12 或更高版本。
+需要 Python 3.12 至 3.14。
 
 Windows 下如果通过终端启动，建议使用管理员模式打开 PowerShell、Windows Terminal 或 CMD；Windows 11 24H2 及以上也可以按 [Sudo for Windows](https://learn.microsoft.com/zh-cn/windows/advanced-settings/sudo/) 的方式执行。
 
