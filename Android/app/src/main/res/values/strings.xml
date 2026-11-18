@@ -82,7 +82,7 @@
     <string name="step_waiting">等待执行</string>
     <string name="step_disabled">未启用</string>
     <string name="step_starts_on">%1$s开始</string>
-    <string name="result_retry">可以直接再开始一次。反复出现时，到日志页导出日志反馈。</string>
+    <string name="result_retry">需要反馈时，请在重新开始前到「日志」页点「导出」，并附上本轮日志文件。</string>
 
     <!-- 首页 -->
     <string name="pill_ready">就绪</string>
@@ -435,15 +435,17 @@
     <string name="error_busy_advice">1. 等十几秒再点开始。\n2. 还是不行，就在 Shizuku 里停止服务后重新启动，或者重启手机。</string>
     <string name="error_cleanup_pending_title">本轮清理尚未确认</string>
     <string name="error_service_title">设备端服务没有启动成功</string>
-    <string name="error_service_advice">1. 打开 Shizuku，确认它显示「正在运行」；手机重启过就需要重新启动它。\n2. 回到权限引导，确认状态是「已就绪」。\n3. 再点开始。</string>
+    <string name="error_shizuku_api_title">当前 Shizuku 服务不支持设备进程接口</string>
+    <string name="error_shizuku_api_advice">请到「日志」页点「导出」，反馈时附上本轮日志文件，里面有 Shizuku 版本和 UID。\n请使用提供 API 13 的 Shizuku 服务，或在已 Root 的设备上选择 Root 授权。</string>
+    <string name="error_service_advice">重试前，请到「日志」页点「导出」，反馈时附上本轮日志文件。\n使用 Shizuku 时，确认它正在运行。手机重启后需要重新启动 Shizuku，再回到「权限引导」确认已就绪。</string>
     <string name="error_root_title">没有拿到 Root 权限</string>
     <string name="error_root_advice">1. 在 Root 管理应用（如 Magisk）里允许三月七小助手使用超级用户权限。\n2. 到权限引导点「检查 Root」。\n3. 没有 Root 的设备请改用 Shizuku。</string>
     <string name="error_game_title">没有找到游戏</string>
     <string name="error_game_advice">请先安装国服《崩坏：星穹铁道》，手动打开一次，完成登录和资源下载后再开始。</string>
     <string name="error_game_exited_title">游戏已退出</string>
-    <string name="error_game_exited_advice">可以直接从小助手重新启动游戏。若反复退出，请导出日志反馈。</string>
+    <string name="error_game_exited_advice">需要反馈时，请先到「日志」页点「导出」，保存本轮日志。然后可以从小助手重新启动游戏。</string>
     <string name="error_game_start_timeout_title">等待游戏就绪超时</string>
-    <string name="error_game_start_timeout_advice">打开游戏确认是否需要登录或更新，然后重新开始任务。反复超时可导出日志反馈。</string>
+    <string name="error_game_start_timeout_advice">打开游戏确认是否需要登录或更新。需要反馈时，请在重试前到「日志」页点「导出」，保存本轮日志。</string>
     <string name="error_honor_smart_resolution_advice">如果后台游戏画面异常或一直卡在启动界面，可在手机系统设置中搜索并关闭「智能分辨率」，再试一次。</string>
     <string name="error_login_title">需要你先登录游戏</string>
     <string name="error_login_advice">1. 在手机上打开游戏，完成登录，进到能操作角色的界面。\n2. 回到小助手重新开始。</string>
@@ -458,11 +460,11 @@
     <string name="error_foreground_title">系统没有允许启动后台任务</string>
     <string name="error_foreground_advice">1. 让小助手停留在前台，再点一次开始。\n2. 仍然不行，在应用系统设置里允许通知，并把省电策略设为「无限制」。</string>
     <string name="error_task_title">任务没有做完</string>
-    <string name="error_task_advice">游戏里有一步没有按预期进行。\n1. 在运行日志里看最后几条红色记录，了解停在了哪一步。\n2. 重新开始一次，多数情况可以恢复。\n3. 反复出现时，导出日志反馈。</string>
+    <string name="error_task_advice">请在「日志」页查看最后几条红色记录，了解任务停在了哪一步。需要反馈时，请先点「导出」，保存本轮日志后再重试。</string>
     <string name="error_runtime_title">运行时出错</string>
-    <string name="error_runtime_advice">1. 重新开始一次。\n2. 仍然出错，在日志页点「导出」，把文件发到项目主页反馈。</string>
+    <string name="error_runtime_advice">重试前，请到「日志」页点「导出」，保存本轮日志。到项目主页反馈时，请附上这个文件。</string>
     <string name="error_unknown_title">任务失败</string>
-    <string name="error_unknown_advice">1. 在运行日志里看最后几条记录。\n2. 重新开始一次。\n3. 仍然失败，导出日志并附上下面的错误码反馈。</string>
+    <string name="error_unknown_advice">请在「日志」页查看最后几条记录，点「导出」保存本轮日志后再重试。反馈时请附上日志文件和下面的错误码。</string>
 
     <!-- 设置 -->
     <string name="settings_title">设置</string>

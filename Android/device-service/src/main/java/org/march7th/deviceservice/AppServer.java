@@ -91,7 +91,7 @@ public final class AppServer {
         new GameAudio().restorePending();
     }
 
-    /** Binder 死亡和 Root 管道 EOF 都走这里。中断收发，等待正在处理的命令结束。 */
+    /** 持有者断开时中断收发，等待正在处理的命令结束。 */
     public void stop() {
         if (!stopping.compareAndSet(false, true)) {
             return;
@@ -198,13 +198,13 @@ public final class AppServer {
         }
     }
 
-    /** 已获授权的 su 入口。令牌走 stdin，关闭管道时结束租约。 */
+    /** Root 和 Shizuku 共用的 shell UID 入口。令牌走 stdin，关闭管道时结束租约。 */
     @SuppressWarnings("deprecation")
     public static void main(String[] args) {
         int uid = Process.myUid();
         boolean recoverAudioOnly = args.length == 2 && "--recover-audio".equals(args[1]);
         if (uid != Process.SHELL_UID || (args.length != 1 && !recoverAudioOnly)) {
-            Logger.w("invalid Root service entry: uid=" + uid + ", argc=" + args.length);
+            Logger.w("invalid app service entry: uid=" + uid + ", argc=" + args.length);
             System.exit(2);
         }
         Looper.prepareMainLooper();
@@ -241,7 +241,7 @@ public final class AppServer {
             if (BUSY.equals(error.getMessage())) {
                 System.out.println("M7A_APP_BUSY");
             }
-            Logger.e("cannot start Root service", error);
+            Logger.e("cannot start app service", error);
             System.exit(3);
         }
     }

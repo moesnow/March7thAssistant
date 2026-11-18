@@ -1,12 +1,11 @@
 # app_process 按类名启动 AppServer，设备端也在 APK 之外执行系统调用。
 -keep class org.march7th.deviceservice.** { *; }
 
-# Shizuku 按组件名反射构造 UserService，双方经同一个 AIDL 接口通信。
--keep class top.m7a.GameUserService {
-    public <init>(android.content.Context);
-}
--keep interface top.m7a.IDeviceBootstrap { *; }
--keep class top.m7a.IDeviceBootstrap$* { *; }
+# Shizuku API 13 进程入口与远端管道使用 SDK 自带的 Binder 协议。
+-keep interface moe.shizuku.server.IShizukuService { *; }
+-keep class moe.shizuku.server.IShizukuService$* { *; }
+-keep interface moe.shizuku.server.IRemoteProcess { *; }
+-keep class moe.shizuku.server.IRemoteProcess$* { *; }
 
 # Python 通过 Chaquopy 按成员名调用。
 -keepclassmembers class top.m7a.TaskController$TaskRun {
