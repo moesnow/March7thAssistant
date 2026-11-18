@@ -23,6 +23,7 @@ from app.components.notice_bar import NoticeBar
 from app.components.pill_label import PillLabel, pill_colors
 from app.tools.process_audio import ProcessAudioMuter
 from app.tools.rdp_control import DESKTOP_SIZE, RdpControl
+from module.config import cfg
 from module.localization import tr
 from utils.admin import is_user_admin
 from utils.desktop_twin import (
@@ -30,6 +31,7 @@ from utils.desktop_twin import (
     disconnected_child_session, launcher_server_key, logoff_owned_session, owned_session_info,
     reserve_connection, reserve_disconnected_child, session_exists,
 )
+from utils.runs import read_active_run
 from utils.windows_session import child_sessions_enabled, enable_child_sessions, process_session_id, session_info
 
 
@@ -282,6 +284,8 @@ class DesktopTwinDialog(QDialog):
         self._logoff_lease = None
         self._error = ""
         self._error_doc_section = None
+        # 隐藏窗口时暂停 RDP 画面传输，避免后台持续接收、解码 1080p 画面
+        self._preview_paused = False
         # 分身的声音由本进程里的 RDP 控件播放，窗口看不见时静音
         self._audio = ProcessAudioMuter(marker=os.path.abspath(os.path.join("temp", "desktop_twin_muted")))
         self._audio_check_at = 0.0
@@ -636,6 +640,7 @@ class DesktopTwinDialog(QDialog):
         self._applyFrameTheme()
         self._restore_audio()
         self._refresh_recovery_session()
+        self._resume_preview()
 
     def _show_in_taskbar(self):
         """分身窗口归属于主窗口，默认没有任务栏按钮，最小化后只会缩成屏幕左下角的小标题栏。
@@ -655,6 +660,62 @@ class DesktopTwinDialog(QDialog):
         # 包括窗口最小化，以及主窗口最小化时随之隐藏；连接中隐藏也要静音，避免连上后直接出声
         if self._session is not None or self._connect_until:
             self._mute_audio()
+        if self._session is not None and self._connected and not (self._quit_until or self._logoff_until):
+            self._pause_preview()
+
+    @staticmethod
+    def _pause_preview_enabled():
+        try:
+            return bool(cfg.get_value("desktop_twin_pause_preview", True))
+        except Exception:
+            return True
+
+    def _pause_preview(self):
+        """隐藏窗口时断开画面传输：分身会话和其中的任务继续运行。"""
+        if self._preview_paused or not self._session or not self._connected:
+            return
+        if not self._pause_preview_enabled():
+            return
+        try:
+            if read_active_run() is not None:
+                # 任务进行中保持画面：避免分身会话在任务运行时变成断开状态
+                return
+        except Exception:
+            return
+        try:
+            if not self._rdp.suspend():
+                return
+        except Exception as error:
+            self._report(error)
+            return
+        self._preview_paused = True
+        self._log.appendLog("桌面分身：窗口已隐藏，画面传输已暂停（分身继续运行）\n")
+
+    def _resume_preview(self):
+        """重新连接画面传输，并交给 _poll_connection 校验会话状态。"""
+        if not self._preview_paused:
+            return
+        self._preview_paused = False
+        try:
+            self._rdp.resume()
+        except Exception as error:
+            self._cancel_connection()
+            self._report(error)
+            return
+        self._connect_until = time.monotonic() + 60
+        self._log.appendLog("桌面分身：正在恢复画面…\n")
+        self.retranslateUi()
+
+    def _poll_paused_preview(self):
+        """暂停期间任务开始时恢复画面；分身会话结束则清理状态。"""
+        if self.isVisible() or read_active_run() is not None:
+            self._resume_preview()
+            return
+        if self._session is not None and not session_exists(self._session):
+            self._preview_paused = False
+            self._finish_launch(cancel=True)
+            self._session = None
+            self._cancel_connection()
 
     def _mute_audio(self):
         try:
@@ -886,6 +947,7 @@ class DesktopTwinDialog(QDialog):
     def _cancel_connection(self):
         self._connect_until = None
         self._connected = False
+        self._preview_paused = False
         try:
             self._rdp.dispose()
         except Exception as error:
@@ -1006,6 +1068,8 @@ class DesktopTwinDialog(QDialog):
                 return
             if self._connect_until:
                 self._poll_connection(now)
+            elif self._preview_paused:
+                self._poll_paused_preview()
             elif self._connected and self._rdp.error is not None:
                 self._cancel_connection()
             if self._launch_until and not self._quit_until:

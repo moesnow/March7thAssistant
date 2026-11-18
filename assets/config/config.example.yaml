@@ -482,6 +482,9 @@ scheduled_tasks: [] # 示例：
 use_background_screenshot: true # 是否优先使用后台截图
 local_control_mode: foreground # Windows 本地操作模式：foreground 前台；background 后台。下次启动任务生效。
 background_mouse_protection: false # 后台鼠标重试失败时，最多保护鼠标 2 秒；保留键盘和暂停热键。
+# 桌面分身画面暂停：隐藏或最小化分身窗口时暂停画面传输，分身内任务继续运行；
+# 任务开始或重新显示窗口时自动恢复。隐藏期间仍需要画面时设为 false。
+desktop_twin_pause_preview: true
 
 # 开机启动设置（在图形界面「设置 - 杂项」中通过「配置」按钮设置）
 # 由计划任务在登录后以最高权限静默启动，不会弹出 UAC 提示。
