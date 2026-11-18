@@ -16,6 +16,10 @@ def applyTheme(window, theme=None):
         theme = {'light': Theme.LIGHT, 'dark': Theme.DARK}.get(preference)
         if theme is None:
             theme = Theme.DARK if darkdetect.isDark() else Theme.LIGHT
+    # setTheme() 会刷新全部控件的样式，即使传入的主题没有变化。
+    if theme == qconfig.theme:
+        return
+
     is_minimized_to_tray = hasattr(window, 'tray_icon') and not window.isVisible() and window.tray_icon.isVisible()
     setTheme(theme, lazy=not is_minimized_to_tray)
     # Refresh Mica after the light-to-dark transition (PyQt-Frameless-Window #158).

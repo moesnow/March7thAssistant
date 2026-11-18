@@ -77,6 +77,34 @@ def test_external_config_reload_applies_theme_and_updates_setting(window, monkey
     assert window.settingInterface.themeCard.comboBox.currentData() == 'dark'
 
 
+def test_unrelated_config_reload_in_tray_does_not_reapply_theme(window, monkeypatch):
+    from app.tools import check_theme_change
+    from module import notification
+
+    monkeypatch.setattr(notification, 'init_notifiers', lambda: None)
+    monkeypatch.setattr(check_theme_change.darkdetect, 'isDark', lambda: False)
+    cfg.config['ui_theme'] = 'auto'
+    cfg.config['log_level'] = 'INFO'
+    setTheme(Theme.LIGHT)
+    window.hide()
+    window.tray_icon = Mock()
+    window.tray_icon.isVisible.return_value = True
+
+    set_theme = Mock()
+    timer = Mock()
+    monkeypatch.setattr(check_theme_change, 'setTheme', set_theme)
+    monkeypatch.setattr(check_theme_change, 'QTimer', timer)
+    updated = deepcopy(cfg.config)
+    updated['log_level'] = 'DEBUG'
+    with Path(cfg.config_path).open('w', encoding='utf-8') as f:
+        cfg.yaml.dump(updated, f)
+    window.config_watcher._emit_change()
+
+    assert cfg.config['log_level'] == 'DEBUG'  # The unrelated change was applied.
+    set_theme.assert_not_called()
+    timer.singleShot.assert_not_called()
+
+
 def test_theme_setting_preserves_custom_assets_and_does_not_start_tasks(window, qtbot, monkeypatch):
     from app import home_interface
     custom_cards = [{'icon': './assets/app/images/bg37.jpg', 'title': '自定义卡片',
