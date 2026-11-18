@@ -1,4 +1,6 @@
 """Mouse-transparent Evey artwork for the Long Night theme."""
+import sys
+
 from PySide6.QtCore import QEvent, QRectF, Qt
 from PySide6.QtGui import QPainter, QPixmap
 from PySide6.QtWidgets import QSizePolicy, QWidget
@@ -64,7 +66,12 @@ class EveyTitleDecoration(EveyDecoration):
 
     def _position(self):
         title_bar = self.parentWidget()
-        left = title_bar.minBtn.x()
+        window = title_bar.window()
+        if sys.platform == 'darwin' and window.isSystemButtonVisible():
+            # Fluent positions the native controls separately from its hidden Qt buttons.
+            left = window.systemTitleBarRect(title_bar.size()).left()
+        else:
+            left = title_bar.minBtn.x()
         self.setGeometry(left, 0, title_bar.width() - left, title_bar.height())
 
     def eventFilter(self, watched, event):

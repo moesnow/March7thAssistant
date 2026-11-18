@@ -1,4 +1,5 @@
 """Exercise the session-only Easter egg through the title-bar logo."""
+import sys
 from copy import deepcopy
 from pathlib import Path
 from unittest.mock import Mock
@@ -117,7 +118,8 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
     monkeypatch.setattr(home_interface, 'start_task', start_task)
     setTheme(Theme.LIGHT)
     accounts = window.settingInterface.findChild(AccountsCard)
-    tips = (accounts.tipsText, accounts.tipsText2)
+    assert (accounts is not None) == (sys.platform == 'win32')
+    tips = (accounts.tipsText, accounts.tipsText2) if accounts is not None else ()
     for label in tips:
         label.ensurePolished()
         assert label.palette().color(QPalette.ColorRole.WindowText).name() == '#f94e9b'
@@ -402,9 +404,17 @@ def test_evey_artwork_positions_preserve_controls(window, qtbot, monkeypatch, tm
         window.resize(width, 720)
         qtbot.wait(20)
         assert title_art.width() >= 64 and card_art.width() >= 64
-        for button in (window.titleBar.minBtn, window.titleBar.maxBtn, window.titleBar.closeBtn):
-            assert title_art.geometry().intersects(button.geometry())
-            assert window.titleBar.childAt(button.geometry().center()) is button
+        buttons = (window.titleBar.minBtn, window.titleBar.maxBtn, window.titleBar.closeBtn)
+        if sys.platform == 'darwin' and window.isSystemButtonVisible():
+            assert all(button.isHidden() for button in buttons)
+            native = window.systemTitleBarRect(window.titleBar.size())
+            assert title_art.geometry().left() == native.left()
+            assert title_art.geometry().contains(native.center())
+            assert window.titleBar.childAt(native.center()) is not title_art
+        else:
+            for button in buttons:
+                assert title_art.geometry().intersects(button.geometry())
+                assert window.titleBar.childAt(button.geometry().center()) is button
         assert card_art.geometry().contains(combo.geometry())
         assert settings.themeCard.childAt(combo.geometry().center()) is combo
         assert nav_art.geometry().contains(nav_settings.geometry())
@@ -428,10 +438,11 @@ def test_evey_artwork_positions_preserve_controls(window, qtbot, monkeypatch, tm
     window.switchTo(window.homeInterface)
     qtbot.mouseClick(nav_settings, Qt.MouseButton.LeftButton)
     assert window.stackedWidget.currentWidget() is settings
-    qtbot.mouseClick(window.titleBar.maxBtn, Qt.MouseButton.LeftButton)
-    qtbot.waitUntil(window.isMaximized, timeout=2000)
-    qtbot.mouseClick(window.titleBar.maxBtn, Qt.MouseButton.LeftButton)
-    qtbot.waitUntil(lambda: not window.isMaximized(), timeout=2000)
+    if window.titleBar.maxBtn.isVisible():
+        qtbot.mouseClick(window.titleBar.maxBtn, Qt.MouseButton.LeftButton)
+        qtbot.waitUntil(window.isMaximized, timeout=2000)
+        qtbot.mouseClick(window.titleBar.maxBtn, Qt.MouseButton.LeftButton)
+        qtbot.waitUntil(lambda: not window.isMaximized(), timeout=2000)
 
     combo.setCurrentIndex(combo.findData('dark'))
     assert window._evey_animation is None
