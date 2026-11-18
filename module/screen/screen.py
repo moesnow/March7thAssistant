@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import json
@@ -198,7 +199,7 @@ class Screen(metaclass=SingletonMeta):
             import psutil
             mem = psutil.virtual_memory()
             if mem.available > 2 * 1024**3:
-                executor = ThreadPoolExecutor(max_workers=len(screen_map))
+                executor = ThreadPoolExecutor(max_workers=min(len(screen_map), os.cpu_count() or 4, 8))
                 try:
                     futures = [executor.submit(find_screen, name, screen) for name, screen in screen_map.items()]
                     for future in as_completed(futures):
