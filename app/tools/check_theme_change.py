@@ -8,7 +8,8 @@ from module.config import cfg
 
 def applyTheme(window, theme=None):
     """Apply the session theme or the saved preference; auto follows the system."""
-    preference = 'evernight' if window._evernight.selected else cfg.get_value('ui_theme', 'auto')
+    evernight_selected = window is not None and window._evernight.selected
+    preference = 'evernight' if evernight_selected else cfg.get_value('ui_theme', 'auto')
     if theme is not None:
         if preference != 'auto':
             return
@@ -19,7 +20,8 @@ def applyTheme(window, theme=None):
     is_minimized_to_tray = hasattr(window, 'tray_icon') and not window.isVisible() and window.tray_icon.isVisible()
     setTheme(theme, lazy=not is_minimized_to_tray)
     # Refresh Mica after the light-to-dark transition (PyQt-Frameless-Window #158).
-    QTimer.singleShot(500, window, lambda: window.setMicaEffectEnabled(True))
+    if window is not None:
+        QTimer.singleShot(500, window, lambda: window.setMicaEffectEnabled(True))
 
 
 class SystemThemeListener(QThread):

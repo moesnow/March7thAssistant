@@ -39,6 +39,26 @@ def test_startup_restores_saved_theme_or_defaults_to_system(startup_theme, windo
         './assets/logo/March7th.ico').pixmap(window.titleBar.iconLabel.size()).toImage()
 
 
+def test_standalone_theme_card_saves_and_applies_regular_themes(qtbot, monkeypatch):
+    from app.card.comboboxsettingcard2 import ComboBoxSettingCardTheme
+
+    config = dict(cfg.config, ui_theme='light')
+    monkeypatch.setattr(cfg, 'config', config)
+    monkeypatch.setattr(cfg, 'set_value', config.__setitem__)
+    card = ComboBoxSettingCardTheme(None)
+    qtbot.addWidget(card)
+    combo = card.comboBox
+    assert [combo.itemData(i) for i in range(combo.count())] == ['auto', 'light', 'dark']
+    previous = Theme.DARK if isDarkTheme() else Theme.LIGHT
+    try:
+        for mode in ('dark', 'light'):
+            combo.setCurrentIndex(combo.findData(mode))
+            assert config['ui_theme'] == mode
+            assert isDarkTheme() is (mode == 'dark')
+    finally:
+        setTheme(previous)
+
+
 def test_theme_preferences_follow_system_only_in_auto_without_icon_refresh(window, qtbot, monkeypatch):
     from app.tools import check_theme_change
     monkeypatch.setattr(cfg, 'set_value', Mock(side_effect=lambda key, value: cfg.config.__setitem__(key, value)))

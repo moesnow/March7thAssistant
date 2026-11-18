@@ -38,13 +38,15 @@ class ComboBoxSettingCardTheme(ComboBoxSettingCard2):
     """Keep the unlocked theme in this window, never in the saved preference."""
 
     def __init__(self, window):
-        self._window = window
+        self._window = window if hasattr(window, '_evernight') else None
         super().__init__(
             'ui_theme', FluentIcon.BRUSH, tr('界面主题'), tr('选择应用的显示主题'),
             texts={tr('跟随系统'): 'auto', tr('浅色'): 'light', tr('深色'): 'dark'},
         )
         self.eveyDecoration = EveyControlDecoration(
             self.comboBox, 'evey-decoration-wide.png', (-52, -15, 14, 15))
+        if self._window is None:
+            return
         self.setEvernightMode(window._evernight_active)
         if window._evernight.unlocked:
             with QSignalBlocker(self.comboBox):
@@ -56,12 +58,15 @@ class ComboBoxSettingCardTheme(ComboBoxSettingCard2):
         self.eveyDecoration.setActive(active)
 
     def _onCurrentIndexChanged(self, index):
-        self._window._evernight.selected = self.comboBox.itemData(index) == 'evernight'
-        if not self._window._evernight.selected:
+        selected = self.comboBox.itemData(index) == 'evernight'
+        if self._window is not None:
+            self._window._evernight.selected = selected
+        if not selected:
             super()._onCurrentIndexChanged(index)
         applyTheme(self._window)
         # Dark and Evernight share a palette, so Qt may not emit themeChanged.
-        self._window._on_theme_changed()
+        if self._window is not None:
+            self._window._on_theme_changed()
 
 
 class ComboBoxSettingCardUpdateSource(SettingCard):
