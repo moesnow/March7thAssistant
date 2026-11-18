@@ -56,14 +56,14 @@ RANK_CLICK_HOLD = 0.03
 PROMOTION_CAP_ENEMY_RANK = 28  # 入画奇航超频博弈 A4 冰钛 6
 PREP_OVERLAYS = frozenset((Page.SHOP, Page.TIMED_SHOP, Page.RAIL_SHOP, Page.BLACK_MARKET, Page.REVEAL, Page.CHOICE,
                            Page.DANCE, Page.RANGER, Page.SVAROG_MODIFICATION, Page.DRAGON_CLEANSE,
-                           Page.GARDEN, Page.HACK,
+                           Page.GARDEN, Page.HACK, Page.TREASURY,
                            Page.BENCH_FULL, Page.HALO_TIP, Page.HALO_INFO, Page.HALO_MENTOR, Page.EMPTY_FRONT))
 PLAY_PAGES = PREP_OVERLAYS | {Page.BOARD, Page.BATTLE, Page.NODE_RESULT, Page.MATCH_RESULT,
                              Page.HALO, Page.HALO_DETAIL, Page.HALO_REPLACE, Page.TEA}
 ACTIVE_PAGES = PLAY_PAGES | {Page.DETAIL, Page.PARTNER_DETAIL, Page.EQUIPMENT, Page.CONFIRM_FIGHT}
 BATTLE_RESULT_PAGES = {Page.BATTLE, Page.NODE_RESULT, Page.MATCH_RESULT}
 ESC_RECOVERY_PAGES = (ACTIVE_PAGES - BATTLE_RESULT_PAGES
-                      - {Page.BLACK_MARKET, Page.HALO_REPLACE, Page.HALO_MENTOR, Page.DRAGON_CLEANSE}
+                      - {Page.BLACK_MARKET, Page.HALO_REPLACE, Page.HALO_MENTOR, Page.DRAGON_CLEANSE, Page.TREASURY}
                       | {Page.UNKNOWN, Page.CONFLICT})
 HALO_EXIT_PAGES = (ACTIVE_PAGES | {Page.HOME, Page.WEEKLY}) - {Page.HALO}
 REWARD_PAGES = {Page.HOME, Page.WEEKLY, Page.REWARD_RECEIPT, Page.REWARD_LIMIT}
@@ -4112,6 +4112,16 @@ class CurrencyWars:
                     raise CurrencyWarsPageBlocked(self.frame, f"{message}，已保留当前现场") from error
                 log.warning(f"{event.value}仍在等待选择，复核后重试：{error}")
 
+    def _claim_treasury(self, frame):
+        try:
+            return self._click_to(
+                frame, lambda f: ui.point(f.enabled_button(f.treasury_claim)),
+                lambda f: f.page in ACTIVE_PAGES - {Page.TREASURY} and f.treasury_claim is None,
+                "未确认珠珠鱼宝库领取全部奖励并转场", seconds=12, attempts=2, retry_after=5,
+            )
+        except (CurrencyWarsRecoverable, CurrencyWarsPageBlocked) as error:
+            raise CurrencyWarsUnavailable(f"{error}，已保留当前现场") from error
+
     def _choose_dragon_cleanse(self, frame):
         stage = frame.stage
 
@@ -4797,6 +4807,8 @@ class CurrencyWars:
             return self._watch_battle(frame)
         if page == Page.CHOICE:
             return self._choose(frame)
+        if page == Page.TREASURY:
+            return self._claim_treasury(frame)
         if page in (Page.DANCE, Page.RANGER):
             return self._employee_event(frame)
         if page == Page.SVAROG_MODIFICATION:

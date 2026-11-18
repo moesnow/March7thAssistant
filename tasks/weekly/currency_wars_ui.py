@@ -130,6 +130,10 @@ RAIL_LAUNCH = (937, 352, 1093, 409)
 RAIL_UNLOCK = (1470, 312, 1640, 354)
 RAIL_SPENT = (1480, 380, 1640, 434)
 RAIL_COLUMNS = (556, 806, 1056, 1306)
+TREASURY_TITLE = (885, 37, 1210, 83)
+TREASURY_PROMPT = (885, 83, 1210, 118)
+TREASURY_REFRESH = (1090, 483, 1255, 540)
+TREASURY_CLAIM = (1340, 483, 1650, 540)
 BOARD_ADVANCE = ("出战", "跳过", "选择主角", "开启宝库", "幕后茶歇", "开始茶歇", "前往茶歇", "前往补给")
 REVEAL_CONTINUE = (525, 650, 1780, 1065)
 PARTNER_REVEAL_TITLE = (680, 453, 902, 520)
@@ -216,6 +220,7 @@ class Page(Enum):
     PARTNER_DETAIL = "奇遇伙伴详情"
     EQUIPMENT = "装备推荐"
     CHOICE = "节点选择"
+    TREASURY = "珠珠鱼宝库"
     DANCE = "梦境交织共舞"
     RANGER = "巡海游侠任命"
     SVAROG_MODIFICATION = "机心巧匠改装"
@@ -284,7 +289,7 @@ class Frame:
     def action_context(self):
         """输入必须始终属于同一节点和同一层界面。"""
         # 独立弹层的操作只依赖弹层本身。背景节点号漏读或跳变不代表弹层已关闭。
-        if self.page in (Page.SVAROG_MODIFICATION, Page.HALO_MENTOR):
+        if self.page in (Page.SVAROG_MODIFICATION, Page.HALO_MENTOR, Page.TREASURY):
             return self.page, None, None
         dialog = {Page.CHOICE: "choice", Page.REVEAL: "reveal_kind"}.get(self.page)
         return self.page, self.stage, getattr(self, dialog) if dialog else None
@@ -629,6 +634,10 @@ class Frame:
             return Page.END_MATCH_CONFIRM
         if self.empty_front_confirm():
             return Page.EMPTY_FRONT
+        if (self.has("珠珠鱼宝库", "珠珠鱼的幸运宝库", area=TREASURY_TITLE, contains=True)
+                or self.has("刷新宝库或者拿走全部奖励", area=TREASURY_PROMPT)
+                or self.treasury_claim and self.has("刷新", area=TREASURY_REFRESH)):
+            return Page.TREASURY
         if self.mentor_prompt or (self.has("从师", area=MENTOR_TITLE) and (
                 self.mentor_confirm_label or self.mentor_selection_prompt or self.mentor_confirm())):
             return Page.HALO_MENTOR
@@ -735,6 +744,10 @@ class Frame:
             if self.find("商店", area=BOARD_SHOP) and self.board_advance and self._board_rows_visible():
                 return Page.BOARD
         return Page.UNKNOWN
+
+    @cached_property
+    def treasury_claim(self) -> Label | None:
+        return self.find("全部拿走", area=TREASURY_CLAIM)
 
     @cached_property
     def board_advance(self) -> Label | None:

@@ -6002,20 +6002,129 @@ def test_tea_bounds_the_wait_for_unreadable_controls(monkeypatch, world, recover
     assert state.clicks == [(Page.TEA, (1534, 922))] * 2
 
 
-def test_closing_shop_on_treasure_node_recognizes_the_board_and_advances(monkeypatch, world):
+@pytest.fixture
+def treasury():
+    image = CANVAS.copy()
+    ImageDraw.Draw(image).rectangle((1303, 482, 1680, 540), fill="white")
+    return Frame(image, labels(
+        ("备战阶段", 323, 70), ("3-6", 322, 108), ("珠珠鱼宝库", 1047, 60),
+        ("刷新宝库或者拿走全部奖励", 1046, 100), ("刷新", 1174, 510), ("全部拿走", 1492, 510),
+        ("后台区域", 971, 576), ("开启宝库", 1816, 752), ("商店", 1624, 982),
+    ))
+
+
+@pytest.mark.parametrize("signals", (
+    (("珠珠鱼宝库", 1047, 60),),
+    (("珠珠鱼的幸运宝库！", 1047, 60),),
+    (("刷新宝库或者拿走全部奖励", 1046, 100),),
+    (("刷新", 1174, 510),),
+))
+def test_treasury_layers_take_priority_over_visible_board_controls(treasury, signals):
+    background = treasury.texts((0, 542, 1920, 1080)) + treasury.texts(ui.BOARD_STAGE)
+    background += labels(("前台区域", 974, 315))
+    claim = labels(("全部拿走", 1492, 510))
+    assert Frame(CANVAS, background).page is Page.BOARD
+    assert Frame(treasury.image, background + claim + labels(*signals)).page is Page.TREASURY
+
+
+def test_closing_shop_on_treasure_node_opens_and_claims_the_treasury(monkeypatch, world, treasury):
     common = labels(("备战阶段", 469, 46), ("2-6", 468, 77), ("6/6", 959, 262),
                     ("前台区域", 974, 315), ("后台区域", 976, 575), ("开启宝库", 1816, 752))
     shop = Frame(CANVAS, common + labels(("收起", 1624, 982), ("刷新", 1617, 486)))
     closed = Frame(CANVAS, common + labels(("商店", 1624, 982)))
-    reward = page(Page.CHOICE, stage="2-6")
-    routes = {(shop, (1624, 982)): closed, (closed, (1816, 752)): reward}
+    opened = Frame(treasury.image, tuple(
+        replace(label, text="2-6") if label.text == "3-6" else label for label in treasury.labels
+    ))
+    next_node = Frame(CANVAS, labels(
+        ("备战阶段", 469, 46), ("2-7", 468, 77), ("前台区域", 974, 315),
+        ("后台区域", 976, 575), ("商店", 1624, 982), ("出战", 1816, 752),
+    ))
+    routes = {(shop, (1624, 982)): closed, (closed, (1816, 752)): opened, (opened, (1492, 510)): next_node}
     state = drive(monkeypatch, world, shop, lambda s, p: setattr(s, "frame", routes[s.frame, p]))
 
     assert shop.page == Page.SHOP
     assert closed.page == Page.BOARD
     assert world.war._play_step(shop) is closed
-    assert world.war._finish_preparation(closed, board(stage="2-6", used=6, capacity=6)) is reward
-    assert state.clicks == [(Page.SHOP, (1624, 982)), (Page.BOARD, (1816, 752))]
+    assert world.war._finish_preparation(closed, board(stage="2-6", used=6, capacity=6)) is opened
+    assert world.war._play_step(opened) is next_node
+    assert state.clicks == [(Page.SHOP, (1624, 982)), (Page.BOARD, (1816, 752)), (Page.TREASURY, (1492, 510))]
+    assert not state.keys
+
+
+@pytest.mark.parametrize(("fault", "claim_attempts", "error"), (
+    ("late_receipt", 1, None),
+    ("lost_click", 2, None),
+    ("unchanged", 2, task.CurrencyWarsUnavailable),
+    ("missing_receipt", 1, task.CurrencyWarsUnavailable),
+    ("deadline", 1, task.CurrencyWarsBudgetExceeded),
+    ("stopped", 1, RunStopRequested),
+))
+def test_treasury_claim_during_takeover(monkeypatch, world, treasury, fault, claim_attempts, error):
+    missing_button = Frame(treasury.image, tuple(label for label in treasury.labels if label.text != "全部拿走"))
+    unknown = Frame(treasury.image, treasury.texts((0, 542, 1920, 1080)))
+    result = Frame(CANVAS, labels(("对局胜利", 960, 233), ("返回货币战争", 960, 899)))
+    lobby = Frame(CANVAS, labels(("入画奇航", 164, 79), ("开始货币战争", 1600, 972)))
+    state = SimpleNamespace(frame=missing_button if fault == "late_receipt" else treasury, claims=0)
+    claim_point = (1492, 510)
+    monkeypatch.setattr(world.war, "_notify", Mock())
+    monkeypatch.setattr(world.war, "_check_weekly_reward", lambda f: (f, (18000, 18000), False))
+    monkeypatch.setattr(task, "TASK_SECONDS", 45)
+
+    def capture():
+        if fault == "late_receipt":
+            if state.frame is missing_button and world.now[0] >= 1:
+                state.frame = treasury
+            if state.frame is unknown and world.now[0] >= 14:
+                state.frame = result
+        return state.frame
+
+    def click(point, *, press_duration):
+        if state.frame is result and point == (960, 899):
+            state.frame = lobby
+            return True
+        assert state.frame is treasury and point == claim_point
+        state.claims += 1
+        if fault in ("late_receipt", "missing_receipt"):
+            state.frame = unknown
+        if fault == "lost_click":
+            if state.claims == 1:
+                return False
+            state.frame = result
+        return True
+
+    def locate(target, *_args, **_kwargs):
+        point = tuple(round(value * scale) for value, scale in zip(target[:2], (1920, 1080)))
+        if fault == "deadline" and state.claims == 1:
+            world.now[0] = world.war.deadline
+        return point
+
+    def checkpoint():
+        if fault == "stopped" and state.claims == 1:
+            raise RunStopRequested()
+
+    monkeypatch.setattr(world.war, "_capture", capture)
+    world.auto.find_element.side_effect = locate
+    world.auto.click_element_with_pos.side_effect = click
+    task.pause_ctl.checkpoint.side_effect = checkpoint
+
+    if error is None:
+        assert world.war.start(resume=True)
+        assert state.frame is lobby
+    else:
+        with pytest.raises(error) as raised:
+            world.war.start(resume=True)
+        if error is task.CurrencyWarsUnavailable:
+            assert raised.value.preserve_game
+            assert "珠珠鱼宝库" in str(raised.value)
+            assert world.now[0] < task.TASK_SECONDS
+        assert state.frame is (unknown if fault == "missing_receipt" else treasury)
+
+    assert state.claims == claim_attempts
+    assert [call.args[0] for call in world.auto.click_element_with_pos.call_args_list] == (
+        [claim_point] * claim_attempts + ([(960, 899)] if error is None else [])
+    )
+    world.auto.press_key.assert_not_called()
+    world.auto.drag_mouse.assert_not_called()
 
 
 def test_start_advances_counted_skip_without_spending_again_when_the_count_changes(monkeypatch, world):
