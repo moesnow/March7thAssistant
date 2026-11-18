@@ -164,7 +164,10 @@
     {
         "name": "拟造花萼",
         "id": "calyx",
-        "image_path": "./assets/touch_720/images/screen/calyx.png",
+        "image_path": [
+            "./assets/touch_720/images/screen/calyx.png",
+            "./assets/touch_720/images/screen/calyx_audition.png"
+        ],
         "actions": [
             {
                 "target_screen": "main",
