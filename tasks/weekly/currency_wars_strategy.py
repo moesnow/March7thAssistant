@@ -281,61 +281,92 @@ def can_move(board: Board, source: Slot, target: Slot, *, replacing_same_name=Fa
     return True
 
 
-# 仅核对过的其它路线单站位卡。名字只是入口；不能凭“不在阵容表”出售。
-ANAXA_OFF_ROUTE = {"流萤": "front", "椒丘": "front", "黑天鹅": "back"}
+# 4.7「入画奇航」图鉴，按实际站位校验 OCR 身份，不是弃牌名单。60 位员工 + 特殊阿哈。
+# https://wiki.biligame.com/sr/index.php?oldid=106504 （入画奇航页签，不含零和博弈）
+S2_CARD_ROLES = {name: roles for roles, names in (
+    ((True, False), "星神★阿哈 雪衣 卡芙卡 丹恒·饮月 阿格莱雅 希露瓦 砂金·戏浪 姬子·启行 昔涟 黄泉 "
+                    "银狼LV.999 椒丘 飞霄 花火 流萤 知更鸟 大黑塔 那刻夏 波提欧"),
+    ((False, True), "帕姆王 不死途 翡翠 丹恒·腾荒 寒鸦 藿藿 爻光 符玄 乱破 赛飞儿 白露 娜塔莎 三月七·巡猎 真珠 刻律德菈 黑天鹅"),
+    ((True, True), "克拉拉 白厄 千冶·刃 缇宝 风堇 砂金 刃 开拓者·欢愉 大丽花 遐蝶 镜流 罗刹 知更鸟·晴歌 "
+                   "绯英 海瑟音 万敌 星期日 云璃 桂乃芬 火花 灵砂 瓦尔特 托帕&账账 景元 忘归人 长夜月"),
+) for name in names.split()}
+# 商店不会展示完整职能。用同版图鉴模拟：普通策略只认纯输出，高难也认「辅助/输出」等双职能。
+S2_PURE_DAMAGE = frozenset(("不死途 丹恒·饮月 阿格莱雅 希露瓦 砂金·戏浪 姬子·启行 刃 黄泉 银狼LV.999 大丽花 遐蝶 "
+                            "乱破 镜流 飞霄 绯英 流萤 海瑟音 大黑塔 火花 那刻夏 波提欧 景元").split())
+S2_DAMAGE = S2_CARD_ROLES.keys() - set(("星神★阿哈 丹恒·腾荒 寒鸦 昔涟 藿藿 开拓者·欢愉 爻光 符玄 赛飞儿 罗刹 "
+                                       "知更鸟·晴歌 白露 花火 知更鸟 星期日 真珠 灵砂 刻律德菈 忘归人").split())
 
 
-def anaxa_unused_reserves(board: Board) -> tuple[Slot, ...]:
-    """部署收敛后，列出有正向站位证据的一星候选。是否可售仍须复核本局效果、详情和装备。"""
+def anaxa_unused_reserves(board: Board, *, bound=frozenset(), keep_leftmost=False) -> tuple[Slot, ...]:
+    """已收敛的部署：两套路线之外的实名候补默认可售，扣掉当前有用的保护项。"""
     if (board.lineup not in (None, LINEUPS[HIGH_ANAXA]) or not board.front_output_count
-            or not 0 < board.used <= board.capacity or len(board.field) != board.used
-            or any(s.occupied and (s.blocked or s.unit is None) for s in board.slots)):
+            or not 0 < board.used <= board.capacity or len(board.field) != board.used or deployment(board)):
         return ()
-    names = [u.name for u in board.units]
-    deployed = {s.unit.name for s in board.field}
-    preferred = ({"front": board.lineup.front, "back": board.lineup.back} if board.lineup
-                 else {"front": FRONT, "back": BACK})
-    protected = (set(preferred["front"]) | set(preferred["back"]) | board.sustain | SPECIAL
-                 | {CORE, EVERNIGHT, "阿格莱雅", "瓦尔特", "昔涟", "砂金·戏浪"})
-    if board.lineup:
-        protected.update(board.lineup.preferences)
-    selected = []
-    for s in board.slots:
+    # 不认识的角色保留，但不能拿来证明另一张角色已有人替补。
+    def known(s):
+        return s.unit and S2_CARD_ROLES.get(s.unit.name) == (s.unit.front, s.unit.back)
+    board = replace(board, slots=tuple(replace(s, unit=None) if s.occupied and not known(s) else s for s in board.slots))
+    if not board.front_output_count:
+        return ()
+    field = {s.unit.name for s in board.field if s.unit and not s.blocked}
+    goals = set(dict(board.lineup.stars)) if board.lineup else set(FRONT + BACK)
+    preferred = board.lineup.preferences if board.lineup else FRONT + BACK
+    special = {*SPECIAL, "昔涟", "砂金·戏浪", *bound}
+    bench = [s for s in board.slots if s.zone == "bench" and s.occupied]
+    left = min(bench, key=lambda s: s.index, default=None) if keep_leftmost else None
+    remaining = board.capacity - board.used
+    if board.level != 10 and board.stage != board.final_node:
+        # 留一个自然升级后的替补；现在能买经验且还有下次购买预算时，再留一人。
+        remaining += 1
+        budget = _upgrade_budget(board, 4)
+        if (board.level is not None and board.level < 9 and budget is not None and board.gold is not None
+                and board.gold >= budget + 4):
+            remaining += 1
+    # 阵容里的治疗优先；缺治疗、低血缺第二保护时只保实际需要的人，不永久保一整类。
+    sustain = board.sustain | {"真珠", "丹恒·腾荒"}
+    healers = board.healers | {"真珠"}
+    candidates = _bench_candidates(board)
+    def rank(s):
         u = s.unit
-        if (s.zone != "bench" or not u or u.name not in ANAXA_OFF_ROUTE or u.name in protected
-                or u.stars != 1 or u.has_halo or names.count(u.name) != 1):
-            continue
-        row = ANAXA_OFF_ROUTE[u.name]
-        if (u.front, u.back) != (row == "front", row == "back"):
-            continue
-        # 本排每个位置都有已持有的阵容成员：场上的本排目标，或不会被另一排借用的目标候补。
-        # 不用其它待卖卡充当替补，不把商店里将来可能抽到的角色算进来。
-        seats = [p for p in board.slots if p.zone == row]
-        other_row = "back" if row == "front" else "front"
-        occupants = {p.unit.name for p in seats if p.unit and p.unit.name in preferred[row]
-                     and (p.unit.name not in preferred[other_row] or not _can_deploy_to(board, p.unit, other_row))}
-        reserves = {p.unit.name for p in _bench_candidates(board)
-                    if p.unit.name in preferred[row] and _can_deploy_to(board, p.unit, row)
-                    and not _can_deploy_to(board, p.unit, other_row)}
-        covered = bool(seats) and not any(p.blocked for p in seats) and len(occupants | reserves) >= len(seats)
-        # 高难部署本来就拒绝已成型阵容的抢点前台，不把该条件硬套在普通策略或后台卡上。
-        competition = (row == "front" and board.lineup and board.core_ready and u.is_output
-                       and u.name not in board.lineup.compatible_front
-                       and bool(deployed & {"寒鸦", "星期日", BACK_LEAD}))
-        # 满级满员的已成型阵容没有下个人口；不要求六至九个后台格全是同一张短名单。
-        maxed = (board.level == 10 and board.used == board.capacity and deployed <= protected
-                 and any(p.zone == "front" and p.unit.name == CORE for p in board.field))
-        if not (covered or competition or maxed):
-            continue
-        # 不只看下一级：逐张模拟移除，不能降低整手已持角色未来可填的总人数。
+        return (u.name in goals, u.name in preferred, u.name in healers, u.stars or 0,
+                max(slot_priority(board, u, row) for row in ("front", "back") if _can_deploy_to(board, u, row)))
+    if not field & healers:
+        if healer := max((s for s in candidates if s.unit.name in healers), key=rank, default=None):
+            special.add(healer.unit.name)
+    minimum = 2 if board.capacity >= 6 and board.hp is not None and board.hp <= (60 if board.lineup else 35) else 1
+    for s in sorted((c for c in candidates if c.unit.name in sustain), key=rank, reverse=True):
+        if len((field | special | goals) & sustain & {u.name for u in board.units}) >= minimum:
+            break
+        special.add(s.unit.name)
+    if remaining:
+        # 已持有的星期日 + 瓦尔特在成型前可走银轨打钱；连击临界层只需一个在手的补羁绊人选。
+        if any(u.name == "星期日" for u in board.units):
+            special.add("瓦尔特")
+        combo = {CORE, *COMBO_SUPPORT, "镜流", "阿格莱雅"}
+        if len(field & combo) % 2 and not any(s.unit.name in combo & goals for s in candidates):
+            if bridge := max((s for s in candidates if s.unit.name in combo), key=rank, default=None):
+                special.add(bridge.unit.name)
+    # 同名一星对子正在等第三张；高星、星级未知、有光环、锁定、奇遇指名不拆。
+    pairs = {u.name for u in board.units if u.stars == 1 and sum(
+        v.name == u.name and v.stars in (1, None) for v in board.units) >= 2}
+    protected = goals | special | pairs
+    def sale_rank(s):
+        u = s.unit
+        return (u.name in preferred, u.name in sustain, u.front and u.back,
+                max(slot_priority(board, u, row) for row in ("front", "back") if _can_deploy_to(board, u, row)))
+    possible = [s for s in bench if s != left and s.unit and not s.blocked and not s.unit.has_halo
+                and s.unit.stars == 1 and s.unit.name not in protected
+                and (_can_deploy_to(board, s.unit, "front") or _can_deploy_to(board, s.unit, "back"))]
+    selected = []
+    for s in sorted(possible, key=sale_rank):
         without = replace(board, slots=tuple(_empty(p) if p == s else p for p in board.slots))
-        growth = (board.capacity - board.used + 10 - board.level if board.level in range(1, 11)
-                  else len(board.slots))
         fillable = _open_field_count(without)
-        if board.used + fillable < board.capacity or min(growth, fillable) < min(growth, _open_field_count(board)):
+        if min(remaining, fillable) < min(remaining, _open_field_count(board)):
             continue
         selected.append(s)
         board = without
+        if deployment(board):  # 新空位允许暂存换人时，先把控制权还给原来的布阵流程。
+            break
     return tuple(selected)
 
 

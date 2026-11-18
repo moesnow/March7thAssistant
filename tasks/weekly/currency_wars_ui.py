@@ -1058,7 +1058,7 @@ class Frame:
     def preparation_banner(self) -> bool:
         return self.has("备战阶段", "等级提升", "获得经验", area=(580, 170, 1385, 558), contains=True)
 
-    def employee_name(self, *, local=False) -> str | None:
+    def employee_name(self, *, local=False, allow_blade=False) -> str | None:
         role = self.find("前台", "后台", "前后台", area=DETAIL_ROLE)
         if role:
             # 试用角色等详情布局会下移整行。姓名在同一面板站位标签的上方。
@@ -1068,7 +1068,7 @@ class Frame:
             area = (1480, 228, 1806, 278) if self.halo_preview() else DETAIL_NAME
 
         def valid(text):
-            return re.fullmatch(EMPLOYEE_NAME, text or "") and text not in (
+            return (allow_blade and text == "刃") or re.fullmatch(EMPLOYEE_NAME, text or "") and text not in (
                 "备战阶段", "试用", "试用角色", "装备追踪中", "角色详情", "前台", "后台", "前后台",
             )
 
@@ -1082,6 +1082,11 @@ class Frame:
         else:
             return None
         return "千冶·刃" if name == "干冶·刃" else name
+
+    def anaxa_employee_name(self):
+        # 只放行实名「刃」，统一键盘字符样式；不让随机单字 OCR 变成有效员工。
+        name = self.employee_name(local=True, allow_blade=True)
+        return "托帕&账账" if name == "托帕＆账账" else name
 
     def employee_output(self, *, allow_dual=False) -> bool:
         if allow_dual:

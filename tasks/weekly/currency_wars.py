@@ -82,9 +82,9 @@ SAFE_BENEFITS = ("免费刷新", "额外金币", "获得金币", "简易装备",
                  "伤害提高", "伤害增幅", "额外造成", "回复生命值", "经验", "治疗",
                  "前台强度", "后台强度", "速度增幅提高", "战利品晶矿")
 EVENT_RISKS = ("失去", "消耗", "出售", "替换", "变为", "无法上场", "随机移除", "敌人难度", "扣除", "损失")
-# 只确认不会给持有候补设置额外收益或身份的投资。无法核实（含采购专员）的局不主动清席。
+# 已核对不依赖持牌/出售的投资；采购专员另保最左角色，其余按这次实际选中的效果判断。
 ANAXA_BENCH_NEUTRAL_INVESTMENTS = frozenset((*NEUTRAL_ENVIRONMENTS, "人才下沉", "长线利好", "轮岗",
-                                             "经济过热", "白银时代", "黄金时代", "过剩经费", "全速推进"))
+                                             "经济过热", "白银时代", "黄金时代", "过剩经费", "全速推进", "正能量"))
 INVESTMENT_BLACKLIST = ("全员晋升",)
 INVESTMENT_RESTRICTIONS = ("节省工位", "只有3个备战", "奋斗协议", "钻石商人", "长线空头", "无法合成")
 
@@ -253,6 +253,8 @@ class CurrencyWars:
         self.weekly_reward_pending = False
         self._start_match_sent = False
         self.anaxa_bench_history_known = False
+        self.anaxa_bound_names = set()
+        self.anaxa_keep_leftmost = False
         self.supply_attempted: dict[int, tuple[int, int] | None] = {}
         self._reset_supply()
 
@@ -1213,7 +1215,8 @@ class CurrencyWars:
                 if slot.zone == "bench" and detail.employee_deployment_locked():
                     slot = replace(slot, blocked=True)
                     self.slot_cache.pop(key, None)
-                name = detail.employee_name(local=True) if not slot.blocked else None
+                name = None if slot.blocked else (
+                    detail.anaxa_employee_name() if self.anaxa_bench_history_known else detail.employee_name(local=True))
                 if role := detail.find("前台", "后台", "前后台", area=ui.DETAIL_ROLE):
                     front, back = "前" in role.text, "后" in role.text
                 if name:
@@ -1737,7 +1740,15 @@ class CurrencyWars:
                 offer = strategy.default_front_offer(shop_board, offers)
             else:
                 skipped = {} if board.lineup and log.logger.isEnabledFor(DEBUG) else None
-                offer = strategy.shop_purchase(shop_board, offers, experience_price=experience_price, skipped=skipped)
+                pending = offers
+                while True:
+                    offer = strategy.shop_purchase(shop_board, pending, experience_price=experience_price, skipped=skipped)
+                    if (not offer or not self.anaxa_bench_history_known or board.core != strategy.CORE
+                            or self._anaxa_shop_offers(shop_board, (offer,))):
+                        break
+                    pending = tuple(card for card in pending if card != offer)
+                    if skipped is not None:
+                        skipped[offer] = "买入后会立即作为无用候补清售"
                 if skipped is not None:
                     selected = f"本轮选中{offer.name}（第 {offer.column + 1} 栏）" if offer else "本轮没有购买计划"
                     details = [f"第 {card.column + 1} 栏 {card.name}（{card.stars} 星，{card.cost} 金）{skipped[card]}"
@@ -2500,24 +2511,43 @@ class CurrencyWars:
                 retry.append(slot)
         return (*fresh, *retry)
 
+    def _anaxa_shop_offers(self, board, offers):
+        spare = next(iter(board.empty_bench), None)
+        def still_unused(o):
+            roles = strategy.S2_CARD_ROLES.get(o.name)
+            if o.stars != 1 or roles is None or spare is None or strategy.merge_purchase(board, o):
+                return False
+            # 买入前只复核原策略实际看中的一星卡。名字/角色来自图鉴；如有可执行的部署或替换则照常买。
+            damage = strategy.S2_DAMAGE if board.lineup else strategy.S2_PURE_DAMAGE
+            unit = strategy.Unit(o.name, *roles, stars=1, output=o.name in damage, cost=o.cost)
+            source = replace(spare, occupied=True, unit=unit)
+            after = replace(board, slots=tuple(source if p == spare else p for p in board.slots))
+            return source in strategy.anaxa_unused_reserves(
+                after, bound=self.anaxa_bound_names, keep_leftmost=self.anaxa_keep_leftmost)
+        return tuple(o for o in offers if not still_unused(o))
+
     def _sell_unused_anaxa(self, frame, board):
         """新增的自愿清席不走溢出兜底。每张仍核对详情和回执，不逐张重新打开全席详情。"""
         if (not self.anaxa_bench_history_known or self.default_strategy
                 or board.lineup not in (None, strategy.LINEUPS[strategy.HIGH_ANAXA])
                 or self.held_deployment or self.deployment_moves or (board.stage, "部署") in self.deferred_operations
                 or (board.stage, "主动清席") in self.deferred_operations
-                or not any(s.zone == "bench" and s.unit and s.unit.name in strategy.ANAXA_OFF_ROUTE
+                or not any(s.zone == "bench" and s.unit and s.unit.name in strategy.S2_CARD_ROLES
                            for s in board.slots)):
             return None
-        if self._deployment_layout(board) in self.deployment_history and strategy.deployment(board):
-            return None
-        candidates = strategy.anaxa_unused_reserves(board)
+        def plan(state):
+            return strategy.anaxa_unused_reserves(state, bound=self.anaxa_bound_names, keep_leftmost=self.anaxa_keep_leftmost)
+        state = board
+        candidates = plan(state)
         if not candidates:
             return None
         freed = set()
+        initial = frame
 
         def same_card(f, s):
             # _read_board 会跨帧读详情。把支持判定的姓名绑定到它被识别时的肖像，而非最后一帧。
+            if not s.unit or s.blocked or s.unit.name not in strategy.S2_CARD_ROLES:
+                return cv2.absdiff(f.slot_mark(s.point), initial.slot_mark(s.point)).mean() <= 6
             cached = self.slot_cache.get((s.zone, s.index))
             return (cached is not None and cached[1] == s.unit.name
                     and np.abs(cv2.resize(f.slot_mark(s.point), (12, 12)).astype(np.int16) - cached[0]).mean() <= 6
@@ -2537,7 +2567,8 @@ class CurrencyWars:
                 and (not p.occupied or same_card(f, s))
                 for p, s in zip(current, board.slots))
 
-        for s in candidates:
+        while candidates:
+            s = candidates[0]
             def ready(f):
                 return same_board(f) and f.card_role(s) == (s.unit.front, s.unit.back)
             if not ready(frame):
@@ -2548,6 +2579,9 @@ class CurrencyWars:
                 self.deferred_operations.add((board.stage, "主动清席"))
                 return frame
             freed.add(s.point)
+            state = replace(state, gold=frame.gold, slots=tuple(replace(p, unit=None, occupied=False) if p.point == s.point
+                                                               else p for p in state.slots))
+            candidates = plan(state) if len(candidates) > 1 and frame.page == Page.BOARD and frame.gold is not None else ()
         if not freed:
             # 尚未点出售时允许重新读一次；持续读盘矛盾也不能占住正常运营循环。
             retry = board.stage, "主动清席重读"
@@ -2596,7 +2630,7 @@ class CurrencyWars:
         name = slot.unit.name if identified else detail.employee_name()
 
         def sell(f):
-            current = f.employee_name(local=identified)
+            current = f.anaxa_employee_name() if verify_board is not None else f.employee_name(local=identified)
             if (f.preparation_banner or f.shop_open or f.employee_deployment_locked()
                     or (current or name) in strategy.SPECIAL
                     or (verify_board is not None and current != name)
@@ -3502,8 +3536,26 @@ class CurrencyWars:
             nonlocal safe_pick
             column = min(range(3), key=lambda i: abs(f.investment_card_point(i)[0] - candidate.point[0]))
             group = next(group for group in f.investment_groups if column in group)
-            safe_pick = all((label := f.investment_card_title(i)) and label.text in ANAXA_BENCH_NEUTRAL_INVESTMENTS
-                            for i in group)
+            safe_pick = True
+            for i in group:
+                label = f.investment_card_title(i)
+                if not label:
+                    safe_pick = False
+                    continue
+                name = label.text
+                effect = "".join(w.text for w in f.investment_card_texts(i) if w.point[1] > label.point[1])
+                if "采购专员" in name:
+                    self.anaxa_keep_leftmost = True
+                elif name in ANAXA_BENCH_NEUTRAL_INVESTMENTS:
+                    continue
+                elif name == "青梅牛马":
+                    # 同时持有两名三星一费的条件，非一费无需陪着保留。
+                    self.anaxa_bound_names.update("三月七·巡猎 桂乃芬 真珠 火花 灵砂 那刻夏 瓦尔特 波提欧 托帕&账账 刻律德菈 景元 忘归人 长夜月 黑天鹅".split())
+                elif (not effect or any(w in effect for w in ("备战席", "持有", "拥有", "合成", "出售", "卖出"))
+                      or not any(w in effect for w in SAFE_BENEFITS)):
+                    safe_pick = False
+                else:
+                    self.anaxa_bound_names.update(n for n in strategy.S2_CARD_ROLES if n in effect)
 
         title = frame.choice
         if title in ui.INVESTMENT_CHOICES and not self.default_strategy:
@@ -4098,6 +4150,9 @@ class CurrencyWars:
         return frame
 
     def _halo_mentor(self, frame):
+        precise = (self._protect_anaxa_event((c.text for c in frame.mentor_candidates), expected=1)
+                   if self.anaxa_bench_history_known else None)
+        picked = []
         def option(f, attempt):
             cards = f.mentor_candidates
             return cards[attempt % len(cards)] if cards else None
@@ -4106,10 +4161,14 @@ class CurrencyWars:
             return ui.point(f.mentor_confirm())
 
         try:
-            return self._choose_single(
+            after = self._choose_single(
                 frame, option, confirm, lambda f: f.page == Page.BOARD and not f.halo_preview(),
                 "从师选择后未确认返回备战", seconds=6, ready_confirm=confirm,
+                on_pick=(lambda f, card: picked.append(card.text)) if precise else None,
             )
+            if precise:
+                precise(picked)
+            return after
         except (CurrencyWarsActionUnready, CurrencyWarsReceiptTimeout) as error:
             if self.frame.page in (Page.HALO_MENTOR, Page.UNKNOWN, Page.CONFLICT):
                 raise CurrencyWarsPageBlocked(self.frame, f"{error}，已保留当前现场") from error
@@ -4140,10 +4199,38 @@ class CurrencyWars:
         frame = self._expect(settled_target, 8, "未确认返回光环页后的主角肖像")
         return frame, matches
 
+    def _protect_anaxa_event(self, names, expected):
+        if not self.anaxa_bench_history_known:
+            return lambda selected: None
+        previous = self.anaxa_bound_names.copy()
+        names = tuple(names)
+        if names and all(n in strategy.S2_CARD_ROLES for n in names):
+            self.anaxa_bound_names.update(names)
+        elif self.last_board and all(not s.occupied or s.unit and s.unit.name in strategy.S2_CARD_ROLES
+                                     for s in self.last_board.slots):
+            # 匿名选卡也只能选事件出现时已有的员工，后来新招的其它名字不受影响。
+            self.anaxa_bound_names.update(u.name for u in self.last_board.units)
+            self.anaxa_bound_names.update(n for n in names if n in strategy.S2_CARD_ROLES)
+        else:
+            self.anaxa_bench_history_known = False
+
+        def confirmed(selected):
+            selected = set(selected)
+            if len(selected) == expected and selected <= strategy.S2_CARD_ROLES.keys():
+                self.anaxa_bound_names = previous | selected
+                self.anaxa_bench_history_known = True
+        return confirmed
+
     def _employee_event(self, frame):
-        # 共舞/巡海可无可读姓名完成；不能从棋盘卡面排除已获得的特殊用途。
-        self.anaxa_bench_history_known = False
         event = frame.page
+        precise = None
+        if self.anaxa_bench_history_known:
+            names = ([card.text for card, _ in frame.dance_cards] if event == Page.DANCE
+                     else [card.text for card in frame.employee_event_candidates])
+            expected = 2 if event == Page.DANCE else 1
+            if len(names) < max(expected, len(frame.employee_event_details)):
+                names.append(None)
+            precise = self._protect_anaxa_event(names, expected=expected)
         preferences = () if self.default_strategy else (
             self.lineup.preferences if self.lineup else (*strategy.FRONT, *strategy.BACK)
         )
@@ -4169,7 +4256,13 @@ class CurrencyWars:
             def confirm(f):
                 return ui.point(f.find("确认选择", area=ui.EMPLOYEE_EVENT_CONFIRM)) or (1492, 598)
 
-            return self._choose_single(frame, option, confirm, advanced, "巡海游侠任命后未转场")
+            picked, marked = [], []
+            after = self._choose_single(frame, option, confirm, advanced, "巡海游侠任命后未转场",
+                                        on_pick=(lambda f, card: picked.append(card.text)) if precise else None,
+                                        on_confirm=(lambda f: marked.extend(f.employee_event_selected)) if precise else None)
+            if precise:
+                precise(marked or picked)
+            return after
 
         if not frame.employee_event_confirm() and len(frame.dance_cards) < 2:
             fresh = self._wait(
@@ -4201,11 +4294,18 @@ class CurrencyWars:
                 frame = self.frame
             if frame.page != event or frame.stage != stage:
                 return frame
+        marked = set()
+        def dance_confirm(f):
+            button = f.employee_event_confirm()
+            if button and precise:
+                marked.clear()
+                marked.update(f.employee_event_selected)
+            return ui.point(button)
         try:
-            return self._click_to(
-                frame, lambda f: ui.point(f.employee_event_confirm()), advanced,
-                f"{event.value}确认后未转场", attempts=1,
-            )
+            after = self._click_to(frame, dance_confirm, advanced, f"{event.value}确认后未转场", attempts=1)
+            if precise:
+                precise(marked)
+            return after
         except CurrencyWarsActionUnready as error:
             current = self.frame
             if (current.action_context == frame.action_context
@@ -4793,6 +4893,8 @@ class CurrencyWars:
             self.unidentified_since = None
 
     def _reset_match_state(self):
+        self.anaxa_bound_names.clear()
+        self.anaxa_keep_leftmost = False
         self.slot_cache.clear()
         self.stage_refreshes.clear()
         self.deployment_stage = None
@@ -4941,8 +5043,8 @@ class CurrencyWars:
 
     def _play_step(self, frame):
         page = frame.page
-        if page in (Page.SVAROG_MODIFICATION, Page.DRAGON_CLEANSE, Page.GARDEN, Page.HACK, Page.HALO_MENTOR, Page.TEA):
-            self.anaxa_bench_history_known = False
+        if page == Page.SVAROG_MODIFICATION and self.anaxa_bench_history_known:
+            self.anaxa_bound_names.add("克拉拉")
         if page != Page.TEA and page in ACTIVE_PAGES:
             self.tea_menu_fallback = None
         if page == Page.MODES:
@@ -4987,8 +5089,6 @@ class CurrencyWars:
         if page == Page.BATTLE:
             return self._watch_battle(frame)
         if page == Page.CHOICE:
-            if frame.choice in ("奇遇伙伴", "选择奇遇", "奇遇效果", "伙伴事件", "遭遇节点"):
-                self.anaxa_bench_history_known = False
             return self._choose(frame)
         if page == Page.TREASURY:
             return self._claim_treasury(frame)

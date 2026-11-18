@@ -9094,8 +9094,8 @@ def anaxa_team(front, rear, bench, *, lineup=None, level=None, capacity=None, re
 
 
 def off_route(name):
-    front = policy.ANAXA_OFF_ROUTE[name] == "front"
-    return policy.Unit(name, front, not front, 1, output=front, equipment=0)
+    front, back = policy.S2_CARD_ROLES[name]
+    return policy.Unit(name, front, back, 1, output=front, equipment=0)
 
 
 def named(name, front=False, back=True):
@@ -9105,7 +9105,7 @@ def named(name, front=False, back=True):
 def mature_anaxa(lineup, bench, *, rear_size=6):
     front = [replace(CORE, stars=1), named("星期日", True, True), named("花火", True, False),
              named("知更鸟", True, False)]
-    rear = [named(n) for n in ("刻律德菈", "白露", "寒鸦", "千冶·刃", "雪衣", "长夜月")]
+    rear = [named(n, *policy.S2_CARD_ROLES[n]) for n in ("刻律德菈", "白露", "寒鸦", "千冶·刃", "真珠", "长夜月")]
     return anaxa_team(front, rear, bench, lineup=lineup, rear_size=rear_size)
 
 
@@ -9114,7 +9114,7 @@ def mature_anaxa(lineup, bench, *, rear_size=6):
 def test_anaxa_unused_full_level_can_clear_multiple_with_free_bench(lineup, rear_size):
     b = mature_anaxa(lineup, list(map(off_route, ("流萤", "黑天鹅", "椒丘"))), rear_size=rear_size)
     assert b.used == b.capacity == b.level == 10 and len(b.empty_bench) == 6
-    assert [s.unit.name for s in policy.anaxa_unused_reserves(b)] == ["流萤", "黑天鹅", "椒丘"]
+    assert {s.unit.name for s in policy.anaxa_unused_reserves(b)} == {"流萤", "黑天鹅", "椒丘"}
 
 
 def test_anaxa_unused_starts_before_endgame_and_without_two_star_or_healer():
@@ -9153,7 +9153,7 @@ def test_anaxa_unused_high_competitor_preserves_every_reachable_future_slot():
 @pytest.mark.parametrize("unit", [
     replace(off_route("流萤"), stars=None), replace(off_route("流萤"), stars=2),
     replace(off_route("流萤"), has_halo=True), replace(off_route("流萤"), back=True),
-    CORE, BAILU, EVERNIGHT, named("阿格莱雅"), FILLER, named("星神★阿哈"), named("昔涟"), named("陌生文本"),
+    CORE, BAILU, EVERNIGHT, named("星神★阿哈"), named("昔涟"), named("陌生文本"),
 ])
 def test_anaxa_unused_keeps_unproved_or_useful_cards(unit):
     for lineup in (None, policy.LINEUPS[policy.HIGH_ANAXA]):
@@ -9167,9 +9167,10 @@ def test_anaxa_unused_ignores_other_builds_and_unresolved_copies():
     for b in (mature_anaxa(None, [ff, ff]), mature_anaxa(None, [ff, replace(ff, stars=2)]),
               mature_anaxa(None, [ff])):
         bad = replace(b.slots[-1], occupied=True, unit=None)
-        assert not policy.anaxa_unused_reserves(replace(b, slots=(*b.slots[:-1], bad)))
+        expected = () if len(b.empty_bench) == 7 and all(not s.unit or s.unit.stars == 1 for s in b.slots if s.zone == "bench") else ("流萤",)
+        assert tuple(s.unit.name for s in policy.anaxa_unused_reserves(replace(b, slots=(*b.slots[:-1], bad)))) == expected
         if len(b.empty_bench) == 7:
-            assert not policy.anaxa_unused_reserves(b)
+            assert tuple(s.unit.name for s in policy.anaxa_unused_reserves(b)) == expected
     locked = tuple(replace(s, blocked=True) if s.unit == ff else s for s in b.slots)
     assert not policy.anaxa_unused_reserves(replace(b, slots=locked))
 
@@ -9360,7 +9361,7 @@ def test_anaxa_unused_read_board_does_not_bind_old_detail_to_a_new_portrait(monk
     assert b.slots[0].occupied and b.slots[0].unit is None and not war.slot_cache
 
 
-@pytest.mark.parametrize("title,expected", [("连击概念股", True), ("采购专员", False), ("未知投资", False)])
+@pytest.mark.parametrize("title,expected", [("连击概念股", True), ("采购专员", True), ("未知投资", False)])
 def test_anaxa_unused_only_keeps_observed_neutral_investment(monkeypatch, world, title, expected):
     war = world.war
     war.anaxa_bench_history_known = True
@@ -9371,6 +9372,7 @@ def test_anaxa_unused_only_keeps_observed_neutral_investment(monkeypatch, world,
     routes = {(option, (460, 393)): selected, (selected, (960, 984)): after}
     drive(monkeypatch, world, option, lambda st, p: setattr(st, "frame", routes[st.frame, p]))
     assert war._play_step(option) is after and war.anaxa_bench_history_known == expected
+    assert war.anaxa_keep_leftmost == (title == "采购专员")
 
 
 @pytest.mark.parametrize("event", (Page.DANCE, Page.RANGER, Page.HALO_MENTOR))
@@ -9379,7 +9381,7 @@ def test_anaxa_unused_retains_special_employee_bindings(monkeypatch, world, even
     war.anaxa_bench_history_known = True
     f = page(event)
     if event == Page.HALO_MENTOR:
-        monkeypatch.setattr(war, "_halo_mentor", lambda _: page(Page.BOARD))
+        monkeypatch.setattr(war, "_choose_single", lambda *a, **kw: page(Page.BOARD))
     elif event == Page.RANGER:
         monkeypatch.setattr(war, "_choose_single", lambda *args, **kwargs: page(Page.BOARD))
     else:
@@ -9389,7 +9391,7 @@ def test_anaxa_unused_retains_special_employee_bindings(monkeypatch, world, even
 
 
 @pytest.mark.parametrize("high", (False, True))
-def test_anaxa_unused_does_not_sell_and_rebuy_fillers_while_short(high):
+def test_anaxa_unused_clears_surplus_while_short_without_rebuying_the_wrong_row(world, high):
     ff, jq = off_route("流萤"), off_route("椒丘")
     sun = named("星期日", True, True)
     sparkle = named("花火", True, False)
@@ -9399,7 +9401,190 @@ def test_anaxa_unused_does_not_sell_and_rebuy_fillers_while_short(high):
         b = anaxa_team([CORE, sun, sparkle, named("知更鸟", True, False)], [], [ff], capacity=5)
     b = replace(b, gold=15)
     assert not policy.deployment(b)
-    assert not policy.anaxa_unused_reserves(b)
-    without = replace(b, slots=tuple(replace(s, unit=None, occupied=False) if s.unit == ff else s for s in b.slots))
+    picked = policy.anaxa_unused_reserves(b)
+    assert [s.unit.name for s in picked] == ["流萤"]
+    without = replace(b, slots=tuple(replace(s, unit=None, occupied=False) if s in picked else s for s in b.slots))
     offer = policy.Offer("流萤", 2, (1, 1), 0, True, False)
     assert policy.shop_purchase(without, (offer,)) == offer
+    assert not world.war._anaxa_shop_offers(without, (offer,))
+
+
+def test_anaxa_unused_s2_catalog_matches_pinned_season_not_all_game_names():
+    import hashlib
+    roles = policy.S2_CARD_ROLES
+    assert len(roles) == 61  # 入画奇航 60 员工与特殊阿哈。旧赛季、伙伴、通用角色表不是这个池。
+    encoded = [n + ":" + ("F" if f else "") + ("B" if b else "") for n, (f, b) in roles.items()]
+    # 图鉴 oldid=106504 的入画奇航页签，分隔符 • 按游戏 OCR 规范化为 ·。
+    assert hashlib.sha256("\n".join(sorted(encoded)).encode()).hexdigest() == (
+        "898dd12e7684646e7e55cb465286164bafb623c05583ef105f8c7ba4f9a539c0")
+    assert [list(roles.values()).count(r) for r in ((True, False), (False, True), (True, True))] == [19, 16, 26]
+    assert all(n not in roles for n in ("陌生文本", "叽米", "寒腿叔叔", "角色详情"))
+
+
+@pytest.mark.parametrize("lineup", (None, policy.LINEUPS[policy.HIGH_ANAXA]))
+def test_anaxa_unused_each_registered_employee_is_classified_on_real_sized_mature_board(lineup):
+    b = mature_anaxa(lineup, [])
+    field = {s.unit.name for s in b.field}
+    fixed = set(dict(lineup.stars)) if lineup else set(policy.FRONT + policy.BACK)
+    exceptions = field | fixed | policy.SPECIAL | {"昔涟", "砂金·戏浪"}
+    available = set()
+    for name in policy.S2_CARD_ROLES:
+        incoming = off_route(name)
+        team = mature_anaxa(lineup, [incoming])
+        picked = policy.anaxa_unused_reserves(team)
+        if policy.deployment(team):
+            assert not picked
+            exceptions.add(name)
+        if picked:
+            assert [s.unit.name for s in picked] == [name]
+            available.add(name)
+    assert available == set(policy.S2_CARD_ROLES) - exceptions
+    assert len(available) >= 40 and {"飞霄", "乱破", "刃", "海瑟音", "桂乃芬"} <= available
+
+
+MIXED_RESERVES = ("飞霄", "波提欧", "赛飞儿", "乱破", "桂乃芬", "海瑟音", "景元", "云璃")
+
+
+@pytest.mark.parametrize("lineup", (None, policy.LINEUPS[policy.HIGH_ANAXA]))
+def test_anaxa_unused_clears_early_mixed_rows_without_reserving_for_ten_future_levels(lineup):
+    reserves = [off_route(n) for n in MIXED_RESERVES]
+    b = replace(anaxa_team([replace(CORE, stars=1), off_route("花火")], [BAILU], reserves, lineup=lineup),
+                gold=0, stage="1-1")
+    assert not policy.deployment(b) and len(b.empty_bench) == 1
+    picked = policy.anaxa_unused_reserves(b)
+    assert len(picked) == 7 and {policy.S2_CARD_ROLES[s.unit.name] for s in picked} == {
+        (True, False), (False, True), (True, True)}
+    later = replace(b, slots=tuple(replace(s, occupied=False, unit=None) if s in picked else s for s in b.slots))
+    assert policy._open_field_count(later) == 1  # 留下真正在手的下一人口
+    assert len(policy.anaxa_unused_reserves(mature_anaxa(lineup, reserves))) == 8
+
+
+def test_anaxa_unused_keeps_only_shortage_of_healers_and_actual_combo_or_income_partner():
+    f = replace(CORE, stars=1)
+    extras = list(map(off_route, ("罗刹", "娜塔莎", "灵砂", "风堇", "阿格莱雅", "镜流", "瓦尔特", "乱破")))
+    b = replace(anaxa_team([f], [], extras), gold=0)
+    picked = {s.unit.name for s in policy.anaxa_unused_reserves(b)}
+    assert len(picked & {"罗刹", "娜塔莎", "灵砂", "风堇"}) == 3
+    assert len(picked & {"阿格莱雅", "镜流"}) == 1 and "瓦尔特" in picked
+    with_sunday = replace(anaxa_team([f, off_route("星期日")], [BAILU], extras), gold=0)
+    assert "瓦尔特" not in {s.unit.name for s in policy.anaxa_unused_reserves(with_sunday)}
+
+
+def test_anaxa_unused_keeps_only_leftmost_or_bound_people_not_the_entire_bench():
+    unknown = named("OCR误字", True, True)
+    b = mature_anaxa(None, [unknown, off_route("飞霄"), off_route("乱破"), off_route("景元")])
+    b = replace(b, slots=tuple(replace(s, blocked=True) if s.unit == unknown else s for s in b.slots))
+    actual = policy.anaxa_unused_reserves(b, bound={"乱破"}, keep_leftmost=True)
+    assert {s.unit.name for s in actual} == {"飞霄", "景元"}
+    b = mature_anaxa(None, [off_route("飞霄"), off_route("乱破"), off_route("景元")])
+    assert {s.unit.name for s in policy.anaxa_unused_reserves(b, keep_leftmost=True)} == {"乱破", "景元"}
+
+
+@pytest.mark.parametrize("event", [Page.RANGER, Page.HALO_MENTOR, Page.DANCE])
+def test_anaxa_unused_preserves_selected_names_not_every_visible_employee(monkeypatch, world, event):
+    war = world.war
+    war.anaxa_bench_history_known = True
+    war.anaxa_bound_names = {"黑天鹅"}  # 以前的绑定不可被新选择覆盖
+    cards = labels(("飞霄", 660, 354), ("景元", 905, 354), ("乱破", 1185, 354))
+    if event == Page.DANCE:
+        marked = frozenset(("飞霄", "景元"))
+        f = page(event, stage="1-2", dance_cards=tuple((c, c.point[0]) for c in cards),
+                 employee_event_candidates=cards, employee_event_selected=marked)
+        monkeypatch.setattr(f, "employee_event_confirm", lambda: Label("确认选择", (1487, 576)))
+        def click(f, locator, after, *args, **kwargs):
+            assert locator(f) == (1487, 576)
+            return page(Page.BOARD)
+        monkeypatch.setattr(war, "_click_to", click)
+    else:
+        marked = {"景元"}
+        f = page(event, stage="1-2", employee_event_candidates=cards, mentor_candidates=cards)
+        def choose(f, *args, on_pick, **kwargs):
+            on_pick(f, cards[1])
+            return page(Page.BOARD)
+        monkeypatch.setattr(war, "_choose_single", choose)
+    assert war._play_step(f).page == Page.BOARD
+    assert war.anaxa_bench_history_known and war.anaxa_bound_names == marked | {"黑天鹅"}
+
+
+def test_anaxa_unused_shop_replans_for_new_need_and_allows_higher_star_and_merger(world):
+    war = world.war
+    b = mature_anaxa(policy.LINEUPS[policy.HIGH_ANAXA], [])
+    u = off_route("海瑟音")
+    one = policy.Offer(u.name, 2, (1, 1), 0, True, True)
+    two = replace(one, stars=2, cost=6)
+    assert war._anaxa_shop_offers(b, (one, two)) == (two,)
+    changed = anaxa_team([CORE], [], [], lineup=b.lineup)
+    # 无其它补位、下个人口可用时不能因同节点卖过一次而永远屏蔽该名字。
+    assert war._anaxa_shop_offers(changed, (one, two)) == (one, two)
+    merge = mature_anaxa(b.lineup, [u, u])
+    assert war._anaxa_shop_offers(merge, (one,)) == (one,)
+
+
+def test_anaxa_unused_single_character_name_is_strictly_scoped(monkeypatch):
+    f = page(Page.DETAIL, ("刃", 1538, 231))
+    monkeypatch.setattr(f, "read_local", lambda *a: None)
+    assert f.employee_name(local=True) is None and f.anaxa_employee_name() == "刃"
+    wrong = page(Page.DETAIL, ("冰", 1538, 231))
+    monkeypatch.setattr(wrong, "read_local", lambda *a: "冰")
+    assert wrong.anaxa_employee_name() is None
+
+
+@pytest.mark.parametrize("lineup,names", [(None, [("长夜月", 1)]),
+    (policy.LINEUPS[policy.HIGH_ANAXA], [("知更鸟", 2), ("镜流", 3), ("雪衣", 5)])])
+def test_anaxa_unused_skips_first_purchase_and_next_node_repurchase_if_still_useless(world, lineup, names):
+    b = anaxa_team([CORE], [CER, BAILU], [off_route("星期日"), off_route("花火")], lineup=lineup)
+    war = world.war
+    for stage in ("1-4", "1-5"):
+        state = replace(b, stage=stage, gold=20)
+        for name, cost in names:
+            offer = policy.Offer(name, cost, (2, 3), 0, *policy.S2_CARD_ROLES[name])
+            assert policy.shop_purchase(state, (offer,)) == offer
+            assert not war._anaxa_shop_offers(state, (offer,))
+
+
+def test_anaxa_unused_known_and_unknown_star_pair_is_not_split():
+    other = replace(off_route("飞霄"), stars=None)
+    b = mature_anaxa(None, [off_route("飞霄"), other, off_route("乱破")])
+    assert [s.unit.name for s in policy.anaxa_unused_reserves(b)] == ["乱破"]
+
+
+@pytest.mark.parametrize("lineup", (None, policy.LINEUPS[policy.HIGH_ANAXA]))
+def test_anaxa_unused_open_rear_does_not_freeze_unusable_front_only_cards(world, lineup):
+    front = [off_route(n) for n in ("那刻夏", "花火", "星期日", "知更鸟")]
+    junk = [off_route(n) for n in ("飞霄", "椒丘", "波提欧", "流萤", "大黑塔")]
+    b = anaxa_team(front, [], junk, capacity=5, lineup=lineup)
+    assert not policy.deployment(b)
+    selected = policy.anaxa_unused_reserves(b)
+    assert {s.unit.name for s in selected} == {u.name for u in junk}
+    after = replace(b, slots=tuple(replace(s, occupied=False, unit=None) if s in selected else s for s in b.slots))
+    ff = policy.Offer("流萤", 2, (1, 1), 0, True, False)
+    swan = policy.Offer("黑天鹅", 1, (2, 2), 1, False, True)
+    assert world.war._anaxa_shop_offers(after, (ff, swan)) == (swan,)
+
+
+def test_anaxa_unused_s2_output_classifications_and_fullwidth_name():
+    assert len(policy.S2_PURE_DAMAGE) == 22 and len(policy.S2_DAMAGE) == 42
+    assert policy.S2_PURE_DAMAGE <= policy.S2_DAMAGE <= policy.S2_CARD_ROLES.keys()
+    assert "流萤" in policy.S2_PURE_DAMAGE and "椒丘" in policy.S2_DAMAGE - policy.S2_PURE_DAMAGE
+    assert "赛飞儿" not in policy.S2_DAMAGE
+    f = page(Page.DETAIL, ("托帕＆账账", 1538, 231))
+    assert f.anaxa_employee_name() == "托帕&账账" and f.employee_name() == "托帕＆账账"
+
+
+def test_anaxa_unused_rechecks_new_expansion_budget_with_real_sale_balance(monkeypatch, world):
+    war = world.war
+    war.anaxa_bench_history_known = True
+    b = anaxa_team([replace(CORE, stars=1), off_route("花火")], [BAILU], [off_route(n) for n in MIXED_RESERVES])
+    b = replace(b, gold=0, stage="1-1")
+    initial = bench_frame(monkeypatch, war, b, remember=True)
+    sold = []
+    def sell(f, s, *, identified, verify_board):
+        nonlocal b
+        assert identified and verify_board(f)
+        sold.append(s.unit.name)
+        b = replace(b, gold=20, slots=tuple(replace(p, occupied=False, unit=None) if p == s else p for p in b.slots))
+        return bench_frame(monkeypatch, war, b), True
+    monkeypatch.setattr(war, "_sell_reserve", sell)
+    assert len(policy.anaxa_unused_reserves(b)) == 7
+    assert war._sell_unused_anaxa(initial, b).page == Page.BOARD
+    assert len(sold) == 6 and policy._open_field_count(b) == 2
