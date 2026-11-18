@@ -435,6 +435,8 @@
     <string name="error_busy_advice">1. 等十几秒再点开始。\n2. 还是不行，就在 Shizuku 里停止服务后重新启动，或者重启手机。</string>
     <string name="error_cleanup_pending_title">本轮清理尚未确认</string>
     <string name="error_service_title">设备端服务没有启动成功</string>
+    <string name="error_shizuku_api_title">当前 Shizuku 服务不支持设备进程接口</string>
+    <string name="error_shizuku_api_advice">请使用提供 API 13 的 Shizuku 服务，或在已 Root 的设备上选择 Root 授权。导出的日志中可查看服务 API 和 UID。</string>
     <string name="error_service_advice">1. 打开 Shizuku，确认它显示「正在运行」；手机重启过就需要重新启动它。\n2. 回到权限引导，确认状态是「已就绪」。\n3. 再点开始。</string>
     <string name="error_root_title">没有拿到 Root 权限</string>
     <string name="error_root_advice">1. 在 Root 管理应用（如 Magisk）里允许三月七小助手使用超级用户权限。\n2. 到权限引导点「检查 Root」。\n3. 没有 Root 的设备请改用 Shizuku。</string>

@@ -82,7 +82,10 @@ class TaskController private constructor(private val context: Context) {
     private val worker = Executors.newSingleThreadExecutor()
     private val prefs = context.getSharedPreferences("task-options", Context.MODE_PRIVATE)
     private val usage = UsageTelemetry.get(context)
-    private val access = DeviceAccess(context)
+    private val access = DeviceAccess(context) { detail ->
+        Log.d("M7ADevice", detail)
+        appLog(LogLevel.DEBUG, detail)
+    }
     private val rootProbeInFlight = AtomicBoolean()
     private val marker = AtomicFile(File(context.filesDir, "active-task"))
     private val logFile = File(context.filesDir, "last-run.log")
@@ -484,7 +487,7 @@ class TaskController private constructor(private val context: Context) {
             stateData.update { it.copy(service = ServiceState.STARTING) }
             try {
                 val boot = SystemClock.elapsedRealtime()
-                val opened = access.open(snapshot.privilege, token)
+                val opened = access.open(snapshot.privilege, token, ::isCancelled)
                 device = opened
                 val elapsed = SystemClock.elapsedRealtime() - boot
                 timings["device_service_seconds"] = elapsed
@@ -492,6 +495,7 @@ class TaskController private constructor(private val context: Context) {
                 return opened.port
             } catch (error: DeviceFailure) {
                 deviceError = error.code
+                appLog(LogLevel.ERROR, "启动设备端服务：${error.message}")
                 error.suppressed.forEach(cleanup::unconfirmed)
                 throw error
             }

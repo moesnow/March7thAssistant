@@ -26,6 +26,9 @@ if [[ "$certs" != "$expected_cert" ]]; then
 fi
 
 "$ANDROID_BUILD_TOOLS/zipalign$build_tools_exe" -c -P 16 4 "$apk"
+for abi in arm64-v8a x86_64; do
+    unzip -tqq "$apk" "lib/$abi/libm7a_launcher.so"
+done
 badging=$("$ANDROID_BUILD_TOOLS/aapt$build_tools_exe" dump badging "$apk" | tr -d '\r')
 package=$(sed -n '/^package: /p' <<< "$badging")
 min_api=$(sed -n 's/^m7a\.minApi=//p' Android/gradle.properties | tr -d '\r')
