@@ -602,15 +602,24 @@ def test_title_logo_click_release_drag_cancel_and_double_click(window, qtbot):
     effect.timeline.setCurrentTime(effect.timeline.duration())
     resting = window.titleBar.grab().toImage()
     geometry = logo.geometry()
-    click_logo(window, qtbot)
+    qtbot.mouseClick(logo, Qt.MouseButton.LeftButton)
     effect.timeline.pause()
     effect.timeline.setCurrentTime(70)
     assert abs(effect.angle) > 10
     assert window.titleBar.grab().toImage() != resting
     assert logo.geometry() == geometry
-    click_logo(window, qtbot)  # A rapid click restarts the shake without moving the hit area.
-    assert effect.timeline.currentTime() < 70
-    qtbot.waitUntil(lambda: effect.angle == 0, timeout=1000)
+    effect.timeline.resume()
+
+    # Observe the restart frame as Qt emits it, not after the event loop has advanced.
+    def is_restart_frame(angle):
+        return effect.timeline.currentTime() == 0 and angle == 0
+
+    with qtbot.waitSignals(
+        [effect.timeline.valueChanged, effect.timeline.finished],
+        check_params_cbs=[is_restart_frame, None], order='simple',
+    ):
+        qtbot.mouseClick(logo, Qt.MouseButton.LeftButton)
+    assert effect.angle == 0
     assert logo.geometry() == geometry
     assert window.titleBar.grab().toImage() == resting
 
