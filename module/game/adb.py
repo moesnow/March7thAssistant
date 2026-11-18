@@ -467,16 +467,20 @@ class AdbGameController(GameControllerBase):
                 return False
             raise
         seq = header.get("seq")
-        if (type(seq) is not int or seq < min_seq or header.get("stale")
-                or header.get("display_id") != self._display_id
+        stale = header.get("stale", False)
+        if (type(seq) is not int or type(stale) is not bool or header.get("display_id") != self._display_id
                 or header.get("crop") != list(pixels) or header.get("encoding") != "rgb"
                 or len(payload) != pixels[2] * pixels[3] * 3):
             raise AdbError("invalid_response", tr("ADB 设备端服务返回了无效的帧"))
-        if self._input_ns is not None and (
-            header.get("timestamp_comparable") is not True
-            or header.get("image_ns", 0) <= self._input_ns
-        ):
-            raise AdbError("invalid_response", tr("ADB 设备端服务返回了输入前的帧"))
+        if seq < min_seq or stale:
+            raise AdbError("invalid_response", tr("ADB 设备端服务返回了无效的帧"), frame_only=True)
+        if self._input_ns is not None:
+            comparable = header.get("timestamp_comparable")
+            image_ns = header.get("image_ns")
+            if type(comparable) is not bool or type(image_ns) is not int:
+                raise AdbError("invalid_response", tr("ADB 设备端服务返回了无效的帧"))
+            if not comparable or image_ns <= self._input_ns:
+                raise AdbError("invalid_response", tr("ADB 设备端服务返回了输入前的帧"), frame_only=True)
         return seq, Image.frombytes("RGB", pixels[2:], bytes(payload))
 
     def _capture_emulator(self, pixels):
@@ -526,11 +530,11 @@ class AdbGameController(GameControllerBase):
     @staticmethod
     def _decode_emulator_png(data, pixels):
         if not data:
-            raise AdbError("invalid_response", tr("模拟器 display 0 的截图输出为空"))
+            raise AdbError("invalid_response", tr("模拟器 display 0 的截图输出为空"), frame_only=True)
         if not data.startswith(_PNG_SIGNATURE):
             raise AdbError("invalid_response", tr("模拟器 display 0 的截图输出不符合 PNG 格式（{size} 字节）").format(
                 size=len(data),
-            ))
+            ), frame_only=True)
         try:
             with Image.open(BytesIO(data)) as image:
                 if image.size != RESOLUTION:
@@ -538,4 +542,4 @@ class AdbGameController(GameControllerBase):
                 x, y, w, h = pixels
                 return image.crop((x, y, x + w, y + h)).convert("RGB")
         except (OSError, SyntaxError, Image.DecompressionBombError) as error:
-            raise AdbError("invalid_response", tr("无法解码模拟器 display 0 的截图")) from error
+            raise AdbError("invalid_response", tr("无法解码模拟器 display 0 的截图"), frame_only=True) from error

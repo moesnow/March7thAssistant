@@ -6,7 +6,7 @@ from module.logger import log
 from module.game import get_game_controller
 from utils.color import red, green, yellow
 import tasks.reward as reward
-from tasks.base.task_steps import FATAL_GAME_ERRORS
+from tasks.base.task_steps import optional_reward
 import time
 import json
 import datetime
@@ -253,14 +253,11 @@ class Redemption:
                 if part.strip():  # 确保非空字符串
                     log.info(part.strip())
             if send_notification:
-                notif.notify(content=msg, level=NotificationLevel.ALL)
+                with optional_reward("兑换码成功通知"):
+                    notif.notify(content=msg, level=NotificationLevel.ALL)
 
-            try:
+            with optional_reward("兑换码邮件奖励"):
                 reward.start_specific("mail")
-            except FATAL_GAME_ERRORS:
-                raise
-            except Exception as error:
-                log.warning(f"兑换码已记为成功，邮件奖励待领取：{error}")
             log.hr("完成", 2)
             return True
         else:

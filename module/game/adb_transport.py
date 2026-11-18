@@ -41,8 +41,10 @@ _ADB_DISCONNECT = re.compile(r"device (?:offline|disconnected|unauthorized|not f
 class AdbError(RuntimeError):
     """ADB 操作失败。界面按 code 判断原因，str(error) 用于显示。"""
 
-    def __init__(self, code: str, message: str):
+    def __init__(self, code: str, message: str, *, frame_only: bool = False):
         self.code = code
+        # 应答结构有效，但截图数据本身不可用时仍可继续从当前会话取帧。
+        self.frame_only = frame_only
         super().__init__(message)
 
 

@@ -4,9 +4,8 @@ from module.logger import log
 from module.config import cfg
 from module.config.platform import get_control_backend
 from module.game import cloud_game
-from module.screen import screen
 from utils.date import Date
-from tasks.base.task_steps import run_steps
+from tasks.base.task_steps import optional_reward, run_steps
 from tasks.daily.photo import Photo
 from tasks.weekly.currency_wars import CurrencyWars
 from tasks.weekly.divergent_universe import DivergentUniverse
@@ -18,7 +17,7 @@ from tasks.daily.synthesis import Synthesis
 import tasks.challenge as challenge
 from tasks.power.power import Power
 from tasks.power.policy import SupportDemand
-from tasks.daily.training import SUPPORT_TASK, MATERIAL_TASK, DailyTrainingError, can_complete, needs_action
+from tasks.daily.training import SUPPORT_TASK, MATERIAL_TASK, can_complete, needs_action
 from tasks.reward.quest import Quest
 from tasks.daily.himekotry import HimekoTry
 from tasks.weekly.echoofwar import Echoofwar
@@ -39,12 +38,10 @@ class Daily:
     def support_demand(*, full_run=False):
         if not can_complete(cfg, full_run=full_run) or not cfg.borrow_enable or cfg.borrow_character_enable:
             return SupportDemand()
-        try:
+        with optional_reward("支援实训查询"):
             activity, tasks, _ = Quest.scan(collect=False)
-        except DailyTrainingError as error:
-            log.warning(f"未能查询支援实训，本轮继续处理副本：{error}")
-            return SupportDemand()
-        return SupportDemand(needs_action(activity, tasks) and tasks.get(SUPPORT_TASK, False))
+            return SupportDemand(needs_action(activity, tasks) and tasks.get(SUPPORT_TASK, False))
+        return SupportDemand()
 
     @staticmethod
     def prepare_daily(ignore_refresh=False):
@@ -167,7 +164,6 @@ class Daily:
     @staticmethod
     def _run_weekly_divergent():
         divergent = DivergentUniverse()
-        screen.change_to("divergent_main")
         for _ in range(3):
             if divergent.check_divergent_universe_score():
                 return True

@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 from PIL import Image
 
+from .background_input import GameWindowLost
 from .screenshot import Screenshot
 from .debug_overlay import get_debug_overlay, DebugOverlay
 from utils.logger.logger import Logger
@@ -246,7 +247,7 @@ class Automation(metaclass=SingletonMeta):
                     return result
                 elif timeout > 0 and not adb:
                     self.logger.error("截图失败：未能获取游戏窗口画面" if background else "截图失败：没有找到游戏窗口")
-            except AdbError:
+            except (AdbError, GameWindowLost):
                 raise
             except Exception as e:
                 if timeout <= 0:

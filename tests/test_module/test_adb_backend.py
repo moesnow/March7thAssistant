@@ -402,6 +402,29 @@ def test_crop_and_strict_sequence_after_input(adb, s1):
         controller.capture_frame(crop)
 
 
+@pytest.mark.parametrize("field, value, frame_only", [
+    ("seq", "8", False), ("encoding", "unrecognized", False), ("stale", True, True),
+])
+def test_virtual_capture_distinguishes_bad_frame_metadata_from_a_stale_frame(adb, s1, monkeypatch,
+                                                                            field, value, frame_only):
+    controller, _ = adb
+    controller.start_game_process()
+    reply = s1.reply
+
+    def modified_reply(request):
+        header, data = reply(request)
+        if request["cmd"] == "frame":
+            header[field] = value
+        return header, data
+
+    monkeypatch.setattr(s1, "reply", modified_reply)
+    with pytest.raises(transport.AdbError) as error:
+        controller.capture_frame()
+
+    assert error.value.code == "invalid_response"
+    assert error.value.frame_only is frame_only
+
+
 def test_touch_mapping_and_release(adb, s1):
     controller, _ = adb
     controller.cfg.adb_tap_ms = 65
