@@ -9151,7 +9151,7 @@ def test_anaxa_unused_high_competitor_preserves_every_reachable_future_slot():
 
 
 @pytest.mark.parametrize("unit", [
-    replace(off_route("流萤"), stars=None), replace(off_route("流萤"), stars=2),
+    replace(off_route("流萤"), stars=None), replace(off_route("流萤"), stars=0),
     replace(off_route("流萤"), has_halo=True), replace(off_route("流萤"), back=True),
     CORE, BAILU, EVERNIGHT, named("星神★阿哈"), named("昔涟"), named("陌生文本"),
 ])
@@ -9164,10 +9164,9 @@ def test_anaxa_unused_ignores_other_builds_and_unresolved_copies():
     ff = off_route("流萤")
     for key in (policy.HIGH_FIREFLY, policy.HIGH_SERVAL):
         assert not policy.anaxa_unused_reserves(mature_anaxa(policy.LINEUPS[key], [ff]))
-    for b in (mature_anaxa(None, [ff, ff]), mature_anaxa(None, [ff, replace(ff, stars=2)]),
-              mature_anaxa(None, [ff])):
+    for cards, expected in (([ff, ff], ()), ([ff, replace(ff, stars=2)], ("流萤", "流萤")), ([ff], ("流萤",))):
+        b = mature_anaxa(None, cards)
         bad = replace(b.slots[-1], occupied=True, unit=None)
-        expected = () if len(b.empty_bench) == 7 and all(not s.unit or s.unit.stars == 1 for s in b.slots if s.zone == "bench") else ("流萤",)
         assert tuple(s.unit.name for s in policy.anaxa_unused_reserves(replace(b, slots=(*b.slots[:-1], bad)))) == expected
         if len(b.empty_bench) == 7:
             assert tuple(s.unit.name for s in policy.anaxa_unused_reserves(b)) == expected
@@ -9506,13 +9505,13 @@ def test_anaxa_unused_preserves_selected_names_not_every_visible_employee(monkey
     assert war.anaxa_bench_history_known and war.anaxa_bound_names == marked | {"黑天鹅"}
 
 
-def test_anaxa_unused_shop_replans_for_new_need_and_allows_higher_star_and_merger(world):
+def test_anaxa_unused_shop_replans_for_new_need_and_does_not_rebuy_useless_higher_stars(world):
     war = world.war
     b = mature_anaxa(policy.LINEUPS[policy.HIGH_ANAXA], [])
     u = off_route("海瑟音")
     one = policy.Offer(u.name, 2, (1, 1), 0, True, True)
     two = replace(one, stars=2, cost=6)
-    assert war._anaxa_shop_offers(b, (one, two)) == (two,)
+    assert war._anaxa_shop_offers(b, (one, two)) == ()
     changed = anaxa_team([CORE], [], [], lineup=b.lineup)
     # 无其它补位、下个人口可用时不能因同节点卖过一次而永远屏蔽该名字。
     assert war._anaxa_shop_offers(changed, (one, two)) == (one, two)
@@ -9588,3 +9587,77 @@ def test_anaxa_unused_rechecks_new_expansion_budget_with_real_sale_balance(monke
     assert len(policy.anaxa_unused_reserves(b)) == 7
     assert war._sell_unused_anaxa(initial, b).page == Page.BOARD
     assert len(sold) == 6 and policy._open_field_count(b) == 2
+
+
+@pytest.mark.parametrize("lineup", (None, policy.LINEUPS[policy.HIGH_ANAXA]))
+@pytest.mark.parametrize("stars", (2, 3, 4))
+def test_anaxa_unused_sell_confirmed_higher_stars_only_if_no_current_use(lineup, stars):
+    # 满编且无同名合成、光环、奇遇或替换，星级和沉没的招募成本都不是用途。
+    junk = replace(off_route("飞霄"), stars=stars, equipment=None)
+    tagged = replace(off_route("波提欧"), stars=stars)
+    b = mature_anaxa(lineup, [junk, tagged])
+    assert not policy.deployment(b)
+    assert [s.unit.name for s in policy.anaxa_unused_reserves(b, bound={tagged.name})] == [junk.name]
+    # 同名字的在用本体确实可以变强，不因为阵容外、或角色身上装备数未知而卖掉升级。
+    b = replace(b, slots=tuple(replace(s, unit=replace(off_route("飞霄"), stars=1, equipment=None))
+                               if s.zone == "front" and s.index == 3 else s for s in b.slots))
+    assert "飞霄" not in {s.unit.name for s in policy.anaxa_unused_reserves(b)}
+
+
+@pytest.mark.parametrize("lineup", (None, policy.LINEUPS[policy.HIGH_ANAXA]))
+@pytest.mark.parametrize("ranks", ((2, 2), (2, None), (2, 1, 1), (2, 2, 1), (1, 2)))
+def test_anaxa_unused_protects_actual_same_star_pairs_and_chain_material_only(lineup, ranks):
+    cards = [replace(off_route("飞霄"), stars=n) for n in ranks]
+    b = mature_anaxa(lineup, [*cards, off_route("乱破")])
+    picked = [(s.unit.name, s.unit.stars) for s in policy.anaxa_unused_reserves(b)]
+    assert ("乱破", 1) in picked
+    sold = [n for name, n in picked if name == "飞霄"]
+    assert sold == ([1, 2] if ranks == (1, 2) else [])
+
+
+@pytest.mark.parametrize("lineup", (None, policy.LINEUPS[policy.HIGH_ANAXA]))
+def test_anaxa_unused_prefers_stronger_real_future_substitute_to_lower_star(lineup):
+    weak, strong = off_route("飞霄"), replace(off_route("波提欧"), stars=2)
+    b = replace(anaxa_team([CORE, off_route("花火")], [BAILU], [weak, strong], lineup=lineup), gold=0)
+    assert not policy.deployment(b)
+    assert [s.unit.name for s in policy.anaxa_unused_reserves(b)] == [weak.name]
+
+
+def test_anaxa_unused_shop_compares_real_two_star_upgrade_and_two_star_merge(world):
+    war = world.war
+    b = mature_anaxa(None, [])
+    u = replace(off_route("飞霄"), stars=2)
+    deal = policy.Offer(u.name, 9, (11, 10), 0, True, False, stars=2)
+    assert not war._anaxa_shop_offers(b, (deal,))
+    assert war._anaxa_shop_offers(mature_anaxa(None, [u, u]), (deal,)) == (deal,)
+    field = replace(b, slots=tuple(replace(s, unit=replace(u, stars=1, equipment=None))
+                                   if s.zone == "front" and s.index == 3 else s for s in b.slots))
+    assert war._anaxa_shop_offers(field, (deal,)) == (deal,)
+
+
+@pytest.mark.parametrize("visible", (None, 3, 4))
+def test_anaxa_unused_normal_recognizes_four_stars_only_when_separate_glow_confirms(monkeypatch, world, visible):
+    war = world.war
+    war.anaxa_bench_history_known = True
+    card = replace(off_route("飞霄"), stars=None)
+    b = mature_anaxa(None, [card])
+    f = bench_frame(monkeypatch, war, b, remember=True)
+    monkeypatch.setattr(f, "card_stars", lambda s, *, separate_glow=False: (
+        visible if separate_glow else None) if s.zone == "bench" else s.unit.stars)
+    confirmed = []
+    def sell(frame, source, *, identified, verify_board):
+        assert identified and verify_board(frame)
+        confirmed.append(source.unit.stars)
+        return frame, False
+    monkeypatch.setattr(war, "_sell_reserve", sell)
+    war._sell_unused_anaxa(f, b)
+    assert confirmed == ([4] if visible == 4 else [])
+
+
+@pytest.mark.parametrize("lineup", (None, policy.LINEUPS[policy.HIGH_ANAXA]))
+def test_anaxa_unused_can_keep_a_three_star_merchant_for_an_actual_filler_seat(lineup):
+    # 上场即触发千星商会，候补二选一时保能提供经济的三星；不能因为这个羁绊多留整排。
+    plain, merchant = (replace(off_route(n), stars=3) for n in ("乱破", "爻光"))
+    b = replace(anaxa_team([CORE, off_route("花火")], [BAILU], [plain, merchant], lineup=lineup), gold=0)
+    assert not policy.deployment(b)
+    assert [s.unit.name for s in policy.anaxa_unused_reserves(b)] == [plain.name]

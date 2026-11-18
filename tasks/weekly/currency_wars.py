@@ -2515,13 +2515,14 @@ class CurrencyWars:
         spare = next(iter(board.empty_bench), None)
         def still_unused(o):
             roles = strategy.S2_CARD_ROLES.get(o.name)
-            if o.stars != 1 or roles is None or spare is None or strategy.merge_purchase(board, o):
+            if o.stars not in (1, 2, 3, 4) or roles is None or spare is None:
                 return False
-            # 买入前只复核原策略实际看中的一星卡。名字/角色来自图鉴；如有可执行的部署或替换则照常买。
+            # 按实际显示的星级复核原策略看中的卡。能补位、替换本体或参与合成时照常买。
             damage = strategy.S2_DAMAGE if board.lineup else strategy.S2_PURE_DAMAGE
-            unit = strategy.Unit(o.name, *roles, stars=1, output=o.name in damage, cost=o.cost)
+            unit = strategy.Unit(o.name, *roles, stars=o.stars, output=o.name in damage, cost=o.cost)
             source = replace(spare, occupied=True, unit=unit)
-            after = replace(board, slots=tuple(source if p == spare else p for p in board.slots))
+            after = replace(board, gold=board.gold - o.cost if board.gold is not None else None,
+                            slots=tuple(source if p == spare else p for p in board.slots))
             return source in strategy.anaxa_unused_reserves(
                 after, bound=self.anaxa_bound_names, keep_leftmost=self.anaxa_keep_leftmost)
         return tuple(o for o in offers if not still_unused(o))
@@ -2535,6 +2536,15 @@ class CurrencyWars:
                 or not any(s.zone == "bench" and s.unit and s.unit.name in strategy.S2_CARD_ROLES
                            for s in board.slots)):
             return None
+        def sale_stars(f, s, visible):
+            # 普通布阵只读到三星；仅清席时认可分离高光后明确出现的第四颗，不猜其余未知星数。
+            if board.lineup is None and visible in (None, 3) and f.card_stars(s, separate_glow=True) == 4:
+                return 4
+            return visible
+        if board.lineup is None:
+            board = replace(board, slots=tuple(
+                replace(s, unit=replace(s.unit, stars=4)) if s.unit and s.unit.stars in (None, 3)
+                and sale_stars(frame, s, s.unit.stars) == 4 else s for s in board.slots))
         def plan(state):
             return strategy.anaxa_unused_reserves(state, bound=self.anaxa_bound_names, keep_leftmost=self.anaxa_keep_leftmost)
         state = board
@@ -2551,7 +2561,7 @@ class CurrencyWars:
             cached = self.slot_cache.get((s.zone, s.index))
             return (cached is not None and cached[1] == s.unit.name
                     and np.abs(cv2.resize(f.slot_mark(s.point), (12, 12)).astype(np.int16) - cached[0]).mean() <= 6
-                    and self._card_stars(f, s) == s.unit.stars
+                    and sale_stars(f, s, self._card_stars(f, s)) == s.unit.stars
                     and f.card_role(s) == (s.unit.front, s.unit.back)
                     and (s.zone != "front" or f.assigned_halo(s.point) == s.unit.has_halo))
 

@@ -293,6 +293,8 @@ S2_CARD_ROLES = {name: roles for roles, names in (
 # 商店不会展示完整职能。用同版图鉴模拟：普通策略只认纯输出，高难也认「辅助/输出」等双职能。
 S2_PURE_DAMAGE = frozenset(("不死途 丹恒·饮月 阿格莱雅 希露瓦 砂金·戏浪 姬子·启行 刃 黄泉 银狼LV.999 大丽花 遐蝶 "
                             "乱破 镜流 飞霄 绯英 流萤 海瑟音 大黑塔 火花 那刻夏 波提欧 景元").split())
+# 每上场一名三星以上的千星商会成员可获得经验、免费刷新等分级奖励。
+S2_MERCHANTS = frozenset(("翡翠", "砂金·戏浪", "爻光", "知更鸟·晴歌", "真珠", "托帕&账账"))
 S2_DAMAGE = S2_CARD_ROLES.keys() - set(("星神★阿哈 丹恒·腾荒 寒鸦 昔涟 藿藿 开拓者·欢愉 爻光 符玄 赛飞儿 罗刹 "
                                        "知更鸟·晴歌 白露 花火 知更鸟 星期日 真珠 灵砂 刻律德菈 忘归人").split())
 
@@ -305,6 +307,7 @@ def anaxa_unused_reserves(board: Board, *, bound=frozenset(), keep_leftmost=Fals
     # 不认识的角色保留，但不能拿来证明另一张角色已有人替补。
     def known(s):
         return s.unit and S2_CARD_ROLES.get(s.unit.name) == (s.unit.front, s.unit.back)
+    uncertain_copies = {s.unit.name for s in board.slots if s.occupied and s.unit and (s.blocked or not known(s))}
     board = replace(board, slots=tuple(replace(s, unit=None) if s.occupied and not known(s) else s for s in board.slots))
     if not board.front_output_count:
         return ()
@@ -346,16 +349,24 @@ def anaxa_unused_reserves(board: Board, *, bound=frozenset(), keep_leftmost=Fals
         if len(field & combo) % 2 and not any(s.unit.name in combo & goals for s in candidates):
             if bridge := max((s for s in candidates if s.unit.name in combo), key=rank, default=None):
                 special.add(bridge.unit.name)
-    # 同名一星对子正在等第三张；高星、星级未知、有光环、锁定、奇遇指名不拆。
-    pairs = {u.name for u in board.units if u.stars == 1 and sum(
-        v.name == u.name and v.stars in (1, None) for v in board.units) >= 2}
-    protected = goals | special | pairs
+    # 三个同名同星自动合成。保住手里的对子及其已在手的一、二星连锁材料；
+    # 三星通常已成型，不假设仅凭两张三星就能合四星。单张高星本身不等于有用途。
+    copies = {}
+    for u in board.units:
+        copies.setdefault(u.name, []).append(u.stars)
+    def upgrade_use(u):
+        owned = copies[u.name]
+        if None in owned or any(s.unit and s.unit.name == u.name and s.unit.stars < u.stars for s in board.field):
+            return True  # 同名星数不清，或能替换一个已在用的低星本体
+        return u.stars <= 2 and any(owned.count(i) >= 2 for i in (1, 2))
+    protected = goals | special | uncertain_copies
     def sale_rank(s):
         u = s.unit
-        return (u.name in preferred, u.name in sustain, u.front and u.back,
+        return (u.name in preferred, u.name in sustain, u.stars >= 3 and u.name in S2_MERCHANTS,
+                u.stars, u.front and u.back,
                 max(slot_priority(board, u, row) for row in ("front", "back") if _can_deploy_to(board, u, row)))
     possible = [s for s in bench if s != left and s.unit and not s.blocked and not s.unit.has_halo
-                and s.unit.stars == 1 and s.unit.name not in protected
+                and s.unit.stars in (1, 2, 3, 4) and s.unit.name not in protected and not upgrade_use(s.unit)
                 and (_can_deploy_to(board, s.unit, "front") or _can_deploy_to(board, s.unit, "back"))]
     selected = []
     for s in sorted(possible, key=sale_rank):
