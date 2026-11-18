@@ -8499,6 +8499,10 @@ msgstr "Uncollected entries first"
 msgid "忆灵「长夜」"
 msgstr "Memosprite: Evey"
 
+#: app/home_interface.py:54
+msgid "别晃啦！本姑娘头好晕( ꩜ ᯅ ꩜;)"
+msgstr "Stop shaking me! I'm getting dizzy! ( ꩜ ᯅ ꩜;)"
+
 #: app/home_interface.py:123
 msgid "长夜月小助手"
 msgstr "Evernight Assistant"

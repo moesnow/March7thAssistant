@@ -2,13 +2,13 @@
 import copy
 
 from PySide6.QtCore import QEvent, QEasingCurve, QRectF, Qt, QVariantAnimation
-from PySide6.QtGui import QColor, QPainter, QPainterPath, QImage, QAction
+from PySide6.QtGui import QColor, QPainter, QPainterPath, QPainterPathStroker, QImage, QAction
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowEffect, QFileDialog, QDialog
 
 from qfluentwidgets import ScrollArea, FluentIcon, RoundMenu, PushButton, isDarkTheme
 
 from .common.style_sheet import StyleSheet
-from .common.evernight import EVERNIGHT_BANNER, EVERNIGHT_AVATAR
+from .common.evernight_artwork import evernight_artwork
 from .common.theme_assets import portrait_artwork
 from .components.image_crossfade import ImageCrossFade
 from .card.samplecardview1 import SampleCardView1
@@ -29,14 +29,16 @@ import sys
 class FloatingLogoHint(QLabel):
     """Float above the banner without changing the page layout."""
     def __init__(self, parent):
-        super().__init__('别晃啦！本姑娘头好晕( ꩜ ᯅ ꩜;)', parent)
+        super().__init__(parent)
         self.setTextFormat(Qt.TextFormat.PlainText)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setStyleSheet('color: #ff91c1; font-family: "Sans Serif Collection", "Microsoft YaHei UI"; '
-                           'font-size: 18px; font-weight: 600;')
+        self.setStyleSheet('color: #ff91c1; font-family: "Sans Serif Collection", "Microsoft YaHei UI", '
+                           '"PingFang SC", "Noto Sans CJK SC", sans-serif; font-size: 18px; font-weight: 600;')
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self._progress = 0.0
         self._text_path = QPainterPath()
+        self._outline_path = QPainterPath()
+        self._shadow_path = QPainterPath()
         self._motion = QEasingCurve(QEasingCurve.Type.OutCubic)
         self.animation = QVariantAnimation(self)
         self.animation.setStartValue(0.0)
@@ -45,16 +47,35 @@ class FloatingLogoHint(QLabel):
         self.animation.valueChanged.connect(self._advance)
         self.animation.finished.connect(self.hide)
         parent.installEventFilter(self)
+        self.retranslateUi()
         self.hide()
+
+    def retranslateUi(self):
+        text = tr('别晃啦！本姑娘头好晕( ꩜ ᯅ ꩜;)')
+        if text != self.text():
+            self.setText(text)
+            if self.animation.state() != self.animation.State.Stopped:
+                self._prepareText()
+                self.update()  # preserve both progress and the second click deadline
+
+    def _prepareText(self):
+        self.ensurePolished()
+        path = QPainterPath()
+        path.addText(0, 0, self.font(), self.text())
+        bounds = path.boundingRect()
+        self._text_path = path.translated(-bounds.left(), -bounds.top())
+        # Cache the rounded edge and low-offset shadow once, not on animation frames.
+        stroke = QPainterPathStroker()
+        stroke.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+        stroke.setWidth(2.3)
+        self._outline_path = stroke.createStroke(self._text_path)
+        stroke.setWidth(4.0)
+        self._shadow_path = stroke.createStroke(self._text_path).united(self._text_path).translated(0, 2.0)
 
     def play(self):
         self.animation.stop()
-        self.ensurePolished()
-        # Cache the glyph outlines, then translate at subpixel precision each frame.
-        self._text_path = QPainterPath()
-        self._text_path.addText(0, 0, self.font(), self.text())
-        bounds = self._text_path.boundingRect()
-        self._text_path.translate(-bounds.left(), -bounds.top())
+        self.retranslateUi()
+        self._prepareText()
         self.setGeometry(self.parentWidget().rect())
         self._advance(0.0)
         self.show()
@@ -85,6 +106,8 @@ class FloatingLogoHint(QLabel):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setOpacity(1.0 - self._progress)
         painter.translate(self.textRect().topLeft())
+        painter.fillPath(self._shadow_path, QColor(30, 10, 25, 115))
+        painter.fillPath(self._outline_path, QColor('#622640'))
         painter.fillPath(self._text_path, QColor('#ff91c1'))
 
     def eventFilter(self, watched, event):
@@ -97,8 +120,6 @@ class BannerWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self._evernight_active = False
-        with Image.open(EVERNIGHT_BANNER) as image:
-            self._evernight_banner_image = image.convert('RGB')
         self.menu = RoundMenu(parent=self)
         self.menu.addAction(QAction(tr("更换背景图片"), self, triggered=lambda: on_change_banner_image()))
 
@@ -203,7 +224,7 @@ class BannerWidget(QWidget):
         else:
             self.imageTransition.finish()
         self._evernight_active = active
-        self.banner_image = self._evernight_banner_image if active else self._regular_banner_image
+        self.banner_image = evernight_artwork().banner if active else self._regular_banner_image
         self.retranslateTitle()
         self.banner = None
         self.path = None
@@ -250,8 +271,6 @@ class HomeInterface(ScrollArea):
 
         self.__initWidget()
         self.loadSamples()
-        # Prepare the reveal before the animation starts, not at its midpoint.
-        portrait_artwork(EVERNIGHT_AVATAR, True)
 
     def __initWidget(self):
         self.view.setObjectName('view')
@@ -283,6 +302,7 @@ class HomeInterface(ScrollArea):
     def retranslateUi(self):
         StyleSheet.HOME_INTERFACE.apply(self)
         self.banner.retranslateTitle()
+        self.banner.logoHint.retranslateUi()
         actions = self.banner.menu.actions()
         actions[0].setText(tr('更换背景图片'))
         if len(actions) > 1:
@@ -308,8 +328,9 @@ class HomeInterface(ScrollArea):
                     transition.play(widget.iconWidget.grab().toImage())
                 elif not self._evernight_active:
                     transition.finish()
-            source = EVERNIGHT_AVATAR if self._evernight_active and full_run else original_icon
-            widget.iconWidget.setPixmap(portrait_artwork(source, isDarkTheme()))
+            pixmap = (evernight_artwork().avatar if self._evernight_active and full_run
+                      else portrait_artwork(original_icon, isDarkTheme()))
+            widget.iconWidget.setPixmap(pixmap)
 
     def _build_card_action(self, card_data):
         """根据卡片配置数据构建动作"""

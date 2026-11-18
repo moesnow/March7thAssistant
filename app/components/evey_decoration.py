@@ -2,8 +2,10 @@
 import sys
 
 from PySide6.QtCore import QEvent, QRectF, Qt
-from PySide6.QtGui import QPainter, QPixmap
+from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import QSizePolicy, QWidget
+
+from ..common.evernight_artwork import evernight_artwork
 
 
 class EveyDecoration(QWidget):
@@ -13,11 +15,14 @@ class EveyDecoration(QWidget):
         self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Expanding)
         self._active = False
         self._opacity = opacity
-        self._sprite = QPixmap(f'./assets/app/images/evernight/{image_name}')
+        self._image_name = image_name
+        self._sprite = None
         self.hide()
 
     def setActive(self, active):
         self._active = active
+        if active and self._sprite is None:
+            self._sprite = evernight_artwork().decorations[self._image_name]
         self.setVisible(active)
         self.update()
 

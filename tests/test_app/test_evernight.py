@@ -747,3 +747,193 @@ def test_shell_group_rebuilds_for_each_icon_and_restores_original_identity(qtbot
     set_application_icon(owner, application_icon_path(False), 'March7th Assistant')
     owner.destroy()  # Surface teardown must release shell properties first.
     assert owner._taskbar_properties.store is None
+
+
+def test_locked_session_does_not_decode_evernight_artwork(qtbot, monkeypatch, request):
+    from PIL import Image
+    from app.common import evernight_artwork as artwork, theme_assets
+    from app.components import evey_animation
+
+    reads = []
+    def watched(reader):
+        def read(path, *args, **kwargs):
+            if isinstance(path, (str, Path)):
+                normalized = Path(path).as_posix().lower()
+                if '/evernight/' in normalized or normalized.endswith('/dark/evernight.png'):
+                    reads.append(Path(path).name)
+            return reader(path, *args, **kwargs)
+        return read
+
+    artwork.evernight_artwork.cache_clear()
+    try:
+        monkeypatch.setattr(Image, 'open', watched(Image.open))
+        monkeypatch.setattr(artwork, 'QPixmap', watched(artwork.QPixmap))
+        monkeypatch.setattr(artwork, 'QIcon', watched(artwork.QIcon))
+        monkeypatch.setattr(theme_assets, 'QPixmap', watched(theme_assets.QPixmap))
+        monkeypatch.setattr(evey_animation, 'QPixmap', watched(evey_animation.QPixmap))
+        window = request.getfixturevalue('window')  # install readers before constructing a real main window
+        combo = window.settingInterface.themeCard.comboBox
+        combo.setCurrentIndex(combo.findData('dark'))
+        click_logo(window, qtbot, 5)
+        assert window.homeInterface.banner.logoHint.isVisible()
+        click_logo(window, qtbot, 4)
+        assert reads == []
+        assert artwork.evernight_artwork.cache_info().currsize == 0
+        click_logo(window, qtbot)
+        expected = sorted(('banner.png', 'Evernight.png', 'icon.ico', 'evey-floating.png',
+                           'evey-decoration-folded.png', 'evey-decoration-upright.png', 'evey-decoration-wide.png'))
+        assert sorted(reads) == expected
+        intro = window._evey_animation
+        intro.timeline.setCurrentTime(intro.DURATION_MS // 2)
+        combo.setCurrentIndex(combo.findData('dark'))
+        combo.setCurrentIndex(combo.findData('evernight'))
+        assert sorted(reads) == expected
+    finally:
+        artwork.evernight_artwork.cache_clear()
+
+
+def test_unreadable_optional_banner_leaves_ordinary_app_usable(qtbot, monkeypatch, request, tmp_path):
+    from app.common import evernight_artwork as artwork
+
+    broken = tmp_path / 'broken.png'
+    broken.write_bytes(b'not an image')
+    artwork.evernight_artwork.cache_clear()
+    monkeypatch.setattr(artwork, 'EVERNIGHT_BANNER', str(broken))
+    window = request.getfixturevalue('window')
+    combo = window.settingInterface.themeCard.comboBox
+    old = (window.windowTitle(), combo.currentData(), isDarkTheme(), window.homeInterface.banner.banner_image)
+    cfg.set_value.reset_mock()
+    click_logo(window, qtbot, 10)
+    assert not window._evernight.unlocked and not window._evernight.selected
+    assert window._evey_animation is None and combo.findData('evernight') < 0
+    assert (window.windowTitle(), combo.currentData(), isDarkTheme(), window.homeInterface.banner.banner_image) == old
+    cfg.set_value.assert_not_called()
+    assert artwork.evernight_artwork.cache_info().currsize == 0
+    target = 'light' if old[1] == 'dark' else 'dark'
+    combo.setCurrentIndex(combo.findData(target))
+    cfg.set_value.assert_called_once_with('ui_theme', target)
+
+
+@pytest.mark.parametrize('missing', ['dark/Evernight.png', 'evernight/evey-decoration-folded.png', 'icon.ico'])
+def test_incomplete_optional_asset_set_is_not_cached(qtbot, monkeypatch, tmp_path, missing):
+    from PIL import Image
+    from app.common import evernight_artwork as artwork
+
+    monkeypatch.chdir(tmp_path)
+    root = Path('assets/app/images')
+    (root / 'dark').mkdir(parents=True)
+    (root / 'evernight').mkdir()
+    img = Image.new('RGB', (32, 32), '#ff91c1')
+    for name in ('dark/Evernight.png', 'evernight/banner.png', 'evernight/evey-decoration-folded.png',
+                 'evernight/evey-decoration-upright.png', 'evernight/evey-decoration-wide.png'):
+        img.save(root / name)
+    monkeypatch.setattr(artwork, 'application_icon_path', lambda active: str(root / 'icon.ico'))
+    img.save(root / 'icon.ico', sizes=[(32, 32)])
+    (root / missing).unlink()
+    artwork.evernight_artwork.cache_clear()
+    with pytest.raises(OSError, match=Path(missing).name):
+        artwork.evernight_artwork()
+    assert artwork.evernight_artwork.cache_info().currsize == 0
+
+
+def test_missing_intro_still_completes_a_valid_theme(qtbot, monkeypatch, window, tmp_path):
+    from app.components import evey_animation
+
+    monkeypatch.setattr(evey_animation, 'EVEY_ANIMATION', str(tmp_path / 'missing-intro.png'))
+    click_logo(window, qtbot, 10)
+    assert window._evey_animation is None and window._evernight_active
+    assert window.windowTitle() == 'Evernight Assistant'
+
+
+def test_logo_hint_all_languages_keep_motion_and_update_cached_glyphs(qtbot):
+    from PySide6.QtGui import QPainterPath
+    from app.home_interface import FloatingLogoHint
+    from module.localization import get_current_language, load_language
+
+    translations = {
+        'zh_CN': '别晃啦！本姑娘头好晕( ꩜ ᯅ ꩜;)',
+        'zh_TW': '別晃啦！本姑娘頭好暈( ꩜ ᯅ ꩜;)',
+        'en_US': "Stop shaking me! I'm getting dizzy! ( ꩜ ᯅ ꩜;)",
+        'ja_JP': 'もう揺らさないでよ！目が回っちゃう～ ( ꩜ ᯅ ꩜;)',
+        'ko_KR': '그만 흔들어! 나 어지럽단 말이야! ( ꩜ ᯅ ꩜;)',
+    }
+    original = get_current_language()
+    parent = QWidget()
+    parent.resize(900, 320)
+    qtbot.addWidget(parent)
+    parent.show()
+    hint = FloatingLogoHint(parent)
+    try:
+        hint.play()
+        hint.animation.pause()
+        hint.animation.setCurrentTime(1150)
+        for language, expected in translations.items():
+            load_language(language)
+            hint.retranslateUi()
+            assert hint.text() == expected
+            assert hint.animation.currentTime() == 1150 and hint.isVisible()
+            assert hint.textRect().width() < parent.width()
+            # A CI runner without CJK fonts may render different Han characters as the same box.
+            reference = QPainterPath()
+            reference.addText(0, 0, hint.font(), expected)
+            bounds = reference.boundingRect()
+            assert hint._text_path == reference.translated(-bounds.left(), -bounds.top())
+    finally:
+        load_language(original)
+
+
+def test_mid_warning_application_language_switch_retains_click_deadline(window, qtbot):
+    click_logo(window, qtbot, 5)
+    hint = window.homeInterface.banner.logoHint
+    hint.animation.pause()
+    hint.animation.setCurrentTime(1000)
+    deadline = window._evernight._warning_until
+    switch_language(qtbot, window, 'en_US')
+    assert hint.text().startswith('Stop shaking me!')
+    assert hint.isVisible() and hint.animation.currentTime() == 1000
+    assert window._evernight._warning_until == deadline
+
+
+@pytest.mark.parametrize('background', ['white', 'dark', 'busy'])
+def test_logo_hint_paints_visible_outline_and_shadow_on_different_banners(qtbot, tmp_path, background):
+    from PySide6.QtGui import QColor, QImage, QPainter, QPainterPath
+    from app.home_interface import FloatingLogoHint
+    from module.localization import get_current_language, load_language
+    import numpy as np
+
+    class Surface(QWidget):
+        def paintEvent(self, event):
+            painter = QPainter(self)
+            painter.fillRect(self.rect(), QColor('#ffffff' if background == 'white' else '#191824'))
+            if background == 'busy':
+                for x in range(0, self.width(), 8):
+                    painter.fillRect(x, 0, 4, self.height(), QColor('#ffe5ea' if x % 16 else '#ff91c1'))
+
+    original = get_current_language()
+    parent = Surface()
+    qtbot.addWidget(parent)
+    parent.resize(720, 160)
+    parent.show()
+    try:
+        load_language('en_US')  # known glyph coverage on all CI runners
+        hint = FloatingLogoHint(parent)
+        hint.play()
+        hint.animation.pause()
+        hint.animation.setCurrentTime(0)
+
+        def render():
+            im = parent.grab().toImage().convertToFormat(QImage.Format.Format_RGBA8888)
+            pixels = np.frombuffer(im.constBits(), dtype=np.uint8).reshape(im.height(), im.width(), 4).copy()
+            return im, pixels
+
+        image, full = render()
+        assert image.save(str(tmp_path / f'hint-{background}.png'))
+        # Compare rendered pixels, not just a configured paint color or path.
+        assert ((full[:, :, :3] == [98, 38, 64]).all(axis=2)).sum() > 12
+        assert ((full[:, :, :3] == [255, 145, 193]).all(axis=2)).sum() > 25
+        hint._shadow_path = QPainterPath()
+        _, no_shadow = render()
+        delta = abs(full.astype('int16') - no_shadow.astype('int16')).max(axis=2)
+        assert (delta > 2).sum() > 50
+    finally:
+        load_language(original)

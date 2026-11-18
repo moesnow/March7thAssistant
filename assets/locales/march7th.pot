@@ -7843,6 +7843,10 @@ msgstr ""
 msgid "忆灵「长夜」"
 msgstr ""
 
+#: app/home_interface.py:54
+msgid "别晃啦！本姑娘头好晕( ꩜ ᯅ ꩜;)"
+msgstr ""
+
 #: app/home_interface.py:123
 msgid "长夜月小助手"
 msgstr ""

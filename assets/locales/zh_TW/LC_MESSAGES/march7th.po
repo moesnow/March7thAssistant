@@ -8090,6 +8090,10 @@ msgstr "圖鑑優先"
 msgid "忆灵「长夜」"
 msgstr "憶靈「長夜」"
 
+#: app/home_interface.py:54
+msgid "别晃啦！本姑娘头好晕( ꩜ ᯅ ꩜;)"
+msgstr "別晃啦！本姑娘頭好暈( ꩜ ᯅ ꩜;)"
+
 #: app/home_interface.py:123
 msgid "长夜月小助手"
 msgstr "長夜月小助手"

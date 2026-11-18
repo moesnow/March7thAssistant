@@ -22,6 +22,7 @@ from .setting_interface import SettingInterface
 from .log_interface import LogInterface
 from .common.signal_bus import signalBus
 from .common.evernight import EvernightEasterEgg
+from .common.evernight_artwork import evernight_artwork
 from .common.theme_assets import application_icon_path
 from .common.window_icon import set_application_icon
 from .components.evey_animation import EveyAnimation
@@ -447,6 +448,13 @@ class MainWindow(MSFluentWindow):
         if result != 'unlocked':
             return
         self.homeInterface.banner.logoHint.dismiss()
+        # No optional artwork is decoded at startup, on theme/config reload, or on the first hint.
+        try:
+            evernight_artwork()
+        except OSError as error:
+            self._evernight.unlocked = False  # Do not expose a broken option on later settings rebuilds.
+            log.warning(f'无法加载长夜月彩蛋，保留当前主题：{error}')
+            return
         combo = self.settingInterface.themeCard.comboBox
         combo.addItem(tr('长夜'), userData='evernight')
         combo.setCurrentIndex(combo.findData('evernight'))
@@ -460,7 +468,10 @@ class MainWindow(MSFluentWindow):
         self._evey_animation = animation
         animation.midpointReached.connect(self._on_theme_changed)
         animation.closed.connect(self._on_evey_animation_closed)
-        animation.play()
+        if animation.sprite.isNull():
+            animation.close()  # A missing intro alone need not prevent the prepared theme from working.
+        else:
+            animation.play()
 
     def _on_evey_animation_closed(self):
         self._evey_animation = None

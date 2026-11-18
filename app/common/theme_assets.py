@@ -4,18 +4,15 @@ from pathlib import Path
 
 from PySide6.QtGui import QPixmap
 
-from .evernight import EVERNIGHT_AVATAR
-
 
 _IMAGE_ROOT = Path('./assets/app/images')
 _DARK_PORTRAITS = {
     str((_IMAGE_ROOT / f'{name}.jpg').resolve()): str(_IMAGE_ROOT / 'dark' / f'{name}.png')
     for name in ('March7th', 'JingYuan', 'Yanqing', 'Herta', 'SilverWolf', 'Bronya')
 }
-_DARK_PORTRAITS[str(Path(EVERNIGHT_AVATAR).resolve())] = str(Path(EVERNIGHT_AVATAR).resolve())
 
 
-@lru_cache(maxsize=13)  # Six light/dark pairs and one final Evernight portrait.
+@lru_cache(maxsize=12)  # Six ordinary light/dark pairs.
 def _builtin_portrait_artwork(path):
     return QPixmap(path)
 
