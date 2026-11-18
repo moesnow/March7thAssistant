@@ -682,7 +682,9 @@ def prepare_game_connection(backend, profile):
         screen.reload_profile()
 
 
-def stop(detect_loop=False):
+def stop(detect_loop=False, *, success=True):
+    """执行完成后操作；success 控制非循环运行的退出码和成功等待提示。"""
+    pause_ctl.check_stop()
     log.hr("停止运行", 0)
 
     def play_audio():
@@ -714,9 +716,9 @@ def stop(detect_loop=False):
                 get_game_controller("adb").close()
             _finish_game_run()
         log.hr("完成", 2)
-        if cfg.after_finish not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript"]:
+        if success and cfg.after_finish not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript"]:
             pause_on_success()
-        sys.exit(0)
+        sys.exit(0 if success else 1)
 
 
 def after_finish_is_loop(*, preserve_game=False):
