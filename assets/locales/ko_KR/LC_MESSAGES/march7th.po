@@ -8313,7 +8313,3 @@ msgstr "비밀번호 업데이트"
 #: app/tools/desktop_twin_password_dialog.py:34
 msgid "保存密码"
 msgstr "비밀번호 저장"
-
-#: app/tools/desktop_twin_password_dialog.py:63
-msgid "删除本机保存的分身密码？"
-msgstr "이 PC에 저장한 분신 비밀번호를 삭제할까요?"

@@ -8233,7 +8233,3 @@ msgstr "更新密碼"
 #: app/tools/desktop_twin_password_dialog.py:34
 msgid "保存密码"
 msgstr "儲存密碼"
-
-#: app/tools/desktop_twin_password_dialog.py:63
-msgid "删除本机保存的分身密码？"
-msgstr "要刪除本機儲存的分身密碼嗎？"

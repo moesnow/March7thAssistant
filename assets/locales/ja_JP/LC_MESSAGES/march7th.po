@@ -8314,7 +8314,3 @@ msgstr "パスワードを更新"
 #: app/tools/desktop_twin_password_dialog.py:34
 msgid "保存密码"
 msgstr "パスワードを保存"
-
-#: app/tools/desktop_twin_password_dialog.py:63
-msgid "删除本机保存的分身密码？"
-msgstr "この PC に保存した分身パスワードを削除しますか？"

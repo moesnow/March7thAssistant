@@ -8660,7 +8660,3 @@ msgstr "Update password"
 #: app/tools/desktop_twin_password_dialog.py:34
 msgid "保存密码"
 msgstr "Save password"
-
-#: app/tools/desktop_twin_password_dialog.py:63
-msgid "删除本机保存的分身密码？"
-msgstr "Remove the Desktop Twin password saved on this PC?"

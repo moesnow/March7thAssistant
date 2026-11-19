@@ -312,13 +312,14 @@ class DesktopTwinDialog(QDialog):
         self._status = _StatusLabel(self._footerBar)
         self._docs_button = HyperlinkButton(self._footerBar)
         self._docs_button.setIcon(FIF.HELP)
+        self._credentials_button = PushButton(FIF.FINGERPRINT, "", self._footerBar)
         self._connect_button = PrimaryPushButton(self._footerBar)
         self._assistant_button = PushButton(QIcon("./assets/logo/March7th.ico"), "", self._footerBar)
         self._hide_button = PushButton(FIF.HIDE, "", self._footerBar)
         self._logoff_button = PushButton(FIF.POWER_BUTTON, "", self._footerBar)
         self._logoff_button.setAutoDefault(False)
-        self._bar_buttons = (self._docs_button, self._connect_button, self._assistant_button,
-                             self._hide_button, self._logoff_button)
+        self._bar_buttons = (self._docs_button, self._credentials_button, self._connect_button,
+                             self._assistant_button, self._hide_button, self._logoff_button)
         for button in self._bar_buttons:
             button.installEventFilter(ToolTipFilter(button, 300, ToolTipPosition.TOP))
 
@@ -349,6 +350,7 @@ class DesktopTwinDialog(QDialog):
         self._arranging_bar = False
         self._apply_bar_layout(False)
 
+        self._credentials_button.clicked.connect(self._manage_credentials)
         self._connect_button.clicked.connect(self._toggle_connection)
         self._assistant_button.clicked.connect(self._open_assistant)
         self._hide_button.clicked.connect(self.hide)
@@ -424,10 +426,6 @@ class DesktopTwinDialog(QDialog):
         layout.addLayout(header)
         layout.addSpacing(20)
         layout.addWidget(self._pointsCard)
-        self._credentials_button = PushButton(FIF.FINGERPRINT, "", intro)
-        self._credentials_button.clicked.connect(self._manage_credentials)
-        layout.addSpacing(8)
-        layout.addWidget(self._credentials_button, 0, Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self._errorHolder)
         layout.addStretch(1)
         return intro
@@ -535,6 +533,7 @@ class DesktopTwinDialog(QDialog):
         """在说明页和分身画面之间切换，按内容调整窗口大小并保持窗口中心不动。"""
         center = self.frameGeometry().center() if self.isVisible() else None
         self._intro.setVisible(not visible)
+        self._credentials_button.setVisible(not visible)
         self._screen.setVisible(visible)
         self._rdp.setVisible(visible)
         self._update_bar_layout()

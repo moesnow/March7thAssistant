@@ -132,11 +132,10 @@ def test_password_editor_round_trip(qtbot, editor_parent, monkeypatch, storage):
     assert writer.call_count == 2
 
     box = TwinPasswordDialog(creds.saved_account(), editor_parent)
-    choices = Mock(side_effect=[QMessageBox.StandardButton.No, QMessageBox.StandardButton.Yes])
-    monkeypatch.setattr(QMessageBox, "question", choices)
+    confirm = Mock(return_value=QMessageBox.StandardButton.No)
+    monkeypatch.setattr(QMessageBox, "question", confirm)
     box.forget.click()
-    deleter.assert_not_called()
-    box.forget.click()
+    confirm.assert_not_called()
     deleter.assert_called_once_with(creds.CREDENTIAL_TARGET, creds.win32cred.CRED_TYPE_GENERIC, 0)
     qtbot.waitUntil(lambda: box.result() == box.FORGOTTEN)
 
@@ -189,6 +188,13 @@ def test_intro_actions(qtbot, monkeypatch, storage):
     dialog._credentials_button.click()
     assert observed == [(dialog, storage[1].return_value["UserName"], "")]
     assert dialog._credentials_button.text() == ui.tr("自动登录")
+    index = dialog._footer.indexOf(dialog._credentials_button)
+    assert dialog._footer.indexOf(dialog._docs_button) < index < dialog._footer.indexOf(dialog._connect_button)
+    assert not dialog._credentials_button.isHidden()
+    dialog._set_screen_visible(True)
+    assert dialog._credentials_button.isHidden()
+    dialog._set_screen_visible(False)
+    assert not dialog._credentials_button.isHidden()
     labels = [label.text() for label in dialog._pointLabels]
     assert len(labels) == 5
     assert labels[1] == ui.tr("点击“自动登录”保存Windows密码至本地凭证，后续启动无需输入密码")

@@ -2,7 +2,7 @@
 
 from PySide6.QtCore import QPoint, QPropertyAnimation
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QMessageBox, QVBoxLayout
+from PySide6.QtWidgets import QVBoxLayout
 from qfluentwidgets import (BodyLabel, CaptionLabel, LineEdit, MessageBoxBase, PasswordLineEdit,
                             PushButton, SubtitleLabel, setCustomStyleSheet)
 
@@ -88,10 +88,6 @@ class TwinPasswordDialog(MessageBoxBase):
         return True
 
     def _forget(self):
-        if QMessageBox.question(self, tr("删除已保存的密码"), tr("删除本机保存的分身密码？"),
-                                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                                QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
-            return
         try:
             credentials.forget_credential()
         except RuntimeError as exc:
