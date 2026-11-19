@@ -8170,9 +8170,9 @@ msgstr "已刪除儲存的分身密碼"
 msgid "已保存分身密码"
 msgstr "已儲存分身密碼"
 
-#: app/tools/desktop_twin.py:727
-msgid "点击“自动登录”保存Windows密码至本地凭证，后续启动无需输入密码"
-msgstr "點選「自動登入」將 Windows 密碼儲存至本機認證，之後啟動時無需再輸入密碼"
+#: app/tools/desktop_twin.py:725
+msgid "通过“自动登录”保存Windows密码至本地凭证，后续启动无需输入密码"
+msgstr "透過「自動登入」將 Windows 密碼儲存至本機認證，之後啟動時無需再輸入密碼"
 
 #: app/tools/desktop_twin_credentials.py:24
 msgid "无法读取分身密码，请检查 Windows 凭据服务。"

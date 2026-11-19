@@ -197,7 +197,33 @@ def test_intro_actions(qtbot, monkeypatch, storage):
     assert not dialog._credentials_button.isHidden()
     labels = [label.text() for label in dialog._pointLabels]
     assert len(labels) == 5
-    assert labels[1] == ui.tr("点击“自动登录”保存Windows密码至本地凭证，后续启动无需输入密码")
+    assert labels[1] == ui.tr("通过“自动登录”保存Windows密码至本地凭证，后续启动无需输入密码")
+
+
+@pytest.mark.parametrize("deleted", [False, True], ids=["save", "delete"])
+def test_credential_success_preserves_connection_error(qtbot, monkeypatch, storage, deleted):
+    from app.tools import desktop_twin as ui
+    from app.tools.desktop_twin_password_dialog import TwinPasswordDialog
+
+    monkeypatch.setattr(ui, "connection_reserved", lambda: False)
+    monkeypatch.setattr(ui, "disconnected_child_session", lambda: None)
+    dialog = ui.DesktopTwinDialog(None, Mock())
+    qtbot.addWidget(dialog)
+    dialog._timer.stop()
+    dialog._report("RDP 516", rdp_code=516)
+    troubleshooting_url = dialog._error_docs_button.getUrl()
+    result = TwinPasswordDialog.FORGOTTEN if deleted else ui.QDialog.DialogCode.Accepted
+    monkeypatch.setattr(TwinPasswordDialog, "exec", lambda self: result)
+    notice = Mock()
+    monkeypatch.setattr(ui.InfoBar, "success", notice)
+
+    dialog._credentials_button.click()
+
+    assert not dialog._errorHolder.isHidden()
+    assert dialog._errorBar.content() == "RDP 516"
+    assert dialog._error_docs_button.getUrl() == troubleshooting_url
+    notice.assert_called_once()
+    assert notice.call_args.kwargs["title"] == ui.tr("已删除保存的分身密码" if deleted else "已保存分身密码")
 
 
 def test_failed_update_can_be_corrected_without_deleting(qtbot, editor_parent, monkeypatch, storage):

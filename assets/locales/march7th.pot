@@ -7919,8 +7919,8 @@ msgstr ""
 msgid "已保存分身密码"
 msgstr ""
 
-#: app/tools/desktop_twin.py:727
-msgid "点击“自动登录”保存Windows密码至本地凭证，后续启动无需输入密码"
+#: app/tools/desktop_twin.py:725
+msgid "通过“自动登录”保存Windows密码至本地凭证，后续启动无需输入密码"
 msgstr ""
 
 #: app/tools/desktop_twin_credentials.py:24

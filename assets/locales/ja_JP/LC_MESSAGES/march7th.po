@@ -8251,9 +8251,9 @@ msgstr "保存した分身パスワードを削除しました"
 msgid "已保存分身密码"
 msgstr "分身パスワードを保存しました"
 
-#: app/tools/desktop_twin.py:727
-msgid "点击“自动登录”保存Windows密码至本地凭证，后续启动无需输入密码"
-msgstr "「自動ログイン」をクリックして Windows パスワードをこの PC の資格情報に保存すると、次回から入力せずに起動できます"
+#: app/tools/desktop_twin.py:725
+msgid "通过“自动登录”保存Windows密码至本地凭证，后续启动无需输入密码"
+msgstr "「自動ログイン」で Windows パスワードをこの PC の資格情報に保存すると、次回から入力せずに起動できます"
 
 #: app/tools/desktop_twin_credentials.py:24
 msgid "无法读取分身密码，请检查 Windows 凭据服务。"

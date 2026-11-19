@@ -442,7 +442,6 @@ class DesktopTwinDialog(QDialog):
         try:
             result = box.exec()
             if result in (QDialog.DialogCode.Accepted, box.FORGOTTEN):
-                self._dismiss_error()
                 message = tr("已删除保存的分身密码") if result == box.FORGOTTEN else tr("已保存分身密码")
                 InfoBar.success(title=message, content="", duration=2500, parent=self)
         finally:
@@ -723,7 +722,7 @@ class DesktopTwinDialog(QDialog):
         self._descLabel.setText(tr("在独立的 Windows 桌面中运行游戏和小助手，执行任务时不占用你的鼠标和键盘。"))
         points = (
             tr("分身以当前 Windows 账户登录，首次使用需要允许系统开启本地子会话"),
-            tr("点击“自动登录”保存Windows密码至本地凭证，后续启动无需输入密码"),
+            tr("通过“自动登录”保存Windows密码至本地凭证，后续启动无需输入密码"),
             tr("游戏同一时间只能在一个桌面运行，连接前请先关闭主桌面中的游戏"),
             tr("运行期间，任务、定时和设置交给分身内的小助手，主界面暂停操作"),
             tr("注销分身会关闭其中的游戏和所有应用"),
