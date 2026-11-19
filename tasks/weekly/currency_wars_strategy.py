@@ -40,8 +40,15 @@ class Lineup:
     halos: tuple[str, ...] = ()
     # 最早开始买经验的节点（位面, 节点）。
     level_from: tuple[int, int] = (1, 1)
-    # 第一位面是否就为核心追三星。
-    early_three_star: bool = True
+    # 人口等级到这里才为三星目标继续收同名卡。None 时按位面判断。
+    three_star_level: int | None = None
+    # 停搜条件：核心二星在场、settle_with 的角色都在场、combo 里至少 combo_goal 人在场。
+    # combo_goal 为 0 时不按停搜判断，刷新照旧按星级目标找牌。
+    settle_with: tuple[str, ...] = ()
+    combo: frozenset[str] = frozenset()
+    combo_goal: int = 0
+    # 关键辅助：还没有时见到就买，满编也不因候补多而暂缓；停搜后只为找它们刷新。
+    key_supports: tuple[str, ...] = ()
     # 星徽秘典里先于通用顺序挑选的星徽。
     emblems: tuple[str, ...] = ()
     # 梦境交织共舞优先指定的角色。
@@ -57,16 +64,20 @@ FRONT_SUPPORT = ("星期日", "花火", "知更鸟")
 REAR_SUPPORT = (*COMBO_SUPPORT, "缇宝", "符玄", "藿藿", "镜流", "砂金", "千冶·刃")
 # 按《货币战争 S2 梦境那刻夏攻略》：那刻夏、刻律德菈、星期日、白露、花火五人口过渡，九人口为前台那刻夏、花火、
 # 知更鸟、昔涟，后台刻律德菈、寒鸦、星期日、风堇、千冶·刃，更多人口再补缇宝、不死途。白露在换上寒鸦、风堇时退场，
-# 部署时仍保持四连击。二星那刻夏就够用，第一位面不为三星停留；1-4 前不买经验；主角光环遇到「逐日」就选。
-# 星级目标也决定刷新时要找哪些角色，沿用高难版的组合（攻略未提的符玄去掉）。
+# 部署时仍保持四连击。1-4 前不买经验；主角光环遇到「逐日」就选。
+# 开局只为二星那刻夏、花火和四连击刷新；三者到位后停搜升级，只在新开人口位时找还没有的关键辅助。
+# 核心迟迟没来时少刷：一张都没有时每节点最多刷两次；第二位面起一星那刻夏在场也算停搜，同名卡见到照买。
+# 追三星排在上人口和补关键辅助之后：九级前那刻夏和刻律德菈只做到二星，九级起也只在离三星差两张以内时为它刷新，
+# 同名卡见到照买；白露、缇宝不设追星目标。
 ANAXA_FRONT = (CORE, "花火", "知更鸟", "昔涟", "星期日")
 ANAXA_BACK = (BACK_LEAD, "寒鸦", "星期日", "风堇", "千冶·刃", "白露", "缇宝", "不死途")
 LINEUPS = {
     HIGH_ANAXA: Lineup(CORE, ANAXA_FRONT, ANAXA_BACK,
-                      ((CORE, 3), ("白露", 2), (BACK_LEAD, 3), ("星期日", 2), ("寒鸦", 2), ("花火", 2), ("缇宝", 2)),
+                      ((CORE, 3), (BACK_LEAD, 3), ("星期日", 2), ("寒鸦", 2), ("花火", 2)),
                       frozenset(("花火", "知更鸟", "昔涟", "星期日")),
-                      halos=("逐日",), level_from=(1, 4), early_three_star=False, emblems=("梦境交织星徽",),
-                      dancers=(CORE, "花火")),
+                      halos=("逐日",), level_from=(1, 4), three_star_level=9, emblems=("梦境交织星徽",),
+                      dancers=(CORE, "花火"), settle_with=("花火",), combo=frozenset((CORE, *COMBO_SUPPORT)),
+                      combo_goal=4, key_supports=("昔涟", "知更鸟", "寒鸦", "风堇", "千冶·刃")),
     HIGH_FIREFLY: Lineup("流萤", ("流萤", *FRONT_SUPPORT, "雪衣", "忘归人"), (*REAR_SUPPORT, "大丽花"),
                         (("流萤", 3), ("寒鸦", 2), ("白露", 2), ("刻律德菈", 2), ("星期日", 2), ("花火", 2)),
                         frozenset(FRONT_SUPPORT)),
@@ -77,8 +88,10 @@ LINEUPS = {
                        frozenset(("星期日", "椒丘", "雪衣", "花火")),
                        frozenset(("希露瓦", "海瑟音", "黑天鹅", "桑博", "椒丘", "卡芙卡"))),
 }
-# 那刻夏穿满三件前只给攻略里的配装优先角色：那刻夏的火力风暴潮、昔涟的永动机、刻律德菈的加速装备。之后其余上阵角色也配。
+# 配装先给攻略里的优先角色：那刻夏的火力风暴潮、昔涟的永动机、刻律德菈的加速装备。那刻夏穿满三件后，其余上阵角色
+# 留到最终节点或小队生命值低于 EQUIPMENT_SPREAD_HP 时再配：物品栏每变一次都要重开全队推荐页，多数一无所获。
 EQUIPMENT_FOCUS = {HIGH_ANAXA: frozenset((CORE, "昔涟", BACK_LEAD))}
+EQUIPMENT_SPREAD_HP = 90
 STRATEGY_NAMES = {
     DEFAULT_STRATEGY: "默认",
     HIGH_ANAXA: "连击那刻夏",
@@ -233,6 +246,12 @@ def _prefers_back(board: Board, name: str) -> bool:
 def _can_deploy_to(board: Board, unit: Unit, zone: Zone) -> bool:
     # 策略偏好只用于自动布阵。物理站位仍由游戏标记和 can_move 复核。
     return _can_use_zone(unit, zone, board.core) and (zone != "front" or not _prefers_back(board, unit.name))
+
+
+def _guards_front(board: Board) -> bool:
+    """二星核心在前台，且寒鸦、星期日或刻律德菈在场时，前台不放与核心争位的输出。"""
+    field = {slot.unit.name for slot in board.field if slot.unit}
+    return board.lineup is not None and board.core_ready and bool(field & {"寒鸦", "星期日", BACK_LEAD})
 
 
 def _bench_candidates(board: Board) -> tuple[Slot, ...]:
@@ -465,9 +484,7 @@ def deployment(board: Board, *, overflow=False) -> tuple[Move, ...]:
     field_names = {slot.unit.name for slot in board.field if slot.unit}
     combo_members = {*COMBO_SUPPORT, "镜流", "阿格莱雅", CORE}
     combo_count = len(field_names & combo_members)
-    prevent_competition = board.lineup is not None and not overflow and board.core_ready and bool(
-        field_names & {"寒鸦", "星期日", BACK_LEAD}
-    )
+    prevent_competition = not overflow and _guards_front(board)
 
     def is_competitor(unit):
         return (prevent_competition and unit.is_output and unit.name != board.core
@@ -631,8 +648,11 @@ def experience_purchases(experience: tuple[int, int] | None) -> int:
 def _can_expand(board: Board, price: int | None) -> bool:
     if board.lineup and _progress(board)[:2] < board.lineup.level_from:
         return False
-    return (price == 4 and board.level is not None and board.level < 10
-            and board.front_count > 0 and board.used == board.capacity and _open_field_count(board) > 0)
+    if not (price == 4 and board.level is not None and board.level < 10
+            and board.front_count > 0 and board.used == board.capacity):
+        return False
+    # 攻略停搜后直接升人口，新开的位置再找关键辅助补上；其余情况要有能上场的候补才升。
+    return _open_field_count(board) > 0 or search_settled(board)
 
 
 def _experience_reserve(board: Board) -> int:
@@ -684,13 +704,22 @@ def merge_purchase(board: Board, offer: Offer) -> bool:
 
 
 def has_merge_pair(board: Board) -> bool:
-    return board.lineup is not None and any(_merge_ready(_owned(board, name)) for name, _ in board.lineup.stars)
+    lineup = board.lineup
+    if lineup is None:
+        return False
+    # 按攻略停搜的阵容对没设星级目标的阵容角色也补能立即合成的第三张。
+    names = lineup.preferences if lineup.combo_goal else tuple(name for name, _ in lineup.stars)
+    return any(_merge_ready(_owned(board, name)) for name in names)
 
 
 def _high_target(board: Board, name: str, stars: int, copies: tuple[Slot, ...]) -> int:
     plane, node, _ = _progress(board)
-    early = board.lineup is None or board.lineup.early_three_star
-    if stars >= 3 and (plane > 1 or early and name == board.core and (node >= 5 or _merge_ready(copies))):
+    lineup = board.lineup
+    urgent = board.hp is not None and board.hp <= 55
+    if stars >= 3 and lineup is not None and lineup.three_star_level is not None and not urgent:
+        # 追三星排在上人口之后：人口等级到了才收第三星的同名卡。小队扛不住时按位面照常补强。
+        return 3 if (board.level or 0) >= lineup.three_star_level else 2
+    if stars >= 3 and (plane > 1 or name == board.core and (node >= 5 or _merge_ready(copies))):
         return 3
     return min(stars, 2)
 
@@ -717,7 +746,7 @@ def _quality_pressure(board: Board) -> int:
     field = {slot.unit.name: slot.unit for slot in board.field if slot.unit}
     plane, node, _ = _progress(board)
     core = field.get(board.core)
-    if (plane >= 2 or node >= 6) and core and (core.stars or 0) < 3:
+    if (plane >= 2 or node >= 6) and core and (core.stars or 0) < 3 and _high_target(board, board.core, 3, ()) >= 3:
         copies = _owned(board, board.core)
         if (board.hp is not None and board.hp <= 65) or any(slot.unit.stars == 2 and slot.zone == "bench"
                                                            for slot in copies):
@@ -794,7 +823,20 @@ def _high_purchase(board: Board, offers: tuple[Offer, ...], experience_price: in
         if offer.stars > 1 and offer.stars > best_star and can_deploy and (name == board.core or preferred):
             value = 139 if name == board.core else 105
         elif copies:
-            target = targets.get(name, 2 if name in field and (preferred or name in board.sustain) else 1)
+            if name in targets:
+                target = targets[name]
+            elif not preferred:
+                # 阵容外的卡会立即出售，不为它们买同名卡。
+                skip(offer, "阵容外角色不买同名卡")
+                continue
+            elif lineup.combo_goal:
+                # 按攻略停搜的阵容不为没设星级目标的角色囤同名卡，只补能立即合成的第三张。
+                if not merging:
+                    skip(offer, "未设追星目标，只在能立即合成时补买")
+                    continue
+                target = 2
+            else:
+                target = 2 if name in field else 1
             if reason := _copy_block_reason(board, name, target, copies):
                 skip(offer, reason)
                 continue
@@ -829,7 +871,8 @@ def _high_purchase(board: Board, offers: tuple[Offer, ...], experience_price: in
             elif name in board.sustain and sustain <= int(urgent):
                 value = 97
             elif preferred:
-                if holds >= 5 and board.used == board.capacity and name not in targets:
+                key = name in lineup.key_supports
+                if holds >= 5 and board.used == board.capacity and name not in targets and not key:
                     skip(offer, "已满编且候补较多，暂缓未设追星目标的角色")
                     continue
                 if offer.cost >= 4 and not board.core_ready and board.level is not None and board.level < 5:
@@ -840,9 +883,15 @@ def _high_purchase(board: Board, offers: tuple[Offer, ...], experience_price: in
                     value += 19
                 if name in COMBO_SUPPORT and len(field & set(COMBO_SUPPORT)) < 4:
                     value += 12
+                if key and search_settled(board):
+                    # 攻略九人口的关键辅助：停搜后见到就买，换下白露、缇宝等过渡位。仍为升人口留钱。
+                    value = max(value, 88)
             elif board.used + _open_field_count(board) < board.capacity and offer.cost <= 3:
-                # 优先用可上场的过渡位补人数，避免反复占用已满的一侧。
+                # 优先用可上场的过渡位补人数，避免反复占用已满的一侧。前台由核心把守时部署不放阵容外的输出，
+                # 商店卡看不出是不是输出，只按后台空位补，免得买下就卖。
+                guarded = _guards_front(board) and name not in lineup.compatible_front and name not in board.sustain
                 if not any(not slot.occupied and not slot.blocked and _can_deploy_to(board, unit, slot.zone)
+                           and not (guarded and slot.zone == "front")
                            for slot in board.slots if slot.zone != "bench"):
                     skip(offer, "过渡角色没有可部署的空位")
                     continue
@@ -865,16 +914,60 @@ def _spare_to_sell(board: Board) -> bool:
     return any(slot.unit.equipment == 0 for slot in disposable_bench(board))
 
 
+def search_settled(board: Board) -> bool:
+    """攻略「那刻夏二星、花火、四连击都到位且能过战斗，就停搜升级」。核心迟迟升不了二星时，第二位面起一星在场也算；
+    小队血量吃紧时不算到位。"""
+    lineup = board.lineup
+    if lineup is None or not lineup.combo_goal:
+        return False
+    core_on_front = any(slot.zone == "front" and slot.unit and slot.unit.name == board.core for slot in board.field)
+    if not (board.core_ready or core_on_front and _progress(board)[0] >= 2):
+        return False
+    if board.hp is not None and board.hp <= 55:
+        return False
+    field = {slot.unit.name for slot in board.field if slot.unit}
+    return set(lineup.settle_with) <= field and len(field & lineup.combo) >= lineup.combo_goal
+
+
+def _copies_short(board: Board, name: str, stars: int) -> int:
+    """离目标星级还差几张一星卡：二星要三张，三星要九张。"""
+    owned = sum(3 ** ((slot.unit.stars or 1) - 1) for slot in _owned(board, name))
+    return max(0, 3 ** (stars - 1) - owned)
+
+
+def _search_targets(board: Board) -> tuple[tuple[str, int], ...]:
+    """刷新商店要找的角色和目标星级。"""
+    lineup = board.lineup
+    if not lineup.combo_goal or board.hp is not None and board.hp <= 55:
+        return lineup.stars
+    if not search_settled(board):
+        # 开局只搜二星核心、花火和四连击。
+        field = {slot.unit.name for slot in board.field if slot.unit}
+        wanted = [(lineup.core, 2), *((name, 1) for name in lineup.settle_with)]
+        if len(field & lineup.combo) < lineup.combo_goal:
+            wanted.extend((name, 1) for name in lineup.preferences if name in lineup.combo and name != lineup.core)
+        return tuple(wanted)
+    # 停搜升级：新开了人口位才为还没有的关键辅助刷新；人口到三星等级后再按星级目标追星。
+    owned = {slot.unit.name for slot in board.slots if slot.occupied and not slot.blocked and slot.unit}
+    wanted = []
+    if board.used < board.capacity:
+        wanted.extend((name, 1) for name in lineup.key_supports if name not in owned)
+    if lineup.three_star_level is not None and (board.level or 0) >= lineup.three_star_level:
+        # 三星要九张一星卡，后期商店很少再出那刻夏、刻律德菈这类一费卡：差两张以内才为三星刷新，否则只补到二星。
+        wanted.extend((name, stars if stars < 3 or _copies_short(board, name, stars) <= 2 else 2)
+                      for name, stars in lineup.stars)
+    return tuple(wanted)
+
+
 def _high_refresh(board: Board, price: int, refreshes: int, experience_price: int | None) -> bool:
     if board.gold is None or price < 0 or not board.has_bench_space:
         return False
     plane, node, final = _progress(board)
     urgent = board.hp is not None and board.hp <= 55
     pressure = _quality_pressure(board)
-    targets = board.lineup.stars
     open_bench = len(board.empty_bench)
     needed = []
-    for name, stars in targets:
+    for name, stars in _search_targets(board):
         copies = _owned(board, name)
         can_buy = (open_bench >= 2 or _merge_ready(copies) or not copies and board.used < board.capacity
                    or name == board.core and not board.core_upgraded and _spare_to_sell(board))
@@ -893,6 +986,9 @@ def _high_refresh(board: Board, price: int, refreshes: int, experience_price: in
         limit = 8
     elif urgent or core_missing_quality and node >= 5:
         limit = 6
+    if board.lineup.combo_goal and not urgent and not _owned(board, board.core):
+        # 一张核心都没有时搜牌命中率低，每节点最多刷两次，省下的钱先升人口。
+        limit = min(limit, 2)
     if refreshes >= limit:
         return False
     if price == 0:

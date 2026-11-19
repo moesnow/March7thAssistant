@@ -230,6 +230,14 @@ class ShopCatalog:
 
 
 @dataclass(frozen=True)
+class PurchasedCard:
+    """刚从商店买下、还没在棋盘上认过的卡。它落在买前空着的备战格里。"""
+    stage: str
+    name: str
+    empty_bench: frozenset[int]
+
+
+@dataclass(frozen=True)
 class HaloSelection:
     stage: str
     cards: tuple[tuple[strategy.Slot, np.ndarray], ...]
@@ -270,6 +278,9 @@ class CurrencyWars:
         # 最近一次开始备战前移开指针的节点。
         self.pointer_parked_stage = None
         self.shop_catalog = None
+        # 刚买下的卡，以及本局读过详情的角色是否算输出。下次读盘只多出这一张时按商店的姓名记下，不再打开详情。
+        self.purchased_card = None
+        self.unit_outputs: dict[str, bool] = {}
         self.halo_candidate = None
         self.halo_identity_retries: dict[str, int] = {}
         self.tea_menu_fallback = None
@@ -1283,11 +1294,23 @@ class CurrencyWars:
             del self.moved_identities[key]
             log.debug(f"{frame.stage}{slot.zone}第 {slot.index + 1} 格刚挪入的{entry.name}卡面已稳定，沿用姓名并更新卡面")
 
+    def _purchased_slot(self, frame, slots):
+        """刚买下的卡落在买前空着的备战格。只多出这一张、且本局读过这名角色的详情时，沿用商店里的姓名。"""
+        card, self.purchased_card = self.purchased_card, None
+        if card is None or card.stage != frame.stage or (output := self.unit_outputs.get(card.name)) is None:
+            return None
+        fresh = [slot for slot in slots if slot.zone == "bench" and slot.occupied and not slot.blocked
+                 and slot.index in card.empty_bench]
+        if len(fresh) != 1:
+            return None
+        return ("bench", fresh[0].index), card.name, output
+
     def _read_board(self, frame, *, front_only=False, bench_only=False):
         frame, slots = self._board_layout(frame, bench_only=bench_only)
         if not slots:
             return frame, None
         frame, slots = self._settle_identities(frame, slots, front_only=front_only, bench_only=bench_only)
+        bought = None if front_only else self._purchased_slot(frame, slots)
         occupied, capacity = frame.capacity
         board_page = frame.page
         scanned = []
@@ -1308,6 +1331,11 @@ class CurrencyWars:
             output = False
             if previous is not None:
                 name, output = previous[1], previous[2]
+            elif bought is not None and bought[0] == key and (front or back):
+                # 站位和认过的卡一样取卡面标记。
+                name, output = bought[1], bought[2]
+                self.slot_cache[key] = SlotIdentity(portrait, name, output, mark.copy())
+                log.debug(f"{frame.stage}备战席第 {slot.index + 1} 格是刚买下的{name}，沿用商店里的姓名，不再打开详情")
             elif front or back:
                 try:
                     detail = self._open_detail(frame, slot)
@@ -1348,6 +1376,7 @@ class CurrencyWars:
                     front, back = "前" in role.text, "后" in role.text
                 if name:
                     output = detail.employee_output(allow_dual=True) if self.lineup else detail.employee_output()
+                    self.unit_outputs[name] = output
                 frame = self._close_detail(detail)
                 if frame.page != board_page:
                     return frame, None
@@ -2049,6 +2078,9 @@ class CurrencyWars:
                     log.info(f"已购买{stars}{offer.name}，金币 {before.gold} → {balance}")
                     # 买走的一栏变空，其余商品不变。下次是否还要打开商店由剩余商品复算。
                     self._remember_catalog(before, board.stage, offers, refreshes, sold=offer)
+                    if not merge_pair and not self.default_strategy:
+                        self.purchased_card = PurchasedCard(board.stage, offer.name,
+                                                            frozenset(slot.index for slot in board.empty_bench))
                 if confirmed and merge_pair and frame.page == Page.BOARD:
                     frame = self._verify_merge(board, offer.name)
                 return frame, refreshes, confirmed
@@ -2262,15 +2294,23 @@ class CurrencyWars:
         return frame
 
     def _equipment_waiting(self, frame, board, slot):
-        """那刻夏策略先给核心和后台主力配装。核心穿满三件后，其余上阵角色也照常配装。"""
+        """那刻夏策略先给核心和后台主力配装。核心穿满三件后，其余上阵角色留到最终节点或小队生命值偏低时再配。"""
         if self.equipment_focus is None or slot.unit.name in self.equipment_focus:
             return None
         core = next((s for s in board.field if s.unit and s.unit.name == board.core), None)
-        if core is not None and frame.card_equipment(core) == 3:
+        if core is None or frame.card_equipment(core) != 3:
+            return f"{board.core}未配满"
+        threshold = strategy.EQUIPMENT_SPREAD_HP
+        if board.stage == board.final_node or board.hp is not None and board.hp < threshold:
             return None
-        return f"{board.core}未配满"
+        return f"留到最终节点或生命值低于 {threshold} 再配"
 
-    def _equipment_skip_reason(self, frame, slot):
+    def _equipment_ahead(self, frame, board, rest):
+        """按打开推荐页前的棋盘看，后面还有没有要打开推荐页的角色。只作判断，不写日志。"""
+        return any(frame.slot_occupied(slot.point) and not self._equipment_waiting(frame, board, slot)
+                   and not self._equipment_skip_reason(frame, slot, quiet=True) for slot in rest)
+
+    def _equipment_skip_reason(self, frame, slot, *, quiet=False):
         """已确认没有可执行配装的角色，物品栏没有新增物品时不重开推荐页。"""
         worn = frame.card_equipment(slot)
         if worn == 3:
@@ -2279,7 +2319,8 @@ class CurrencyWars:
         if check is None:
             return None
         if worn != check.worn:
-            self._log_equipment_recheck(frame, slot, f"卡面装备从 {check.worn} 件变为 {worn} 件")
+            if not quiet:
+                self._log_equipment_recheck(frame, slot, f"卡面装备从 {check.worn} 件变为 {worn} 件")
             return None
         remaining = list(check.icons)
         items = frame.inventory_items() + frame.spare_inventory_items()
@@ -2289,9 +2330,10 @@ class CurrencyWars:
             scores = [cv2.matchTemplate(area, icon, cv2.TM_CCOEFF_NORMED).max() for icon in remaining]
             match = next((index for index, score in enumerate(scores) if score >= INVENTORY_ICON_SCORE), None)
             if match is None:
-                closest = f"最高相似度 {max(scores):.2f}" if scores else "记录里的物品已对完"
-                self._log_equipment_recheck(
-                    frame, slot, f"物品栏第 {order} 件没有对应（{closest}；记录 {len(check.icons)} 件，现在 {len(items)} 件）")
+                if not quiet:
+                    closest = f"最高相似度 {max(scores):.2f}" if scores else "记录里的物品已对完"
+                    self._log_equipment_recheck(
+                        frame, slot, f"物品栏第 {order} 件没有对应（{closest}；记录 {len(check.icons)} 件，现在 {len(items)} 件）")
                 return None
             remaining.pop(match)
         return "物品栏没有新增装备"
@@ -2426,7 +2468,9 @@ class CurrencyWars:
                     break
                 rounds += 1
                 options = []
-                for slot in candidates:
+                tried = None
+                applied = False
+                for index, slot in enumerate(candidates):
                     if not frame.slot_occupied(slot.point):
                         continue
                     # 已穿满或上一轮已确认无可配的角色不再打开推荐页，原因写进配装跳过日志。
@@ -2445,13 +2489,27 @@ class CurrencyWars:
                     if not actions:
                         self._remember_equipment(original, slot)
                     options.extend(EquipmentOption(slot, frame.equipment_option(button), worn) for button in actions)
+                    last = tried is None and actions and not self._equipment_ahead(original, board, candidates[index + 1:])
+                    best = equipment_order(board, tuple(options))[:1] if last else ()
+                    if best and best[0].slot == slot:
+                        # 后面没有要看的角色，这一页正是本轮首选：就地配装，不必关页再重开。
+                        log.debug(f"{board.stage}{slot.unit.name}的推荐页正是本轮首选，就地配装")
+                        tried = best[0]
+                        frame, applied = self._equip_on_page(frame, original, slot, preferred=tried.action)
+                        confirmed += int(applied)
+                        if frame.page != Page.BOARD or self.equipment_deferred_stage == board.stage:
+                            return frame
+                        if applied:
+                            break
+                        continue
                     frame = self._return_from_equipment(frame)
                     if frame.page != Page.BOARD or frame.stage != original.stage:
                         return frame
-                choices = equipment_order(board, tuple(options))
+                if applied:
+                    continue
+                choices = tuple(choice for choice in equipment_order(board, tuple(options)) if choice != tried)
                 if not choices:
                     break
-                applied = False
                 for choice in choices:
                     # 能执行的选择随材料变化。每次有回执后重新读取全队可合成项。
                     frame, applied = self._equip_once(frame, choice.slot, preferred=choice.action)
@@ -2537,10 +2595,14 @@ class CurrencyWars:
     def _equip_once(self, frame, slot, *, preferred=None):
         """打开推荐页执行一项配装。指定 preferred 时只执行与它一致的那一项。第二项返回是否已确认更新。"""
         board_before = frame
-        stage = frame.stage
         frame = self._open_equipment(frame, slot)
         if frame.page != Page.EQUIPMENT:
             return frame, False
+        return self._equip_on_page(frame, board_before, slot, preferred=preferred)
+
+    def _equip_on_page(self, frame, board_before, slot, *, preferred=None):
+        """在已打开的推荐页上执行一项配装。board_before 是打开前的备战棋盘，用于回执核对。"""
+        stage = board_before.stage
         employee_name = frame.employee_name() if self.default_strategy else slot.unit.name
 
         def same_employee(f):
@@ -2792,10 +2854,14 @@ class CurrencyWars:
     def _recover_deployment(self, board, error):
         # 在重新识别前保存暂存角色。它可能已经移动，失败回执不能作为仍在原位的依据。
         held = self.held_deployment
+        if held is not None:
+            # 暂存这一步最多挪动两端的卡，只作废这两格的姓名。其余卡位读盘时仍逐格核对肖像，不必整盘重认。
+            for slot in held:
+                self.slot_cache.pop((slot.zone, slot.index), None)
         # 尚未输入时，只重读肖像发生变化的角色。其余缓存仍要逐格核对新画面。
         frame = self._recover_preparation(
             board.stage, "部署", error,
-            keep_slot_cache=held is None and isinstance(error, CurrencyWarsActionUnready),
+            keep_slot_cache=held is not None or isinstance(error, CurrencyWarsActionUnready),
         )
         if frame.page != Page.BOARD or frame.stage != board.stage:
             return frame
@@ -5069,6 +5135,8 @@ class CurrencyWars:
         self.equipment_checks.clear()
         self.pointer_parked_stage = None
         self.shop_catalog = None
+        self.purchased_card = None
+        self.unit_outputs.clear()
         self.stage_refreshes.clear()
         self.deployment_stage = None
         self.deployment_moves = ()
