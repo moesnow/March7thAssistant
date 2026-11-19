@@ -71,6 +71,9 @@ DETAIL_FUNCTION = (1740, 242, 1888, 340)
 BENCH_BOX = (375, 925, 1496, 981)
 DETAIL_EQUIP = (1360, 765, 1610, 900)
 DETAIL_RECOMMEND = ('推荐', '装备推荐')
+# 推荐页两行装备（推荐装备、次选装备）的图标中心，可执行项的按钮在图标下方。
+RECOMMENDATION_COLUMNS = (1010, 1147, 1284)
+RECOMMENDATION_ROWS = (656, 845)
 DETAIL_SELL = (1670, 879, 1885, 958)
 DETAIL_SELL_PRICE = (1604, 885, 1725, 947)
 DETAIL_SELL_DIGITS = (1650, 899, 1691, 932)
@@ -854,14 +857,17 @@ class Frame:
         x, y = point
         return self.crop((x - 30, y - 31, x + 30, y + 30))
 
-    def slot_portrait_matches(self, point: Point, previous: np.ndarray) -> bool:
+    def slot_portrait_score(self, point: Point, previous: np.ndarray) -> float:
         x, y = point
         # 忽略卡边和星徽。拖放后角色卡可能抬起，允许肖像在目标格内偏移。
         face = previous[1:47, 6:54]
         if face.std() < 12:
-            return False
+            return 0.0
         area = self.crop((x - 55, y - 67, x + 55, y + 48))
-        return bool(cv2.matchTemplate(area, face, cv2.TM_CCOEFF_NORMED).max() >= 0.70)
+        return float(cv2.matchTemplate(area, face, cv2.TM_CCOEFF_NORMED).max())
+
+    def slot_portrait_matches(self, point: Point, previous: np.ndarray) -> bool:
+        return self.slot_portrait_score(point, previous) >= 0.70
 
     def deployed_copy(self, source: Slot, deployed: tuple[Slot, ...]) -> Slot | None:
         """同一肖像在前后台比备战席略大，卡片上抬时也会偏移。"""
@@ -1259,6 +1265,11 @@ class Frame:
             result.append(((x, y), equipment_name(mark)))
         return tuple(result)
 
+    def inventory_names(self) -> tuple[str, ...] | None:
+        """物品栏中的装备名，按名称排序。任一物品无法识别时返回 None。"""
+        names = tuple(name for _, name in self.inventory_equipment())
+        return None if None in names else tuple(sorted(names))
+
     def inventory_items(self) -> tuple[Point, ...]:
         # 装备格有贯穿其宽度的水平边缘。左列的场景纹理容易误判，右列覆盖所有行。
         positions = []
@@ -1283,10 +1294,24 @@ class Frame:
     def equipped_slots(self) -> tuple[np.ndarray, ...]:
         return tuple(self.crop((x - 26, 790, x + 26, 844)) for x in (1646, 1731, 1819))
 
+    def recommended_equipment(self) -> tuple[str, ...] | None:
+        """推荐页两行装备的名称。任一有图标的格子无法识别，或一个图标都没有时返回 None。"""
+        names = []
+        for row in RECOMMENDATION_ROWS:
+            for column in RECOMMENDATION_COLUMNS:
+                icon = self.crop((column - 24, row - 24, column + 24, row + 24))
+                if icon.std(axis=(0, 1)).max() < 24:
+                    continue
+                name = equipment_name(icon)
+                if name is None:
+                    return None
+                names.append(name)
+        return tuple(names) or None
+
     def equipment_option(self, button: Label) -> Equipment:
         x, y = button.point
-        column = min((1010, 1147, 1284), key=lambda center: abs(x - 20 - center))
-        row = 656 if y < 795 else 845
+        column = min(RECOMMENDATION_COLUMNS, key=lambda center: abs(x - 20 - center))
+        row = RECOMMENDATION_ROWS[0] if y < 795 else RECOMMENDATION_ROWS[1]
         icon = self.crop((column - 24, row - 24, column + 24, row + 24))
         name = equipment_name(icon)
         ingredients = ()
