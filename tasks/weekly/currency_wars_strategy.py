@@ -63,6 +63,8 @@ LINEUPS = {
                        frozenset(("星期日", "椒丘", "雪衣", "花火")),
                        frozenset(("希露瓦", "海瑟音", "黑天鹅", "桑博", "椒丘", "卡芙卡"))),
 }
+# 两套那刻夏策略同 S1，只给核心和后台主力配装，其余角色不再逐个打开推荐页。
+EQUIPMENT_FOCUS = {STRATEGY_ID: frozenset((CORE, BACK_LEAD)), HIGH_ANAXA: frozenset((CORE, BACK_LEAD))}
 STRATEGY_NAMES = {
     DEFAULT_STRATEGY: "默认",
     STRATEGY_ID: "连击那刻夏（S2）",
