@@ -49,6 +49,14 @@ def test_wait_times_out_and_reports_failure(monkeypatch):
     page.check_screen = Mock(return_value=False)
     monkeypatch.setattr(screen_module, "_SCREEN_WAIT_TIMEOUT", 0.05)
     monkeypatch.setattr(screen_module, "_SCREEN_POLL_INTERVAL", 0.01)
+    # 用受控时钟推进等待预算，避免真实 sleep 在负载高的 CI 机器上被拉长到一次就超时。
+    clock = {"now": 0.0}
+
+    def fake_sleep(seconds):
+        clock["now"] += seconds
+
+    fake_time = SimpleNamespace(monotonic=lambda: clock["now"], sleep=fake_sleep)
+    monkeypatch.setattr(screen_module, "time", fake_time)
     page.log_and_raise = Mock(side_effect=RuntimeError("无法切换到目标界面"))
 
     with pytest.raises(RuntimeError, match="无法切换"):
