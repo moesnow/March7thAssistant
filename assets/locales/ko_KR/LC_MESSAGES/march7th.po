@@ -8241,3 +8241,87 @@ msgstr "긴 밤"
 #: module/game/adb_ready.py:118
 msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
 msgstr "열차 보급 팝업에서 제한 시간 안에 메인 화면으로 돌아가지 못했습니다. 게임에서 보상을 받았는지 확인하세요."
+
+#: app/tools/desktop_twin.py:454
+msgid "已忘记分身密码"
+msgstr "분신 비밀번호를 삭제했습니다"
+
+#: app/tools/desktop_twin.py:454
+msgid "已保存分身密码"
+msgstr "분신 비밀번호를 저장했습니다"
+
+#: app/tools/desktop_twin.py:728
+msgid "管理分身密码"
+msgstr "분신 비밀번호 관리"
+
+#: app/tools/desktop_twin.py:729
+msgid "本次手动登录"
+msgstr "이번만 수동 로그인"
+
+#: app/tools/desktop_twin_credentials.py:24
+msgid "无法读取分身密码，请检查 Windows 凭据服务或选择本次手动登录。"
+msgstr "분신 비밀번호를 읽을 수 없습니다. Windows 자격 증명 서비스를 확인하거나 이번에는 수동으로 로그인하세요."
+
+#: app/tools/desktop_twin_credentials.py:63
+msgid "请填写有效的 Windows 账户名。"
+msgstr "올바른 Windows 계정 이름을 입력하세요."
+
+#: app/tools/desktop_twin_credentials.py:71
+msgid "请输入 Windows 账户密码。"
+msgstr "Windows 계정 비밀번호를 입력하세요."
+
+#: app/tools/desktop_twin_credentials.py:82
+msgid "无法保存分身密码，请检查账户名和 Windows 凭据服务。"
+msgstr "분신 비밀번호를 저장할 수 없습니다. 계정 이름과 Windows 자격 증명 서비스를 확인하세요."
+
+#: app/tools/desktop_twin_credentials.py:90
+msgid "无法忘记分身密码，请检查 Windows 凭据服务。"
+msgstr "분신 비밀번호를 삭제할 수 없습니다. Windows 자격 증명 서비스를 확인하세요."
+
+#: app/tools/desktop_twin_credentials.py:95
+msgid "分身密码仅用于本机连接"
+msgstr "분신 비밀번호는 이 PC에 연결할 때만 사용할 수 있습니다."
+
+#: app/tools/desktop_twin_credentials.py:111
+msgid "已保存的凭据格式有误。请打开「管理分身密码」更新或忘记密码，也可以选择「本次手动登录」。"
+msgstr ""
+"저장된 자격 증명의 형식이 올바르지 않습니다. ‘분신 비밀번호 관리’에서 수정하거나 삭제하세요. ‘이번만 수동 로그인’을 선택할 수도 "
+"있습니다."
+
+#: app/tools/desktop_twin_credentials.py:118
+msgid "无法向本机分身提供已保存的凭据"
+msgstr "저장된 자격 증명을 이 PC의 분신에 전달할 수 없습니다."
+
+#: app/tools/desktop_twin_password_dialog.py:19
+msgid "MicrosoftAccount\\邮箱 或 计算机名\\用户名"
+msgstr "MicrosoftAccount\\이메일 또는 컴퓨터이름\\사용자이름"
+
+#: app/tools/desktop_twin_password_dialog.py:24
+msgid "Windows 账户"
+msgstr "Windows 계정"
+
+#: app/tools/desktop_twin_password_dialog.py:25
+msgid "账户密码"
+msgstr "계정 비밀번호"
+
+#: app/tools/desktop_twin_password_dialog.py:26
+msgid "密码保存在本机的 Windows 凭据管理器中。以你的 Windows 用户身份运行的其他程序也可能读取它。"
+msgstr ""
+"비밀번호는 이 PC의 Windows 자격 증명 관리자에 저장됩니다. 같은 Windows 사용자로 실행되는 다른 프로그램도 읽을 수 "
+"있습니다."
+
+#: app/tools/desktop_twin_password_dialog.py:31
+msgid "忘记密码"
+msgstr "비밀번호 삭제"
+
+#: app/tools/desktop_twin_password_dialog.py:34
+msgid "更新密码"
+msgstr "비밀번호 업데이트"
+
+#: app/tools/desktop_twin_password_dialog.py:34
+msgid "保存密码"
+msgstr "비밀번호 저장"
+
+#: app/tools/desktop_twin_password_dialog.py:63
+msgid "删除本机保存的分身密码？"
+msgstr "이 PC에 저장한 분신 비밀번호를 삭제할까요?"

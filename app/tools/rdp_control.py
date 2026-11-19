@@ -1,6 +1,7 @@
 """在 Qt 窗口中承载系统 RDP ActiveX 控件。仅由 Windows 工具箱加载。"""
 
 import ctypes
+from contextlib import contextmanager
 from ctypes import wintypes
 from functools import cache
 from uuid import UUID
@@ -21,6 +22,7 @@ from app.tools.desktop_twin_credentials import apply_saved_credential
 
 _RDP_CLSID = "{A0C63C30-F08D-4AB4-907C-34905D770C7D}"  # MsRdpClient10NotSafeForScripting
 _EXTENDED_SETTINGS = UUID("302d8188-0052-4807-806a-362b628f9ac5").bytes_le
+_NON_SCRIPTABLE3 = UUID("b3378d90-0728-45c7-8ed7-b6159fb92219").bytes_le
 DESKTOP_SIZE = (1920, 1080)
 
 
@@ -42,12 +44,30 @@ def _check_hresult(hr):
         raise ctypes.WinError(hr)
 
 
+@contextmanager
+def _hosted_control(hwnd):
+    control = ctypes.c_void_p()
+    _check_hresult(_atl().AtlAxGetControl(hwnd, ctypes.byref(control)))
+    try:
+        yield control
+    finally:
+        _com_method(control, 2, ctypes.c_ulong)(control)
+
+
+@contextmanager
+def _interface(control, iid):
+    pointer = ctypes.c_void_p()
+    query = _com_method(control, 0, ctypes.c_long, ctypes.c_char_p, ctypes.POINTER(ctypes.c_void_p))
+    _check_hresult(query(control, iid, ctypes.byref(pointer)))
+    try:
+        yield pointer
+    finally:
+        _com_method(pointer, 2, ctypes.c_ulong)(pointer)
+
+
 def _set_child_session_property(control):
     # IMsRdpExtendedSettings 继承 IUnknown，不能通过 IDispatch 或 Qt 动态属性设置。
-    extended = ctypes.c_void_p()
-    query_interface = _com_method(control, 0, ctypes.c_long, ctypes.c_char_p, ctypes.POINTER(ctypes.c_void_p))
-    _check_hresult(query_interface(control, _EXTENDED_SETTINGS, ctypes.byref(extended)))
-    try:
+    with _interface(control, _EXTENDED_SETTINGS) as extended:
         ole = ctypes.WinDLL("oleaut32")
         ole.SysAllocString.argtypes = (ctypes.c_wchar_p,)
         ole.SysAllocString.restype = ctypes.c_void_p
@@ -63,8 +83,6 @@ def _set_child_session_property(control):
             _check_hresult(put_property(extended, name, ctypes.byref(value)))
         finally:
             ole.SysFreeString(name)
-    finally:
-        _com_method(extended, 2, ctypes.c_ulong)(extended)  # IUnknown::Release
 
 
 @cache
@@ -118,7 +136,7 @@ class RdpControl(QWidget):
         return self._events.error
 
     def prepare(self):
-        atl = _atl()
+        _atl()  # 先注册 AtlAxWin 窗口类
         self._events = _RdpEvents()
         style = win32con.WS_CHILD | win32con.WS_VISIBLE | win32con.WS_TABSTOP
         self._hwnd = win32gui.CreateWindowEx(
@@ -126,14 +144,10 @@ class RdpControl(QWidget):
             int(self.winId()), 0, win32api.GetModuleHandle(None), None,
         )
         try:
-            control = ctypes.c_void_p()
-            _check_hresult(atl.AtlAxGetControl(self._hwnd, ctypes.byref(control)))
-            try:
+            with _hosted_control(self._hwnd) as control:
                 _set_child_session_property(control)
                 unknown = pythoncom.ObjectFromAddress(control.value, pythoncom.IID_IUnknown)
                 self._client = Dispatch(unknown.QueryInterface(pythoncom.IID_IDispatch))
-            finally:
-                _com_method(control, 2, ctypes.c_ulong)(control)
             self._connection = SimpleConnection(self._client, self._events)
             self._client.Server = "localhost"
             self._client.DesktopWidth, self._client.DesktopHeight = DESKTOP_SIZE
@@ -152,8 +166,15 @@ class RdpControl(QWidget):
             self.dispose()
             raise
 
-    def connect_child(self):
-        apply_saved_credential(self._client)
+    def connect_child(self, *, manual=False):
+        if manual:
+            # 每次连接都有独立控件。仅本次请求 Windows 显示身份验证界面。
+            with _hosted_control(self._hwnd) as control, _interface(control, _NON_SCRIPTABLE3) as settings:
+                # IMsRdpClientNonScriptable3::put_PromptForCredentials(VARIANT_BOOL)
+                prompt = _com_method(settings, 19, ctypes.c_long, ctypes.c_short)
+                _check_hresult(prompt(settings, -1))
+        else:
+            apply_saved_credential(self._client)
         self._client.Connect()
 
     def dispose(self):

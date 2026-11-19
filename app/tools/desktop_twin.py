@@ -2,7 +2,6 @@
 
 import ctypes
 import os
-import subprocess
 import time
 from ctypes import wintypes
 
@@ -12,7 +11,7 @@ from PySide6.QtCore import QEvent, QRect, QRectF, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QTextLayout
 from PySide6.QtWidgets import (QApplication, QBoxLayout, QDialog, QFrame, QHBoxLayout, QLayout, QPushButton,
                                QSizePolicy, QVBoxLayout, QWidget)
-from qfluentwidgets import (BodyLabel, Dialog, HyperlinkButton, IconWidget, IndeterminateProgressRing, InfoBarIcon,
+from qfluentwidgets import (BodyLabel, Dialog, HyperlinkButton, IconWidget, IndeterminateProgressRing, InfoBar, InfoBarIcon,
                             PrimaryPushButton, PushButton, SubtitleLabel, TextWrap, ToolTipFilter, ToolTipPosition,
                             isDarkTheme, qconfig)
 from qfluentwidgets import FluentIcon as FIF
@@ -427,26 +426,35 @@ class DesktopTwinDialog(QDialog):
         layout.addWidget(self._pointsCard)
         self._credentials_button = PushButton(intro)
         self._credentials_button.clicked.connect(self._manage_credentials)
+        self._manual_button = PushButton(intro)
+        self._manual_button.clicked.connect(lambda: self._toggle_connection(manual=True))
+        credentials_row = QHBoxLayout()
+        credentials_row.addWidget(self._credentials_button)
+        credentials_row.addWidget(self._manual_button)
+        credentials_row.addStretch()
         layout.addSpacing(8)
-        layout.addWidget(self._credentials_button, 0, Qt.AlignmentFlag.AlignLeft)
+        layout.addLayout(credentials_row)
         layout.addWidget(self._errorHolder)
         layout.addStretch(1)
         return intro
 
     def _manage_credentials(self):
-        from app.tools.desktop_twin_credentials import CREDENTIAL_TARGET
+        from app.tools.desktop_twin_credentials import saved_account
+        from app.tools.desktop_twin_password_dialog import TwinPasswordDialog
 
-        instructions = tr(
-            "打开「Windows 凭据 → 添加普通凭据」，地址填写 {target}，用户名沿用分身登录框显示的完整账户名，"
-            "密码填写 Windows 账户密码。以后可在同一位置编辑或删除这个条目。\n\n"
-            "保存后，以你的 Windows 用户身份运行的其他程序也可能读取此密码。"
-        ).format(target=CREDENTIAL_TARGET)
-        if self._ask(tr("管理分身密码"), instructions, tr("打开凭据管理器")) == "accept":
-            try:
-                control = os.path.join(os.environ["SystemRoot"], "System32", "control.exe")
-                subprocess.Popen([control, "/name", "Microsoft.CredentialManager"])
-            except OSError as exc:
-                self._report(exc)
+        try:
+            box = TwinPasswordDialog(saved_account(), self)
+        except RuntimeError as exc:
+            self._report(exc)
+            return
+        try:
+            result = box.exec()
+            if result in (QDialog.DialogCode.Accepted, box.FORGOTTEN):
+                self._dismiss_error()
+                message = tr("已忘记分身密码") if result == box.FORGOTTEN else tr("已保存分身密码")
+                InfoBar.success(title=message, content="", duration=2500, parent=self)
+        finally:
+            box.deleteLater()
 
     @property
     def active(self):
@@ -718,6 +726,7 @@ class DesktopTwinDialog(QDialog):
         self.setWindowTitle(tr("桌面分身（实验）"))
         self._titleLabel.setText(tr("桌面分身"))
         self._credentials_button.setText(tr("管理分身密码"))
+        self._manual_button.setText(tr("本次手动登录"))
         self._experimentalPill.setText(tr("实验性"))
         self._descLabel.setText(tr("在独立的 Windows 桌面中运行游戏和小助手，执行任务时不占用你的鼠标和键盘。"))
         points = (
@@ -735,6 +744,7 @@ class DesktopTwinDialog(QDialog):
         self._error_docs_button.setUrl(self._docs_button.getUrl())
 
         closing = self._quit_until is not None or self._logoff_until is not None
+        self._manual_button.setEnabled(not closing and not self._connect_until)
         opening = self._launcher is not None or self._launch_until is not None
         recovery_logoff = self._recovery_session is not None and not self._connect_until
         if self._connect_until:
@@ -853,7 +863,7 @@ class DesktopTwinDialog(QDialog):
             self._recovery_session = candidate
             self.retranslateUi()
 
-    def _toggle_connection(self):
+    def _toggle_connection(self, *, manual=False):
         if self._quit_until or self._logoff_until:
             return
         self._error = ""
@@ -898,7 +908,7 @@ class DesktopTwinDialog(QDialog):
                 self._login_started_at = session_info(process_session_id()).current_time
             self._set_screen_visible(True)
             self._connect_until = time.monotonic() + 90
-            self._rdp.connect_child()
+            self._rdp.connect_child(manual=manual)
         except Exception as error:
             self._cancel_connection()
             self._report(error)

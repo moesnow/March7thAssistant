@@ -81,25 +81,125 @@ def test_real_disconnected_control_accepts_explicit_account(qtbot, storage):
         widget.dispose()
 
 
-@pytest.mark.parametrize("response", ["accept", None])
-def test_manage_button_opens_vault_only_when_requested(qtbot, monkeypatch, response):
+def test_password_editor_round_trip(qtbot, monkeypatch, storage):
+    from PySide6.QtWidgets import QDialog, QLineEdit, QMessageBox
+    from app.tools.desktop_twin_password_dialog import TwinPasswordDialog
+
+    creds, reader = storage
+    writer, deleter = Mock(), Mock()
+    monkeypatch.setattr(creds.win32cred, "CredWrite", writer)
+    monkeypatch.setattr(creds.win32cred, "CredDelete", deleter)
+    monkeypatch.setattr(creds, "current_account", lambda: r"PC\example")
+    box = TwinPasswordDialog(None, None)
+    qtbot.addWidget(box)
+    assert box.account.text() == r"PC\example"
+    assert box.password.echoMode() == QLineEdit.EchoMode.Password
+    assert box.forget.isHidden()
+    box.save.click()
+    writer.assert_not_called()
+    assert not box.error.isHidden()
+    box.password.setText(" initial 🔑 ")
+    box.save.click()
+    record, flags = writer.call_args.args
+    assert flags == 0
+    assert record == {"UserName": r"PC\example", "CredentialBlob": " initial 🔑 ",
+                      "Type": creds.win32cred.CRED_TYPE_GENERIC, "TargetName": creds.CREDENTIAL_TARGET,
+                      "Persist": creds.win32cred.CRED_PERSIST_LOCAL_MACHINE}
+    assert box.result() == QDialog.DialogCode.Accepted and not box.password.text()
+    reader.return_value = dict(record, CredentialBlob=record["CredentialBlob"].encode("utf-16-le"))
+
+    box = TwinPasswordDialog(creds.saved_account(), None)
+    qtbot.addWidget(box)
+    assert not box.forget.isHidden() and not box.password.text()
+    box.password.setText("unused")
+    box.reject()
+    assert not box.password.text()
+    writer.assert_called_once()
+    box = TwinPasswordDialog(creds.saved_account(), None)
+    qtbot.addWidget(box)
+    box.password.setText("new")
+    box.save.click()
+    assert writer.call_args.args[0]["CredentialBlob"] == "new"
+    assert writer.call_count == 2
+
+    box = TwinPasswordDialog(creds.saved_account(), None)
+    qtbot.addWidget(box)
+    choices = Mock(side_effect=[QMessageBox.StandardButton.No, QMessageBox.StandardButton.Yes])
+    monkeypatch.setattr(QMessageBox, "question", choices)
+    box.forget.click()
+    deleter.assert_not_called()
+    box.forget.click()
+    deleter.assert_called_once_with(creds.CREDENTIAL_TARGET, creds.win32cred.CRED_TYPE_GENERIC, 0)
+    assert box.result() == box.FORGOTTEN
+
+
+def test_manual_prompt_skips_vault_for_one_connection(qtbot, storage):
+    import ctypes
+    from app.tools import rdp_control as rdp
+
+    _, reader = storage
+    widget = rdp.RdpControl()
+    qtbot.addWidget(widget)
+    widget.prepare()
+    try:
+        client = SimpleNamespace(Server="localhost", AdvancedSettings8=SimpleNamespace(), Connect=Mock())
+        # Exercise the real COM property; replace just the network connection.
+        rdp.RdpControl.connect_child(SimpleNamespace(_hwnd=widget._hwnd, _client=client), manual=True)
+        with rdp._hosted_control(widget._hwnd) as control, rdp._interface(control, rdp._NON_SCRIPTABLE3) as options:
+            enabled = ctypes.c_short()
+            getter = rdp._com_method(options, 20, ctypes.c_long, ctypes.POINTER(ctypes.c_short))
+            rdp._check_hresult(getter(options, ctypes.byref(enabled)))
+            assert enabled.value == -1
+        reader.assert_not_called()
+        assert not hasattr(client, "UserName")
+        rdp.RdpControl.connect_child(SimpleNamespace(_client=client))
+        reader.assert_called_once()
+        assert client.Connect.call_count == 2
+    finally:
+        widget.dispose()
+
+
+def test_intro_actions(qtbot, monkeypatch, storage):
     from app.tools import desktop_twin as ui
-    from app.tools.desktop_twin_credentials import CREDENTIAL_TARGET
+    from app.tools.desktop_twin_password_dialog import TwinPasswordDialog
 
     monkeypatch.setattr(ui, "connection_reserved", lambda: False)
     monkeypatch.setattr(ui, "disconnected_child_session", lambda: None)
     dialog = ui.DesktopTwinDialog(None, Mock())
     qtbot.addWidget(dialog)
     dialog._timer.stop()
-    ask = Mock(return_value=response)
-    monkeypatch.setattr(dialog, "_ask", ask)
-    launch = Mock()
-    monkeypatch.setattr(ui.subprocess, "Popen", launch)
+    observed = []
+
+    def cancel(box):
+        observed.append((box.parentWidget(), box.account.text(), box.password.text()))
+        return ui.QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(TwinPasswordDialog, "exec", cancel)
     dialog._credentials_button.click()
-    assert CREDENTIAL_TARGET in ask.call_args.args[1]
-    if response:
-        path, option, panel = launch.call_args.args[0]
-        assert path == ui.os.path.join(ui.os.environ["SystemRoot"], "System32", "control.exe")
-        assert (option, panel) == ("/name", "Microsoft.CredentialManager")
-    else:
-        launch.assert_not_called()
+    assert observed == [(dialog, storage[1].return_value["UserName"], "")]
+    manual = Mock()
+    monkeypatch.setattr(dialog, "_toggle_connection", manual)
+    dialog._manual_button.click()
+    manual.assert_called_once_with(manual=True)
+
+
+def test_failed_update_can_be_corrected_without_deleting(qtbot, monkeypatch, storage):
+    from PySide6.QtWidgets import QDialog
+    from app.tools.desktop_twin_password_dialog import TwinPasswordDialog
+
+    creds, _ = storage
+    denied = creds.pywintypes.error(5, "CredWrite", "denied")
+    writer = Mock(side_effect=[denied, None])
+    monkeypatch.setattr(creds.win32cred, "CredWrite", writer)
+    deleter = Mock()
+    monkeypatch.setattr(creds.win32cred, "CredDelete", deleter)
+    box = TwinPasswordDialog(creds.saved_account(), None)
+    qtbot.addWidget(box)
+    box.password.setText("fictional-value")
+    box.save.click()
+    assert not box.error.isHidden() and "fictional-value" not in box.error.text()
+    assert box.result() != QDialog.DialogCode.Accepted
+    box.save.click()
+    assert box.result() == QDialog.DialogCode.Accepted
+    assert not box.password.text()
+    deleter.assert_not_called()
