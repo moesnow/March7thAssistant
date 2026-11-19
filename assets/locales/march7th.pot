@@ -7920,7 +7920,7 @@ msgid "静音"
 msgstr ""
 
 #: app/tools/desktop_twin.py:746
-msgid "已静音"
+msgid "声音关闭"
 msgstr ""
 
 #: app/tools/desktop_twin.py:746

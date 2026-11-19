@@ -743,7 +743,7 @@ class DesktopTwinDialog(QDialog):
         self._assistant_button.setVisible(self._connected)
         self._assistant_button.setEnabled(not closing and not opening)
         muted = self._mute_button.isChecked()
-        self._mute_button.setText(tr("已静音") if muted else tr("声音开启"))
+        self._mute_button.setText(tr("声音关闭") if muted else tr("声音开启"))
         self._mute_button.setIcon(FIF.MUTE if muted else FIF.VOLUME)
         self._mute_button.setToolTip(tr("取消静音") if muted else tr("静音"))
         self._mute_button.setVisible(self._connected)

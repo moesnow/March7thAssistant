@@ -8252,8 +8252,8 @@ msgid "静音"
 msgstr "ミュート"
 
 #: app/tools/desktop_twin.py:746
-msgid "已静音"
-msgstr "ミュート中"
+msgid "声音关闭"
+msgstr "サウンドオフ"
 
 #: app/tools/desktop_twin.py:746
 msgid "声音开启"

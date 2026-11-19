@@ -896,7 +896,7 @@ def test_manual_mute_survives_hiding_until_unmuted_or_session_ends(qtbot):
 
     button.click()
     assert dialog.isVisible() and dialog._audio.muting
-    assert button.text() == ui.tr("已静音") and button.toolTip() == ui.tr("取消静音")
+    assert button.text() == ui.tr("声音关闭") and button.toolTip() == ui.tr("取消静音")
     dialog.hide()
     dialog.show()
     dialog.showMinimized()
