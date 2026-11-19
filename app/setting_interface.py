@@ -31,7 +31,6 @@ from tasks.weekly.currency_wars_strategy import (
     DEFAULT_STRATEGY as CURRENCY_WARS_DEFAULT,
     HIGH_ANAXA,
     PROMOTION_CAP_DIFFICULTY,
-    STRATEGY_ID as CURRENCY_WARS_STRATEGY,
     STRATEGY_NAMES,
 )
 from tasks.weekly.divergent_universe import DivergentUniverse
@@ -636,7 +635,7 @@ class SettingInterface(ScrollArea):
         )
         self.currencywarsStrategyCard = None
         configured_strategy = cfg.get_value("currencywars_strategy")
-        visible_strategies = (CURRENCY_WARS_DEFAULT, CURRENCY_WARS_STRATEGY, HIGH_ANAXA)
+        visible_strategies = (CURRENCY_WARS_DEFAULT, HIGH_ANAXA)
         self.currencywarsStrategySelectCard = ExpandableComboBoxSettingCard(
             "currencywars_strategy",
             UiIcon.LIST,
@@ -650,7 +649,7 @@ class SettingInterface(ScrollArea):
             combo.setPlaceholderText(tr("实验性"))
         elif configured_strategy not in visible_strategies:
             self.currencywarsStrategyCard = PushSettingCard(
-                tr("改用连击那刻夏（S2）"),
+                tr("改用连击那刻夏"),
                 UiIcon.LIST,
                 tr("请更新货币战争策略"),
             )
@@ -3611,10 +3610,10 @@ class SettingInterface(ScrollArea):
         self.ScriptPathCard.setContent(script_path)
 
     def __applyCurrencywarsStrategy(self):
-        cfg.set_value("currencywars_strategy", CURRENCY_WARS_STRATEGY)
+        cfg.set_value("currencywars_strategy", HIGH_ANAXA)
         combo = self.currencywarsStrategySelectCard.comboBox
         with QSignalBlocker(combo):
-            combo.setCurrentIndex(combo.findData(CURRENCY_WARS_STRATEGY))
+            combo.setCurrentIndex(combo.findData(HIGH_ANAXA))
         self.currencywarsStrategyCard.hide()
         self.currencywarsStrategySelectCard.show()
 
@@ -3626,7 +3625,7 @@ class SettingInterface(ScrollArea):
 
     def __applyCurrencywarsPromotionPreset(self):
         self.__applyCurrencywarsPreset(
-            "overclock", PROMOTION_CAP_DIFFICULTY, CURRENCY_WARS_STRATEGY, fast=False,
+            "overclock", PROMOTION_CAP_DIFFICULTY, HIGH_ANAXA, fast=False,
             message=self.currencywarsPresetCard.middleButton.text(),
         )
 

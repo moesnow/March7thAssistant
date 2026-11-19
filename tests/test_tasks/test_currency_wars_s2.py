@@ -69,7 +69,7 @@ def world(monkeypatch):
     now = [0.0]
     cfg = SimpleNamespace(currencywars_type="normal", currencywars_rank_difficulty="current",
                           currencywars_fast_mode=False, currencywars_bonus_enable=False,
-                          currencywars_strategy="s2_anaxa", save_timestamp=Mock(), currencywars_timestamp=1,
+                          currencywars_strategy=policy.HIGH_ANAXA, save_timestamp=Mock(), currencywars_timestamp=1,
                           refresh_hour=4)
     cfg.get_value = lambda key, default=None: getattr(cfg, key, default)
     fake_auto = Mock()
@@ -443,16 +443,6 @@ def test_refuse_special_object_and_uncertain_occupancy():
     assert policy.deployment(before) == ()
 
 
-def test_shop_refuses_conflicting_price_full_bench_and_third_star():
-    offers = (policy.Offer("那刻夏", 2, (100, 200), 0), policy.Offer("白露", 2, (400, 200), 1))
-    b = board(slot("front", 0, CORE), slot("bench", 0))
-    assert policy.shop_purchase(b, offers) == offers[1]
-    assert policy.shop_purchase(replace(b, slots=(slot("bench", 0, FILLER),)), offers) is None
-    assert policy.shop_purchase(b, (policy.Offer("那刻夏", 1, (100, 200), 0),)) is None
-    assert not policy.should_refresh(b, 2, 0)
-    assert not policy.should_buy_exp(replace(b, used=3), 4)
-
-
 def ten_employee_board(front, back, bench, **kwargs):
     return board(
         *(slot(zone, index, unit) for zone, row in (("front", front), ("back", back), ("bench", bench))
@@ -477,7 +467,7 @@ def test_full_ten_person_team_makes_room_for_priority_assist():
     fronts = (CORE, FILLER, policy.Unit("星期日", True, True, 2), policy.Unit("知更鸟", True, False))
     backs = (CER, BAILU, *(policy.Unit(f"后台角色{i}", False, True) for i in range(4)))
     sparkle = policy.Unit("花火", True, False)
-    full = ten_employee_board(fronts, backs, (sparkle, None))
+    full = ten_employee_board(fronts, backs, (sparkle, None), lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     plan = policy.deployment(full)
     assert [move[0].unit.name for move in plan] == [FILLER.name, sparkle.name]
     assert plan[0][1].zone == "bench" and plan[1][1].zone == "front"
@@ -495,7 +485,7 @@ def test_early_replacement_preserves_the_only_frontline_damage_dealer():
     rear = slot("back", 0)
     lead = slot("bench", 0, CER)
     before = board(slot("front", 0, sparkle), slot("front", 1, robin), fallback, rear,
-                   lead, slot("bench", 1), stage="1-1", used=3, capacity=3)
+                   lead, slot("bench", 1), stage="1-1", used=3, capacity=3, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     assert not policy.can_move(before, fallback, rear)
     plan = policy.deployment(before)
     assert [source.unit for source, _ in plan] == [robin, CER]
@@ -607,7 +597,7 @@ def test_population_upgrade_requires_a_distinct_employee_and_an_available_legal_
 
 def test_shop_can_buy_an_actual_filler_when_only_the_same_name_copy_is_waiting():
     b = board(slot("front", 0, CORE), slot("back", 0), slot("bench", 0, replace(CORE, stars=1)),
-              slot("bench", 1), used=1, capacity=2, gold=6)
+              slot("bench", 1), used=1, capacity=2, gold=6, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     filler = policy.Offer("娜塔莎", 1, (400, 200), 1)
     assert policy.shop_purchase(b, (filler,)) == filler
 
@@ -670,7 +660,7 @@ def test_halo_holder_is_kept_even_if_a_different_employee_has_higher_priority():
     active = slot("front", 0, replace(FILLER, has_halo=True))
     incoming = slot("bench", 0, policy.Unit("花火", True, False, 2))
     spare = slot("bench", 1)
-    b = board(active, incoming, spare, used=1, capacity=1)
+    b = board(active, incoming, spare, used=1, capacity=1, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     assert policy.deployment(b) == ()
     assert policy.deployment(replace(b, slots=(replace(active, unit=FILLER), incoming, spare)))
 
@@ -693,27 +683,6 @@ def test_core_swap_replans_and_restores_the_confirmed_copy_after_a_change(world)
     unreadable = replace(incoming, unit=replace(CORE, stars=None))
     changed = replace(intermediate, slots=(intermediate.slots[0], unreadable, intermediate.slots[2]))
     assert world.war._next_deployment(changed) == (intermediate.slots[2], intermediate.slots[0])
-
-
-def test_shop_buys_the_core_upgrade_before_spending_the_population_budget():
-    b = board(slot("front", 0, replace(CORE, stars=1)), slot("back", 0, CER), slot("back", 1),
-              slot("bench", 0, policy.Unit("后台候补", False, True)), slot("bench", 1), slot("bench", 2),
-              used=2, capacity=2, level=6, gold=12, exp=(32, 36))
-    core = policy.Offer(CORE.name, 1, (100, 200), 0)
-    healer = policy.Offer(BAILU.name, 2, (400, 200), 1)
-    assert policy.should_buy_exp(b, 4)
-    assert policy.shop_purchase(b, (healer, core), experience_price=4) == core
-    assert policy.shop_purchase(b, (healer,), experience_price=4) is None
-
-
-def test_full_board_reserves_the_last_bench_slot_for_a_replacement():
-    b = board(slot("front", 0, replace(CORE, stars=1)), slot("back", 0, CER), slot("bench", 0),
-              used=2, capacity=2)
-    sparkle = policy.Offer("花火", 2, (350, 180), 1, front=True)
-    core_copy = policy.Offer(CORE.name, 1, (100, 180), 0, front=True)
-    assert policy.shop_purchase(b, (sparkle,)) is None
-    assert policy.shop_purchase(b, (sparkle, core_copy)) == core_copy
-    assert policy.shop_purchase(replace(b, slots=(*b.slots, slot("bench", 1))), (sparkle,)) == sparkle
 
 
 def test_rotation_reconciles_the_move_after_an_intervening_overlay(world):
@@ -1526,14 +1495,6 @@ def test_low_cost_card_uses_stable_name_and_fee_bar_without_coin_icon_ocr(monkey
     monkeypatch.setattr(f, "read_local", fallback)
     assert [(offer.name, offer.cost) for offer in f.offers] == [("那刻夏", 1)]
     fallback.assert_not_called()
-
-
-def test_missing_core_refresh_keeps_budget_and_stops():
-    b = board(slot("bench", 0))
-    assert not policy.should_refresh(replace(b, gold=11), 2, 0)
-    assert policy.should_refresh(replace(b, gold=12), 2, 0)
-    assert not policy.should_refresh(b, 2, 2)
-    assert not policy.should_refresh(replace(b, stage="1-1"), 2, 0)
 
 
 @pytest.mark.parametrize("legacy", policy.LEGACY_STRATEGIES)
@@ -2353,6 +2314,31 @@ def test_emblem_book_reads_the_single_choice_cards_and_prefers_combo(monkeypatch
     assert state.clicks == [(Page.CHOICE, (885, 335))]
 
 
+@pytest.mark.parametrize("anaxa", (True, False))
+def test_emblem_book_takes_the_dreamscape_emblem_for_anaxa(monkeypatch, world, anaxa):
+    """攻略：梦境交织星徽决定能否打出长行动链，连击那刻夏遇到就拿；默认策略仍按通用顺序先拿连击星徽。"""
+    frame = Frame(CANVAS, labels(("星徽秘典", 1028, 60), ("请选择1个", 1028, 98), ("1-2", 300, 109),
+                                ("梦境交织星徽", 594, 335), ("连击星徽", 885, 335),
+                                ("查看详情", 601, 391), ("查看详情", 891, 391)))
+    ready = page(Page.BOARD, stage="1-2")
+    monkeypatch.setattr(frame, "inventory_items", lambda: ())
+    monkeypatch.setattr(ready, "inventory_items", lambda: ((1844, 248),))
+    world.war.lineup = policy.LINEUPS[policy.HIGH_ANAXA] if anaxa else None
+    world.war.default_strategy = not anaxa
+    state = drive(monkeypatch, world, frame, lambda s, _: setattr(s, "frame", ready))
+    assert world.war._choose(frame) is ready
+    assert state.clicks == [(Page.CHOICE, (594, 335) if anaxa else (885, 335))]
+
+
+def test_halo_prefers_the_named_halo_when_it_is_offered():
+    """攻略首推「逐日」：出现时直接选它，没有指定时照常按增益挑选。"""
+    frame = Frame(CANVAS, labels(("逐日", 420, 430), ("那刻夏每次行动后积累追光层数", 420, 520),
+                                ("前台专家", 1500, 430), ("前台强度提高20%", 1500, 520)))
+    assert frame.halo_effect()[1] == 1
+    assert frame.halo_effect(preferred=("逐日",))[1] == 0
+
+
+
 @pytest.mark.parametrize("read_card_name", (True, False))
 @pytest.mark.parametrize("title", ("简易武装箱", "阿哈·简易武装箱"))
 def test_item_box_chooses_a_reward_and_continues_after_returning_to_board(monkeypatch, world, read_card_name, title):
@@ -2443,7 +2429,7 @@ def test_purchase_needs_both_gold_delta_and_slot_change(monkeypatch, world, conf
                        (Page.SHOP, (470, 192)): bought,
                        (Page.SHOP, (1624, 983)): initial}[state.frame.page, point]
     state = drive(monkeypatch, world, initial, click)
-    before = board(slot("bench", 0), gold=7)
+    before = board(slot("bench", 0), gold=7, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     if confirmed:
         assert world.war._shop(initial, before, 0) == (initial, 0, True)
     else:
@@ -2463,7 +2449,7 @@ def test_sold_slot_with_unclear_balance_is_checked_on_board_without_repurchase(m
     monkeypatch.setattr(sold, "shop_slot_empty", lambda col: True)
     routes = {(initial, (1624, 983)): shop, (shop, (470, 192)): sold, (sold, (1624, 983)): board_receipt}
     state = drive(monkeypatch, world, initial, lambda s, p: setattr(s, "frame", routes[s.frame, p]))
-    assert world.war._shop(initial, board(slot("bench", 0)), 0) == (board_receipt, 0, True)
+    assert world.war._shop(initial, board(slot("bench", 0), lineup=policy.LINEUPS[policy.HIGH_ANAXA]), 0) == (board_receipt, 0, True)
     assert state.clicks.count((Page.SHOP, (470, 192))) == 1
 
 
@@ -2480,7 +2466,9 @@ def test_shop_refresh_verifies_the_catalog_and_accepts_variable_credits(
     updated = page(Page.SHOP, *controls, stage=stage, gold=gold_after, offers=())
     returned = page(Page.BOARD, stage=stage, gold=gold_after)
     team = board(slot("front", 0, FILLER), slot("bench", 0), slot("bench", 1),
-                 stage=stage, used=1, capacity=1)
+                 stage=stage, used=1, capacity=1, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
+    # 只核对一次刷新的回执，是否继续刷新交给策略自身的用例。
+    monkeypatch.setattr(task.strategy, "should_refresh", lambda team, price, refreshes, **_: refreshes == used)
     monkeypatch.setattr(updated, "shop_changed", lambda before, column: catalog_changed and before is first)
     monkeypatch.setattr(world.war, "_open_shop", lambda _: first)
     monkeypatch.setattr(world.war, "_settle_shop", lambda frame: frame)
@@ -4070,11 +4058,6 @@ def test_equipment_keeps_the_same_recipe_when_ocr_misses_it_or_reorders_the_row(
     worn.image = CANVAS.copy()
     ImageDraw.Draw(worn.image).rectangle((1706, 793, 1756, 840), fill=(233, 151, 133))
     ImageDraw.Draw(worn.image).rectangle((1720, 805, 1743, 828), fill=(172, 220, 206))
-    # 配上后同一页还剩另一项，直接继续。用完后关闭，不再重开推荐页。
-    done = page(Page.EQUIPMENT, name, stage=stage)
-    done.image = worn.image.copy()
-    ImageDraw.Draw(done.image).rectangle((1794, 793, 1844, 840), fill=(120, 200, 90))
-    ImageDraw.Draw(done.image).rectangle((1806, 805, 1830, 828), fill=(40, 60, 160))
     changed = page(Page.EQUIPMENT, name, equip, other, stage=stage)
     changed.image = CANVAS.copy()
     ImageDraw.Draw(changed.image).rectangle((983, 818, 1084, 885), fill=(216, 164, 113))
@@ -4085,7 +4068,7 @@ def test_equipment_keeps_the_same_recipe_when_ocr_misses_it_or_reorders_the_row(
     monkeypatch.setattr(after, "slot_portrait_matches", lambda point, _: point == target.point)
     routes = {(initial, target.point): detail, (detail, (1512, 818)): menu,
               (reordered, equip[1:]): worn if has_receipt else changed,
-              (worn, other[1:]): done, (done, (12, 12)): after, (changed, (12, 12)): after}
+              (worn, (12, 12)): after, (changed, (12, 12)): after}
     menu_scans = 0
 
     def capture(s):
@@ -4099,11 +4082,9 @@ def test_equipment_keeps_the_same_recipe_when_ocr_misses_it_or_reorders_the_row(
 
     state = drive(monkeypatch, world, initial, lambda s, p: setattr(s, "frame", routes[s.frame, p]),
                   after_capture=capture)
-    assert world.war._equip_once(initial, target) == (after, False)
+    assert world.war._equip_once(initial, target) == (after, has_receipt)
     assert world.war.equipment_deferred_stage == (None if has_receipt else stage)
-    clicks = [equip[1:], other[1:], (12, 12)] if has_receipt else [equip[1:], (12, 12)]
-    assert [point for page_kind, point in state.clicks if page_kind == Page.EQUIPMENT] == clicks
-    assert ((target.unit.name, target.point) in world.war.equipment_checks) is has_receipt
+    assert [point for page_kind, point in state.clicks if page_kind == Page.EQUIPMENT] == [equip[1:], (12, 12)]
 
 
 @pytest.mark.parametrize("same_recipe", (True, False))
@@ -4403,7 +4384,7 @@ def test_svarog_bond_in_sidebar_keeps_the_normal_preparation_page():
     assert normal.page is Page.BOARD
 
 
-@pytest.mark.parametrize("strategy", (policy.DEFAULT_STRATEGY, policy.STRATEGY_ID))
+@pytest.mark.parametrize("strategy", (policy.DEFAULT_STRATEGY, policy.HIGH_ANAXA))
 def test_svarog_modification_resumes_preparation_after_deployment_and_at_the_next_node(monkeypatch, world, strategy):
     world.cfg.currencywars_strategy = strategy
     world.cfg.currencywars_fast_mode = True
@@ -4658,6 +4639,7 @@ def test_dreamscape_dance_confirms_two_actual_selections_before_returning(monkey
     first = Frame(CANVAS, common + labels(("已选择", 1118, 192)))
     both = Frame(bright, common + labels(("已选择", 1118, 192), ("已选择", 879, 192)))
     ready = page(return_page, stage="1-2")
+    world.war.lineup = policy.LINEUPS[policy.HIGH_ANAXA]
     state = drive(monkeypatch, world, open_, lambda s, point: setattr(
         s, "frame", {(1165, 357): first, (928, 357): both, (1487, 576): ready}[point]))
     assert open_.page == Page.DANCE
@@ -4665,6 +4647,26 @@ def test_dreamscape_dance_confirms_two_actual_selections_before_returning(monkey
     assert first.employee_event_confirm() is None
     assert world.war._play_step(open_) is ready
     assert state.clicks == [(Page.DANCE, p) for p in ((1165, 357), (928, 357), (1487, 576))]
+
+
+def test_dreamscape_dance_pairs_anaxa_with_sparkle_first(monkeypatch, world):
+    """攻略：梦境交织指定那刻夏与花火共舞，先于阵容一般顺序里排在前面的白露。"""
+    common = labels(("备战阶段", 287, 70), ("1-2", 287, 106), ("梦境交织", 1044, 77),
+                    ("选择2个角色进行共舞，为其增加战斗内连携效果", 1044, 136),
+                    ("白露", 690, 357), ("那刻夏", 928, 357), ("花火", 1165, 357),
+                    ("详情", 700, 412), ("详情", 938, 412), ("详情", 1176, 412), ("确认选择", 1487, 576))
+    bright = CANVAS.copy()
+    ImageDraw.Draw(bright).rectangle((1310, 550, 1670, 601), fill=(235, 235, 235))
+    open_ = Frame(CANVAS, common)
+    first = Frame(CANVAS, common + labels(("已选择", 879, 192)))
+    both = Frame(bright, common + labels(("已选择", 879, 192), ("已选择", 1118, 192)))
+    ready = page(Page.BOARD, stage="1-2")
+    world.war.lineup = policy.LINEUPS[policy.HIGH_ANAXA]
+    state = drive(monkeypatch, world, open_, lambda s, point: setattr(
+        s, "frame", {(928, 357): first, (1165, 357): both, (1487, 576): ready}[point]))
+    assert world.war._play_step(open_) is ready
+    assert state.clicks == [(Page.DANCE, p) for p in ((928, 357), (1165, 357), (1487, 576))]
+
 
 
 @pytest.mark.parametrize("entry", ("single", "loop", "takeover", "daily"))
@@ -4842,6 +4844,7 @@ def test_ranger_appointment_falls_back_to_a_card_and_confirms_without_badge(monk
         if point == (1492, 598):
             state.frame = after
 
+    world.war.lineup = policy.LINEUPS[policy.HIGH_ANAXA]
     state = drive(monkeypatch, world, before, click)
     assert world.war._play_step(before) is after
     assert state.clicks == [(Page.RANGER, (928, 358) if read_card_names else (699, 355)),
@@ -5163,7 +5166,7 @@ def test_investment_catalog_falls_back_to_strategy_without_a_badge(world):
     assert world.war._choice_option(frame).text == "全速推进"
 
 
-@pytest.mark.parametrize("preset", (policy.DEFAULT_STRATEGY, policy.STRATEGY_ID, policy.HIGH_ANAXA))
+@pytest.mark.parametrize("preset", (policy.DEFAULT_STRATEGY, policy.HIGH_ANAXA))
 @pytest.mark.parametrize("paired", (False, True))
 def test_uncollected_all_employee_promotion_is_not_selected(world, preset, paired):
     world.war.default_strategy = preset == policy.DEFAULT_STRATEGY
@@ -5271,7 +5274,7 @@ def test_investment_redraw_recovers_to_a_safe_card_when_the_quota_is_unclear(mon
 def test_sparkle_variant_is_not_the_combo_support():
     variant = policy.Offer("火花", 1, (100, 180), 0)
     support = policy.Offer("花火", 2, (350, 180), 1)
-    b = board(slot("front", 0, CORE), slot("bench", 0), slot("bench", 1), used=3)
+    b = board(slot("front", 0, CORE), slot("bench", 0), slot("bench", 1), used=3, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     assert policy.shop_purchase(b, (variant, support)) == support
     assert policy.shop_purchase(b, (variant,)) is None
 
@@ -6480,14 +6483,6 @@ def test_existing_halo_requires_cyan_marker_in_its_own_slot(size):
     assert not f.assigned_halo((888, 405))
 
 
-def test_reward_space_only_considers_known_one_star_bench_spares():
-    b = board(slot("front", 0, FILLER), slot("bench", 0, CORE), slot("bench", 1, BAILU),
-              slot("bench", 2, CER), slot("bench", 3, replace(FILLER, stars=2)),
-              slot("bench", 4, policy.Unit("娜塔莎", False, True, 1)),
-              slot("bench", 5, FILLER), slot("bench", 6, occupied=True))
-    assert policy.disposable_bench(b) == (b.slots[6],)
-
-
 def test_forced_overflow_reserves_prioritize_a_deployed_duplicate_and_keep_core():
     ling = policy.Unit("灵砂", True, True, 2)
     topaz = policy.Unit("托帕&账账", True, True, 2)
@@ -7013,7 +7008,7 @@ def test_halo_mentor_preserves_terminal_states(monkeypatch, world, outcome, erro
 @pytest.mark.parametrize("returned_gold", (13, 17))
 def test_full_bench_sale_requires_identity_price_and_empty_slot(monkeypatch, world, returned_gold):
     spare = slot("bench", 0, FILLER)
-    b = board(slot("front", 0, CORE), spare, gold=12, used=1)
+    b = board(slot("front", 0, CORE), spare, gold=12, used=1, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     initial = page(Page.BOARD, stage=b.stage, gold=12)
     detail = page(Page.DETAIL, ("瓦尔特", 1538, 231), ("出售", 1768, 915), stage=b.stage, sell_price=1)
     after = page(Page.BOARD, stage=b.stage, gold=returned_gold)
@@ -7299,7 +7294,7 @@ def test_high_moves_other_damage_away_from_auto_support_target(high_lineup):
     assert policy.deployment(apply_deployment(b, policy.deployment(b)[0])) == ()
 
 
-@pytest.mark.parametrize("selected", (policy.STRATEGY_ID, policy.HIGH_ANAXA))
+@pytest.mark.parametrize("selected", (policy.HIGH_ANAXA,))
 @pytest.mark.parametrize("rear_open", (False, True))
 def test_anaxa_uses_evernight_to_fill_the_back_but_not_the_fourth_front_slot(selected, rear_open):
     front = (slot("front", 0, CORE), slot("front", 1, policy.Unit("花火", True, False)),
@@ -7308,13 +7303,13 @@ def test_anaxa_uses_evernight_to_fill_the_back_but_not_the_fourth_front_slot(sel
     bench = slot("bench", 0, EVERNIGHT)
     used = 4 + int(not rear_open)
     b = board(*front, slot("back", 0, CER), rear, bench, slot("bench", 1),
-              lineup=policy.LINEUPS.get(selected), used=used, capacity=used + 1)
+              lineup=policy.LINEUPS.get(selected), used=used, capacity=used + 1, stage="1-5")
     expected = ((bench, rear),) if rear_open else ()
     assert policy.deployment(b) == policy.deployment(b, overflow=True) == expected
     assert policy.should_buy_exp(replace(b, capacity=used), 4) is rear_open
 
 
-@pytest.mark.parametrize("selected", (policy.STRATEGY_ID, policy.HIGH_ANAXA))
+@pytest.mark.parametrize("selected", (policy.HIGH_ANAXA,))
 @pytest.mark.parametrize("other_output", (False, True))
 def test_anaxa_moves_existing_front_evernight_back_when_another_output_is_ready(selected, other_output):
     source = slot("front", 0, EVERNIGHT)
@@ -7325,7 +7320,7 @@ def test_anaxa_moves_existing_front_evernight_back_when_another_output_is_ready(
     assert policy.deployment(b) == (((source, target),) if other_output else ())
 
 
-@pytest.mark.parametrize("selected", (policy.STRATEGY_ID, policy.HIGH_ANAXA))
+@pytest.mark.parametrize("selected", (policy.HIGH_ANAXA,))
 def test_anaxa_can_still_purchase_evernight_for_backline_healing(selected):
     b = board(slot("front", 0, CORE), slot("back", 0), slot("bench", 0),
               lineup=policy.LINEUPS.get(selected), used=1, capacity=3)
@@ -7348,7 +7343,7 @@ def test_anaxa_front_fallback_prefers_another_confirmed_dual_role_character():
     assert policy.anaxa_front_fallback(b) == (support, front)
 
 
-@pytest.mark.parametrize("selected", (policy.STRATEGY_ID, policy.HIGH_ANAXA))
+@pytest.mark.parametrize("selected", (policy.HIGH_ANAXA,))
 @pytest.mark.parametrize("shop_has_core", (False, True))
 def test_anaxa_checks_the_shop_before_frontline_evernight_fallback(monkeypatch, world, selected, shop_has_core):
     world.cfg.currencywars_strategy = selected
@@ -7716,6 +7711,69 @@ def test_high_budget_preserves_population_for_a_ready_key_support(high_lineup):
     assert policy.should_refresh(no_support, 2, 0, experience_price=4)
 
 
+@pytest.mark.parametrize(("stage", "expected"), (("1-3", False), ("1-4", True)))
+def test_anaxa_buys_no_experience_before_1_4(stage, expected):
+    """攻略：1-1 至 1-3 不买经验，1-4 起再按经验条升人口。"""
+    b = board(slot("front", 0, CORE), slot("back", 0), slot("bench", 0, BAILU),
+              lineup=policy.LINEUPS[policy.HIGH_ANAXA], stage=stage, used=1, capacity=1, level=3, exp=(0, 4), gold=20)
+    assert policy.should_buy_exp(b, 4) is expected
+
+
+@pytest.mark.parametrize(("stage", "bought"), (("1-6", False), ("2-1", True)))
+def test_anaxa_waits_for_the_second_plane_before_a_three_star_core(stage, bought):
+    """二星那刻夏在场就够用，第一位面不为三星停留；第二位面起再收第三星的同名卡。"""
+    b = board(slot("front", 0, CORE), slot("bench", 0), slot("bench", 1),
+              lineup=policy.LINEUPS[policy.HIGH_ANAXA], stage=stage, used=1, capacity=1)
+    offer = policy.Offer(CORE.name, 1, (470, 194), 0, front=True)
+    skipped = {}
+    assert (policy.shop_purchase(b, (offer,), skipped=skipped) == offer) is bought
+    assert (skipped.get(offer) == "已达到当前阶段星级目标") is not bought
+
+
+def test_off_roster_bench_keeps_one_filler_only_in_the_first_plane():
+    """阵容外的卡立即出售。第一位面留一张最能补位的过渡卡；特殊对象、带装备或星级未读清的卡不在此出售。"""
+    filler = slot("bench", 0, policy.Unit("瓦尔特", True, True, 1, equipment=0))
+    stronger = slot("bench", 1, policy.Unit("海瑟音", True, True, 2, equipment=0))
+    kept = (slot("bench", 2, replace(BAILU, equipment=0)),
+            slot("bench", 3, policy.Unit("星神★阿哈", True, True, 1, equipment=0)),
+            slot("bench", 4, policy.Unit("托帕&账账", True, False, 1, equipment=1)),
+            slot("bench", 5, policy.Unit("灵砂", True, True, None, equipment=0)))
+    team = board(slot("front", 0, CORE), filler, stronger, *kept, lineup=policy.LINEUPS[policy.HIGH_ANAXA],
+                 stage="1-4", used=1, capacity=1)
+    assert policy.off_roster_bench(team) == (filler,)
+    assert policy.off_roster_bench(replace(team, stage="2-1")) == (filler, stronger)
+    assert policy.off_roster_bench(replace(team, lineup=None)) == ()
+
+
+def test_preparation_sells_an_off_roster_bench_card_right_away(monkeypatch, world):
+    """阵容外的卡不占备战席：部署之后、商店之前，已读出姓名的阵容外角色直接出售。"""
+    stage = "2-1"
+    stranger = slot("bench", 0, policy.Unit("海瑟音", True, True, 1, equipment=0))
+    team = board(slot("front", 0, CORE), slot("back", 0, CER), stranger, slot("bench", 1),
+                 lineup=policy.LINEUPS[policy.HIGH_ANAXA], stage=stage, used=2, capacity=2, gold=0)
+    cleared = replace(team, slots=(*team.slots[:2], slot("bench", 0), slot("bench", 1)))
+    frame = page(Page.BOARD, ("出战", 1818, 750), stage=stage, gold=0, capacity=(2, 2))
+    current, sold = [team], []
+
+    def sell(f, target, *, identified=False):
+        sold.append((target.unit.name, identified))
+        current[0] = cleared
+        return f
+
+    world.war.lineup = team.lineup
+    monkeypatch.setattr(world.war, "_settle_board", lambda f: f)
+    monkeypatch.setattr(world.war, "_collect_preparation_rewards", lambda f: (f, True))
+    monkeypatch.setattr(world.war, "_read_board", lambda f, **_: (f, current[0]))
+    monkeypatch.setattr(world.war, "_sell_for_space", sell)
+    monkeypatch.setattr(world.war, "_shop_needs_visit", lambda *_: False)
+    monkeypatch.setattr(world.war, "_finish_preparation", lambda f, b: f)
+    drive(monkeypatch, world, frame)
+
+    assert world.war._prepare(frame) is frame
+    assert sold == [("海瑟音", True)]
+
+
+
 def test_halo_reselection_tutorial_is_recognized_by_text_and_highlight(monkeypatch, world):
     markup = (("备战阶段", 469, 46), ("2-1", 471, 78), ("提示：现在你可以重选主角光", 460, 240),
               ("环。", 315, 277), ("5/6", 960, 262), ("出战", 1818, 750))
@@ -7756,7 +7814,7 @@ def test_high_preparation_diagnoses_skipped_purchase_and_retained_bench(
     stage, shop_button, fight_button = "2-4", (1624, 983), (1818, 751)
     team = board(slot("front", 0, CORE), slot("back", 0, BAILU),
                  slot("bench", 0, replace(CORE, stars=1)),
-                 slot("bench", 1, policy.Unit("雪衣", True, True, 2, equipment=0)),
+                 slot("bench", 1, policy.Unit("知更鸟", True, False, 2, equipment=0)),
                  slot("bench", 2), replace(slot("bench", 3, occupied=True), blocked=True),
                  slot("bench", 4, occupied=True),
                  lineup=high_lineup, stage=stage, gold=2, used=2, capacity=2)
@@ -7786,7 +7844,7 @@ def test_high_preparation_diagnoses_skipped_purchase_and_retained_bench(
         assert "那刻夏（1 星，1 金）保留最后一格" in shop_logs[0]
         assert "花火（1 星，4 金）报价不符合购买规则" in shop_logs[0]
         assert "真珠（1 星，3 金）金币不足" in shop_logs[0]
-        assert bench_logs and "雪衣（常规清理仅考虑一星卡）" in bench_logs[0]
+        assert bench_logs and "知更鸟（常规清理仅考虑一星卡）" in bench_logs[0]
         assert "第 4 格（卡位不可用）" in bench_logs[0]
         assert "第 5 格（占用对象未确认）" in bench_logs[0]
     else:
@@ -7851,7 +7909,8 @@ def test_high_reward_space_preserves_equipment_and_a_spare_healer_when_needed(hi
               slot("bench", 1, policy.Unit("风堇", False, True, 1, equipment=1)),
               slot("bench", 2, policy.Unit("藿藿", False, True, 1, equipment=0)),
               lineup=high_lineup, stage="3-1", used=3, capacity=3)
-    assert policy.disposable_bench(b) == (b.slots[3],)
+    # 藿藿不在攻略阵容里，和娜塔莎一样可作为冗余治疗腾位；带装备的风堇是阵容角色。
+    assert policy.disposable_bench(b) == (b.slots[3], b.slots[5])
     without_pearl = replace(b, slots=(*b.slots[:2], *b.slots[3:]), used=2)
     assert policy.disposable_bench(without_pearl) == ()
 
@@ -9276,13 +9335,14 @@ def stock(frame, *items, worn=None):
     frame.spare_inventory_items = lambda: points[6:]
     frame.inventory_equipment = lambda: tuple(zip(points[:6], (item if item in ui.ITEMS else None for item in items)))
     frame.card_equipment = lambda s: (worn or {}).get(s.point, 0)
+    frame.slot_occupied = lambda point: True
     return frame
 
 
 def test_anaxa_equipment_reopens_only_after_new_materials_arrive(monkeypatch, world):
     stage = "2-5"
     core, support, full = slot("front", 0, CORE), slot("back", 0, CER), slot("front", 1, FILLER)
-    team = board(core, support, full, stage=stage, used=3, capacity=3)
+    team = board(core, support, full, stage=stage, used=3, capacity=3, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     menu = page(Page.EQUIPMENT, stage=stage)
     screens = []
     opened = []
@@ -9404,11 +9464,11 @@ def test_prepare_does_not_reopen_a_fully_read_shop_that_would_not_act(monkeypatc
 def test_shop_catalog_after_a_purchase_decides_whether_to_reopen(world):
     stage = "1-5"
     sparkle = policy.Offer("花火", 2, (742, 194), 1, True, True)
-    rest = policy.Offer("罗刹", 3, (473, 194), 0, False, True)
+    rest = policy.Offer("黑天鹅", 3, (473, 194), 0, False, True)
     shop = page(Page.SHOP, stage=stage, shop_refresh_price=2)
     shop.shop_slot_empty = lambda column: column > 1
     after = board(slot("front", 0, CORE), slot("back", 0, CER), slot("bench", 0, replace(FILLER, name="花火")),
-                  slot("bench", 1), stage=stage, used=2, capacity=3, level=4, gold=8, exp=(0, 20))
+                  slot("bench", 1), stage=stage, used=2, capacity=3, level=4, gold=8, exp=(0, 20), lineup=policy.LINEUPS[policy.HIGH_ANAXA])
 
     world.war._remember_catalog(shop, stage, (rest, sparkle), 0, sold=sparkle)
     assert world.war.shop_catalog.offers == (rest,)
@@ -9515,7 +9575,7 @@ def test_anaxa_node_reads_each_card_once_through_the_task_entry(monkeypatch, wor
               (notice, tip): clean, (won, settlement): lobby}
     world.cfg.currencywars_type = "overclock"
     world.cfg.currencywars_rank_difficulty = "lowest"
-    world.cfg.currencywars_strategy = policy.STRATEGY_ID
+    world.cfg.currencywars_strategy = policy.HIGH_ANAXA
     shop = unwanted_shop(stage, gold=10)
     fights = []
     shops = []
@@ -9758,11 +9818,11 @@ def test_unsent_held_move_keeps_confirmed_names_and_replans_once(monkeypatch, wo
     stage = "1-1"
     frame = page(Page.BOARD, ("出战", 1818, 750), stage=stage, gold=0, capacity=(2, 2))
     team = board(slot("front", 0, CORE), slot("front", 1, GUINAIFEN), slot("back", 0), slot("bench", 0, CER),
-                 slot("bench", 1), stage=stage, used=2, capacity=2, gold=0)
+                 slot("bench", 1), stage=stage, used=2, capacity=2, gold=0, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     benched = board(slot("front", 0, CORE), slot("front", 1), slot("back", 0), slot("bench", 0, CER),
-                    slot("bench", 1, GUINAIFEN), stage=stage, used=1, capacity=2, gold=0)
+                    slot("bench", 1, GUINAIFEN), stage=stage, used=1, capacity=2, gold=0, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     deployed = board(slot("front", 0, CORE), slot("front", 1), slot("back", 0, CER), slot("bench", 0),
-                     slot("bench", 1, GUINAIFEN), stage=stage, used=2, capacity=2, gold=0)
+                     slot("bench", 1, GUINAIFEN), stage=stage, used=2, capacity=2, gold=0, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     for key in (("front", 0), ("front", 1), ("bench", 0)):
         world.war.slot_cache[key] = task.SlotIdentity(np.zeros((12, 12, 3), np.int16), "那刻夏", False)
     moves = []
@@ -9819,38 +9879,9 @@ def test_level_up_replans_a_deferred_deployment(monkeypatch, world):
     assert (stage, "部署") not in world.war.deferred_operations
 
 
-def test_anaxa_equipment_follows_up_on_the_same_page_and_remembers_the_result(monkeypatch, world):
-    """配上后推荐页还有可执行项就在同一页继续；用完后按物品栏记下，材料没新增时不再打开推荐页。"""
-    stage = "2-1"
-    core = slot("front", 0, CORE)
-    team = board(core, stage=stage, used=1, capacity=1)
-    name = ("那刻夏", 1520, 231)
-    first, second = ("穿戴", 1034, 720), ("合成", 1170, 909)
-    initial = stock(page(Page.BOARD, stage=stage, capacity=(1, 1)), "轮滑鞋", "生命之花", "生命之花")
-    detail = page(Page.DETAIL, name, ("推荐", 1512, 818), stage=stage)
-    menu = page(Page.EQUIPMENT, name, first, second, stage=stage)
-    once = page(Page.EQUIPMENT, name, second, stage=stage)
-    once.image = CANVAS.copy()
-    ImageDraw.Draw(once.image).rectangle((1621, 793, 1671, 840), fill=(233, 151, 133))
-    ImageDraw.Draw(once.image).rectangle((1633, 805, 1657, 828), fill=(172, 220, 206))
-    twice = page(Page.EQUIPMENT, name, stage=stage)
-    twice.image = once.image.copy()
-    ImageDraw.Draw(twice.image).rectangle((1706, 793, 1756, 840), fill=(120, 200, 90))
-    ImageDraw.Draw(twice.image).rectangle((1720, 805, 1743, 828), fill=(40, 60, 160))
-    after = stock(page(Page.BOARD, stage=stage, capacity=(1, 1)), "轮滑鞋", worn={core.point: 2})
-    monkeypatch.setattr(initial, "slot_occupied", lambda point: point == core.point)
-    routes = {(initial, core.point): detail, (detail, (1512, 818)): menu, (menu, first[1:]): once,
-              (once, second[1:]): twice, (twice, (12, 12)): after}
-    state = drive(monkeypatch, world, initial, lambda s, p: setattr(s, "frame", routes[s.frame, p]))
-
-    assert world.war._equip_board(initial, team) is after
-    assert [point for kind, point in state.clicks] == [core.point, (1512, 818), first[1:], second[1:], (12, 12)]
-    assert world.war._equipment_skip_reason(after, core) == "物品栏没有新增装备"
-
-
 @pytest.mark.parametrize("core_worn", (2, 3))
 def test_anaxa_equipment_waits_for_a_full_core_before_other_units(monkeypatch, world, core_worn):
-    """同 S1：那刻夏穿满三件前只给那刻夏和刻律德菈配装，穿满后其余上阵角色也配。"""
+    """那刻夏穿满三件前只给攻略的配装优先角色（那刻夏、昔涟、刻律德菈）配装，穿满后其余上阵角色也配。"""
     stage = "2-5"
     core, support, other = slot("front", 0, CORE), slot("back", 0, CER), slot("front", 1, FILLER)
     team = board(core, support, other, stage=stage, used=3, capacity=3)
@@ -9863,26 +9894,22 @@ def test_anaxa_equipment_waits_for_a_full_core_before_other_units(monkeypatch, w
     drive(monkeypatch, world, frame)
     debug = Mock()
     monkeypatch.setattr(task.log, "debug", debug)
-    assert policy.EQUIPMENT_FOCUS[policy.STRATEGY_ID] == policy.EQUIPMENT_FOCUS[policy.HIGH_ANAXA] == {"那刻夏", "刻律德菈"}
-    world.war.equipment_focus = policy.EQUIPMENT_FOCUS[policy.STRATEGY_ID]
+    assert policy.EQUIPMENT_FOCUS[policy.HIGH_ANAXA] == {"那刻夏", "昔涟", "刻律德菈"}
+    world.war.equipment_focus = policy.EQUIPMENT_FOCUS[policy.HIGH_ANAXA]
+    world.war.lineup = policy.LINEUPS[policy.HIGH_ANAXA]
     expected = ["刻律德菈", "瓦尔特"] if core_worn == 3 else ["刻律德菈", "那刻夏"]
 
-    world.war._equip_board(frame, team)
+    world.war._equip_board(frame, replace(team, lineup=world.war.lineup))
     assert sorted(opened) == expected
     skips = " ".join(call.args[0] for call in debug.call_args_list if "配装跳过" in call.args[0])
     assert ("瓦尔特（那刻夏未配满）" in skips) is (core_worn == 2)
-    opened.clear()
-    world.war.equipment_checks.clear()
-    world.war.lineup = policy.LINEUPS[policy.HIGH_ANAXA]
-    world.war._equip_team(frame, replace(team, lineup=world.war.lineup))
-    assert sorted(opened) == expected
 
 
 def test_anaxa_equipment_moves_on_to_other_units_once_the_core_fills_up(monkeypatch, world):
     """同一遍配装中那刻夏刚穿满，后面的角色接着配，不必等下一节点。"""
     stage = "2-5"
     core, other = slot("front", 0, CORE), slot("front", 1, FILLER)
-    team = board(core, other, stage=stage, used=2, capacity=2)
+    team = board(core, other, stage=stage, used=2, capacity=2, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     before = stock(page(Page.BOARD, stage=stage, capacity=(2, 2)), "轮滑鞋", "生命之花", worn={core.point: 2})
     filled = stock(page(Page.BOARD, stage=stage, capacity=(2, 2)), "生命之花", worn={core.point: 3})
     opened = []
@@ -9890,7 +9917,7 @@ def test_anaxa_equipment_moves_on_to_other_units_once_the_core_fills_up(monkeypa
     monkeypatch.setattr(world.war, "_open_equipment", lambda f, s: opened.append(s.unit.name) or menu)
     monkeypatch.setattr(world.war, "_return_from_equipment", lambda f: filled)
     drive(monkeypatch, world, before)
-    world.war.equipment_focus = policy.EQUIPMENT_FOCUS[policy.STRATEGY_ID]
+    world.war.equipment_focus = policy.EQUIPMENT_FOCUS[policy.HIGH_ANAXA]
 
     assert world.war._equip_board(before, team) is filled
     assert opened == ["那刻夏", "瓦尔特"]
@@ -9900,7 +9927,7 @@ def test_equipment_memo_compares_unrecognized_items_by_image(monkeypatch, world)
     """羁绊徽章等认不出名字的物品不影响记录：物品栏只少不多时不再打开推荐页，新增物品后才重新检查。"""
     stage = "2-5"
     core = slot("front", 0, CORE)
-    team = board(core, stage=stage, used=1, capacity=1)
+    team = board(core, stage=stage, used=1, capacity=1, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     menu = page(Page.EQUIPMENT, stage=stage)
     screens, opened = [], []
     monkeypatch.setattr(world.war, "_open_equipment", lambda f, s: opened.append(s.unit.name) or menu)
@@ -9918,7 +9945,7 @@ def test_equipment_memo_logs_why_it_reopens_the_menu(monkeypatch, world):
     """记录没沿用时写明原因：卡面件数变化、扩列区域变化，或第几件物品对不上，便于从实机日志定位。"""
     stage = "2-4"
     core = slot("front", 0, CORE)
-    team = board(core, stage=stage, used=1, capacity=1)
+    team = board(core, stage=stage, used=1, capacity=1, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     menu = page(Page.EQUIPMENT, stage=stage)
     screens, opened = [], []
     monkeypatch.setattr(world.war, "_open_equipment", lambda f, s: opened.append(s.unit.name) or menu)
@@ -9953,7 +9980,7 @@ def test_equipment_memo_follows_items_that_move_out_of_the_expansion_column(monk
     """复现 new4 1-6：超过六件时第七件排在左侧扩列。别人用掉一件后它挪进右列，没有新物品，不必重开推荐页；扩列真来了新物品才重开。"""
     stage = "1-6"
     core = slot("front", 0, CORE)
-    team = board(core, stage=stage, used=1, capacity=1)
+    team = board(core, stage=stage, used=1, capacity=1, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     menu = page(Page.EQUIPMENT, stage=stage)
     screens, opened = [], []
     monkeypatch.setattr(world.war, "_open_equipment", lambda f, s: opened.append(s.unit.name) or menu)
@@ -10078,7 +10105,7 @@ def test_anaxa_swap_survives_a_lifted_card_through_the_task_entry(monkeypatch, w
               (won, settlement): lobby}
     world.cfg.currencywars_type = "overclock"
     world.cfg.currencywars_rank_difficulty = "lowest"
-    world.cfg.currencywars_strategy = policy.STRATEGY_ID
+    world.cfg.currencywars_strategy = policy.HIGH_ANAXA
     reads, fights, failures = [], [], []
     boards = [clean]
 
