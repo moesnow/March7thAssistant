@@ -54,6 +54,9 @@ HALO_FOLLOWUP_SECONDS = 3
 IDENTITY_PORTRAIT_SCORE = 0.80
 IDENTITY_SETTLE_SECONDS = 1.2
 IDENTITY_STABLE_DIFF = 3
+# 每次购买经验加 4 点。少到账的按键没有扣费时，再等这么久确认不是迟到的回执。
+EXPERIENCE_PER_PURCHASE = 4
+EXPERIENCE_LATE_SECONDS = 1.5
 # 配装记录按物品栏图像比对：同一件物品的图标对位后高度相似，扩列区域沿用物品栏变化阈值。
 INVENTORY_ICON_SCORE = 0.90
 INVENTORY_STABLE_DIFF = 1.8
@@ -271,6 +274,7 @@ class CurrencyWars:
         self.deployment_replan_stage = None
         self.preparation_progress = 0
         self.experience_probes = set()
+        self.experience_top_ups = set()
         self.disassembly_attempted = set()
         self.equipment_deferred_stage = None
         self.default_equipment_attempted = set()
@@ -1816,8 +1820,10 @@ class CurrencyWars:
         if self.default_strategy:
             return
         columns = {offer.column for offer in offers}
+        # 开拓者显示玩家自定的名字。游戏里的角色名都不止一个字，单字名只会是开拓者，不在购买范围内。
         unknown = [column + 1 for column in range(5)
-                   if column not in columns and not shop_frame.shop_slot_empty(column)]
+                   if column not in columns and not shop_frame.shop_slot_empty(column)
+                   and not re.fullmatch(r"[\u3400-\u9fff]", shop_frame.shop_column_name(column))]
         if unknown:
             log.debug(f"{stage}商店第 {'、'.join(map(str, unknown))} 栏未认出商品，下次照常打开商店核对")
             return
@@ -2064,15 +2070,47 @@ class CurrencyWars:
             self._check_budget()
             log.warning("本节点已尝试一次重读经验，保留当前棋盘继续")
             return self.frame
-        if sent and not batch_confirmed:
+        top_up = bool(sent and credited and not batch_confirmed and board.stage not in self.experience_top_ups
+                      and self._lost_experience_presses(board, updated, price, sent))
+        if top_up:
+            # 账面恰好少到账整数次且没有扣费：漏掉的按键没有生效。再等一会儿确认不是迟到的回执。
+            def changed(f):
+                return f.page != updated.page or (f.gold, f.experience, f.capacity) != (
+                    updated.gold, updated.experience, updated.capacity)
+
+            later = self._wait(changed, EXPERIENCE_LATE_SECONDS)
+            if later is None:
+                self.experience_top_ups.add(board.stage)
+                updated = self.frame or updated
+            else:
+                top_up = False
+                updated = later
+        if sent and not batch_confirmed and not top_up:
             # 部分经验是实际进展，剩余按键的回执仍可能迟到。
             self.deferred_operations.add((board.stage, "经验"))
         if credited:
             self.preparation_progress += 1
-            status = "经验批次已到账" if batch_confirmed else "已确认部分经验到账，本节点暂缓再次购买"
+            if batch_confirmed:
+                status = "经验批次已到账"
+            elif top_up:
+                status = "部分按键未生效且没有扣费，本节点按现场经验补买一次"
+            else:
+                status = "已确认部分经验到账，本节点暂缓再次购买"
             log.info(f"{status}，按 F {sent} 次，金币 {board.gold} → {updated.gold}，"
                      f"经验 {board.exp} → {updated.experience}")
         return updated
+
+    @staticmethod
+    def _lost_experience_presses(board, updated, price, sent):
+        """扣费和经验恰好对应少于按键次数的整数次购买，其余按键没有生效。"""
+        if (not price or board.gold is None or updated.gold is None or board.exp is None
+                or updated.experience is None or updated.experience[1] != board.exp[1]
+                or updated.capacity != (board.used, board.capacity)):
+            return False
+        spent = board.gold - updated.gold
+        bought = spent // price
+        return (spent > 0 and spent % price == 0 and bought < sent
+                and updated.experience[0] - board.exp[0] == bought * EXPERIENCE_PER_PURCHASE)
 
     def _equip(self, frame, board):
         if self.equipment_deferred_stage == board.stage:
@@ -2829,6 +2867,8 @@ class CurrencyWars:
         frame = self._action(detail, sell, send, advanced, message, seconds=8 if identified else 4, attempts=1)
         if cleared(frame) and self.reserve_sales.get(key) is not previous:
             self.reserve_sales.pop(key)
+            # 腾出的备战位随后可能放进新卡，旧姓名不再适用。
+            self.slot_cache.pop((slot.zone, slot.index), None)
             self.preparation_progress += 1
             log.info(f"已出售多余角色{name or slot.unit.name}")
             return frame, True
@@ -4977,6 +5017,7 @@ class CurrencyWars:
         self.deployment_replan_stage = None
         self.preparation_progress = 0
         self.experience_probes.clear()
+        self.experience_top_ups.clear()
         self.disassembly_attempted.clear()
         self.equipment_deferred_stage = None
         self.default_equipment_attempted.clear()

@@ -818,6 +818,13 @@ class Frame:
                                     is_back if is_front or is_back else None, stars))
         return tuple(offers)
 
+    def shop_column_name(self, column: int) -> str:
+        """商店一栏底部名字条上的文字，去掉末尾的报价。"""
+        x = 367 + 269 * column
+        names = self.texts((x, SHOP_ROW[1], x + 242, SHOP_ROW[3]))
+        joined = "".join(label.text for label in sorted(names, key=lambda label: label.point[0]))
+        return re.sub(r"[?？]?[1-9]\d?$", "", joined)
+
     def shop_card_image(self, column: int) -> np.ndarray:
         x = 367 + 269 * column
         return self.crop((x + 20, 78, x + 221, 185))
@@ -1190,12 +1197,23 @@ class Frame:
         return value
 
     def card_equipment(self, slot: Slot) -> int | None:
-        # 卡片下方的装备按已有卡位中心相对布局取样。暗边与邻近背景的差异不作为装备。
+        # 卡片下方的装备图标按件数居中排列，每件约 38 像素宽、间隔约 3 像素，四周是金色边框。
+        # 透视使整组图标随卡位略向两侧偏移。按卡片正下方那组金框的总宽度换算件数；
+        # 「0」等角标遮住底边一角时，左右竖边仍在。
         x, y = slot.point
-        boxes = (self.crop((x + dx - 9, y + 68, x + dx + 10, y + 84)) for dx in (-29, 0, 29))
-        return sum(bool(mark.size > 0 and mark.std(axis=(0, 1)).max() >= 38
-                        and ((mark.max(axis=2) > 155) & (np.ptp(mark, axis=2) > 28)).mean() >= 0.19)
-                   for mark in boxes)
+        left = max(0, x - 110)
+        band = self.crop((left, y + 66, x + 110, y + 100)).astype(np.int16)
+        red, green, blue = band[..., 0], band[..., 1], band[..., 2]
+        gold = (red > 165) & (green > 120) & (blue < 125) & (red - blue > 70)
+        groups = []
+        for column in np.flatnonzero(gold.sum(axis=0) >= 2):
+            if groups and column - groups[-1][1] <= 16:
+                groups[-1][1] = column
+            else:
+                groups.append([column, column])
+        center = x + (x - 960) * 0.04 - left
+        width = next((end - start + 1 for start, end in groups if start - 12 <= center <= end + 12), 0)
+        return min(3, round(width / 41.5))
 
     def reward_close(self) -> Point | None:
         if label := self.find("点击空白处关闭", area=REWARD_DISMISS, contains=True):

@@ -9921,3 +9921,104 @@ def test_anaxa_swap_survives_a_lifted_card_through_the_task_entry(monkeypatch, w
     assert fights == [stage] and failures == ([Page.BOARD] if fault == "step_failure" else [])
     assert not any("部署暂缓" in str(call.args[0]) for call in warnings.call_args_list)
     assert state.frame is lobby and world.war.result is True
+
+
+def draw_card_items(image, point, count, *, badge=False):
+    """按实机布局在卡片下方画装备图标：每件约 38 像素宽、带金框，按件数居中，整组随透视偏移。"""
+    x, y = point
+    center = x + (x - 960) * 0.04
+    draw = ImageDraw.Draw(image)
+    for k in range(count):
+        left = round(center + (k - (count - 1) / 2) * 41.5 - 19)
+        draw.rectangle((left, y + 60, left + 37, y + 95), fill=(150, 40, 60), outline=(232, 186, 70), width=2)
+    if badge and count:
+        # 「0」角标压住第一件的左下角和一段底边。
+        left = round(center - (count - 1) / 2 * 41.5 - 19)
+        draw.rectangle((left - 2, y + 80, left + 14, y + 99), fill=(20, 20, 30))
+    return image
+
+
+@pytest.mark.parametrize("badge", (False, True))
+@pytest.mark.parametrize("count", (0, 1, 2, 3))
+@pytest.mark.parametrize("point", ((745, 405), (605, 667), (1386, 667), (1065, 912)))
+def test_card_equipment_counts_centered_icons_by_their_gold_frames(point, count, badge):
+    """实机上 2 件被读成 3 件、1 件被读成 2 件。图标按件数居中，按卡片正下方金框的总宽度计数。"""
+    x, y = point
+    image = CANVAS.copy()
+    # 金色卡框的底边不算装备；相邻卡位穿满三件也不能算到这张卡上。
+    ImageDraw.Draw(image).rectangle((x - 60, y + 60, x + 60, y + 63), fill=(232, 186, 70))
+    draw_card_items(image, (x + 142, y), 3)
+    draw_card_items(image, point, count, badge=badge)
+    assert Frame(image, ()).card_equipment(policy.Slot("back", 0, point, True)) == count
+
+
+@pytest.mark.parametrize("outcome", ("topped_up", "late_receipt", "lost_again"))
+def test_lost_experience_press_is_topped_up_once_in_the_same_node(monkeypatch, world, outcome):
+    """实机 1-6：按 F 6 次只到账 5 次，没扣费的那次在本节点按现场经验补买一次；迟到的回执或再次漏按仍暂缓。"""
+    stage = "1-6"
+    units = (slot("front", 0, CORE),)
+    controls = (("出战", 1818, 751), ("购买经验", 296, 866))
+    initial = page(Page.BOARD, *controls, stage=stage, capacity=(1, 1), gold=36, level=6,
+                   experience=(14, 36), experience_cost=4)
+    partial = page(Page.BOARD, *controls, stage=stage, capacity=(1, 1), gold=16, level=6,
+                   experience=(34, 36), experience_cost=4)
+    leveled = page(Page.BOARD, *controls, stage=stage, capacity=(1, 2), gold=12, level=7,
+                   experience=(2, 48), experience_cost=4)
+    for frame in (initial, partial, leveled):
+        monkeypatch.setattr(frame, "slots", lambda: units)
+    entered = battle(True)
+    late_at = None
+
+    def capture(state):
+        if state.frame is partial and late_at is not None and world.now[0] >= late_at:
+            state.frame = leveled
+
+    state = drive(monkeypatch, world, initial, lambda s, _: setattr(s, "frame", entered), capture)
+    monkeypatch.setattr(world.war, "_read_board", lambda f: (f, board(
+        *units, stage=stage, used=f.capacity[0], capacity=f.capacity[1], gold=f.gold, level=f.level, exp=f.experience,
+    )))
+    monkeypatch.setattr(world.war, "_can_buy_exp", lambda b, _: b.level == 6)
+
+    def press(key):
+        nonlocal late_at
+        state.keys.append((state.frame.page, key))
+        if len(state.keys) == 5:
+            state.frame = partial
+        elif len(state.keys) == 6 and outcome == "late_receipt":
+            # 漏掉的那次在收回执后才生效：额外等待期间画面变化，不补买。
+            late_at = world.now[0] + 1.2
+        elif len(state.keys) == 7 and outcome == "topped_up":
+            state.frame = leveled
+        return True
+
+    world.auto.press_key.side_effect = press
+    assert world.war._prepare(initial) is entered
+    assert state.keys == [(Page.BOARD, "f")] * (6 if outcome == "late_receipt" else 7)
+    assert state.clicks == [(Page.BOARD, (1818, 751))]
+    assert ((stage, "经验") in world.war.deferred_operations) is (outcome != "topped_up")
+
+
+@pytest.mark.parametrize(("labels", "stored"), (((("星", 90), ("?3", 225)), True), (((("3", 225),), False))))
+def test_shop_record_treats_a_single_character_name_as_the_player_trailblazer(world, labels, stored):
+    """开拓者显示玩家自定的名字（这个账号是「星」）。单字名只会是开拓者，商店照常记录；只读到价格的栏仍要重开核对。"""
+    stage = "2-5"
+    x = 367 + 269 * 3
+    shop = unwanted_shop(stage, gold=18, empty=(2, 4))
+    shop.labels = shop.labels + tuple(Label(text, (x + offset, 306)) for text, offset in labels)
+    world.war._remember_catalog(shop, stage, shop.offers, 0)
+    assert (world.war.shop_catalog is not None) is stored
+
+
+def test_sold_reserve_forgets_the_slot_name(monkeypatch, world):
+    """出售后腾出的备战位可能马上放进新卡，旧姓名不再沿用。"""
+    tile = slot("bench", 1, FILLER)
+    stage = "2-5"
+    before = page(Page.BOARD, stage=stage, gold=10)
+    detail = page(Page.DETAIL, ("出售", 1770, 917), stage=stage)
+    after = page(Page.BOARD, stage=stage, gold=11)
+    monkeypatch.setattr(before, "slot_occupied", lambda point: point == tile.point)
+    for key, name in ((("bench", 1), "瓦尔特"), (("bench", 0), "那刻夏")):
+        world.war.slot_cache[key] = task.SlotIdentity(np.zeros((12, 12, 3), np.int16), name, False)
+    drive(monkeypatch, world, before, lambda s, p: setattr(s, "frame", detail if p == tile.point else after))
+    assert world.war._sell_reserve(before, tile) == (after, True)
+    assert set(world.war.slot_cache) == {("bench", 0)}
