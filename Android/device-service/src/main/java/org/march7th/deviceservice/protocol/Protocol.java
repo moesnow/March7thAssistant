@@ -31,6 +31,7 @@ public final class Protocol {
     public static final String E_PROTOCOL_MISMATCH = "protocol_mismatch";
     public static final String E_NO_DISPLAY = "no_display";
     public static final String E_DISPLAY_EXISTS = "display_exists";
+    public static final String E_SHELL_CONTEXT_INIT_FAILED = "shell_context_init_failed";
     public static final String E_DISPLAY_FAILED = "display_failed";
     public static final String E_FORBIDDEN_DISPLAY = "forbidden_display";
     public static final String E_TIMEOUT = "timeout";
