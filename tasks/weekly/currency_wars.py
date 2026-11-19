@@ -69,7 +69,6 @@ ESC_RECOVERY_PAGES = (ACTIVE_PAGES - BATTLE_RESULT_PAGES
 HALO_EXIT_PAGES = (ACTIVE_PAGES | {Page.HOME, Page.WEEKLY}) - {Page.HALO}
 REWARD_PAGES = {Page.HOME, Page.WEEKLY, Page.REWARD_RECEIPT, Page.REWARD_LIMIT}
 BOARD_PAGES = {Page.BOARD, Page.BENCH_FULL}
-ENTRY_SCREENS = ("guide5", "main", "menu", "guide1", "guide2", "guide3", "guide4", "start_game", "click_enter")
 BOSS_STAGES = {"normal": ("1-9", "2-7", "3-7"), "overclock": ("1-6", "2-5", "3-5")}
 RESULT_ACTIONS = ("下一页", "下一步", "前往结算", "返回货币战争")
 NEUTRAL_ENVIRONMENTS = ("连击概念股", "增发货币", "能量概念股", "人身意外险", "蓝钻贵族")
@@ -566,22 +565,14 @@ class CurrencyWars:
                             lambda f: f.page == expected, "未确认返回货币战争菜单",
                             seconds=10, attempts=3)
 
-    @staticmethod
-    def _entry_screen_ready():
-        return (screen.get_current_screen(autotry=False, max_retries=1)
-                and screen.current_screen in ENTRY_SCREENS)
-
     def _recover_homepage_entry(self, attempts=MAX_ENTRY_ESCAPES):
         target = "currency_wars_homepage"
 
         def entry_settled(frame):
             if frame.page != Page.UNKNOWN:
                 return frame.page != Page.REWARD_LIMIT
-            return any(
-                screen.check_screen(name, take_screenshot=False)
-                for name in (target, *ENTRY_SCREENS)
-                if name in screen.screen_map
-            )
+            return (screen.get_current_screen(autotry=False, max_retries=1)
+                    and screen.can_change_from(screen.current_screen, target))
 
         for remaining in range(attempts, -1, -1):
             frame = self._observe()
@@ -634,8 +625,6 @@ class CurrencyWars:
             return frame
         if frame.page in ACTIVE_PAGES:
             raise CurrencyWarsError("当前存在进行中的货币战争对局，请使用「货币战争中途接管」继续")
-        if not self._entry_screen_ready():
-            raise CurrencyWarsError("无法确认当前界面可以进入「货币战争·入画奇航」")
         screen.change_to("currency_wars_homepage", max_recursion=0, autotry=False,
                          on_timeout=self._recover_homepage_entry)
         return self._expect(lambda f: f.page == Page.HOME, 10, "未识别到「货币战争·入画奇航」首页")

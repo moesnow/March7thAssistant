@@ -1604,26 +1604,29 @@ def battle(auto_on):
     return page(Page.BATTLE, auto_off=not auto_on)
 
 
-@pytest.mark.parametrize(("screens", "keys", "entries", "succeeds"), [
-    (("currency_wars_homepage",), ["esc"], 1, True),
-    (("interaction",), ["esc", "f"], 1, True),
-    (("homepage_ocr",), ["esc", "f"], 1, True),
-    (("popup", "currency_wars_homepage"), ["esc", "f", "esc"], 1, True),
-    (("popup", "guide5"), ["esc", "f", "esc"], 2, True),
-    (("popup", "popup", "currency_wars_homepage"), ["esc", "f", "esc", "esc"], 1, True),
-    (("popup", "popup", "popup", "guide5"), ["esc", "f", "esc", "esc", "esc"], 2, True),
-    (("popup", "reward_limit", "currency_wars_homepage"), ["esc", "f", "esc", "esc"], 1, True),
-    (("popup", "guide5", "popup", "guide5", "popup", "currency_wars_homepage"),
+@pytest.mark.parametrize(("start_screen", "screens", "keys", "entries", "succeeds"), [
+    pytest.param("apocalyptic", ("currency_wars_homepage",), ["esc", "esc"], 1, True, id="from-apocalyptic"),
+    pytest.param("main", ("popup", "apocalyptic", "currency_wars_homepage"),
+                 ["esc", "f", "esc", "esc", "esc"], 2, True, id="recover-to-apocalyptic"),
+    ("main", ("currency_wars_homepage",), ["esc"], 1, True),
+    ("main", ("interaction",), ["esc", "f"], 1, True),
+    ("main", ("homepage_ocr",), ["esc", "f"], 1, True),
+    ("main", ("popup", "currency_wars_homepage"), ["esc", "f", "esc"], 1, True),
+    ("main", ("popup", "guide5"), ["esc", "f", "esc"], 2, True),
+    ("main", ("popup", "popup", "currency_wars_homepage"), ["esc", "f", "esc", "esc"], 1, True),
+    ("main", ("popup", "popup", "popup", "guide5"), ["esc", "f", "esc", "esc", "esc"], 2, True),
+    ("main", ("popup", "reward_limit", "currency_wars_homepage"), ["esc", "f", "esc", "esc"], 1, True),
+    ("main", ("popup", "guide5", "popup", "guide5", "popup", "currency_wars_homepage"),
      ["esc", "f", "esc", "f", "esc", "f", "esc"], 3, True),
-    (("popup",), ["esc", "f", "esc", "esc", "esc"], 1, False),
-    (("popup", "battle"), ["esc", "f", "esc"], 1, False),
-    (("battle",), ["esc", "f"], 1, False),
-    (("main",), ["esc"], 0, False),
+    ("main", ("popup",), ["esc", "f", "esc", "esc", "esc"], 1, False),
+    ("main", ("popup", "battle"), ["esc", "f", "esc"], 1, False),
+    ("main", ("battle",), ["esc", "f"], 1, False),
+    ("main", ("main",), ["esc"], 0, False),
 ])
-def test_homepage_entry_recovers_after_the_interaction_timeout(monkeypatch, world, screens, keys, entries, succeeds):
+def test_homepage_navigation_and_entry_recovery(monkeypatch, world, start_screen, screens, keys, entries, succeeds):
     target = "currency_wars_homepage"
     destinations = iter(screens)
-    current_screen = "main"
+    current_screen = start_screen
     attempted_entries = 0
     sent_keys = []
     unknown = page(Page.UNKNOWN)
@@ -1634,7 +1637,9 @@ def test_homepage_entry_recovers_after_the_interaction_timeout(monkeypatch, worl
     def press_key(key):
         nonlocal current_screen
         sent_keys.append(key)
-        if current_screen == "main" and key == "esc" and screens[0] != "main":
+        if current_screen == "apocalyptic" and key == "esc":
+            current_screen = "main"
+        elif current_screen == "main" and key == "esc" and screens[0] != "main":
             current_screen = "menu"
         elif current_screen == "interaction" and key == "f":
             current_screen = target
@@ -1670,7 +1675,17 @@ def test_homepage_entry_recovers_after_the_interaction_timeout(monkeypatch, worl
     world.auto.click_element.side_effect = click_element
 
     if succeeds:
-        assert world.war._homepage(unknown) is lobby
+        launch = Mock(return_value=page(Page.BOARD))
+
+        def finish_match(_):
+            world.war.result = True
+            return lobby
+
+        monkeypatch.setattr(world.war, "_launch", launch)
+        monkeypatch.setattr(world.war, "_play_with_restarts", finish_match)
+        monkeypatch.setattr(world.war, "_check_weekly_reward", lambda frame: (frame, (18000, 18000), False))
+        assert world.war.start()
+        launch.assert_called_once_with(lobby, False)
         assert navigation.current_screen == target
         navigation.logger.error.assert_not_called()
     else:
@@ -1895,13 +1910,19 @@ def test_start_without_takeover_needs_currency_wars_hud_on_generic_battle_pages(
 
 def test_unreadable_entry_reports_unavailable_after_bounded_observations(monkeypatch, world):
     state = drive(monkeypatch, world, page(Page.UNKNOWN))
-    entry_ready = Mock(return_value=False)
-    monkeypatch.setattr(world.war, "_entry_screen_ready", entry_ready)
+    navigation = object.__new__(Screen)
+    navigation.__init__(config_path="assets/config/screens.json", logger=Mock())
+    identify = Mock(return_value=False)
+    monkeypatch.setattr(navigation, "get_current_screen", identify)
+    monkeypatch.setitem(Screen.perform_operations.__globals__, "auto", world.auto)
+    monkeypatch.setattr(task, "screen", navigation)
 
     with pytest.raises(task.CurrencyWarsUnavailable, match="多次复核后仍无法确认货币战争入口"):
         world.war.start()
-    assert entry_ready.call_count == task.MAX_ENTRY_ATTEMPTS
+    assert identify.call_count == task.MAX_ENTRY_ATTEMPTS
+    assert all(call.kwargs["autotry"] is False for call in identify.call_args_list)
     assert not state.clicks and not state.keys
+    world.auto.click_element.assert_not_called()
 
 
 def test_old_match_settles_before_weekly_run_starts_a_new_match(monkeypatch, world):
