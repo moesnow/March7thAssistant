@@ -60,11 +60,15 @@ EXPERIENCE_LATE_SECONDS = 1.5
 # 配装记录按物品栏图像比对：同一件物品的图标对位后高度相似，扩列区域沿用物品栏变化阈值。
 INVENTORY_ICON_SCORE = 0.90
 INVENTORY_STABLE_DIFF = 1.8
-# 拖动后把指针移到角落，避免停在卡片上使卡面抬起。
+# 拖动后、每个节点开始备战前把指针移到角落，避免停在卡片上使卡面抬起。
 POINTER_REST = (12, 12)
+# 指针移开后，被抬起的卡片落回原位所需的时间。
+POINTER_SETTLE_SECONDS = 0.3
 ACTION_POLL = 0.22
 CLICK_HOLD = 0.075
 BOX_HOLD = 0.20
+# 晶矿刚扫出的武装箱有落位动画。等连续两帧的开启按钮和箱面一致，再作为开启基准。
+BOX_SETTLE_SECONDS = 4
 RANK_CLICK_BATCH = 80
 RANK_CLICK_HOLD = 0.03
 PROMOTION_CAP_ENEMY_RANK = 28  # 入画奇航超频博弈 A4 冰钛 6
@@ -261,6 +265,8 @@ class CurrencyWars:
         self.equipment_checks = {}
         # 核心穿满三件前只给这些角色配装。None 表示不限。
         self.equipment_focus = None
+        # 最近一次开始备战前移开指针的节点。
+        self.pointer_parked_stage = None
         self.shop_catalog = None
         self.halo_candidate = None
         self.halo_identity_retries: dict[str, int] = {}
@@ -455,6 +461,25 @@ class CurrencyWars:
             return delivered
 
         return self._dispatch_input(drag, mark_sent=mark_sent, before_input=before_drag)
+
+    def _park_pointer(self, stage):
+        """每个节点第一次备战前把指针移到左上角。节点结算、节点说明等按钮落在备战席卡片上，
+        指针停留会让卡面抬起，影响读卡和配装判断。只移动不点击，移不开时照常备战。"""
+        self.pointer_parked_stage = stage
+        rest = POINTER_REST[0] / 1920, POINTER_REST[1] / 1080
+        try:
+            with self._recovery_input_wait():
+                moved = self._dispatch_input(auto.move_mouse, rest)
+        except CurrencyWarsTerminalError:
+            raise
+        except Exception as error:
+            log.debug(f"{stage}开始备战前未能移开指针：{error}")
+            return
+        if moved is False:
+            log.debug(f"{stage}开始备战前未能移开指针：输入未送达")
+            return
+        log.debug(f"{stage}开始备战前已把指针移到左上角")
+        time.sleep(POINTER_SETTLE_SECONDS)
 
     def _action(self, frame, locate, send, after, message, *, seconds, attempts, retry_after=2.2,
                 track_control=True, same_view=None):
@@ -1498,7 +1523,36 @@ class CurrencyWars:
     def _box_button(self, frame):
         return next((label for label in frame.texts(ui.BENCH_BOX) if label.text == "开启"), None)
 
+    def _settled_box(self, frame, box):
+        """晶矿刚扫出的武装箱还在落位。开启按钮的位置和箱面连续两帧一致后再作为开启基准，
+        否则基准停在动画中的一帧，之后每帧都对不上而一直不点击。"""
+        stage = frame.stage
+        previous = frame, box
+
+        def landed(f):
+            nonlocal previous
+            if f.page != Page.BOARD or f.stage != stage:
+                return True
+            last_frame, last_box = previous
+            current = self._box_button(f)
+            previous = f, current
+            if current is None or last_box is None or abs(current.point[0] - last_box.point[0]) > 12:
+                return False
+            point = min(f.bench_slots(), key=lambda s: abs(s.point[0] - current.point[0])).point
+            return cv2.absdiff(f.slot_mark(point), last_frame.slot_mark(point)).mean() <= 16
+
+        settled = self._wait(landed, BOX_SETTLE_SECONDS)
+        if settled is not None and (settled.page != Page.BOARD or settled.stage != stage):
+            return settled, None
+        # 没等到稳定时按最后一帧照常尝试，由开启动作自身的时限和箱位核对兜底。
+        last_frame, last_box = previous
+        return last_frame, last_box or box
+
     def _open_box(self, frame, box):
+        frame, box = self._settled_box(frame, box)
+        if box is None:
+            # 先到了其它备战弹层或节点已变化，交回主流程按新画面处理。
+            return frame
         x = box.point[0]
         area = (x - 46, ui.BENCH_BOX[1], x + 46, ui.BENCH_BOX[3])
         slot = min(frame.bench_slots(), key=lambda s: abs(s.point[0] - x))
@@ -2190,21 +2244,34 @@ class CurrencyWars:
         if worn == 3:
             return "装备已满"
         check = self.equipment_checks.get((slot.unit.name, slot.point))
-        if check is None or worn != check.worn:
+        if check is None:
+            return None
+        if worn != check.worn:
+            self._log_equipment_recheck(frame, slot, f"卡面装备从 {check.worn} 件变为 {worn} 件")
             return None
         # 扩列区域有变化时无法逐件对应，照常打开推荐页。
-        if cv2.absdiff(frame.crop(ui.INVENTORY_SPARE), check.spare).mean() > INVENTORY_STABLE_DIFF:
+        spare = cv2.absdiff(frame.crop(ui.INVENTORY_SPARE), check.spare).mean()
+        if spare > INVENTORY_STABLE_DIFF:
+            self._log_equipment_recheck(frame, slot, f"扩列区域变化 {spare:.1f}")
             return None
         remaining = list(check.icons)
-        for x, y in frame.inventory_items():
+        items = frame.inventory_items()
+        for order, (x, y) in enumerate(items, 1):
             # 物品被用掉后其余物品会上移，同一件物品按图像对位比较。
             area = frame.crop((x - 28, y - 28, x + 28, y + 28))
-            match = next((index for index, icon in enumerate(remaining)
-                          if cv2.matchTemplate(area, icon, cv2.TM_CCOEFF_NORMED).max() >= INVENTORY_ICON_SCORE), None)
+            scores = [cv2.matchTemplate(area, icon, cv2.TM_CCOEFF_NORMED).max() for icon in remaining]
+            match = next((index for index, score in enumerate(scores) if score >= INVENTORY_ICON_SCORE), None)
             if match is None:
+                closest = f"最高相似度 {max(scores):.2f}" if scores else "记录里的物品已对完"
+                self._log_equipment_recheck(
+                    frame, slot, f"物品栏第 {order} 件没有对应（{closest}；记录 {len(check.icons)} 件，现在 {len(items)} 件）")
                 return None
             remaining.pop(match)
         return "物品栏没有新增装备"
+
+    @staticmethod
+    def _log_equipment_recheck(frame, slot, reason):
+        log.debug(f"{frame.stage}{slot.unit.name}的配装记录未沿用：{reason}，重新打开推荐页")
 
     def _remember_equipment(self, board_frame, slot):
         """记下角色在当时的物品栏下没有可执行的穿戴或合成。认不出名字的物品（如羁绊徽章）同样按图像记录。"""
@@ -3128,6 +3195,8 @@ class CurrencyWars:
 
     def _prepare(self, frame):
         stage = frame.stage
+        if stage and self.pointer_parked_stage != stage:
+            self._park_pointer(stage)
         frame = self._settle_board(frame)
         if frame.page != Page.BOARD or frame.stage != stage:
             return frame
@@ -5012,6 +5081,7 @@ class CurrencyWars:
     def _reset_match_state(self):
         self.slot_cache.clear()
         self.equipment_checks.clear()
+        self.pointer_parked_stage = None
         self.shop_catalog = None
         self.stage_refreshes.clear()
         self.deployment_stage = None

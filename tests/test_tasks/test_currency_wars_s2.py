@@ -3,6 +3,7 @@
 from dataclasses import replace
 from types import SimpleNamespace
 from unittest.mock import Mock
+import re
 import zlib
 
 import numpy as np
@@ -2318,6 +2319,25 @@ def test_open_box_only_accepts_a_verified_change_on_the_same_board(monkeypatch, 
     with pytest.raises(task.CurrencyWarsError, match="未确认奖励界面或物品变化"):
         world.war._open_box(unopened, unopened.find("开启"))
     assert state.clicks == [(Page.BOARD, (564, 953))]
+
+
+def test_box_from_the_last_orb_is_opened_once_it_has_landed(monkeypatch, world):
+    """复现 2-5：晶矿最后一颗扫出武装箱，收集回执那一帧箱子还在落位动画中。等箱面稳定后再取基准，照常点击开启。"""
+    stage, button = "2-5", (1312, 952)
+
+    def box_screen(brightness):
+        frame = page(Page.BOARD, ("开启", *button), stage=stage)
+        image = np.array(frame.image)
+        x, y = ui.BENCH_POINTS[7]
+        image[y - 40:y + 40, x - 40:x + 40] = brightness
+        frame.image = Image.fromarray(image)
+        return frame
+
+    landing, landed, choice = box_screen(230), box_screen(120), page(Page.CHOICE)
+    state = drive(monkeypatch, world, landing, lambda s, _: setattr(s, "frame", choice))
+    state.frame = landed
+    assert world.war._open_box(landing, landing.find("开启")) is choice
+    assert state.clicks == [(Page.BOARD, button)]
 
 
 def test_emblem_book_reads_the_single_choice_cards_and_prefers_combo(monkeypatch, world):
@@ -9650,6 +9670,45 @@ def test_drag_parks_the_pointer_only_after_a_delivered_drag(monkeypatch, world, 
     assert world.auto.move_mouse.call_count == int(delivered)
 
 
+def test_preparation_parks_the_pointer_once_per_node_before_reading_the_board(monkeypatch, world):
+    """节点结算、节点说明的按钮落在备战席卡片上。每个节点第一次备战前把指针移到左上角，等卡片落回再读棋盘。"""
+    rest = (12 / 1920, 12 / 1080)
+    events = []
+    drive(monkeypatch, world, page(Page.BOARD, stage="1-5"))
+    world.auto.move_mouse.side_effect = lambda point: events.append(("移开指针", point, world.now[0])) or True
+
+    def settle(frame):
+        events.append(("读棋盘", frame.stage, world.now[0]))
+        return page(Page.SHOP, stage=frame.stage)
+
+    monkeypatch.setattr(world.war, "_settle_board", settle)
+    for stage in ("1-5", "1-5", "1-6"):
+        world.war._prepare(page(Page.BOARD, stage=stage))
+    world.war._reset_match_state()
+    world.war._prepare(page(Page.BOARD, stage="1-6"))
+
+    assert [event[:2] for event in events] == [
+        ("移开指针", rest), ("读棋盘", "1-5"), ("读棋盘", "1-5"),
+        ("移开指针", rest), ("读棋盘", "1-6"), ("移开指针", rest), ("读棋盘", "1-6"),
+    ]
+    assert events[1][2] - events[0][2] == pytest.approx(task.POINTER_SETTLE_SECONDS)
+
+
+@pytest.mark.parametrize("failure", ("window", "stopped"))
+def test_pointer_parking_failure_keeps_preparing_but_a_stop_request_ends_it(monkeypatch, world, failure):
+    frame, settled = page(Page.BOARD, stage="2-1"), page(Page.SHOP, stage="2-1")
+    drive(monkeypatch, world, frame)
+    world.auto.move_mouse.side_effect = (RuntimeError("无法获取游戏窗口尺寸") if failure == "window"
+                                         else RunStopRequested())
+    monkeypatch.setattr(world.war, "_settle_board", lambda f: settled)
+    if failure == "stopped":
+        with pytest.raises(RunStopRequested):
+            world.war._prepare(frame)
+    else:
+        assert world.war._prepare(frame) is settled
+    assert world.war.pointer_parked_stage == "2-1"
+
+
 def test_unsent_held_move_keeps_confirmed_names_and_replans_once(monkeypatch, world):
     """暂存这一步还没拖动就失败时角色仍在原位：只作废对不上的那格，本节点保留一次重新规划。"""
     stage = "1-1"
@@ -9811,6 +9870,47 @@ def test_equipment_memo_compares_unrecognized_items_by_image(monkeypatch, world)
         assert len(opened) == expected
 
 
+def test_equipment_memo_logs_why_it_reopens_the_menu(monkeypatch, world):
+    """记录没沿用时写明原因：卡面件数变化、扩列区域变化，或第几件物品对不上，便于从实机日志定位。"""
+    stage = "2-4"
+    core = slot("front", 0, CORE)
+    team = board(core, stage=stage, used=1, capacity=1)
+    menu = page(Page.EQUIPMENT, stage=stage)
+    screens, opened = [], []
+    monkeypatch.setattr(world.war, "_open_equipment", lambda f, s: opened.append(s.unit.name) or menu)
+    state = drive(monkeypatch, world, menu, lambda s, _: setattr(s, "frame", screens[-1]))
+    debug = Mock()
+    monkeypatch.setattr(task.log, "debug", debug)
+
+    def equip(*items, worn=0, spare=0):
+        frame = stock(page(Page.BOARD, stage=stage, capacity=(1, 1)), *items, worn={core.point: worn})
+        image = np.array(frame.image).astype(np.int16)
+        x1, y1, x2, y2 = ui.INVENTORY_SPARE
+        image[y1:y2, x1:x2] += spare
+        frame.image = Image.fromarray(np.clip(image, 0, 255).astype(np.uint8))
+        screens.append(frame)
+        state.frame = frame
+        world.war._equip_board(frame, team)
+
+    equip("生命之花", "追击星徽")
+    equip("生命之花", "追击星徽")
+    equip("生命之花", "追击星徽", worn=1)
+    equip("生命之花", "追击星徽", worn=1, spare=40)
+    equip("生命之花", "追击星徽", "以太钻头", worn=1, spare=40)
+    equip("以太钻头", "连击星徽", worn=1, spare=40)
+
+    rechecks = [call.args[0] for call in debug.call_args_list if "配装记录未沿用" in call.args[0]]
+    assert rechecks[:3] == [
+        f"{stage}那刻夏的配装记录未沿用：卡面装备从 0 件变为 1 件，重新打开推荐页",
+        f"{stage}那刻夏的配装记录未沿用：扩列区域变化 40.0，重新打开推荐页",
+        f"{stage}那刻夏的配装记录未沿用：物品栏第 3 件没有对应（记录里的物品已对完；记录 2 件，现在 3 件），重新打开推荐页",
+    ]
+    assert len(rechecks) == 4 and re.fullmatch(
+        rf"{stage}那刻夏的配装记录未沿用：物品栏第 2 件没有对应（最高相似度 -?0\.\d\d；记录 3 件，现在 2 件），重新打开推荐页",
+        rechecks[3])
+    assert len(opened) == 5
+
+
 def test_shop_reads_a_price_whose_coin_icon_is_read_as_a_question_mark():
     x = 367 + 269 * 3
     frame = page(Page.SHOP, ("飞霄", x + 90, 306), ("?3", x + 225, 306), stage="3-1")
@@ -9917,7 +10017,8 @@ def test_anaxa_swap_survives_a_lifted_card_through_the_task_entry(monkeypatch, w
         assert world.war.start(resume=entry == "takeover", loop=entry == "loop")
     assert reads == first_reads
     assert world.auto.drag_mouse.call_count == 2 and boards[-1] is deployed
-    assert world.auto.move_mouse.call_count == 2
+    # 节点开始备战前移开一次指针，两次拖动后各移开一次。
+    assert world.auto.move_mouse.call_count == 3
     assert fights == [stage] and failures == ([Page.BOARD] if fault == "step_failure" else [])
     assert not any("部署暂缓" in str(call.args[0]) for call in warnings.call_args_list)
     assert state.frame is lobby and world.war.result is True
