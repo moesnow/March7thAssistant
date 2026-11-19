@@ -1729,7 +1729,7 @@ class Frame:
         return bool(re.search(r"占用[2-9二两三四五六七八九](?:个)?(?:团队规模|人口|上阵位置)", text)
                     or self.halo_title(index) == "高傲巨人")
 
-    def halo_effect(self, *, max_difficulty=0, allow_support=False, allowed=(0, 1)):
+    def halo_effect(self, *, max_difficulty=0, allow_support=False, allowed=(0, 1), preferred=()):
         ranked = []
         for index in allowed:
             area = HALO_EFFECTS[index]
@@ -1754,8 +1754,9 @@ class Frame:
                 shielding = "获得" in text and "护盾强度" in text and "分摊" not in text
                 extending_battle = "倒计时延后" in text and "行动值" in text and "终结技" in text
                 score = int(healing or shielding or extending_battle)
-            if score:
-                ranked.append((score * 10 - difficulty, index, title))
+            # 策略首选的光环遇到就选，排在其它增益之前。
+            if score or title.text in preferred:
+                ranked.append((score * 10 - difficulty + 1000 * (title.text in preferred), index, title))
         return max(ranked, key=lambda option: option[0], default=None)
 
     def halo_fallbacks(self) -> tuple[Label, ...]:
