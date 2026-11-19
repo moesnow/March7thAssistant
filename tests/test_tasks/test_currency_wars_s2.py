@@ -9244,14 +9244,16 @@ def test_halo_identity_recheck_only_forgets_front_names(monkeypatch, world):
 
 
 def stock(frame, *items, worn=None):
-    """给棋盘帧的物品栏画出按名称区分的图标，并设置卡面装备数。不在图鉴里的物品（如羁绊徽章）按名称识别为 None。"""
-    points = tuple((1844, 248 + 77 * index) for index in range(len(items)))
+    """给棋盘帧的物品栏画出按名称区分的图标，并设置卡面装备数。不在图鉴里的物品（如羁绊徽章）按名称识别为 None。
+    超过六件的物品和游戏一样依次排到左侧扩列。"""
+    points = tuple((ui.INVENTORY_COLUMNS[index // 6], 248 + 77 * (index % 6)) for index in range(len(items)))
     image = np.array(frame.image)
     for (x, y), item in zip(points, items):
         image[y - 24:y + 24, x - 24:x + 24] = np.random.default_rng(zlib.crc32(item.encode())).integers(30, 226, (48, 48, 3))
     frame.image = Image.fromarray(image)
-    frame.inventory_items = lambda: points
-    frame.inventory_equipment = lambda: tuple(zip(points, (item if item in ui.ITEMS else None for item in items)))
+    frame.inventory_items = lambda: points[:6]
+    frame.spare_inventory_items = lambda: points[6:]
+    frame.inventory_equipment = lambda: tuple(zip(points[:6], (item if item in ui.ITEMS else None for item in items)))
     frame.card_equipment = lambda s: (worn or {}).get(s.point, 0)
     return frame
 
@@ -9638,6 +9640,48 @@ def test_confirmed_move_names_the_destination_even_when_the_card_size_changes(mo
     assert world.war.slot_cache[("back", 0)].name == "刻律德菈"
 
 
+@pytest.mark.parametrize("origin", ("moved", "read", "earlier_stage"))
+def test_card_moved_this_node_takes_its_settled_portrait_instead_of_a_reread(monkeypatch, world, origin):
+    """复现 new4 1-2：花火拖到前台后，回执那帧还在落位动画中，记下的卡面之后对不上。本节点拖动过的这一格稳定后
+    沿用拖动时确认的姓名并更新卡面，不重开详情；读详情得来或上一节点拖动的记录对不上时仍照常重读。"""
+    stage, target = "1-2", slot("front", 1)
+    landing = swap_screen(((("front", 0), "那刻夏"), (("front", 1), "长夜月")), capacity=(2, 2), stage=stage)
+    rested = swap_screen(((("front", 0), "那刻夏"), (("front", 1), "桂乃芬")), capacity=(2, 2), stage=stage)
+    mark = landing.slot_mark(target.point)
+    entry = task.SlotIdentity(task.cv2.resize(mark, (12, 12)).astype(np.int16), "桂乃芬", False, mark.copy())
+    world.war.slot_cache[("front", 1)] = entry
+    if origin != "read":
+        world.war.moved_identities[("front", 1)] = ("1-1" if origin == "earlier_stage" else stage), entry
+    drive(monkeypatch, world, rested)
+    assert world.war._cached_identity(rested, target) is None
+
+    frame, _ = world.war._settle_identities(rested, rested.slots())
+
+    assert frame is rested
+    refreshed = world.war._cached_identity(rested, target)
+    if origin == "moved":
+        assert refreshed is not None and refreshed.name == "桂乃芬"
+        assert ("front", 1) not in world.war.moved_identities
+    else:
+        assert refreshed is None
+
+
+def test_confirmed_move_is_marked_for_a_settled_portrait_refresh(monkeypatch, world):
+    """拖动确认后记下的卡位同时登记为本节点刚挪入，供之后卡面稳定时更新。"""
+    source, destination = slot("bench", 0, CER), slot("back", 0)
+    team = board(slot("front", 0, CORE), source, destination, stage="1-1", used=1, capacity=2)
+    before = swap_screen(((("front", 0), "那刻夏"), (("bench", 0), "刻律德菈")), capacity=(1, 2))
+    after = swap_screen(((("front", 0), "那刻夏"), (("back", 0), "刻律德菈")), capacity=(2, 2))
+    state = drive(monkeypatch, world, before)
+    world.auto.drag_mouse.side_effect = lambda *_, **__: setattr(state, "frame", after) or True
+
+    assert world.war._move(before, team, source, destination) is after
+    stage, entry = world.war.moved_identities[("back", 0)]
+    assert stage == "1-1" and entry is world.war.slot_cache[("back", 0)]
+    world.war._reset_match_state()
+    assert not world.war.moved_identities
+
+
 @pytest.mark.parametrize("delivered", (True, False))
 def test_drag_parks_the_pointer_only_after_a_delivered_drag(monkeypatch, world, delivered):
     frame = page(Page.BOARD, stage="1-1")
@@ -9861,12 +9905,8 @@ def test_equipment_memo_logs_why_it_reopens_the_menu(monkeypatch, world):
     debug = Mock()
     monkeypatch.setattr(task.log, "debug", debug)
 
-    def equip(*items, worn=0, spare=0):
+    def equip(*items, worn=0):
         frame = stock(page(Page.BOARD, stage=stage, capacity=(1, 1)), *items, worn={core.point: worn})
-        image = np.array(frame.image).astype(np.int16)
-        x1, y1, x2, y2 = ui.INVENTORY_SPARE
-        image[y1:y2, x1:x2] += spare
-        frame.image = Image.fromarray(np.clip(image, 0, 255).astype(np.uint8))
         screens.append(frame)
         state.frame = frame
         world.war._equip_board(frame, team)
@@ -9874,20 +9914,104 @@ def test_equipment_memo_logs_why_it_reopens_the_menu(monkeypatch, world):
     equip("生命之花", "追击星徽")
     equip("生命之花", "追击星徽")
     equip("生命之花", "追击星徽", worn=1)
-    equip("生命之花", "追击星徽", worn=1, spare=40)
-    equip("生命之花", "追击星徽", "以太钻头", worn=1, spare=40)
-    equip("以太钻头", "连击星徽", worn=1, spare=40)
+    equip("生命之花", "追击星徽", "以太钻头", worn=1)
+    equip("以太钻头", "连击星徽", worn=1)
 
     rechecks = [call.args[0] for call in debug.call_args_list if "配装记录未沿用" in call.args[0]]
-    assert rechecks[:3] == [
+    assert rechecks[:2] == [
         f"{stage}那刻夏的配装记录未沿用：卡面装备从 0 件变为 1 件，重新打开推荐页",
-        f"{stage}那刻夏的配装记录未沿用：扩列区域变化 40.0，重新打开推荐页",
         f"{stage}那刻夏的配装记录未沿用：物品栏第 3 件没有对应（记录里的物品已对完；记录 2 件，现在 3 件），重新打开推荐页",
     ]
-    assert len(rechecks) == 4 and re.fullmatch(
+    assert len(rechecks) == 3 and re.fullmatch(
         rf"{stage}那刻夏的配装记录未沿用：物品栏第 2 件没有对应（最高相似度 -?0\.\d\d；记录 3 件，现在 2 件），重新打开推荐页",
-        rechecks[3])
-    assert len(opened) == 5
+        rechecks[2])
+    assert len(opened) == 4
+
+
+def test_equipment_memo_follows_items_that_move_out_of_the_expansion_column(monkeypatch, world):
+    """复现 new4 1-6：超过六件时第七件排在左侧扩列。别人用掉一件后它挪进右列，没有新物品，不必重开推荐页；扩列真来了新物品才重开。"""
+    stage = "1-6"
+    core = slot("front", 0, CORE)
+    team = board(core, stage=stage, used=1, capacity=1)
+    menu = page(Page.EQUIPMENT, stage=stage)
+    screens, opened = [], []
+    monkeypatch.setattr(world.war, "_open_equipment", lambda f, s: opened.append(s.unit.name) or menu)
+    state = drive(monkeypatch, world, menu, lambda s, _: setattr(s, "frame", screens[-1]))
+    debug = Mock()
+    monkeypatch.setattr(task.log, "debug", debug)
+    seven = ("轮滑鞋", "折叠小刀", "生命之花", "幸运星", "光能电池", "以太钻头", "追击星徽")
+
+    for items, expected in ((seven, 1), (seven[1:], 1), ((*seven[1:], "量产型装甲"), 2)):
+        screens.append(stock(page(Page.BOARD, stage=stage, capacity=(1, 1)), *items))
+        state.frame = screens[-1]
+        world.war._equip_board(screens[-1], team)
+        assert len(opened) == expected
+
+    assert screens[0].spare_inventory_items() == ((1766, 248),) and screens[1].spare_inventory_items() == ()
+    rechecks = [call.args[0] for call in debug.call_args_list if "配装记录未沿用" in call.args[0]]
+    assert len(rechecks) == 1 and "物品栏第 7 件没有对应" in rechecks[0]
+
+
+def test_orb_blocked_by_a_full_bench_waits_for_a_free_slot_instead_of_another_sweep(monkeypatch, world):
+    """复现 new4 2-5：装角色的晶矿在备战席满时开不了。挡下一次后先腾位，腾位这一步没空出格子时不再重扫，
+    空出格子后再收它。"""
+    stage, orb = "2-5", (1481, 297)
+
+    def screen(orbs, *, bench_free=False, toast=False):
+        extra = (("备战席已满，需要售卖备战区角色才可开启晶矿", 960, 300),) if toast else ()
+        frame = page(Page.BOARD, *extra, stage=stage, gold=18, capacity=(9, 9))
+        frame.reward_orbs = lambda: orbs
+        frame.opening_orbs = frame.inventory_items = lambda: ()
+        frame.bench_slots = lambda: tuple(policy.Slot("bench", i, ui.BENCH_POINTS[i], not (bench_free and i == 8))
+                                          for i in range(9))
+        return frame
+
+    full, toast, freed, done = screen((orb,)), screen((orb,), toast=True), screen((orb,), bench_free=True), screen(())
+    shown = []
+
+    def toast_fades(state):
+        if state.frame is toast:
+            if shown:
+                state.frame = full
+            shown.append(True)
+
+    state = drive(monkeypatch, world, full, after_capture=toast_fades)
+
+    def drag(*_, **__):
+        shown.clear()
+        state.frame = done if world.war.frame is freed else toast
+        return True
+
+    frees = []
+
+    def free(frame, **_):
+        frees.append(world.auto.drag_mouse.call_count)
+        state.frame = freed if len(frees) >= 2 else full
+        return world.war._observe()
+
+    world.auto.drag_mouse.side_effect = drag
+    monkeypatch.setattr(world.war, "_free_reward_slot", free)
+
+    assert world.war._gather(full) is done
+    assert world.auto.drag_mouse.call_count == 2
+    assert frees == [1, 1]
+    assert world.war.blocked_orbs[stage] == []
+
+
+def test_spare_inventory_column_is_read_with_the_same_item_frames():
+    """物品超过六件时向左扩列。扩列物品与右列一样有贯穿整格的上下边框，空格只有底纹。"""
+    def board_with(spare):
+        image = CANVAS.copy()
+        draw = ImageDraw.Draw(image)
+        for x, y in (*((1844, 248 + 77 * row) for row in range(6)), *spare):
+            draw.rectangle((x - 34, y - 35, x + 34, y + 35), fill=(150, 140, 190))
+        return Frame(image, ())
+
+    main = tuple((1844, 248 + 77 * row) for row in range(6))
+    assert board_with(()).inventory_items() == main and board_with(()).spare_inventory_items() == ()
+    crowded = board_with(((1766, 248), (1766, 325)))
+    assert crowded.inventory_items() == main
+    assert crowded.spare_inventory_items() == ((1766, 248), (1766, 325))
 
 
 def test_shop_reads_a_price_whose_coin_icon_is_read_as_a_question_mark():

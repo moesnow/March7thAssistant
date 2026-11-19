@@ -74,7 +74,8 @@ BENCH_BOX = (375, 925, 1496, 981)
 DETAIL_EQUIP = (1360, 765, 1610, 900)
 DETAIL_RECOMMEND = ('推荐', '装备推荐')
 # 物品栏右列放满后向左扩列的区域。右列按格读取。
-INVENTORY_SPARE = (1650, 219, 1804, 682)
+# 物品栏右列，以及物品超过六件后依次向左扩出的列。
+INVENTORY_COLUMNS = (1844, 1766, 1688)
 DETAIL_SELL = (1670, 879, 1885, 958)
 DETAIL_SELL_PRICE = (1604, 885, 1725, 947)
 DETAIL_SELL_DIGITS = (1650, 899, 1691, 932)
@@ -1288,16 +1289,23 @@ class Frame:
 
     def inventory_items(self) -> tuple[Point, ...]:
         # 装备格有贯穿其宽度的水平边缘。左列的场景纹理容易误判，右列覆盖所有行。
+        return self._inventory_column(INVENTORY_COLUMNS[0])
+
+    def spare_inventory_items(self) -> tuple[Point, ...]:
+        """物品超过六件时向左扩出的列。只用于逐件比对配装记录：误认的底纹前后一致，不影响对照。"""
+        return tuple(point for x in INVENTORY_COLUMNS[1:] for point in self._inventory_column(x))
+
+    def _inventory_column(self, x: int) -> tuple[Point, ...]:
         positions = []
         # 追踪条会把装备列整体下移约 23 像素。
         start = 271 if self.has("装备追踪中", area=(1695, 99, 1900, 148)) else 248
         for y in range(start, start + 77 * 6, 77):
             edges = []
             for top, bottom in ((y - 43, y - 25), (y + 28, y + 45)):
-                crop = self.crop((1815, top, 1874, bottom)).mean(axis=2)
+                crop = self.crop((x - 29, top, x + 30, bottom)).mean(axis=2)
                 edges.append((np.abs(np.diff(crop, axis=0)) > 16).mean(axis=1).max())
             if min(edges) >= 0.65:
-                positions.append((1844, y))
+                positions.append((x, y))
         return tuple(positions)
 
     def equipment_actions(self) -> tuple[Label, ...]:
