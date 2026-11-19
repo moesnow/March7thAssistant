@@ -876,6 +876,41 @@ def test_hidden_twin_is_muted_and_restored_when_shown(qtbot):
     dialog.close()
 
 
+def test_manual_mute_survives_hiding_until_unmuted_or_session_ends(qtbot):
+    from PySide6.QtWidgets import QWidget
+    from app.tools import desktop_twin as ui
+    from utils.windows_session import SessionIdentity
+
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    dialog = ui.DesktopTwinDialog(parent, Mock())
+    dialog._timer.stop()
+    dialog.show()
+    button = dialog._mute_button
+    assert not button.isVisible()
+    dialog._session = SessionIdentity(2, 200)
+    dialog._connected = True
+    dialog.retranslateUi()
+    assert button.isVisible() and button.text() == ui.tr("静音")
+
+    button.click()
+    assert dialog.isVisible() and dialog._audio.muting
+    assert button.text() == ui.tr("取消静音")
+    dialog.hide()
+    dialog.show()
+    dialog.showMinimized()
+    dialog.showNormal()
+    assert dialog._audio.muting and "restore" not in dialog._audio.calls
+
+    button.click()
+    assert not dialog._audio.muting and button.text() == ui.tr("静音")
+    button.click()
+    dialog._session = None
+    dialog._cancel_connection()
+    assert not dialog._audio.muting and not button.isChecked()
+    dialog.close()
+
+
 def test_stale_mute_is_cleared_once_twin_is_visible_and_connected(qtbot):
     from PySide6.QtWidgets import QWidget
     from app.tools import desktop_twin as ui

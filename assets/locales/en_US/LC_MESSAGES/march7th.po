@@ -8577,3 +8577,11 @@ msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中�
 msgstr ""
 "Timed out waiting for the Express Supply pop-up to close and the main "
 "screen to return. Check in-game whether you received the reward."
+
+#: app/tools/desktop_twin.py:746
+msgid "取消静音"
+msgstr "Unmute"
+
+#: app/tools/desktop_twin.py:746
+msgid "静音"
+msgstr "Mute"
