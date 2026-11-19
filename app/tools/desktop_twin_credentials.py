@@ -15,7 +15,7 @@ CREDENTIAL_TARGET = "March7thAssistant/DesktopTwin/localhost"
 
 
 def saved_account():
-    """None 表示没有条目；即使旧条目的用户名已损坏，也允许更新或忘记。"""
+    """None 表示没有条目；即使旧条目的用户名已损坏，也允许更新或删除。"""
     try:
         return win32cred.CredRead(CREDENTIAL_TARGET, win32cred.CRED_TYPE_GENERIC, 0)["UserName"] or ""
     except pywintypes.error as exc:
@@ -68,7 +68,7 @@ def save_credential(account, password):
     account = account.strip()
     _account_parts(account)
     if not password or "\0" in password:
-        raise ValueError(tr("请输入 Windows 账户密码。"))
+        raise ValueError(tr("请输入 Windows 账户密码"))
     try:
         win32cred.CredWrite({
             "Type": win32cred.CRED_TYPE_GENERIC,
@@ -87,7 +87,7 @@ def forget_credential():
         win32cred.CredDelete(CREDENTIAL_TARGET, win32cred.CRED_TYPE_GENERIC, 0)
     except pywintypes.error as exc:
         if exc.winerror != 1168:
-            raise RuntimeError(tr("无法忘记分身密码，请检查 Windows 凭据服务。")) from None
+            raise RuntimeError(tr("无法删除已保存的分身密码，请检查 Windows 凭据服务。")) from None
 
 
 def apply_saved_credential(client):
@@ -108,7 +108,7 @@ def apply_saved_credential(client):
     except (AttributeError, ValueError):
         password = ""
     if not password or "\0" in password:
-        raise ValueError(tr("已保存的凭据格式有误。请打开「管理分身密码」更新或忘记密码，也可以选择「本次手动登录」。"))
+        raise ValueError(tr("已保存的凭据格式有误。请打开「管理分身密码」更新或删除已保存的密码，也可以选择「本次手动登录」。"))
     try:
         client.Domain = domain
         client.UserName = username

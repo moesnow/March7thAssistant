@@ -451,7 +451,7 @@ class DesktopTwinDialog(QDialog):
             result = box.exec()
             if result in (QDialog.DialogCode.Accepted, box.FORGOTTEN):
                 self._dismiss_error()
-                message = tr("已忘记分身密码") if result == box.FORGOTTEN else tr("已保存分身密码")
+                message = tr("已删除保存的分身密码") if result == box.FORGOTTEN else tr("已保存分身密码")
                 InfoBar.success(title=message, content="", duration=2500, parent=self)
         finally:
             box.deleteLater()

@@ -8244,8 +8244,8 @@ msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中�
 msgstr "「列車補給」のポップアップから制限時間内にメイン画面に戻れませんでした。ゲーム内で報酬を受け取れたか確認してください。"
 
 #: app/tools/desktop_twin.py:454
-msgid "已忘记分身密码"
-msgstr "分身パスワードを削除しました"
+msgid "已删除保存的分身密码"
+msgstr "保存した分身パスワードを削除しました"
 
 #: app/tools/desktop_twin.py:454
 msgid "已保存分身密码"
@@ -8268,24 +8268,25 @@ msgid "请填写有效的 Windows 账户名。"
 msgstr "有効な Windows アカウント名を入力してください。"
 
 #: app/tools/desktop_twin_credentials.py:71
-msgid "请输入 Windows 账户密码。"
-msgstr "Windows アカウントのパスワードを入力してください。"
+msgid "请输入 Windows 账户密码"
+msgstr "Windows アカウントのパスワードを入力"
 
 #: app/tools/desktop_twin_credentials.py:82
 msgid "无法保存分身密码，请检查账户名和 Windows 凭据服务。"
 msgstr "分身パスワードを保存できません。アカウント名と Windows 資格情報サービスを確認してください。"
 
 #: app/tools/desktop_twin_credentials.py:90
-msgid "无法忘记分身密码，请检查 Windows 凭据服务。"
-msgstr "分身パスワードを削除できません。Windows 資格情報サービスを確認してください。"
+msgid "无法删除已保存的分身密码，请检查 Windows 凭据服务。"
+msgstr "保存した分身パスワードを削除できません。Windows 資格情報サービスを確認してください。"
 
 #: app/tools/desktop_twin_credentials.py:95
 msgid "分身密码仅用于本机连接"
 msgstr "分身パスワードはこの PC への接続でのみ使用できます。"
 
 #: app/tools/desktop_twin_credentials.py:111
-msgid "已保存的凭据格式有误。请打开「管理分身密码」更新或忘记密码，也可以选择「本次手动登录」。"
-msgstr "保存された資格情報の形式が不正です。「分身パスワードの管理」で更新または削除するか、「今回だけ手動でサインイン」を選んでください。"
+msgid "已保存的凭据格式有误。请打开「管理分身密码」更新或删除已保存的密码，也可以选择「本次手动登录」。"
+msgstr ""
+"保存された資格情報の形式が不正です。「分身パスワードの管理」で保存したパスワードを更新または削除するか、「今回だけ手動でサインイン」を選んでください。"
 
 #: app/tools/desktop_twin_credentials.py:118
 msgid "无法向本机分身提供已保存的凭据"
@@ -8303,15 +8304,16 @@ msgstr "Windows アカウント"
 msgid "账户密码"
 msgstr "アカウントのパスワード"
 
-#: app/tools/desktop_twin_password_dialog.py:26
-msgid "密码保存在本机的 Windows 凭据管理器中。以你的 Windows 用户身份运行的其他程序也可能读取它。"
-msgstr ""
-"パスワードはこの PC の Windows 資格情報マネージャーに保存されます。同じ Windows "
-"ユーザーとして実行中の他のプログラムも読み取れる場合があります。"
-
 #: app/tools/desktop_twin_password_dialog.py:31
-msgid "忘记密码"
-msgstr "パスワードを削除"
+msgid ""
+"密码保存在本机的Windows凭据管理器中，March7th小助手不会以任何方式上传你的Windows密码。如果保存的密码错误，启动分身时仍会要求输入密码。"
+msgstr ""
+"パスワードはこの PC の Windows 資格情報マネージャーに保存されます。March7th 小助手が Windows "
+"のパスワードをアップロードすることは一切ありません。保存したパスワードが間違っている場合は、分身の起動時にパスワードの入力を求められます。"
+
+#: app/tools/desktop_twin_password_dialog.py:36
+msgid "删除已保存的密码"
+msgstr "保存したパスワードを削除"
 
 #: app/tools/desktop_twin_password_dialog.py:34
 msgid "更新密码"

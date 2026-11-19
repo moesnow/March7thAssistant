@@ -8243,8 +8243,8 @@ msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中�
 msgstr "열차 보급 팝업에서 제한 시간 안에 메인 화면으로 돌아가지 못했습니다. 게임에서 보상을 받았는지 확인하세요."
 
 #: app/tools/desktop_twin.py:454
-msgid "已忘记分身密码"
-msgstr "분신 비밀번호를 삭제했습니다"
+msgid "已删除保存的分身密码"
+msgstr "저장된 분신 비밀번호를 삭제했습니다"
 
 #: app/tools/desktop_twin.py:454
 msgid "已保存分身密码"
@@ -8267,26 +8267,26 @@ msgid "请填写有效的 Windows 账户名。"
 msgstr "올바른 Windows 계정 이름을 입력하세요."
 
 #: app/tools/desktop_twin_credentials.py:71
-msgid "请输入 Windows 账户密码。"
-msgstr "Windows 계정 비밀번호를 입력하세요."
+msgid "请输入 Windows 账户密码"
+msgstr "Windows 계정 비밀번호를 입력하세요"
 
 #: app/tools/desktop_twin_credentials.py:82
 msgid "无法保存分身密码，请检查账户名和 Windows 凭据服务。"
 msgstr "분신 비밀번호를 저장할 수 없습니다. 계정 이름과 Windows 자격 증명 서비스를 확인하세요."
 
 #: app/tools/desktop_twin_credentials.py:90
-msgid "无法忘记分身密码，请检查 Windows 凭据服务。"
-msgstr "분신 비밀번호를 삭제할 수 없습니다. Windows 자격 증명 서비스를 확인하세요."
+msgid "无法删除已保存的分身密码，请检查 Windows 凭据服务。"
+msgstr "저장된 분신 비밀번호를 삭제할 수 없습니다. Windows 자격 증명 서비스를 확인하세요."
 
 #: app/tools/desktop_twin_credentials.py:95
 msgid "分身密码仅用于本机连接"
 msgstr "분신 비밀번호는 이 PC에 연결할 때만 사용할 수 있습니다."
 
 #: app/tools/desktop_twin_credentials.py:111
-msgid "已保存的凭据格式有误。请打开「管理分身密码」更新或忘记密码，也可以选择「本次手动登录」。"
+msgid "已保存的凭据格式有误。请打开「管理分身密码」更新或删除已保存的密码，也可以选择「本次手动登录」。"
 msgstr ""
-"저장된 자격 증명의 형식이 올바르지 않습니다. ‘분신 비밀번호 관리’에서 수정하거나 삭제하세요. ‘이번만 수동 로그인’을 선택할 수도 "
-"있습니다."
+"저장된 자격 증명의 형식이 올바르지 않습니다. ‘분신 비밀번호 관리’에서 저장된 비밀번호를 수정하거나 삭제하세요. ‘이번만 수동 "
+"로그인’을 선택할 수도 있습니다."
 
 #: app/tools/desktop_twin_credentials.py:118
 msgid "无法向本机分身提供已保存的凭据"
@@ -8304,15 +8304,16 @@ msgstr "Windows 계정"
 msgid "账户密码"
 msgstr "계정 비밀번호"
 
-#: app/tools/desktop_twin_password_dialog.py:26
-msgid "密码保存在本机的 Windows 凭据管理器中。以你的 Windows 用户身份运行的其他程序也可能读取它。"
-msgstr ""
-"비밀번호는 이 PC의 Windows 자격 증명 관리자에 저장됩니다. 같은 Windows 사용자로 실행되는 다른 프로그램도 읽을 수 "
-"있습니다."
-
 #: app/tools/desktop_twin_password_dialog.py:31
-msgid "忘记密码"
-msgstr "비밀번호 삭제"
+msgid ""
+"密码保存在本机的Windows凭据管理器中，March7th小助手不会以任何方式上传你的Windows密码。如果保存的密码错误，启动分身时仍会要求输入密码。"
+msgstr ""
+"비밀번호는 이 PC의 Windows 자격 증명 관리자에 저장됩니다. March7th 도우미는 어떤 방식으로도 Windows 비밀번호를 "
+"업로드하지 않습니다. 저장된 비밀번호가 틀리면 분신을 시작할 때 비밀번호 입력을 요청합니다."
+
+#: app/tools/desktop_twin_password_dialog.py:36
+msgid "删除已保存的密码"
+msgstr "저장된 비밀번호 삭제"
 
 #: app/tools/desktop_twin_password_dialog.py:34
 msgid "更新密码"

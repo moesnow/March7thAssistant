@@ -8163,8 +8163,8 @@ msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中�
 msgstr "未能在時限內從「列車補給」視窗返回主畫面。請在遊戲中確認是否已領取獎勵。"
 
 #: app/tools/desktop_twin.py:454
-msgid "已忘记分身密码"
-msgstr "已忘記分身密碼"
+msgid "已删除保存的分身密码"
+msgstr "已刪除儲存的分身密碼"
 
 #: app/tools/desktop_twin.py:454
 msgid "已保存分身密码"
@@ -8187,24 +8187,24 @@ msgid "请填写有效的 Windows 账户名。"
 msgstr "請輸入有效的 Windows 帳戶名稱。"
 
 #: app/tools/desktop_twin_credentials.py:71
-msgid "请输入 Windows 账户密码。"
-msgstr "請輸入 Windows 帳戶密碼。"
+msgid "请输入 Windows 账户密码"
+msgstr "請輸入 Windows 帳戶密碼"
 
 #: app/tools/desktop_twin_credentials.py:82
 msgid "无法保存分身密码，请检查账户名和 Windows 凭据服务。"
 msgstr "無法儲存分身密碼，請檢查帳戶名稱和 Windows 認證服務。"
 
 #: app/tools/desktop_twin_credentials.py:90
-msgid "无法忘记分身密码，请检查 Windows 凭据服务。"
-msgstr "無法刪除分身密碼，請檢查 Windows 認證服務。"
+msgid "无法删除已保存的分身密码，请检查 Windows 凭据服务。"
+msgstr "無法刪除已儲存的分身密碼，請檢查 Windows 認證服務。"
 
 #: app/tools/desktop_twin_credentials.py:95
 msgid "分身密码仅用于本机连接"
 msgstr "分身密碼僅用於本機連線"
 
 #: app/tools/desktop_twin_credentials.py:111
-msgid "已保存的凭据格式有误。请打开「管理分身密码」更新或忘记密码，也可以选择「本次手动登录」。"
-msgstr "已儲存的認證格式有誤。請開啟「管理分身密碼」更新或忘記密碼，也可以選擇「這次手動登入」。"
+msgid "已保存的凭据格式有误。请打开「管理分身密码」更新或删除已保存的密码，也可以选择「本次手动登录」。"
+msgstr "已儲存的認證格式有誤。請開啟「管理分身密碼」更新或刪除已儲存的密碼，也可以選擇「這次手動登入」。"
 
 #: app/tools/desktop_twin_credentials.py:118
 msgid "无法向本机分身提供已保存的凭据"
@@ -8222,13 +8222,16 @@ msgstr "Windows 帳戶"
 msgid "账户密码"
 msgstr "帳戶密碼"
 
-#: app/tools/desktop_twin_password_dialog.py:26
-msgid "密码保存在本机的 Windows 凭据管理器中。以你的 Windows 用户身份运行的其他程序也可能读取它。"
-msgstr "密碼儲存在本機的 Windows 認證管理員中。以你的 Windows 使用者身分執行的其他程式也可能讀取它。"
-
 #: app/tools/desktop_twin_password_dialog.py:31
-msgid "忘记密码"
-msgstr "忘記密碼"
+msgid ""
+"密码保存在本机的Windows凭据管理器中，March7th小助手不会以任何方式上传你的Windows密码。如果保存的密码错误，启动分身时仍会要求输入密码。"
+msgstr ""
+"密碼儲存在本機的 Windows 認證管理員中，March7th 小助手不會以任何方式上傳你的 Windows "
+"密碼。如果儲存的密碼錯誤，啟動分身時仍會要求輸入密碼。"
+
+#: app/tools/desktop_twin_password_dialog.py:36
+msgid "删除已保存的密码"
+msgstr "刪除已儲存的密碼"
 
 #: app/tools/desktop_twin_password_dialog.py:34
 msgid "更新密码"

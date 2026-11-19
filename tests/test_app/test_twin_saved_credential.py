@@ -97,7 +97,7 @@ def test_password_editor_round_trip(qtbot, monkeypatch, storage):
     assert box.forget.isHidden()
     box.save.click()
     writer.assert_not_called()
-    assert not box.error.isHidden()
+    assert box.error.isHidden()
     box.password.setText(" initial 🔑 ")
     box.save.click()
     record, flags = writer.call_args.args
@@ -131,6 +131,36 @@ def test_password_editor_round_trip(qtbot, monkeypatch, storage):
     box.forget.click()
     deleter.assert_called_once_with(creds.CREDENTIAL_TARGET, creds.win32cred.CRED_TYPE_GENERIC, 0)
     assert box.result() == box.FORGOTTEN
+
+
+def test_empty_update_shakes_only_password_and_restores_position(qtbot, storage, monkeypatch):
+    from PySide6.QtCore import QAbstractAnimation
+    from app.tools.desktop_twin_password_dialog import TwinPasswordDialog
+
+    creds, _ = storage
+    writer = Mock()
+    monkeypatch.setattr(creds, "save_credential", writer)
+    box = TwinPasswordDialog(r"PC\example", None)
+    qtbot.addWidget(box)
+    box.show()
+    qtbot.wait(1)
+    origin = box.password.pos()
+    account_position = box.account.pos()
+    box.save.setFocus()
+    box.save.click()
+    animation = box._password_shake
+    assert box.focusWidget() is box.password
+    assert animation.state() == QAbstractAnimation.State.Running
+    animation.setCurrentTime(40)
+    assert box.password.x() < origin.x() and box.password.y() == origin.y()
+    assert box.account.pos() == account_position
+    box.save.click()
+    animation.setCurrentTime(90)
+    assert box.password.x() > origin.x()
+    with qtbot.waitSignal(animation.finished, timeout=1000):
+        pass
+    assert box.password.pos() == origin and box.error.isHidden()
+    writer.assert_not_called()
 
 
 def test_manual_prompt_skips_vault_for_one_connection(qtbot, storage):
