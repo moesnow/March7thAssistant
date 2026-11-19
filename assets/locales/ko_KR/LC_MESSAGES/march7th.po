@@ -8250,17 +8250,13 @@ msgstr "저장된 분신 비밀번호를 삭제했습니다"
 msgid "已保存分身密码"
 msgstr "분신 비밀번호를 저장했습니다"
 
-#: app/tools/desktop_twin.py:728
-msgid "管理分身密码"
-msgstr "분신 비밀번호 관리"
-
-#: app/tools/desktop_twin.py:729
-msgid "本次手动登录"
-msgstr "이번만 수동 로그인"
+#: app/tools/desktop_twin.py:727
+msgid "点击“自动登录”保存Windows密码至本地凭证，后续启动无需输入密码"
+msgstr "「자동 로그인」을 눌러 Windows 암호를 이 PC의 자격 증명에 저장하면 다음부터는 암호를 입력할 필요가 없습니다"
 
 #: app/tools/desktop_twin_credentials.py:24
-msgid "无法读取分身密码，请检查 Windows 凭据服务或选择本次手动登录。"
-msgstr "분신 비밀번호를 읽을 수 없습니다. Windows 자격 증명 서비스를 확인하거나 이번에는 수동으로 로그인하세요."
+msgid "无法读取分身密码，请检查 Windows 凭据服务。"
+msgstr "데스크톱 분신 암호를 읽을 수 없습니다. Windows 자격 증명 관리자 서비스를 확인하세요."
 
 #: app/tools/desktop_twin_credentials.py:63
 msgid "请填写有效的 Windows 账户名。"
@@ -8283,10 +8279,8 @@ msgid "分身密码仅用于本机连接"
 msgstr "분신 비밀번호는 이 PC에 연결할 때만 사용할 수 있습니다."
 
 #: app/tools/desktop_twin_credentials.py:111
-msgid "已保存的凭据格式有误。请打开「管理分身密码」更新或删除已保存的密码，也可以选择「本次手动登录」。"
-msgstr ""
-"저장된 자격 증명의 형식이 올바르지 않습니다. ‘분신 비밀번호 관리’에서 저장된 비밀번호를 수정하거나 삭제하세요. ‘이번만 수동 "
-"로그인’을 선택할 수도 있습니다."
+msgid "已保存的凭据格式有误。请打开「自动登录」更新或删除已保存的密码。"
+msgstr "저장된 자격 증명의 형식이 올바르지 않습니다. 「자동 로그인」에서 저장된 암호를 변경하거나 삭제하세요."
 
 #: app/tools/desktop_twin_credentials.py:118
 msgid "无法向本机分身提供已保存的凭据"
@@ -8304,12 +8298,9 @@ msgstr "Windows 계정"
 msgid "账户密码"
 msgstr "계정 비밀번호"
 
-#: app/tools/desktop_twin_password_dialog.py:31
-msgid ""
-"密码保存在本机的Windows凭据管理器中，March7th小助手不会以任何方式上传你的Windows密码。如果保存的密码错误，启动分身时仍会要求输入密码。"
-msgstr ""
-"비밀번호는 이 PC의 Windows 자격 증명 관리자에 저장됩니다. March7th 도우미는 어떤 방식으로도 Windows 비밀번호를 "
-"업로드하지 않습니다. 저장된 비밀번호가 틀리면 분신을 시작할 때 비밀번호 입력을 요청합니다."
+#: app/tools/desktop_twin_password_dialog.py:44
+msgid "若保存的密码有误，启动时仍会要求输入"
+msgstr "저장된 암호가 틀리면 시작할 때 암호를 다시 입력해야 합니다"
 
 #: app/tools/desktop_twin_password_dialog.py:36
 msgid "删除已保存的密码"

@@ -376,7 +376,7 @@ class DesktopTwinDialog(QDialog):
         pointsLayout.setContentsMargins(16, 14, 16, 14)
         pointsLayout.setSpacing(10)
         self._pointLabels = []
-        for icon in (UiIcon.PERSON, FIF.GAME, UiIcon.PEOPLE_SWAP, FIF.POWER_BUTTON):
+        for icon in (UiIcon.PERSON, FIF.FINGERPRINT, FIF.GAME, UiIcon.PEOPLE_SWAP, FIF.POWER_BUTTON):
             iconWidget = IconWidget(icon, self._pointsCard)
             iconWidget.setFixedSize(16, 16)
             label = BodyLabel(self._pointsCard)
@@ -424,16 +424,10 @@ class DesktopTwinDialog(QDialog):
         layout.addLayout(header)
         layout.addSpacing(20)
         layout.addWidget(self._pointsCard)
-        self._credentials_button = PushButton(intro)
+        self._credentials_button = PushButton(FIF.FINGERPRINT, "", intro)
         self._credentials_button.clicked.connect(self._manage_credentials)
-        self._manual_button = PushButton(intro)
-        self._manual_button.clicked.connect(lambda: self._toggle_connection(manual=True))
-        credentials_row = QHBoxLayout()
-        credentials_row.addWidget(self._credentials_button)
-        credentials_row.addWidget(self._manual_button)
-        credentials_row.addStretch()
         layout.addSpacing(8)
-        layout.addLayout(credentials_row)
+        layout.addWidget(self._credentials_button, 0, Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self._errorHolder)
         layout.addStretch(1)
         return intro
@@ -725,12 +719,12 @@ class DesktopTwinDialog(QDialog):
     def retranslateUi(self):
         self.setWindowTitle(tr("桌面分身（实验）"))
         self._titleLabel.setText(tr("桌面分身"))
-        self._credentials_button.setText(tr("管理分身密码"))
-        self._manual_button.setText(tr("本次手动登录"))
+        self._credentials_button.setText(tr("自动登录"))
         self._experimentalPill.setText(tr("实验性"))
         self._descLabel.setText(tr("在独立的 Windows 桌面中运行游戏和小助手，执行任务时不占用你的鼠标和键盘。"))
         points = (
             tr("分身以当前 Windows 账户登录，首次使用需要允许系统开启本地子会话"),
+            tr("点击“自动登录”保存Windows密码至本地凭证，后续启动无需输入密码"),
             tr("游戏同一时间只能在一个桌面运行，连接前请先关闭主桌面中的游戏"),
             tr("运行期间，任务、定时和设置交给分身内的小助手，主界面暂停操作"),
             tr("注销分身会关闭其中的游戏和所有应用"),
@@ -744,7 +738,6 @@ class DesktopTwinDialog(QDialog):
         self._error_docs_button.setUrl(self._docs_button.getUrl())
 
         closing = self._quit_until is not None or self._logoff_until is not None
-        self._manual_button.setEnabled(not closing and not self._connect_until)
         opening = self._launcher is not None or self._launch_until is not None
         recovery_logoff = self._recovery_session is not None and not self._connect_until
         if self._connect_until:
@@ -863,7 +856,7 @@ class DesktopTwinDialog(QDialog):
             self._recovery_session = candidate
             self.retranslateUi()
 
-    def _toggle_connection(self, *, manual=False):
+    def _toggle_connection(self):
         if self._quit_until or self._logoff_until:
             return
         self._error = ""
@@ -908,7 +901,7 @@ class DesktopTwinDialog(QDialog):
                 self._login_started_at = session_info(process_session_id()).current_time
             self._set_screen_visible(True)
             self._connect_until = time.monotonic() + 90
-            self._rdp.connect_child(manual=manual)
+            self._rdp.connect_child()
         except Exception as error:
             self._cancel_connection()
             self._report(error)

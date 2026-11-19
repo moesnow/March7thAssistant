@@ -8170,17 +8170,13 @@ msgstr "已刪除儲存的分身密碼"
 msgid "已保存分身密码"
 msgstr "已儲存分身密碼"
 
-#: app/tools/desktop_twin.py:728
-msgid "管理分身密码"
-msgstr "管理分身密碼"
-
-#: app/tools/desktop_twin.py:729
-msgid "本次手动登录"
-msgstr "這次手動登入"
+#: app/tools/desktop_twin.py:727
+msgid "点击“自动登录”保存Windows密码至本地凭证，后续启动无需输入密码"
+msgstr "點選「自動登入」將 Windows 密碼儲存至本機認證，之後啟動時無需再輸入密碼"
 
 #: app/tools/desktop_twin_credentials.py:24
-msgid "无法读取分身密码，请检查 Windows 凭据服务或选择本次手动登录。"
-msgstr "無法讀取分身密碼，請檢查 Windows 認證服務或選擇這次手動登入。"
+msgid "无法读取分身密码，请检查 Windows 凭据服务。"
+msgstr "無法讀取分身密碼，請檢查 Windows 認證管理員服務。"
 
 #: app/tools/desktop_twin_credentials.py:63
 msgid "请填写有效的 Windows 账户名。"
@@ -8203,8 +8199,8 @@ msgid "分身密码仅用于本机连接"
 msgstr "分身密碼僅用於本機連線"
 
 #: app/tools/desktop_twin_credentials.py:111
-msgid "已保存的凭据格式有误。请打开「管理分身密码」更新或删除已保存的密码，也可以选择「本次手动登录」。"
-msgstr "已儲存的認證格式有誤。請開啟「管理分身密碼」更新或刪除已儲存的密碼，也可以選擇「這次手動登入」。"
+msgid "已保存的凭据格式有误。请打开「自动登录」更新或删除已保存的密码。"
+msgstr "已儲存的認證格式有誤。請開啟「自動登入」更新或刪除已儲存的密碼。"
 
 #: app/tools/desktop_twin_credentials.py:118
 msgid "无法向本机分身提供已保存的凭据"
@@ -8222,12 +8218,9 @@ msgstr "Windows 帳戶"
 msgid "账户密码"
 msgstr "帳戶密碼"
 
-#: app/tools/desktop_twin_password_dialog.py:31
-msgid ""
-"密码保存在本机的Windows凭据管理器中，March7th小助手不会以任何方式上传你的Windows密码。如果保存的密码错误，启动分身时仍会要求输入密码。"
-msgstr ""
-"密碼儲存在本機的 Windows 認證管理員中，March7th 小助手不會以任何方式上傳你的 Windows "
-"密碼。如果儲存的密碼錯誤，啟動分身時仍會要求輸入密碼。"
+#: app/tools/desktop_twin_password_dialog.py:44
+msgid "若保存的密码有误，启动时仍会要求输入"
+msgstr "若儲存的密碼有誤，啟動時仍會要求輸入"
 
 #: app/tools/desktop_twin_password_dialog.py:36
 msgid "删除已保存的密码"

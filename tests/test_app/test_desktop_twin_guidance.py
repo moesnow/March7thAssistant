@@ -21,7 +21,7 @@ def guidance_dialog(qtbot, monkeypatch):
         def prepare(self):
             self.error = None
 
-        def connect_child(self, *, manual=False):
+        def connect_child(self):
             pass
 
         def dispose(self):

@@ -22,7 +22,6 @@ from app.tools.desktop_twin_credentials import apply_saved_credential
 
 _RDP_CLSID = "{A0C63C30-F08D-4AB4-907C-34905D770C7D}"  # MsRdpClient10NotSafeForScripting
 _EXTENDED_SETTINGS = UUID("302d8188-0052-4807-806a-362b628f9ac5").bytes_le
-_NON_SCRIPTABLE3 = UUID("b3378d90-0728-45c7-8ed7-b6159fb92219").bytes_le
 DESKTOP_SIZE = (1920, 1080)
 
 
@@ -166,15 +165,8 @@ class RdpControl(QWidget):
             self.dispose()
             raise
 
-    def connect_child(self, *, manual=False):
-        if manual:
-            # 每次连接都有独立控件。仅本次请求 Windows 显示身份验证界面。
-            with _hosted_control(self._hwnd) as control, _interface(control, _NON_SCRIPTABLE3) as settings:
-                # IMsRdpClientNonScriptable3::put_PromptForCredentials(VARIANT_BOOL)
-                prompt = _com_method(settings, 19, ctypes.c_long, ctypes.c_short)
-                _check_hresult(prompt(settings, -1))
-        else:
-            apply_saved_credential(self._client)
+    def connect_child(self):
+        apply_saved_credential(self._client)
         self._client.Connect()
 
     def dispose(self):

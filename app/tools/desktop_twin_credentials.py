@@ -21,7 +21,7 @@ def saved_account():
     except pywintypes.error as exc:
         if exc.winerror == 1168:
             return None
-        raise RuntimeError(tr("无法读取分身密码，请检查 Windows 凭据服务或选择本次手动登录。")) from None
+        raise RuntimeError(tr("无法读取分身密码，请检查 Windows 凭据服务。")) from None
 
 
 def current_account():
@@ -99,7 +99,7 @@ def apply_saved_credential(client):
         # 缺少条目、当前登录会话无凭据库或不允许读取时，沿用系统交互登录。
         if exc.winerror in (5, 1168, 1312):
             return
-        raise RuntimeError(tr("无法读取分身密码，请检查 Windows 凭据服务或选择本次手动登录。")) from None
+        raise RuntimeError(tr("无法读取分身密码，请检查 Windows 凭据服务。")) from None
 
     account = entry["UserName"] or ""
     try:
@@ -108,7 +108,7 @@ def apply_saved_credential(client):
     except (AttributeError, ValueError):
         password = ""
     if not password or "\0" in password:
-        raise ValueError(tr("已保存的凭据格式有误。请打开「管理分身密码」更新或删除已保存的密码，也可以选择「本次手动登录」。"))
+        raise ValueError(tr("已保存的凭据格式有误。请打开「自动登录」更新或删除已保存的密码。"))
     try:
         client.Domain = domain
         client.UserName = username
