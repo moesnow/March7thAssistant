@@ -57,9 +57,8 @@ IDENTITY_STABLE_DIFF = 3
 # 每次购买经验加 4 点。少到账的按键没有扣费时，再等这么久确认不是迟到的回执。
 EXPERIENCE_PER_PURCHASE = 4
 EXPERIENCE_LATE_SECONDS = 1.5
-# 配装记录按物品栏图像比对：同一件物品的图标对位后高度相似，扩列区域沿用物品栏变化阈值。
+# 配装记录按物品栏图像逐件比对：同一件物品的图标对位后高度相似。
 INVENTORY_ICON_SCORE = 0.90
-INVENTORY_STABLE_DIFF = 1.8
 # 拖动后、每个节点开始备战前把指针移到角落，避免停在卡片上使卡面抬起。
 POINTER_REST = (12, 12)
 # 指针移开后，被抬起的卡片落回原位所需的时间。
@@ -216,10 +215,9 @@ class SlotIdentity(NamedTuple):
 
 
 class EquipmentCheck(NamedTuple):
-    """角色在当时的物品栏下没有可执行的穿戴或合成。物品按图像记录，不依赖装备名识别。"""
+    """角色在当时的物品栏下没有可执行的穿戴或合成。物品（含向左扩出的列）按图像记录，不依赖装备名识别。"""
     worn: int | None
     icons: tuple[np.ndarray, ...]
-    spare: np.ndarray
 
 
 @dataclass(frozen=True)
@@ -262,6 +260,10 @@ class CurrencyWars:
         self.last_board = None
         self.last_result_stage = None
         self.slot_cache = {}
+        # 本节点拖动后按回执画面记下的卡位。回执可能取在落位动画中，卡面稳定后据此更新而不必重读详情。
+        self.moved_identities = {}
+        # 因备战席已满没能收下的晶矿位置，按节点记录。满席时先收其余晶矿并腾位，不再反复扫它。
+        self.blocked_orbs = {}
         self.equipment_checks = {}
         # 核心穿满三件前只给这些角色配装。None 表示不限。
         self.equipment_focus = None
@@ -1236,9 +1238,10 @@ class CurrencyWars:
         layout = [(slot.point, slot.occupied, slot.blocked) for slot in slots]
         marks = {slot.point: frame.slot_mark(slot.point) for slot in stale}
         settled = None
+        stable_points = set()
 
         def ready(f):
-            nonlocal settled
+            nonlocal settled, stable_points
             if f.page != page or f.stage != stage or f.capacity != capacity:
                 return False
             current = f.bench_slots() if bench_only else f.slots()
@@ -1247,10 +1250,11 @@ class CurrencyWars:
             settled = f, current
             if [(slot.point, slot.occupied, slot.blocked) for slot in current] != layout:
                 # 卡位占用已经变化，交给逐格读取按新画面处理。
+                stable_points = set()
                 return True
-            steady = all(self._cached_identity(f, slot) is not None
-                         or cv2.absdiff(f.slot_mark(slot.point), marks[slot.point]).mean() <= IDENTITY_STABLE_DIFF
-                         for slot in stale)
+            stable_points = {slot.point for slot in stale
+                             if cv2.absdiff(f.slot_mark(slot.point), marks[slot.point]).mean() <= IDENTITY_STABLE_DIFF}
+            steady = all(slot.point in stable_points or self._cached_identity(f, slot) is not None for slot in stale)
             marks.update((slot.point, f.slot_mark(slot.point)) for slot in stale)
             return steady
 
@@ -1258,11 +1262,26 @@ class CurrencyWars:
         if settled is None:
             return frame, slots
         frame, slots = settled
+        self._refresh_moved_identities(frame, stale, stable_points)
         if log.logger.isEnabledFor(DEBUG):
             kept = [slot for slot in stale if slot.occupied and self._cached_identity(frame, slot) is not None]
             names = "、".join(f"{slot.zone}第 {slot.index + 1} 格" for slot in stale)
             log.debug(f"{stage}已认过的卡位暂时对不上（{names}），新画面复核后沿用 {len(kept)} 张")
         return frame, slots
+
+    def _refresh_moved_identities(self, frame, stale, stable_points):
+        """本节点拖动后记下的卡面取自落位动画。同一格在新画面里已稳定却仍对不上时，沿用拖动时确认的姓名并更新卡面。"""
+        for slot in stale:
+            key = slot.zone, slot.index
+            entry = self.slot_cache.get(key)
+            moved = self.moved_identities.get(key)
+            if (entry is None or moved is None or moved[1] is not entry or moved[0] != frame.stage
+                    or slot.point not in stable_points or self._cached_identity(frame, slot) is not None):
+                continue
+            mark = frame.slot_mark(slot.point)
+            self.slot_cache[key] = entry._replace(portrait=cv2.resize(mark, (12, 12)).astype(np.int16), mark=mark.copy())
+            del self.moved_identities[key]
+            log.debug(f"{frame.stage}{slot.zone}第 {slot.index + 1} 格刚挪入的{entry.name}卡面已稳定，沿用姓名并更新卡面")
 
     def _read_board(self, frame, *, front_only=False, bench_only=False):
         frame, slots = self._board_layout(frame, bench_only=bench_only)
@@ -1513,8 +1532,10 @@ class CurrencyWars:
             # 原位已空而目标格新占用，落下的就是拖动的这张卡。备战席和场上卡面大小不同，不必再比肖像。
             if named and (not updated.slot_occupied(source.point) or np.abs(before - after).mean() < 32
                           or updated.slot_portrait_matches(destination.point, portrait)):
-                self.slot_cache[key] = SlotIdentity(after, source.unit.name, source.unit.output,
-                                                    updated.slot_mark(destination.point).copy())
+                entry = SlotIdentity(after, source.unit.name, source.unit.output,
+                                     updated.slot_mark(destination.point).copy())
+                self.slot_cache[key] = entry
+                self.moved_identities[key] = board.stage, entry
         if overflow_deploy:
             self.preparation_progress += 1
         log.info(f"{source.unit.name}已移动到{destination.zone}第 {destination.index + 1} 格")
@@ -1708,18 +1729,38 @@ class CurrencyWars:
                 if fresh.page != Page.BOARD or fresh.stage != stage:
                     return fresh
                 frame = fresh
+        blocked_orbs = self.blocked_orbs.setdefault(stage, [])
+
+        def near_blocked(point):
+            return any(abs(point[0] - x) <= 40 and abs(point[1] - y) <= 40 for x, y in blocked_orbs)
+
+        def collectable(f):
+            # 装角色的晶矿在备战席满时开不了。挡下过的位置等腾出格子再收，先收其余晶矿。
+            found = reward_orbs(f)
+            if not blocked_orbs or any(not slot.occupied and not slot.blocked for slot in f.bench_slots()):
+                return found
+            return tuple(point for point in found if not near_blocked(point))
+
         for _ in range(18):
             orbs = reward_orbs(frame)
             if not orbs:
                 return frame
+            if not collectable(frame):
+                log.debug(f"{stage}备战席已满，被挡下的晶矿等腾出格子后再收")
+                frame, finished = self._free_slot_for_orbs(frame, stage)
+                if finished or frame.page != Page.BOARD:
+                    return frame
+                continue
             gold = frame.gold
             items = len(frame.inventory_items())
             bench = sum(slot.occupied for slot in frame.bench_slots()) if self.default_strategy else 0
+            swept = None
 
             def sweep(f):
-                if found := reward_orbs(f):
+                nonlocal swept
+                if found := collectable(f):
                     # 球体会漂移，每次横扫都使用最新的坐标。
-                    x, y = found[0]
+                    swept = x, y = found[0]
                     return (max(1275, x - 86), y), (min(1638, x + 88), y)
                 return None
 
@@ -1737,22 +1778,32 @@ class CurrencyWars:
             frame = self._drag_to(frame, sweep, collected, "拖动后未确认收集节点奖励",
                                   seconds=4, attempts=1, track_control=False)
             if blocked(frame) and frame.page not in PREP_OVERLAYS:
+                if swept is not None and not near_blocked(swept):
+                    blocked_orbs.append(swept)
                 frame = self._expect(lambda f: f.page in PREP_OVERLAYS or
                                      f.page == Page.BOARD and f.stage == stage and not blocked(f),
                                      7, "备战席满提示后未识别备战界面")
                 if frame.page != Page.BOARD:
                     return frame
-                try:
-                    frame = self._free_reward_slot(frame)
-                except CurrencyWarsBenchBlocked:
-                    frame = self.frame
-                    if not self._final_boss_ready(frame) and not (self.default_strategy and self._front_ready(frame, stage)):
-                        raise
-                    log.info("当前阵容可以出战，余下晶矿未开采")
+                frame, finished = self._free_slot_for_orbs(frame, stage)
+                if finished:
                     return frame
+            elif swept is not None:
+                blocked_orbs[:] = [(x, y) for x, y in blocked_orbs if abs(swept[0] - x) > 40 or abs(swept[1] - y) > 40]
             if frame.page != Page.BOARD:
                 return frame
         raise CurrencyWarsReadTimeout("棋盘奖励收集达到操作上限")
+
+    def _free_slot_for_orbs(self, frame, stage):
+        """为装角色的晶矿腾出备战位。腾不出时若当前阵容可以出战，保留余下晶矿。返回新画面和是否结束收集。"""
+        try:
+            return self._free_reward_slot(frame), False
+        except CurrencyWarsBenchBlocked:
+            frame = self.frame
+            if not self._final_boss_ready(frame) and not (self.default_strategy and self._front_ready(frame, stage)):
+                raise
+            log.info("当前阵容可以出战，余下晶矿未开采")
+            return frame, True
 
     def _open_shop(self, frame):
         return self._click_to(
@@ -2249,15 +2300,10 @@ class CurrencyWars:
         if worn != check.worn:
             self._log_equipment_recheck(frame, slot, f"卡面装备从 {check.worn} 件变为 {worn} 件")
             return None
-        # 扩列区域有变化时无法逐件对应，照常打开推荐页。
-        spare = cv2.absdiff(frame.crop(ui.INVENTORY_SPARE), check.spare).mean()
-        if spare > INVENTORY_STABLE_DIFF:
-            self._log_equipment_recheck(frame, slot, f"扩列区域变化 {spare:.1f}")
-            return None
         remaining = list(check.icons)
-        items = frame.inventory_items()
+        items = frame.inventory_items() + frame.spare_inventory_items()
         for order, (x, y) in enumerate(items, 1):
-            # 物品被用掉后其余物品会上移，同一件物品按图像对位比较。
+            # 物品被用掉后其余物品会依次前移，扩列的物品也会挪进右列。同一件物品按图像对位比较。
             area = frame.crop((x - 28, y - 28, x + 28, y + 28))
             scores = [cv2.matchTemplate(area, icon, cv2.TM_CCOEFF_NORMED).max() for icon in remaining]
             match = next((index for index, score in enumerate(scores) if score >= INVENTORY_ICON_SCORE), None)
@@ -2279,9 +2325,9 @@ class CurrencyWars:
         if board_frame.page != Page.BOARD:
             self.equipment_checks.pop(key, None)
             return
-        icons = tuple(board_frame.crop((x - 24, y - 24, x + 24, y + 24)) for x, y in board_frame.inventory_items())
-        self.equipment_checks[key] = EquipmentCheck(board_frame.card_equipment(slot), icons,
-                                                    board_frame.crop(ui.INVENTORY_SPARE))
+        items = board_frame.inventory_items() + board_frame.spare_inventory_items()
+        icons = tuple(board_frame.crop((x - 24, y - 24, x + 24, y + 24)) for x, y in items)
+        self.equipment_checks[key] = EquipmentCheck(board_frame.card_equipment(slot), icons)
 
     def _log_equipment_skips(self, stage, skipped):
         if skipped:
@@ -5080,6 +5126,8 @@ class CurrencyWars:
 
     def _reset_match_state(self):
         self.slot_cache.clear()
+        self.moved_identities.clear()
+        self.blocked_orbs.clear()
         self.equipment_checks.clear()
         self.pointer_parked_stage = None
         self.shop_catalog = None
