@@ -6184,8 +6184,8 @@ msgid "按下 {stop} 停止 · {pause} 继续"
 msgstr "按下 {stop} 停止 · {pause} 繼續"
 
 #: app/card/autoplot_setting_card.py:83
-msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
-msgstr "自動閱讀翁法羅斯英雄紀（請先開啟該書目錄）"
+msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录，非 .exe 版）"
+msgstr "自動閱讀翁法羅斯英雄紀（請先開啟該書目錄，非 .exe 版）"
 
 #: app/card/autoplot_setting_card.py:53
 msgid "记住自动对话开关状态"

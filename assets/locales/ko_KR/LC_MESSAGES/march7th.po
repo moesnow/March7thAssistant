@@ -6217,8 +6217,8 @@ msgid "按下 {stop} 停止 · {pause} 继续"
 msgstr "{stop} 중지 · {pause} 재개"
 
 #: app/card/autoplot_setting_card.py:83
-msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
-msgstr "앰포리어스 영웅기 자동 읽기 (먼저 해당 책의 목차를 여세요)"
+msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录，非 .exe 版）"
+msgstr "앰포리어스 영웅기 자동 읽기 (먼저 목차 열기, .exe 버전 제외)"
 
 #: app/card/autoplot_setting_card.py:53
 msgid "记住自动对话开关状态"

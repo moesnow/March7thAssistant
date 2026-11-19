@@ -6228,8 +6228,8 @@ msgstr "{stop} で停止 · {pause} で再開"
 # Japanese book title: https://honkai-star-
 # rail.fandom.com/wiki/Amphoreus%27s_Saga_of_Heroes
 #: app/card/autoplot_setting_card.py:83
-msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
-msgstr "オンパロス英雄記を自動で読む（先に本の目次を開いてください）"
+msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录，非 .exe 版）"
+msgstr "オンパロス英雄記を自動で読む（先に本の目次を開いてください、.exe版は対象外）"
 
 #: app/card/autoplot_setting_card.py:53
 msgid "记住自动对话开关状态"

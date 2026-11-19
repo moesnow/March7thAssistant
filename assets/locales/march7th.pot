@@ -42,7 +42,7 @@ msgid "自动短信 (自动点击关闭手机短信页面)"
 msgstr ""
 
 #: app/card/autoplot_setting_card.py:83
-msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
+msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录，非 .exe 版）"
 msgstr ""
 
 #: app/card/autoplot_setting_card.py:93

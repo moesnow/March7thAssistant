@@ -6372,10 +6372,9 @@ msgid "按下 {stop} 停止 · {pause} 继续"
 msgstr "Press {stop} to stop · {pause} to resume"
 
 #: app/card/autoplot_setting_card.py:83
-msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
+msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录，非 .exe 版）"
 msgstr ""
-"Automatically read the Amphoreus Heroic Saga (open the book's contents page "
-"first)"
+"Auto-read the Amphoreus Heroic Saga (open the contents first, .exe excluded)"
 
 #: app/card/autoplot_setting_card.py:53
 msgid "记住自动对话开关状态"
