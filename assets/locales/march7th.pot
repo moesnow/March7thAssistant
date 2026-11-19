@@ -7911,10 +7911,18 @@ msgstr ""
 msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
 msgstr ""
 
-#: app/tools/desktop_twin.py:746
+#: app/tools/desktop_twin.py:748
 msgid "取消静音"
 msgstr ""
 
-#: app/tools/desktop_twin.py:746
+#: app/tools/desktop_twin.py:748
 msgid "静音"
+msgstr ""
+
+#: app/tools/desktop_twin.py:746
+msgid "已静音"
+msgstr ""
+
+#: app/tools/desktop_twin.py:746
+msgid "声音开启"
 msgstr ""

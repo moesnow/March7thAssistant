@@ -891,11 +891,12 @@ def test_manual_mute_survives_hiding_until_unmuted_or_session_ends(qtbot):
     dialog._session = SessionIdentity(2, 200)
     dialog._connected = True
     dialog.retranslateUi()
-    assert button.isVisible() and button.text() == ui.tr("静音")
+    assert button.isVisible() and not button.isChecked() and not dialog._audio.muting
+    assert button.text() == ui.tr("声音开启") and button.toolTip() == ui.tr("静音")
 
     button.click()
     assert dialog.isVisible() and dialog._audio.muting
-    assert button.text() == ui.tr("取消静音")
+    assert button.text() == ui.tr("已静音") and button.toolTip() == ui.tr("取消静音")
     dialog.hide()
     dialog.show()
     dialog.showMinimized()
@@ -903,7 +904,7 @@ def test_manual_mute_survives_hiding_until_unmuted_or_session_ends(qtbot):
     assert dialog._audio.muting and "restore" not in dialog._audio.calls
 
     button.click()
-    assert not dialog._audio.muting and button.text() == ui.tr("静音")
+    assert not dialog._audio.muting and button.text() == ui.tr("声音开启")
     button.click()
     dialog._session = None
     dialog._cancel_connection()
