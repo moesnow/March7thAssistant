@@ -110,9 +110,12 @@ class TestFrameCache:
 
 
 class TestScreenMatchWorkers:
-    def test_worker_count_is_capped_and_never_below_one(self):
+    def test_worker_count_is_capped_and_never_below_one(self, monkeypatch):
+        import os
+
         from module.screen.screen import _screen_match_workers
 
+        monkeypatch.setattr(os, "cpu_count", lambda: 16)
         assert _screen_match_workers(61) == 8
         assert _screen_match_workers(8) == 8
         assert _screen_match_workers(3) == 3
@@ -121,10 +124,12 @@ class TestScreenMatchWorkers:
     def test_get_current_screen_passes_capped_worker_count(self, monkeypatch):
         import concurrent.futures
         import importlib
+        import os
 
         import psutil
 
         screen_module = importlib.import_module("module.screen.screen")
+        monkeypatch.setattr(os, "cpu_count", lambda: 16)
 
         created = []
 
@@ -251,6 +256,7 @@ class TestOcrGcInterval:
         assert len(collected) == 4  # 第 5、10、15、20 次
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="桌面分身键鼠输入仅在 Windows 启用")
 class TestLocalInputPause:
     def test_default_pyautogui_pause_disabled(self):
         from module.automation import local_input
@@ -362,6 +368,7 @@ class TestScreenshotResources:
         assert image.size == (2, 3)
         assert len(created) == 2  # 失效实例被丢弃并重建一次
 
+    @pytest.mark.skipif(sys.platform != "win32", reason="后台截图使用 Windows GDI")
     def test_capture_window_background_releases_gdi_on_failure(self, monkeypatch):
         import ctypes
 

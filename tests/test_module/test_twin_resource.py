@@ -43,6 +43,7 @@ class TestPriority:
         monkeypatch.setattr(twin_resource, "_psutil", lambda: SimpleNamespace(Process=Broken))
         assert twin_resource.lower_process_priority() is False
 
+    @pytest.mark.skipif(sys.platform != "win32", reason="桌面分身资源调节仅在 Windows 启用")
     def test_game_priority_skips_other_names_and_sessions(self, monkeypatch):
         nice_calls = []
         processes = [
@@ -68,6 +69,7 @@ class TestPriority:
         assert twin_resource.lower_game_process_priority("", session_id=2) == 0
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="桌面分身窗口操作仅在 Windows 启用")
 class TestWindow:
     def _install_fake_win32(self, monkeypatch, titles):
         import types
