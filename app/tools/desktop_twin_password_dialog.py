@@ -4,7 +4,7 @@ from PySide6.QtCore import QPoint, QPropertyAnimation
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QMessageBox, QVBoxLayout
 from qfluentwidgets import (BodyLabel, CaptionLabel, LineEdit, MessageBoxBase, PasswordLineEdit,
-                            SubtitleLabel, TransparentPushButton)
+                            PushButton, SubtitleLabel, setCustomStyleSheet)
 
 from app.tools import desktop_twin_credentials as credentials
 from module.localization import tr
@@ -50,7 +50,9 @@ class TwinPasswordDialog(MessageBoxBase):
         self.error.hide()
         self.viewLayout.addWidget(self.error)
 
-        self.forget = TransparentPushButton(tr("删除已保存的密码"), self.buttonGroup)
+        self.forget = PushButton(tr("删除已保存的密码"), self.buttonGroup)
+        outline = "PushButton:enabled { border: 1px solid --ThemeColorPrimary; }"
+        setCustomStyleSheet(self.forget, outline, outline)
         self.forget.setVisible(saved_account is not None)
         self.forget.clicked.connect(self._forget)
         self.buttonLayout.insertWidget(0, self.forget)
