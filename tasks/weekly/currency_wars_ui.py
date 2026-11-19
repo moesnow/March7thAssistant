@@ -574,7 +574,13 @@ class Frame:
 
     @cached_property
     def shop_open(self) -> bool:
-        return self.has("收起", area=BOARD_SHOP) and self.has(*SHOP_REFRESH_LABELS, area=SHOP_REFRESH)
+        return self.has("收起", area=BOARD_SHOP) and (
+            self.has(*SHOP_REFRESH_LABELS, area=SHOP_REFRESH) or self.shop_auto_refreshing)
+
+    @cached_property
+    def shop_auto_refreshing(self) -> bool:
+        """奇遇「菇菇兔」每 4 秒强制刷新商店、共 7 次：刷新按钮换成「自动刷新」和次数，期间不能手动刷新。"""
+        return self.has("自动刷新", area=SHOP_REFRESH)
 
     @cached_property
     def end_match_confirm_area(self) -> Area | None:

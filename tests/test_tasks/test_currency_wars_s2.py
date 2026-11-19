@@ -5733,6 +5733,34 @@ def test_timed_shop_uses_its_own_hud_and_waits_for_the_actual_return(monkeypatch
     assert state.clicks == state.keys == []
 
 
+def test_forced_shop_refresh_reads_as_an_open_shop_without_a_refresh_price():
+    """奇遇「菇菇兔」每 4 秒强制刷新商店、共 7 次：刷新按钮换成「自动刷新」和次数，仍是打开的商店，但不能手动刷新。"""
+    header = (("备战阶段", 282, 72), ("3-6", 282, 109), ("收起", 1624, 982))
+    forced = Frame(CANVAS, labels(*header, ("自动刷新", 1630, 488), ("0/7", 1630, 530)))
+    assert forced.page == Page.SHOP and forced.shop_auto_refreshing
+    assert forced.shop_refresh_price is None
+    normal = Frame(CANVAS, labels(*header, ("刷新", 1630, 488)))
+    assert normal.page == Page.SHOP and not normal.shop_auto_refreshing
+
+
+def test_shop_waits_out_forced_refreshes_before_reading_offers(monkeypatch, world):
+    """强制刷新期间商品每 4 秒变一次：不读也不点，刷完再按常规核对商品，不走异常恢复。"""
+    stage = "3-6"
+    forced = page(Page.SHOP, stage=stage, gold=33, shop_auto_refreshing=True)
+    after = page(Page.SHOP, stage=stage, gold=33, shop_auto_refreshing=False)
+
+    def capture(state):
+        state.frame = after if world.now[0] >= 28 else forced
+
+    state = drive(monkeypatch, world, forced, after_capture=capture)
+    debug = Mock()
+    monkeypatch.setattr(task.log, "debug", debug)
+    assert world.war._settle_shop(forced) is after
+    assert world.now[0] >= 28
+    assert state.clicks == state.keys == []
+    assert any("商店正在强制刷新" in call.args[0] for call in debug.call_args_list)
+
+
 def test_duplicate_employee_waits_on_bench_to_merge():
     dupe = replace(CORE, stars=1)
     f = board(slot("front", 0, dupe), slot("front", 1), slot("bench", 0, dupe),

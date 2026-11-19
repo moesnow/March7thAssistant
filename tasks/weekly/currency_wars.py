@@ -68,6 +68,8 @@ CLICK_HOLD = 0.075
 BOX_HOLD = 0.20
 # 晶矿刚扫出的武装箱有落位动画。等连续两帧的开启按钮和箱面一致，再作为开启基准。
 BOX_SETTLE_SECONDS = 4
+# 奇遇「菇菇兔」在第三位面首领节点前的奖励节点触发一次：每 4 秒强制刷新商店、共 7 次，约 28 秒刷完。
+SHOP_FORCED_REFRESH_SECONDS = 36
 RANK_CLICK_BATCH = 80
 RANK_CLICK_HOLD = 0.03
 PROMOTION_CAP_ENEMY_RANK = 28  # 入画奇航超频博弈 A4 冰钛 6
@@ -1856,12 +1858,21 @@ class CurrencyWars:
             nonlocal previous
             if f.page in PREP_OVERLAYS - {Page.SHOP}:
                 return True
-            ready = (previous.page == f.page == Page.SHOP and f.gold is not None and f.gold == previous.gold
-                     and not f.shop_catalog_changed(previous))
+            ready = (previous.page == f.page == Page.SHOP
+                     and not (f.shop_auto_refreshing or previous.shop_auto_refreshing)
+                     and f.gold is not None and f.gold == previous.gold and not f.shop_catalog_changed(previous))
             previous = f
             return ready
 
-        return self._expect(settled, 8, "商店商品尚未稳定")
+        try:
+            return self._expect(settled, 8, "商店商品尚未稳定")
+        except CurrencyWarsReadTimeout:
+            current = self.frame
+            if current is None or current.page != Page.SHOP or not current.shop_auto_refreshing:
+                raise
+        # 强制刷新期间商品每 4 秒一变，不读也不点，刷完再按常规核对。
+        log.debug(f"{current.stage}商店正在强制刷新，刷完再读商品")
+        return self._expect(settled, SHOP_FORCED_REFRESH_SECONDS, "商店强制刷新后商品尚未稳定")
 
     def _rail_shop(self, frame):
         stage = frame.stage
