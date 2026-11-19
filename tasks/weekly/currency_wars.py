@@ -1820,15 +1820,19 @@ class CurrencyWars:
         if self.default_strategy:
             return
         columns = {offer.column for offer in offers}
-        # 开拓者显示玩家自定的名字。游戏里的角色名都不止一个字，单字名只会是开拓者，不在购买范围内。
         unknown = [column + 1 for column in range(5)
                    if column not in columns and not shop_frame.shop_slot_empty(column)
-                   and not re.fullmatch(r"[\u3400-\u9fff]", shop_frame.shop_column_name(column))]
+                   and not self._player_trailblazer(shop_frame.shop_column_name(column))]
         if unknown:
             log.debug(f"{stage}商店第 {'、'.join(map(str, unknown))} 栏未认出商品，下次照常打开商店核对")
             return
         remaining = tuple(offer for offer in offers if offer != sold)
         self.shop_catalog = ShopCatalog(stage, remaining, shop_frame.shop_refresh_price, refreshes)
+
+    @staticmethod
+    def _player_trailblazer(name):
+        """开拓者显示玩家自定的名字，单字时不符合角色名格式，商店读不出也不会购买。单字角色「刃」照常按角色识别。"""
+        return bool(re.fullmatch(r"[\u3400-\u9fff]", name)) and name not in ui.SINGLE_CHARACTER_NAMES
 
     def _shop_needs_visit(self, board, refreshes, experience_price):
         """本节点读过完整商品后，用当前棋盘复算商店决策。不会购买也不会刷新时不再打开商店。"""
