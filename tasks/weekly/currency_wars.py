@@ -257,7 +257,7 @@ class CurrencyWars:
         self.last_result_stage = None
         self.slot_cache = {}
         self.equipment_checks = {}
-        # 只给这些角色配装。None 表示全部上阵角色。
+        # 核心穿满三件前只给这些角色配装。None 表示不限。
         self.equipment_focus = None
         self.shop_catalog = None
         self.halo_candidate = None
@@ -2112,8 +2112,7 @@ class CurrencyWars:
                 return frame
         if board.lineup:
             return self._equip_team(frame, board)
-        deployed = [s for s in board.slots if s.unit and s.zone != "bench"
-                    and (self.equipment_focus is None or s.unit.name in self.equipment_focus)]
+        deployed = [s for s in board.slots if s.unit and s.zone != "bench"]
         if self.default_strategy:
             deployed.sort(key=strategy.default_priority, reverse=True)
         else:
@@ -2129,7 +2128,7 @@ class CurrencyWars:
                     if key in self.default_equipment_attempted or (slot.unit.equipment or 0) >= 3:
                         continue
                     self.default_equipment_attempted.add(key)
-                elif reason := self._equipment_skip_reason(frame, slot):
+                elif reason := self._equipment_waiting(frame, board, slot) or self._equipment_skip_reason(frame, slot):
                     skipped[slot.unit.name] = reason
                     continue
                 for _ in range(1 if self.default_strategy else 3):
@@ -2144,6 +2143,15 @@ class CurrencyWars:
             return frame
         finally:
             self._log_equipment_skips(board.stage, skipped)
+
+    def _equipment_waiting(self, frame, board, slot):
+        """那刻夏策略先给核心和后台主力配装。核心穿满三件后，其余上阵角色也照常配装。"""
+        if self.equipment_focus is None or slot.unit.name in self.equipment_focus:
+            return None
+        core = next((s for s in board.field if s.unit and s.unit.name == board.core), None)
+        if core is not None and frame.card_equipment(core) == 3:
+            return None
+        return f"{board.core}未配满"
 
     def _equipment_skip_reason(self, frame, slot):
         """已确认没有可执行配装的角色，物品栏没有新增物品时不重开推荐页。"""
@@ -2282,8 +2290,7 @@ class CurrencyWars:
         rounds = opened_menus = confirmed = 0
         skipped = {}
         try:
-            candidates = [slot for slot in board.field if slot.unit and slot.unit.name not in strategy.SPECIAL
-                          and (self.equipment_focus is None or slot.unit.name in self.equipment_focus)]
+            candidates = [slot for slot in board.field if slot.unit and slot.unit.name not in strategy.SPECIAL]
             candidates.sort(key=lambda slot: strategy.slot_priority(board, slot.unit, slot.zone), reverse=True)
             for _ in range(12):
                 inventory = frame.inventory_equipment()
@@ -2298,7 +2305,7 @@ class CurrencyWars:
                     if not frame.slot_occupied(slot.point) or frame.card_equipment(slot) == 3:
                         continue
                     # 上一轮已确认无可配的角色，材料只减少时不必整队重扫。
-                    if reason := self._equipment_skip_reason(frame, slot):
+                    if reason := self._equipment_waiting(frame, board, slot) or self._equipment_skip_reason(frame, slot):
                         skipped[slot.unit.name] = reason
                         continue
                     original = frame

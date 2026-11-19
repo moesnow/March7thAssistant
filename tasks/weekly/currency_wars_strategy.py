@@ -63,7 +63,7 @@ LINEUPS = {
                        frozenset(("星期日", "椒丘", "雪衣", "花火")),
                        frozenset(("希露瓦", "海瑟音", "黑天鹅", "桑博", "椒丘", "卡芙卡"))),
 }
-# 两套那刻夏策略同 S1，只给核心和后台主力配装，其余角色不再逐个打开推荐页。
+# 两套那刻夏策略同 S1：核心穿满三件前只给核心和后台主力配装，之后其余上阵角色也配。
 EQUIPMENT_FOCUS = {STRATEGY_ID: frozenset((CORE, BACK_LEAD)), HIGH_ANAXA: frozenset((CORE, BACK_LEAD))}
 STRATEGY_NAMES = {
     DEFAULT_STRATEGY: "默认",

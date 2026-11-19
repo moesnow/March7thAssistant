@@ -9724,27 +9724,52 @@ def test_anaxa_equipment_follows_up_on_the_same_page_and_remembers_the_result(mo
     assert world.war._equipment_skip_reason(after, core) == "物品栏没有新增装备"
 
 
-def test_anaxa_equipment_only_checks_the_core_and_back_lead(monkeypatch, world):
-    """同 S1，只给核心和后台主力配装，其余上阵角色不再逐个打开推荐页。"""
+@pytest.mark.parametrize("core_worn", (2, 3))
+def test_anaxa_equipment_waits_for_a_full_core_before_other_units(monkeypatch, world, core_worn):
+    """同 S1：那刻夏穿满三件前只给那刻夏和刻律德菈配装，穿满后其余上阵角色也配。"""
     stage = "2-5"
     core, support, other = slot("front", 0, CORE), slot("back", 0, CER), slot("front", 1, FILLER)
-    frame = stock(page(Page.BOARD, stage=stage, capacity=(3, 3)), "轮滑鞋", "生命之花")
+    team = board(core, support, other, stage=stage, used=3, capacity=3)
+    frame = stock(page(Page.BOARD, stage=stage, capacity=(3, 3)), "轮滑鞋", "生命之花", worn={core.point: core_worn})
     frame.slot_occupied = lambda point: True
     opened = []
     menu = page(Page.EQUIPMENT, stage=stage)
     monkeypatch.setattr(world.war, "_open_equipment", lambda f, s: opened.append(s.unit.name) or menu)
     monkeypatch.setattr(world.war, "_return_from_equipment", lambda f: frame)
     drive(monkeypatch, world, frame)
+    debug = Mock()
+    monkeypatch.setattr(task.log, "debug", debug)
     assert policy.EQUIPMENT_FOCUS[policy.STRATEGY_ID] == policy.EQUIPMENT_FOCUS[policy.HIGH_ANAXA] == {"那刻夏", "刻律德菈"}
     world.war.equipment_focus = policy.EQUIPMENT_FOCUS[policy.STRATEGY_ID]
+    expected = ["刻律德菈", "瓦尔特"] if core_worn == 3 else ["刻律德菈", "那刻夏"]
 
-    world.war._equip_board(frame, board(core, support, other, stage=stage, used=3, capacity=3))
-    assert opened == ["那刻夏", "刻律德菈"]
+    world.war._equip_board(frame, team)
+    assert sorted(opened) == expected
+    skips = " ".join(call.args[0] for call in debug.call_args_list if "配装跳过" in call.args[0])
+    assert ("瓦尔特（那刻夏未配满）" in skips) is (core_worn == 2)
     opened.clear()
     world.war.equipment_checks.clear()
     world.war.lineup = policy.LINEUPS[policy.HIGH_ANAXA]
-    world.war._equip_team(frame, board(core, support, other, stage=stage, used=3, capacity=3, lineup=world.war.lineup))
-    assert sorted(opened) == ["刻律德菈", "那刻夏"]
+    world.war._equip_team(frame, replace(team, lineup=world.war.lineup))
+    assert sorted(opened) == expected
+
+
+def test_anaxa_equipment_moves_on_to_other_units_once_the_core_fills_up(monkeypatch, world):
+    """同一遍配装中那刻夏刚穿满，后面的角色接着配，不必等下一节点。"""
+    stage = "2-5"
+    core, other = slot("front", 0, CORE), slot("front", 1, FILLER)
+    team = board(core, other, stage=stage, used=2, capacity=2)
+    before = stock(page(Page.BOARD, stage=stage, capacity=(2, 2)), "轮滑鞋", "生命之花", worn={core.point: 2})
+    filled = stock(page(Page.BOARD, stage=stage, capacity=(2, 2)), "生命之花", worn={core.point: 3})
+    opened = []
+    menu = page(Page.EQUIPMENT, stage=stage)
+    monkeypatch.setattr(world.war, "_open_equipment", lambda f, s: opened.append(s.unit.name) or menu)
+    monkeypatch.setattr(world.war, "_return_from_equipment", lambda f: filled)
+    drive(monkeypatch, world, before)
+    world.war.equipment_focus = policy.EQUIPMENT_FOCUS[policy.STRATEGY_ID]
+
+    assert world.war._equip_board(before, team) is filled
+    assert opened == ["那刻夏", "瓦尔特"]
 
 
 def test_equipment_memo_compares_unrecognized_items_by_image(monkeypatch, world):
