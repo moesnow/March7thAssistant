@@ -56,6 +56,7 @@ BOARD_LEVEL = (242, 881, 352, 932)
 BOARD_XP_COST = (303, 972, 342, 1008)
 BOARD_FIGHT = (1690, 704, 1918, 800)
 FRONT_Y, BACK_Y, BENCH_Y = 405, 667, 912
+FRONT_X = (745, 888, 1030, 1173)
 BENCH_POINTS = tuple((440 + i * 125, BENCH_Y) for i in range(9))
 CARD_COST_PALETTE = np.array(((128, 131, 148), (44, 130, 121), (89, 112, 226), (143, 109, 248),
                               (209, 170, 79)), dtype=np.int16)
@@ -101,7 +102,8 @@ EMPLOYEE_EVENT_TITLE = (600, 43, 1465, 102)
 EMPLOYEE_EVENT_SUBTITLE = (636, 103, 1485, 161)
 EMPLOYEE_EVENT_DETAILS = (440, 385, 1650, 436)
 EMPLOYEE_EVENT_CONFIRM = (1280, 541, 1700, 626)
-DANCE_CONFIRM_POINT = (1487, 576)
+DANCE_SELECTION_PROMPT = (1300, 501, 1684, 542)
+DANCE_CONFIRM_X = 1487
 DANCE_MIN_CARD_GAP = 136
 SVAROG_TITLE = (900, 51, 1190, 107)
 SVAROG_SUBTITLE = (880, 114, 1210, 160)
@@ -129,6 +131,10 @@ RAIL_LAUNCH = (937, 352, 1093, 409)
 RAIL_UNLOCK = (1470, 312, 1640, 354)
 RAIL_SPENT = (1480, 380, 1640, 434)
 RAIL_COLUMNS = (556, 806, 1056, 1306)
+TREASURY_TITLE = (885, 37, 1210, 83)
+TREASURY_PROMPT = (885, 83, 1210, 118)
+TREASURY_REFRESH = (1090, 483, 1255, 540)
+TREASURY_CLAIM = (1340, 483, 1650, 540)
 BOARD_ADVANCE = ("出战", "跳过", "选择主角", "开启宝库", "幕后茶歇", "开始茶歇", "前往茶歇", "前往补给")
 REVEAL_CONTINUE = (525, 650, 1780, 1065)
 PARTNER_REVEAL_TITLE = (680, 453, 902, 520)
@@ -215,6 +221,7 @@ class Page(Enum):
     PARTNER_DETAIL = "奇遇伙伴详情"
     EQUIPMENT = "装备推荐"
     CHOICE = "节点选择"
+    TREASURY = "珠珠鱼宝库"
     DANCE = "梦境交织共舞"
     RANGER = "巡海游侠任命"
     SVAROG_MODIFICATION = "机心巧匠改装"
@@ -283,7 +290,7 @@ class Frame:
     def action_context(self):
         """输入必须始终属于同一节点和同一层界面。"""
         # 独立弹层的操作只依赖弹层本身。背景节点号漏读或跳变不代表弹层已关闭。
-        if self.page in (Page.SVAROG_MODIFICATION, Page.HALO_MENTOR):
+        if self.page in (Page.SVAROG_MODIFICATION, Page.HALO_MENTOR, Page.TREASURY):
             return self.page, None, None
         dialog = {Page.CHOICE: "choice", Page.REVEAL: "reveal_kind"}.get(self.page)
         return self.page, self.stage, getattr(self, dialog) if dialog else None
@@ -628,6 +635,10 @@ class Frame:
             return Page.END_MATCH_CONFIRM
         if self.empty_front_confirm():
             return Page.EMPTY_FRONT
+        if (self.has("珠珠鱼宝库", "珠珠鱼的幸运宝库", area=TREASURY_TITLE, contains=True)
+                or self.has("刷新宝库或者拿走全部奖励", area=TREASURY_PROMPT)
+                or self.treasury_claim and self.has("刷新", area=TREASURY_REFRESH)):
+            return Page.TREASURY
         if self.mentor_prompt or (self.has("从师", area=MENTOR_TITLE) and (
                 self.mentor_confirm_label or self.mentor_selection_prompt or self.mentor_confirm())):
             return Page.HALO_MENTOR
@@ -734,6 +745,10 @@ class Frame:
             if self.find("商店", area=BOARD_SHOP) and self.board_advance and self._board_rows_visible():
                 return Page.BOARD
         return Page.UNKNOWN
+
+    @cached_property
+    def treasury_claim(self) -> Label | None:
+        return self.find("全部拿走", area=TREASURY_CLAIM)
 
     @cached_property
     def board_advance(self) -> Label | None:
@@ -867,6 +882,8 @@ class Frame:
         return None
 
     def slot_occupied(self, point: Point) -> bool:
+        if point[1] == FRONT_Y and point in self.front_markers:
+            return False
         if point[1] == BENCH_Y and point in self.black_hole_slots:
             return False
         # 空卡位只有低对比的背景和细框。采用内区纹理，避免边框、星徽和光环。
@@ -910,17 +927,25 @@ class Frame:
         if not xs:
             return ()
         result = []
-        for zone, centers, y in (("front", (745, 888, 1030, 1173), FRONT_Y),
+        for zone, centers, y in (("front", FRONT_X, FRONT_Y),
                                  ("back", xs, BACK_Y)):
             for i, x in enumerate(centers):
                 point = (x, y)
                 occupied = self.slot_occupied(point)
-                result.append(Slot(zone, i, point, occupied, blocked=occupied and self.fixed_partner(point)))
+                blocked = point in self.front_markers or occupied and self.fixed_partner(point)
+                result.append(Slot(zone, i, point, occupied, blocked=blocked))
         return tuple(result)
 
     def slots(self) -> tuple[Slot, ...]:
         field = self.field_slots()
         return field + self.bench_slots() if field else ()
+
+    @cached_property
+    def front_markers(self) -> frozenset[Point]:
+        # 金色弯月星标既不是人物肖像，也没有可确认的空卡位，不能计入人口或用作拖动目标。
+        return frozenset((x, FRONT_Y) for x in FRONT_X if not any(self._card_role((x, FRONT_Y), 44))
+                         and self.match("screen/currency_wars/s2_front_star_marker.png",
+                                        (x - 52, FRONT_Y - 46, x + 52, FRONT_Y + 46), 0.86))
 
     @cached_property
     def black_hole_slots(self) -> frozenset[Point]:
@@ -1478,9 +1503,16 @@ class Frame:
         )
 
     @cached_property
+    def dance_needs_pair(self) -> bool:
+        return self.has("请选择2名共舞的角色", "请选择2个共舞的角色",
+                        area=DANCE_SELECTION_PROMPT, contains=True)
+
+    @cached_property
     def unlabeled_dance_confirm(self) -> Label | None:
-        if self.page == Page.DANCE and not self.has("确认选择", area=EMPLOYEE_EVENT_CONFIRM):
-            return self.enabled_button(Label("确认选择", DANCE_CONFIRM_POINT))
+        if (self.page == Page.DANCE and not self.dance_needs_pair
+                and not self.has("确认选择", area=EMPLOYEE_EVENT_CONFIRM)):
+            # 共舞弹层下可能保留角色详情，中心亮块需和按钮两侧的底色同时吻合。
+            return self._wide_confirm(None, EMPLOYEE_EVENT_CONFIRM, DANCE_CONFIRM_X)
         return None
 
     @cached_property
@@ -1489,6 +1521,10 @@ class Frame:
 
     def employee_event_confirm(self) -> Label | None:
         if button := self.find("确认选择", area=EMPLOYEE_EVENT_CONFIRM):
+            if self.page == Page.DANCE:
+                if self.dance_needs_pair:
+                    return None
+                return self._wide_confirm(button, EMPLOYEE_EVENT_CONFIRM, DANCE_CONFIRM_X)
             return self.enabled_button(button)
         if self.unlabeled_dance_confirm and self.dance_pair_selected:
             return self.unlabeled_dance_confirm

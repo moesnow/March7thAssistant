@@ -317,7 +317,6 @@ def test_weekly_divergent_checks_quota_and_keeps_its_retry_budget(monkeypatch, r
     session.check_divergent_universe_score.return_value = False
     session.start.return_value = False
     monkeypatch.setattr(daily, "DivergentUniverse", Mock(return_value=session))
-    monkeypatch.setattr(daily, "screen", Mock())
     monkeypatch.setattr(daily, "cfg", SimpleNamespace(weekly_divergent_timestamp=0, refresh_hour=4))
     monkeypatch.setattr(daily.Date, "is_next_mon_x_am", Mock(side_effect=remaining_checks))
 

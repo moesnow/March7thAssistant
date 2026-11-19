@@ -12,9 +12,85 @@ from tasks.base import task_steps
 from tasks.daily import daily as pc_daily, redemption, synthesis as pc_synthesis
 from tasks.reward import assist, dispatch, mail, message, quest, receipt, rewardtemplate, sms
 from tasks.touch import daily, rewards, synthesis
+from utils.pause import RunStopRequested
 
 
 BUTTON = ((10, 20), (30, 40))
+
+
+@pytest.mark.parametrize("entry", ["pc", "touch", "touch_routine"])
+@pytest.mark.parametrize("failure, terminal", [
+    (RuntimeError("邮箱识别失败"), False),
+    (AdbError("frame_timeout", "邮箱截图超时"), False),
+    (AdbError("disconnected", "设备已断开"), True),
+    (RunStopRequested(), True),
+])
+def test_mail_failure_isolated_from_later_rewards_and_training(monkeypatch, entry, failure, terminal):
+    config = SimpleNamespace(
+        reward_enable=True, reward_mail_enable=True, reward_assist_enable=True,
+        reward_dispatch_enable=False, reward_srpass_enable=False, reward_message_enable=False,
+        reward_achievement_enable=False, reward_quest_enable=True, power_enable=False,
+    )
+    pages = []
+    claims = []
+
+    def change_to(target, **_kwargs):
+        if target == "main" and "guide2" not in pages:
+            raise RuntimeError("领奖失败后暂时无法直接回到主界面")
+        pages.append(target)
+
+    def find(target, *_args, **_kwargs):
+        if pages[-1] == "mail":
+            raise failure
+        return BUTTON
+
+    def click(button):
+        claims.append((pages[-1], button))
+        return True
+
+    def train(**_kwargs):
+        change_to("guide2")
+        return True
+
+    screen = SimpleNamespace(change_to=change_to, check_screen=Mock(return_value=False))
+    auto = Mock(find_element=Mock(side_effect=find), click_element_with_pos=Mock(side_effect=click))
+    warning = Mock()
+    monkeypatch.setattr(task_steps, "screen", screen)
+    monkeypatch.setattr(task_steps.log, "warning", warning)
+    if entry == "pc":
+        for module in (reward, rewardtemplate):
+            monkeypatch.setattr(module, "screen", screen)
+        for module in (mail, assist):
+            monkeypatch.setattr(module, "auto", auto)
+        monkeypatch.setattr(reward, "cfg", config)
+        monkeypatch.setattr(reward, "menu_alert", Mock(return_value=True))
+        monkeypatch.setattr(assist, "confirm_item_reward", Mock())
+        monkeypatch.setattr(assist, "close_item_reward", Mock())
+        monkeypatch.setattr(pc_daily.Daily, "run", train)
+        run = pc_daily.Daily.run_standalone
+    else:
+        monkeypatch.setattr(rewards, "screen", screen)
+        monkeypatch.setattr(rewards, "auto", auto)
+        monkeypatch.setattr(rewards, "cfg", config)
+        monkeypatch.setattr(rewards, "menu_alert", Mock(return_value=True))
+        monkeypatch.setattr(rewards, "_find_support_gift", Mock(return_value=BUTTON))
+        monkeypatch.setattr(rewards, "_confirm_item_reward", Mock())
+        monkeypatch.setattr(rewards, "_close_item_reward", Mock())
+        monkeypatch.setattr(daily, "run", train)
+        run = rewards.run if entry == "touch" else rewards.routine
+
+    if terminal:
+        with pytest.raises(type(failure)) as info:
+            run()
+        assert info.value is failure
+        assert pages == ["menu", "mail"]
+        assert not claims
+        return
+
+    assert run() is True
+    assert pages[:5] == ["menu", "mail", "menu", "visa", "guide2"]
+    assert claims == [("visa", BUTTON)]
+    assert any("邮件" in args[0] and str(failure) in args[0] for args, _ in warning.call_args_list)
 
 
 @pytest.mark.parametrize("has_red_dot", [False, True])
@@ -273,6 +349,23 @@ def test_pc_mail_fallback_does_not_treat_unknown_color_as_no_attachments(monkeyp
     auto.click_element_with_pos.assert_not_called()
 
 
+@pytest.mark.parametrize("background", [(66, 50, 75), (210, 166, 96)])
+def test_pc_mail_recognizes_sparse_gray_text_over_dynamic_background(monkeypatch, background):
+    with Image.open("assets/images/zh_CN/reward/mail/receive_all.png") as template:
+        strokes = template.convert("L").point(lambda light: 255 if light < 70 else 0)
+    image = Image.new("RGB", strokes.size, background)
+    image.paste((198, 193, 201), (0, 0), strokes)
+    width, height = image.size
+    button = ((316, 942), (316 + width, 942 + height))
+    auto = Mock(screenshot=image, screenshot_pos=(316, 942, width, height), screenshot_scale_factor=1,
+                find_element=Mock(side_effect=[None, button]))
+    monkeypatch.setattr(mail, "auto", auto)
+
+    assert mail.Mail("邮件", True, "mail").run() is False
+    assert all(match.kwargs["crop"] == mail.RECEIVE_CROP for match in auto.find_element.call_args_list)
+    auto.click_element_with_pos.assert_not_called()
+
+
 @pytest.mark.parametrize("state", ["claim", "running", "panel", "unknown"])
 def test_pc_dispatch_waits_for_a_late_claim_button_or_status(monkeypatch, state):
     bottom_frames = 0
@@ -438,6 +531,7 @@ def test_pc_training_returns_to_guide_after_an_action_leaves_the_page(monkeypatc
 def test_pc_training_reports_pending_claim_failure_without_repeating_the_completed_action(monkeypatch):
     monkeypatch.setattr(quest, "cfg", SimpleNamespace(reward_enable=True, reward_quest_enable=True))
     monkeypatch.setattr(quest, "auto", Mock(find_element=Mock(return_value=None)))
+    monkeypatch.setattr(quest, "screen", Mock())
     scan = Mock(side_effect=[(400, {"拍照1次": True}, 0), quest.DailyTrainingError("任务卡片领取按钮无法点击")])
     monkeypatch.setattr(quest.Quest, "scan", scan)
     photo = Mock(return_value=True)
@@ -502,8 +596,11 @@ def test_visible_support_gift_is_used_with_unreadable_title(monkeypatch, touch):
 
 
 @pytest.mark.parametrize("touch", [False, True])
-@pytest.mark.parametrize("missing_badge", [False, True])
-def test_training_collects_visible_milestones_without_card_name_ocr(monkeypatch, touch, missing_badge):
+@pytest.mark.parametrize("badge_error", [
+    None, daily.DailyTrainingError("未识别活跃度"), RuntimeError("徽标 OCR 异常"),
+    AdbError("invalid_response", "实训徽标截图数据无效", frame_only=True),
+])
+def test_training_collects_visible_milestones_without_card_name_ocr(monkeypatch, touch, badge_error):
     module = daily if touch else quest
     auto = Mock()
     frame = Image.new("RGB", (60, 40))
@@ -519,7 +616,7 @@ def test_training_collects_visible_milestones_without_card_name_ocr(monkeypatch,
     monkeypatch.setattr(module, "ocr", ocr)
     notify = Mock()
     monkeypatch.setattr(module, "notify_reward", notify)
-    badge = Mock(side_effect=daily.DailyTrainingError("未识别活跃度")) if missing_badge else Mock(return_value=100)
+    badge = Mock(side_effect=badge_error, return_value=100)
 
     milestone = Mock(side_effect=[BUTTON, None])
 
@@ -531,16 +628,18 @@ def test_training_collects_visible_milestones_without_card_name_ocr(monkeypatch,
     auto.find_element.side_effect = find_element
     if touch:
         monkeypatch.setattr(daily, "read_activity", badge)
-        assert daily.run() is not missing_badge
+        assert daily.run() is (badge_error is None)
     else:
         monkeypatch.setattr(quest.Quest, "activity", badge)
         claim = Mock()
         monkeypatch.setattr(quest, "confirm_item_reward", claim)
         monkeypatch.setattr(quest, "close_item_reward", Mock(return_value=True))
-        assert quest.Quest.settle() is not missing_badge
+        assert quest.Quest.settle() is (badge_error is None)
         claim.assert_called_once_with("实训档位奖励")
 
     auto.click_element_with_pos.assert_called_once_with(BUTTON)
+    if badge_error is not None:
+        module.screen.change_to.assert_called_with("guide2", max_recursion=1)
     ocr.recognize_multi_lines.assert_not_called()
     notify.assert_called_once()
 
@@ -587,6 +686,33 @@ def test_training_waits_for_initial_milestone_after_activity_is_full(monkeypatch
     cfg.save_timestamp.assert_called_once_with("last_run_timestamp")
 
 
+@pytest.mark.parametrize("touch", [False, True])
+def test_training_retains_completed_activity_after_missing_reward_receipt(monkeypatch, touch):
+    module = daily if touch else quest
+    config = SimpleNamespace(reward_enable=True, reward_quest_enable=True, save_timestamp=Mock())
+    auto = Mock(find_element=Mock(side_effect=[BUTTON, None]), click_element_with_pos=Mock(return_value=True))
+    warning = Mock()
+    monkeypatch.setattr(module, "cfg", config)
+    monkeypatch.setattr(module, "auto", auto)
+    monkeypatch.setattr(module, "screen", Mock())
+    monkeypatch.setattr(task_steps.log, "warning", warning)
+
+    if touch:
+        monkeypatch.setattr(daily, "read_activity", Mock(return_value=500))
+        run = daily.run
+    else:
+        monkeypatch.setattr(quest.Quest, "activity", Mock(return_value=500))
+        monkeypatch.setattr(quest, "confirm_item_reward", Mock(side_effect=receipt.RewardError("未出现获得物品")))
+        run = quest.Quest.settle
+
+    later = Mock()
+    assert task_steps.run_steps((("每日实训", run), ("后续任务", later))) is True
+    config.save_timestamp.assert_called_once_with("last_run_timestamp")
+    auto.click_element_with_pos.assert_called_once_with(BUTTON)
+    later.assert_called_once_with()
+    assert any("档位奖励" in args[0] for args, _ in warning.call_args_list)
+
+
 def test_touch_synthesis_preserves_confirmed_result_when_popup_does_not_close(monkeypatch):
     auto = Mock()
     auto.find_element.return_value = BUTTON
@@ -602,11 +728,13 @@ def test_touch_synthesis_preserves_confirmed_result_when_popup_does_not_close(mo
     auto.click_element.assert_called_with(daily.REWARD_CLOSE_CROP, "crop")
 
 
-@pytest.mark.parametrize("close_sent", [False, True])
+@pytest.mark.parametrize("close_sent", [False, True, None])
 def test_touch_training_preserves_confirmed_milestone_when_popup_does_not_close(monkeypatch, close_sent):
     auto = Mock()
     auto.find_element.side_effect = [BUTTON, BUTTON]
     auto.click_element.return_value = close_sent
+    if close_sent is None:
+        auto.click_element.side_effect = RuntimeError("关闭获得物品弹窗时截图失败")
     screen = Mock()
     screen.wait_for_screen_change.side_effect = RuntimeError("返回实训超时")
     notify = Mock()
@@ -621,7 +749,7 @@ def test_touch_training_preserves_confirmed_milestone_when_popup_does_not_close(
     assert daily.run()
 
     auto.click_element_with_pos.assert_called_once_with(BUTTON)
-    assert screen.wait_for_screen_change.call_count == int(close_sent)
+    assert screen.wait_for_screen_change.call_count == int(bool(close_sent))
     notify.assert_called_once_with(auto, "已领取实训奖励，活跃度 200/500", crop=daily.REWARD_REPORT_CROP)
 
 

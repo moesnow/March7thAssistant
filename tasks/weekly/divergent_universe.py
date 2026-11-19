@@ -7,6 +7,7 @@ from module.logger import log
 from module.automation.screenshot import Screenshot
 from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
+from tasks.base.task_steps import optional_reward
 from utils.date import Date
 from typing import Literal, Tuple, Optional
 import numpy as np
@@ -91,9 +92,11 @@ class DivergentUniverse:
             self.screenshot = None
         has_reward = self.get_reward()
         if Date.is_next_mon_x_am(cfg.weekly_divergent_timestamp, cfg.refresh_hour):
-            self.check_divergent_universe_score()
+            with optional_reward("差分宇宙周期积分检查"):
+                self.check_divergent_universe_score()
         if has_reward and cfg.weekly_divergent_bonus_enable:
-            self.process_ornament()
+            with optional_reward("差分宇宙周期奖励饰品提取"):
+                self.process_ornament()
         log.hr("完成", 2)
         return success
 
@@ -101,7 +104,7 @@ class DivergentUniverse:
         """
         检查差分宇宙积分，达到 18000 时记录时间戳
         """
-        screen.wait_for_screen_change("divergent_main")
+        screen.change_to("divergent_main", max_recursion=1)
 
         # 4.2版本周期积分将合并。本期积分奖励已由邮件发放。
         if auto.find_element("奖励已由邮件发放", "text", crop=(33 / 1920, 911 / 1080, 397 / 1920, 103 / 1080), include=True):
@@ -136,16 +139,21 @@ class DivergentUniverse:
 
     def get_reward(self):
         log.info("开始领取奖励")
-        if auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, crop=(0 / 1920, 877.0 / 1080, 422.0 / 1920, 202.0 / 1080)):
-            if auto.click_element("./assets/images/zh_CN/universe/one_key_receive.png", "image", 0.9, max_retries=10):
-                if wait_for_weekly_reward():
-                    time.sleep(2)
+        claimed = False
+        with optional_reward("差分宇宙周期奖励"):
+            if not auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, crop=(0 / 1920, 877.0 / 1080, 422.0 / 1920, 202.0 / 1080)):
+                return False
+            if not auto.click_element("./assets/images/zh_CN/universe/one_key_receive.png", "image", 0.9, max_retries=10):
+                return False
+            claimed = wait_for_weekly_reward()
+            if claimed:
+                time.sleep(2)
+                with optional_reward("差分宇宙周期奖励通知"):
                     Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseRewardClaimed'], NotificationLevel.ALL)
-                    auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10)
-                    time.sleep(1)
-                    auto.press_key("esc")
-                    return True
-        return False
+                auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10)
+                time.sleep(1)
+                auto.press_key("esc")
+        return claimed
 
     def process_ornament(self):
         Power.process_immersifier_only()

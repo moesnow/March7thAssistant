@@ -634,9 +634,34 @@ def test_claim_collects_rewards_without_opening_daily_training(monkeypatch):
     assert rewards.claim()
     dispatch.assert_called_once_with()
 
-    monkeypatch.setattr(rewards.screen, "change_to", Mock())
+    warning = Mock()
+    monkeypatch.setattr(rewards.log, "warning", warning)
+    monkeypatch.setattr(rewards.screen, "check_screen", Mock(return_value=False))
     dispatch.side_effect = rewards.RewardError("x")
-    assert not rewards.claim()
+    assert rewards.claim()
+    warning.assert_called_once_with("委托奖励待核对：x")
+
+
+@pytest.mark.parametrize("popup_visible", [False, True])
+def test_reward_failure_only_dismisses_a_recognized_popup_then_continues(monkeypatch, popup_visible):
+    monkeypatch.setattr(rewards, "cfg", SimpleNamespace(
+        reward_dispatch_enable=True, reward_mail_enable=True, reward_assist_enable=False,
+        reward_srpass_enable=False, reward_message_enable=False,
+    ))
+    calls = Mock()
+    calls.dispatch.side_effect = rewards.RewardError("委托回执超时")
+    calls.check_screen.return_value = popup_visible
+    monkeypatch.setattr(rewards, "claim_dispatch", calls.dispatch)
+    monkeypatch.setattr(rewards, "claim_mail", calls.mail)
+    monkeypatch.setattr(rewards, "screen", SimpleNamespace(check_screen=calls.check_screen))
+    monkeypatch.setattr(rewards, "_close_item_reward", calls.close)
+
+    assert rewards.claim()
+
+    expected = [call.dispatch(), call.check_screen("item_reward")]
+    if popup_visible:
+        expected.append(call.close())
+    assert calls.mock_calls == [*expected, call.mail()]
 
 
 def test_routine_joins_the_power_and_reward_summaries(monkeypatch):

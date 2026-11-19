@@ -10,6 +10,7 @@ from unittest.mock import Mock, call, patch
 import pytest
 
 from tests.test_tasks.test_purefiction_settlement import challenge
+from utils.pause import RunStopRequested
 
 
 @pytest.fixture
@@ -54,6 +55,135 @@ def test_stellar_configuration_runs_shared_flow_instead_of_native(apocalyptic):
     assert apocalyptic.stellar.team3 == [['three', -1]]
     apocalyptic.start_challenges.assert_not_called()
     apocalyptic.collect_rewards.assert_called_once()
+
+
+@pytest.mark.parametrize(("show_boss_info", "failure"), [
+    (True, None), (False, None), (True, "missing"), (True, "late"), (True, "stop")
+])
+def test_first_stellar_iv_opens_after_skipping_three_stars(apocalyptic, monkeypatch, show_boss_info, failure):
+    runner = apocalyptic.stellar
+    globals_ = runner.run.__func__.__globals__
+    auto = globals_["auto"]
+    apocalyptic.level_range = (3, 4)
+    apocalyptic.prepare = Mock(return_value=True)
+    apocalyptic.find_level = Mock(return_value=(100, 100))
+    apocalyptic.judge_stars = Mock(return_value=3)
+    apocalyptic.start_challenge = Mock(side_effect=AssertionError("不应重打常规关"))
+    apocalyptic.collect_rewards = Mock()
+    apocalyptic.use_technique_and_attack_monster = Mock()
+    runner._prepare_teams = Mock()
+    runner._wait_ready = Mock()
+    runner._wait_node_end = Mock(return_value=True)
+    runner._window_region = lambda: (0, 0, 1920, 1080)
+    page, level, mode = "关卡", 4, "常规模式"
+    elapsed = 0
+    missed_entry = False
+    pending_page = None
+    clicks = []
+
+    def sleep(seconds):
+        nonlocal elapsed, page, pending_page
+        elapsed += seconds
+        if pending_page and elapsed >= pending_page[1]:
+            page, pending_page = pending_page[0], None
+
+    monkeypatch.setitem(globals_, "time", SimpleNamespace(sleep=sleep, monotonic=lambda: elapsed))
+
+    def find(target, *args, **kwargs):
+        nonlocal elapsed, missed_entry
+        if page == "关卡":
+            if target == "前往挑战" and show_boss_info and not missed_entry:
+                missed_entry = True
+                return None
+            visible = (mode, "前往挑战") if level == 4 else ()
+        elif page in ("节点一", "节点二", "节点三"):
+            if page == "节点一" and target == ["下一步", "前往编队"]:
+                if failure == "missing":
+                    return None
+                if failure == "late":
+                    elapsed += 20
+                if failure == "stop":
+                    raise RunStopRequested()
+            visible = ("首领信息", "星启模式", page, "前往编队" if page == "节点三" else "下一步")
+        elif page == "角色列表":
+            visible = ("角色列表", "星启模式", "前往挑战")
+        else:
+            visible = ("编队", "星启模式") if page == "编队" else ()
+        for label in ([target] if isinstance(target, str) else target):
+            if label in visible:
+                auto.matched_text = label
+                return label
+        return None
+
+    def click(target, *args, **kwargs):
+        nonlocal level, mode, page
+        if isinstance(target, list):
+            assert page == "角色列表" and "前往挑战" in target
+            target, page = "开始挑战", "战斗"
+        elif target in ("03", "04"):
+            assert page == "关卡"
+            level = int(target)
+        else:
+            assert target == "常规模式" and page == "关卡" and level == 4
+            mode = "星启模式"
+        clicks.append(target)
+        return True
+
+    def click_position(button):
+        nonlocal page, pending_page
+        if page == "关卡":
+            assert (level, mode, button) == (4, "星启模式", "前往挑战")
+            if show_boss_info:
+                pending_page = ("节点一", elapsed + 1.5)
+            else:
+                page = "编队"
+        elif page == "节点一":
+            assert button == "下一步"
+            page = "节点二"
+        elif page == "节点二":
+            assert button == "下一步"
+            if clicks.count("下一步") == 2:
+                page = "节点三"
+        elif page == "节点三":
+            assert button == "前往编队"
+            page = "编队"
+        else:
+            assert page == "编队" and button == ((1488, 330), (1488, 330))
+            button, page = "展开角色列表", "角色列表"
+        clicks.append(button)
+        return True
+
+    auto.find_element.side_effect = find
+    auto.click_element.side_effect = click
+    auto.click_element_with_pos.side_effect = click_position
+
+    if failure:
+        if failure == "stop":
+            with pytest.raises(RunStopRequested):
+                apocalyptic.run()
+        else:
+            with pytest.raises(RuntimeError, match="未进入末日幻影星启三节点编队界面"):
+                apocalyptic.run()
+        assert clicks == ["03", "04", "常规模式", "前往挑战"]
+        runner._prepare_teams.assert_not_called()
+        return
+
+    apocalyptic.run()
+    # 首领说明路径注入入口漏读、转场回执迟到和一次“下一步”点击未推进。
+    intro = ["下一步", "下一步", "下一步", "前往编队"] if show_boss_info else []
+    assert clicks == ["03", "04", "常规模式", "前往挑战", *intro, "展开角色列表", "开始挑战"]
+    runner._prepare_teams.assert_called_once()
+    runner._wait_ready.assert_called_once_with(1)
+
+
+def test_stellar_iv_reports_locked_difficulty_without_clicking(apocalyptic):
+    apocalyptic.prepare = Mock(return_value=True)
+    auto = apocalyptic.run.__func__.__globals__["auto"]
+    auto.find_element.side_effect = lambda target, *args, **kwargs: target == "未解锁"
+    with pytest.raises(RuntimeError, match="请先通关难度 III"):
+        apocalyptic.run()
+    auto.click_element.assert_not_called()
+    auto.click_element_with_pos.assert_not_called()
 
 
 def test_invalid_stellar_teams_stop_before_entering_game(apocalyptic):

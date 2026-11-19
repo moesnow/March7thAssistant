@@ -9,8 +9,8 @@
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>三月七小助手 · 崩坏：星穹铁道全自动日常助手 | March7thAssistant</title>
-<meta name="description" content="三月七小助手（March7thAssistant）是免费开源的《崩坏：星穹铁道》自动化助手：每日实训、清体力、差分宇宙、货币战争、锄大地等日常周常一键完成，支持定时启动、消息推送，也可以交给 AI 助手操作。">
-<meta name="keywords" content="三月七小助手,March7thAssistant,M7A,崩坏星穹铁道,星穹铁道,星铁,崩铁,自动化,清体力,每日实训,差分宇宙,货币战争,锄大地,模拟宇宙,AI 助手">
+<meta name="description" content="三月七小助手（March7thAssistant）是免费开源的《崩坏：星穹铁道》自动化助手：每日实训、清体力、差分宇宙、货币战争、锄大地等日常周常一键完成，支持定时启动、消息推送，也可以交给 AI 助手操作；安卓版可以直接装在手机上，在后台完成日常和清体力。">
+<meta name="keywords" content="三月七小助手,March7thAssistant,M7A,崩坏星穹铁道,星穹铁道,星铁,崩铁,自动化,清体力,每日实训,差分宇宙,货币战争,锄大地,模拟宇宙,AI 助手,安卓版,手机,Shizuku">
 <link rel="canonical" href="https://m7a.top/">
 <meta name="theme-color" content="#fff7fb" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0e1124" media="(prefers-color-scheme: dark)">
@@ -21,13 +21,13 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:url" content="https://m7a.top/">
 <meta property="og:title" content="三月七小助手 · 日常交给三月七，开拓留给你">
-<meta property="og:description" content="免费开源的《崩坏：星穹铁道》自动化助手：每日实训、清体力、周常玩法一键完成，支持定时启动、消息推送与 AI 助手操作。">
+<meta property="og:description" content="免费开源的《崩坏：星穹铁道》自动化助手：每日实训、清体力、周常玩法一键完成，支持定时启动、消息推送与 AI 助手操作，安卓手机也能用。">
 <meta property="og:image" content="https://m7a.top/website/img/og-cover.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"三月七小助手","alternateName":["March7thAssistant","M7A"],"url":"https://m7a.top/","image":"https://m7a.top/website/img/og-cover.jpg","description":"免费开源的《崩坏：星穹铁道》自动化助手：每日实训、清体力、周常玩法一键完成，支持定时启动、消息推送与 AI 助手操作。","applicationCategory":"GameApplication","operatingSystem":"Windows 10, Windows 11","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"},"license":"https://www.gnu.org/licenses/gpl-3.0.html","downloadUrl":"https://github.com/moesnow/March7thAssistant/releases/latest","codeRepository":"https://github.com/moesnow/March7thAssistant","inLanguage":"zh-CN"}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"三月七小助手","alternateName":["March7thAssistant","M7A"],"url":"https://m7a.top/","image":"https://m7a.top/website/img/og-cover.jpg","description":"免费开源的《崩坏：星穹铁道》自动化助手：每日实训、清体力、周常玩法一键完成，支持定时启动、消息推送与 AI 助手操作，安卓手机也能用。","applicationCategory":"GameApplication","operatingSystem":"Windows 10, Windows 11, Android 10+","offers":{"@type":"Offer","price":"0","priceCurrency":"CNY"},"license":"https://www.gnu.org/licenses/gpl-3.0.html","downloadUrl":"https://github.com/moesnow/March7thAssistant/releases/latest","codeRepository":"https://github.com/moesnow/March7thAssistant","inLanguage":"zh-CN"}
 </script>
 <style>
 :root{
@@ -221,6 +221,64 @@ h2{font-size:clamp(1.75rem,1.2rem + 1.9vw,2.6rem)}
 .steps p{font-size:15px}
 @media (min-width:960px){.flow .wrap{grid-template-columns:1.2fr 1fr;gap:72px}}
 
+/* 安卓版：右侧是 App 运行时的首页示意，文字和配色取自 App 界面 */
+.droid .wrap{display:grid;gap:56px;align-items:center}
+.droid .sec-hd{margin-bottom:0}
+.pts{display:grid;gap:18px;margin-top:30px}
+.pts li{display:flex;gap:14px;font-size:15px}
+.pts .ic{width:42px;height:42px;flex:none;border-radius:14px}
+.pts .ic .i{width:21px;height:21px}
+.pts strong{display:block;margin-bottom:2px;color:var(--ink);font-size:16.5px}
+.req{display:flex;gap:10px;margin-top:26px;padding:14px 18px;border-radius:16px;background:var(--bg-soft);border:1px solid var(--line);font-size:14.5px}
+.req .i{color:var(--blue);margin-top:4px}
+.droid .cta{margin:28px 0 0}
+.droid-art{position:relative;width:100%;max-width:420px;margin:0 auto;padding:86px 0 0 44px}
+.droid-art::before{content:"";position:absolute;inset:24% -20px 4% 6%;border-radius:40px;background:var(--stage);border:1px solid var(--line)}
+.ph{--p-bg:#fff8fa;--p-card:#fff;--p-ink:#221a1e;--p-mut:#5a474f;--p-line:#efd9e0;--p-pri:#c2397b;--p-pc:#ffd9e7;--p-opc:#3e0424;--p-okc:#d5f3e0;--p-onok:#0b3a22;--p-hero:linear-gradient(135deg,#ffe0eb,#e2edff);--p-pill:rgba(255,255,255,.72);--p-track:rgba(194,57,123,.25);--p-off:rgba(34,26,30,.12);--p-nav:#fff1f5;--p-stop:#382e32;--p-onstop:#ffecf1;
+  position:relative;width:min(100%,300px);margin-left:auto;padding:9px;border-radius:46px;background:#1e2547;box-shadow:var(--shadow-lg)}
+@media (prefers-color-scheme:dark){.ph{--p-bg:#17131a;--p-card:#211b24;--p-ink:#f0dfe5;--p-mut:#d3bfc8;--p-line:#3e333a;--p-pri:#ffb0ce;--p-pc:#7b2850;--p-opc:#ffd9e7;--p-okc:#12492d;--p-onok:#c5f2d6;--p-hero:linear-gradient(135deg,#4b2139,#1f2f52);--p-pill:rgba(33,27,36,.72);--p-track:rgba(255,176,206,.25);--p-off:rgba(240,223,229,.12);--p-nav:#1e1921;--p-stop:#f0dfe5;--p-onstop:#382e32;background:#2b3157;box-shadow:0 0 0 1px rgba(255,255,255,.1),var(--shadow-lg)}}
+.ph-scr{position:relative;display:flex;flex-direction:column;gap:9px;padding:32px 11px 0;border-radius:37px;background:var(--p-bg);color:var(--p-ink);font-size:11.5px;line-height:1.45;overflow:hidden}
+.ph-scr::before{content:"";position:absolute;top:11px;left:50%;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:#0b0f22}
+.ph-app{display:flex;align-items:center;gap:8px;padding:0 3px;font-size:14px;font-weight:800}
+.ph-app img{width:26px;height:26px;border-radius:8px}
+.ph-hero{position:relative;padding:13px 12px 11px;border-radius:20px;background:var(--p-hero)}
+.ph-hero>div:first-child{max-width:70%}
+.ph-pill{display:inline-flex;align-items:center;gap:5px;padding:1px 9px;border-radius:999px;background:var(--p-pill);color:var(--p-pri);font-size:10.5px;font-weight:700}
+.ph-pill::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor;animation:pulse 1.6s ease-in-out infinite}
+.ph-hero b{display:block;margin:7px 0 3px;font-size:14.5px;line-height:1.35}
+.ph-hero p{color:var(--p-mut);font-size:10.5px}
+.ph-hero img{position:absolute;right:4px;bottom:34px;width:28%;height:auto}
+.ph-phase{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:11px;color:var(--p-mut);font-size:9.5px;white-space:nowrap}
+.ph-phase span::before{content:"";display:block;height:4px;margin-bottom:3px;border-radius:9px;background:var(--p-off)}
+.ph-phase .d,.ph-phase .a{color:var(--p-ink)}
+.ph-phase .d::before{background:var(--p-pri)}
+.ph-phase .a::before{background:linear-gradient(90deg,var(--p-pri) 60%,var(--p-track) 60%)}
+.ph-tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ph-tiles div,.ph-row{padding:9px 10px;border-radius:16px;background:var(--p-card);border:1px solid var(--p-line)}
+.ph-tiles small,.ph-row small{display:block;color:var(--p-mut);font-size:10px}
+.ph-tiles b{display:block;font-size:13px}
+.ph-tiles em{display:inline-block;margin-top:3px;padding:0 7px;border-radius:999px;background:var(--p-pc);color:var(--p-opc);font-style:normal;font-size:9.5px;font-weight:700}
+.ph-tiles em.ok{background:var(--p-okc);color:var(--p-onok)}
+.ph-row{display:flex;align-items:center;gap:9px}
+.ph-row .i{width:17px;height:17px;color:var(--p-pri)}
+.ph-row b{display:block;font-size:12px}
+.ph-row .i:last-child{margin-left:auto;color:var(--p-mut)}
+.ph-stop{display:flex;align-items:center;justify-content:center;gap:8px;height:40px;margin-top:3px;border-radius:999px;background:var(--p-stop);color:var(--p-onstop);font-size:13px;font-weight:700}
+.ph-stop::before{content:"";width:9px;height:9px;border-radius:2px;background:currentColor}
+.ph-nav{display:grid;grid-template-columns:repeat(4,1fr);margin:3px -11px 0;padding:8px 6px 14px;background:var(--p-nav);color:var(--p-mut);font-size:10px;text-align:center}
+.ph-nav .i{width:30px;height:22px;margin:0 auto 2px;padding:3px 7px;border-radius:999px}
+.ph-nav .on{color:var(--p-pri);font-weight:700}
+.ph-nav .on .i{background:var(--p-pc);color:var(--p-opc)}
+.ph-ntf{position:absolute;top:0;left:0;z-index:1;display:flex;gap:10px;width:min(82%,290px);padding:12px 14px;border-radius:20px;background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow-lg);font-size:12.5px;line-height:1.45}
+.ph-ntf img{width:30px;height:30px;flex:none}
+.ph-ntf>div{flex:1;min-width:0}
+.ph-ntf small{display:block;color:var(--muted);font-size:11px}
+.ph-ntf b{display:block;color:var(--ink);font-size:13.5px}
+.ph-ntf i{display:block;height:4px;margin:7px 0 6px;border-radius:9px;background:linear-gradient(90deg,var(--pink) 66%,var(--pink-soft) 66%)}
+.ph-ntf em{font-style:normal;font-weight:700;color:var(--pink);font-size:12px}
+@media (max-width:599px){.droid-art{padding:82px 0 0 20px}.droid-art::before{inset:22% -8px 3% 0;border-radius:30px}.ph{width:min(100%,272px)}.ph-ntf{width:86%}}
+@media (min-width:960px){.droid .wrap{grid-template-columns:1fr 1fr;gap:64px}}
+
 /* AI 助手：深色面板，与粉色的玩家区块区分开 */
 .agent{position:relative;overflow:hidden;background:#141a36;color:#c4c9e6}
 .agent::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(640px 420px at 88% 0%,rgba(79,156,247,.24),transparent 70%),radial-gradient(520px 380px at 0% 100%,rgba(239,95,165,.16),transparent 70%)}
@@ -312,9 +370,20 @@ html:not(.js) .tablist{display:none}
 .acts .btn{flex:1 1 auto}
 .which{display:flex;gap:12px;max-width:820px;margin:28px auto 0;padding:16px 20px;border-radius:18px;background:var(--card);border:1px solid var(--line);font-size:15px}
 .which .i{color:var(--blue);margin-top:4px}
+/* 电脑版 / 安卓版切换：无 JS 时两块都展开，各自显示小标题 */
+.plat{display:flex;gap:4px;width:max-content;max-width:100%;margin:0 auto 28px;padding:5px;border-radius:999px;background:var(--bg-soft);border:1px solid var(--line)}
+html:not(.js) .plat{display:none}
+.plat button{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 22px;border:0;border-radius:999px;background:none;color:var(--muted);font:inherit;font-size:15.5px;font-weight:700;white-space:nowrap;cursor:pointer}
+.plat button:hover{color:var(--ink)}
+.plat [aria-selected=true]{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.plat .i{width:19px;height:19px}
+.dl-pt{margin:0 0 20px;font-size:20px;text-align:center}
+.js .dl-pt{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+html:not(.js) .dl-panel+.dl-panel{margin-top:64px}
 .on-phone{display:none;align-items:center;gap:12px;margin:0 auto 24px;padding:14px 16px;border-radius:16px;background:var(--blue-soft);color:var(--ink);font-size:14.5px}
 .on-phone .copy{border-color:var(--line-2);background:var(--card);color:var(--ink)}
 @media (max-width:720px) and (pointer:coarse){.on-phone{display:flex}}
+.on-phone[hidden]{display:none}
 .start-t{margin:64px 0 18px;font-size:20px;text-align:center}
 .start{display:grid;gap:16px}
 .start h3{font-size:18px;margin:14px 0 6px}
@@ -410,6 +479,12 @@ html:not(.js) .tablist{display:none}
   <symbol id="i-info" viewBox="0 0 24 24"><path d="M12 11v5m0-8h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></symbol>
   <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 4 2.5 20h19L12 4Zm0 6v4.5m0 3h.01"/></symbol>
   <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M8 2.5h8A1.5 1.5 0 0 1 17.5 4v16a1.5 1.5 0 0 1-1.5 1.5H8A1.5 1.5 0 0 1 6.5 20V4A1.5 1.5 0 0 1 8 2.5Zm3 16h2"/></symbol>
+  <symbol id="i-pc" viewBox="0 0 24 24"><path d="M3.5 4.5h17v11h-17v-11Zm5 15h7M12 15.5v4"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3.5 8.5 4.5-8.5 4.5L3.5 8 12 3.5Zm-8.5 8.5 8.5 4.5 8.5-4.5M3.5 16l8.5 4.5 8.5-4.5"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 10.5 12 4l8 6.5V20h-5v-5.5H9V20H4v-9.5Z"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01"/></symbol>
+  <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M4.5 9.5a10.6 10.6 0 0 1 15 0m-12 3a6.4 6.4 0 0 1 9 0M10 15.6a2.8 2.8 0 0 1 4 0M12 19h.01"/></symbol>
   <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.4-1.6.1-1.4-.1-1.4 2-1.6-2-3.4-2.4.9a7.7 7.7 0 0 0-2.4-1.4L14.2 2.5h-4.4l-.4 2.6A7.7 7.7 0 0 0 7 6.5l-2.4-.9-2 3.4 2 1.6-.1 1.4.1 1.4-2 1.6 2 3.4 2.4-.9a7.7 7.7 0 0 0 2.4 1.4l.4 2.6h4.4l.4-2.6a7.7 7.7 0 0 0 2.4-1.4l2.4.9 2-3.4-2-1.6Z"/></symbol>
 </svg>
 <a class="skip" href="#main">跳到正文</a>
@@ -422,6 +497,7 @@ html:not(.js) .tablist{display:none}
     </a>
     <nav class="links" aria-label="主导航">
       <a href="#features">功能</a>
+      <a href="#android">安卓版</a>
       <a href="#agent">AI 助手</a>
       <a href="#download">下载</a>
       <a href="/docs/#/assets/docs/Tutorial">使用教程</a>
@@ -433,6 +509,7 @@ html:not(.js) .tablist{display:none}
       <summary aria-label="打开菜单"><svg class="i"><use href="#i-menu"/></svg></summary>
       <nav aria-label="菜单">
         <a href="#features">功能</a>
+        <a href="#android">安卓版</a>
         <a href="#agent">AI 助手</a>
         <a href="#download">下载</a>
         <a href="/docs/#/assets/docs/Tutorial">使用教程</a>
@@ -447,7 +524,7 @@ html:not(.js) .tablist{display:none}
 <section class="hero">
   <div class="wrap">
     <div>
-      <a class="pill" href="#agent"><b>新</b>现在可以让 AI 助手帮你操作<svg class="i"><use href="#i-chev"/></svg></a>
+      <a class="pill" href="#android"><b>新</b>安卓版来了，手机也能清体力<svg class="i"><use href="#i-chev"/></svg></a>
       <h1>日常交给三月七，<br><span class="hl">开拓留给你。</span></h1>
       <p class="lead">免费开源的《崩坏：星穹铁道》自动化助手。每日实训、清体力、差分宇宙等日常与周常一键完成，还能定时启动、把结果推送到手机。</p>
       <div class="cta">
@@ -456,7 +533,7 @@ html:not(.js) .tablist{display:none}
       </div>
       <ul class="facts">
         <li><svg class="i"><use href="#i-check"/></svg>完全免费 · GPL-3.0 开源</li>
-        <li><svg class="i"><use href="#i-check"/></svg>Windows 10 / 11</li>
+        <li><svg class="i"><use href="#i-check"/></svg>Windows 10 / 11 · Android 10+</li>
         <li><svg class="i"><use href="#i-check"/></svg><span data-version="hero">持续更新中</span></li>
       </ul>
     </div>
@@ -585,6 +662,52 @@ html:not(.js) .tablist{display:none}
   </div>
 </section>
 
+<section class="sec droid" id="android" aria-labelledby="android-t">
+  <div class="wrap">
+    <div>
+      <div class="sec-hd">
+        <p class="eyebrow"><svg class="i"><use href="#i-phone"/></svg>新功能 · 安卓版</p>
+        <h2 id="android-t"><span class="nw">手机也能清体力，</span><span class="nw">游戏在后台跑</span></h2>
+        <p>安卓版直接装在手机上：游戏在一块看不见的虚拟屏里运行，三月七替你完成日常、每日实训和清体力，这期间手机照常聊天、刷视频。</p>
+      </div>
+      <ul class="pts">
+        <li><span class="ic"><svg class="i"><use href="#i-layers"/></svg></span><div><strong>后台运行，不占屏幕</strong>进度显示在通知栏，随时可以停止；想省电，还可以在游戏就绪后关闭屏幕。</div></li>
+        <li><span class="ic b"><svg class="i"><use href="#i-shield"/></svg></span><div><strong>不需要 Root</strong>借助 Shizuku 授权，App 内置安装包和一步步的权限引导；已经 Root 的手机也能直接用。</div></li>
+        <li><span class="ic"><svg class="i"><use href="#i-wifi"/></svg></span><div><strong>Android 11 起不用电脑</strong>用系统自带的「无线调试」在手机上完成授权；Android 10 需要用数据线连一次电脑。</div></li>
+      </ul>
+      <p class="req"><svg class="i"><use href="#i-info"/></svg><span>需要 Android 10 及以上的 64 位手机，并安装国服《崩坏：星穹铁道》官服。目前支持日常、每日实训和清体力，货币战争、差分宇宙等其他任务请使用电脑版。</span></p>
+      <div class="cta">
+        <a class="btn btn-primary" href="#download" data-tab="t-and"><svg class="i"><use href="#i-down"/></svg>下载安卓版</a>
+        <a class="btn btn-ghost" href="/docs/#/assets/docs/Android"><svg class="i"><use href="#i-book"/></svg>安卓版教程</a>
+      </div>
+    </div>
+
+    <figure class="droid-art" role="img" aria-label="示意图：安卓版运行时，通知栏显示「正在执行：清体力（2/4）」，App 首页显示正在清体力，手机可以照常使用">
+      <div class="ph" aria-hidden="true">
+        <div class="ph-scr">
+          <div class="ph-app"><img src="/website/img/m7a-mark-120.webp" width="26" height="26" alt="" loading="lazy" decoding="async">三月七小助手</div>
+          <div class="ph-hero">
+            <div><span class="ph-pill">运行中</span><b>正在清体力（第 2 步，共 4 步）</b><p>手机可以照常使用。请保持解锁，不要按电源键。</p></div>
+            <img src="/website/img/m7a-chibi-440.webp" width="954" height="1471" alt="" loading="lazy" decoding="async">
+            <div class="ph-phase"><span class="d">准备</span><span class="d">启动游戏</span><span class="a">执行任务</span><span>收尾</span></div>
+          </div>
+          <div class="ph-tiles">
+            <div><small>权限方式</small><b>Shizuku</b><em class="ok">已就绪</em></div>
+            <div><small>当前任务</small><b>日常</b><em>运行中不可更换</em></div>
+          </div>
+          <div class="ph-row"><svg class="i"><use href="#i-layers"/></svg><div><b>运行状态</b><small>虚拟屏 2 · 游戏已就绪</small></div><svg class="i"><use href="#i-chev"/></svg></div>
+          <div class="ph-stop">停止</div>
+          <div class="ph-nav"><span class="on"><svg class="i"><use href="#i-home"/></svg>首页</span><span><svg class="i"><use href="#i-day"/></svg>任务</span><span><svg class="i"><use href="#i-list"/></svg>日志</span><span><svg class="i"><use href="#i-gear"/></svg>设置</span></div>
+        </div>
+      </div>
+      <div class="ph-ntf" aria-hidden="true">
+        <img src="/website/img/m7a-mark-120.webp" width="30" height="30" alt="" loading="lazy" decoding="async">
+        <div><small>三月七小助手 · 任务进度</small><b>日常</b>正在执行：清体力（2/4）<i></i><em>停止</em></div>
+      </div>
+    </figure>
+  </div>
+</section>
+
 <section class="sec agent" id="agent" aria-labelledby="agent-t">
   <div class="wrap">
     <div>
@@ -676,12 +799,19 @@ html:not(.js) .tablist{display:none}
       </picture>
       <p class="eyebrow"><svg class="i"><use href="#i-down"/></svg>下载</p>
       <h2 id="download-t">下载三月七小助手</h2>
-      <p>软件本身完全免费。两个渠道提供的是同一份程序，按你的网络情况选择就好。</p>
-      <p class="dl-meta"><span>最新版本 <b data-version="full">最新正式版</b></span><span>Windows 10 / 11（64 位）</span><a href="/docs/#/assets/docs/Changelog">更新日志</a></p>
+      <p>软件本身完全免费。电脑版和安卓版各有两个下载渠道，内容相同，按网络情况选择就好。</p>
+      <p class="dl-meta"><span>最新版本 <b data-version="full">最新正式版</b></span><span>Windows 10 / 11（64 位）</span><span>Android 10 及以上</span><a href="/docs/#/assets/docs/Changelog">更新日志</a></p>
     </div>
 
-    <div class="on-phone"><svg class="i"><use href="#i-info"/></svg><span style="flex:1">小助手需要在 Windows 电脑上运行，可以把下载页链接发到电脑上打开。</span><span id="page-link" hidden>https://m7a.top/#download</span><button class="copy" type="button" data-copy="page-link"><svg class="i"><use href="#i-copy"/></svg><span>复制链接</span></button></div>
+    <div class="on-phone"><svg class="i"><use href="#i-info"/></svg><span style="flex:1">iPhone 暂不支持。想用电脑版的话，可以把下载页链接发到电脑上打开。</span><span id="page-link" hidden>https://m7a.top/#download</span><button class="copy" type="button" data-copy="page-link"><svg class="i"><use href="#i-copy"/></svg><span>复制链接</span></button></div>
 
+    <div class="plat" role="tablist" aria-label="选择设备">
+      <button role="tab" id="t-win" aria-controls="p-win" aria-selected="true"><svg class="i"><use href="#i-pc"/></svg>Windows 电脑</button>
+      <button role="tab" id="t-and" aria-controls="p-and" aria-selected="false" tabindex="-1"><svg class="i"><use href="#i-phone"/></svg>安卓手机</button>
+    </div>
+
+    <div class="dl-panel" id="p-win" role="tabpanel" aria-labelledby="t-win">
+    <h3 class="dl-pt">Windows 电脑版</h3>
     <div class="chans">
       <article class="chan rec">
         <div><span class="badge">中国大陆推荐</span></div>
@@ -732,7 +862,63 @@ html:not(.js) .tablist{display:none}
       <a class="more" href="/docs/#/assets/docs/Tutorial">完整使用教程<svg class="i"><use href="#i-arrow"/></svg></a>
     </div>
     <div class="env" style="margin-top:8px">
-      <span>macOS / Linux / 安卓：使用云·星穹铁道模式，见 <a href="https://github.com/moesnow/March7thAssistant#源码运行" target="_blank" rel="noopener">源码运行</a> · <a href="/docs/#/assets/docs/Docker">Docker 部署</a> · <a href="/docs/#/assets/docs/Termux">Termux 安卓部署</a></span>
+      <span>macOS / Linux：使用云·星穹铁道模式，见 <a href="https://github.com/moesnow/March7thAssistant#源码运行" target="_blank" rel="noopener">源码运行</a> · <a href="/docs/#/assets/docs/Docker">Docker 部署</a></span>
+    </div>
+    </div>
+
+    <div class="dl-panel" id="p-and" role="tabpanel" aria-labelledby="t-and">
+    <h3 class="dl-pt">安卓手机版</h3>
+    <div class="chans">
+      <article class="chan rec">
+        <div><span class="badge">中国大陆推荐</span></div>
+        <div class="chan-hd">
+          <span class="ic"><svg class="i"><use href="#i-bolt"/></svg></span>
+          <div><h3>Mirror酱 高速下载</h3><p>国内 CDN 加速，安装包很快就能下完</p></div>
+        </div>
+        <ul class="pros">
+          <li><svg class="i"><use href="#i-check"/></svg>国内网络下载快，不容易中断</li>
+          <li><svg class="i"><use href="#i-check"/></svg>填写 CDK 后，App 内更新同样走高速通道</li>
+          <li><svg class="i"><use href="#i-heart"/></svg>收入与开发者分成，直接支持三月七小助手的持续开发</li>
+          <li class="n"><svg class="i"><use href="#i-info"/></svg>付费服务，需要购买 CDK；电脑版和 MAA 等其他接入 Mirror酱 的项目也能用同一个 CDK</li>
+        </ul>
+        <div class="acts">
+          <a class="btn btn-primary" href="https://mirrorchyan.com/zh/download?rid=March7thAssistant&amp;os=android&amp;arch=&amp;channel=stable&amp;source=m7a-website" target="_blank" rel="noopener">前往 Mirror酱 下载<svg class="i"><use href="#i-out"/></svg></a>
+          <a href="https://mirrorchyan.com/?source=m7a-website" target="_blank" rel="noopener">了解 Mirror酱</a>
+        </div>
+      </article>
+      <article class="chan">
+        <div><span class="badge g">官方 · 免费</span></div>
+        <div class="chan-hd">
+          <span class="ic b"><svg class="i"><use href="#i-gh"/></svg></span>
+          <div><h3>GitHub 免费下载</h3><p>项目官方发布页，与电脑版同时发布</p></div>
+        </div>
+        <ul class="pros">
+          <li><svg class="i"><use href="#i-check"/></svg>完全免费，下载与 App 内更新都不收费</li>
+          <li><svg class="i"><use href="#i-check"/></svg>一个 APK 安装包，约 150 MB，下载后点开就能安装</li>
+          <li><svg class="i"><use href="#i-check"/></svg>发布页附带 SHA-256 校验值，可以核对文件是否完整</li>
+          <li class="n"><svg class="i"><use href="#i-info"/></svg>中国大陆访问 GitHub 可能很慢，甚至无法连接</li>
+        </ul>
+        <div class="acts">
+          <a class="btn btn-ghost" href="https://github.com/moesnow/March7thAssistant/releases/latest/download/March7thAssistant_full_android.apk"><svg class="i"><use href="#i-down"/></svg>下载安装包 .apk</a>
+          <a href="https://github.com/moesnow/March7thAssistant/releases/latest" target="_blank" rel="noopener">全部版本</a>
+        </div>
+      </article>
+    </div>
+    <p class="which"><svg class="i"><use href="#i-info"/></svg><span>不知道选哪个？能流畅打开 GitHub 就用 GitHub；下载很慢、经常中断，推荐 Mirror酱，顺便支持一下开发者。</span></p>
+
+    <h3 class="start-t">下载之后，三步开始</h3>
+    <div class="start">
+      <div class="card"><span class="n">1</span><h3>安装</h3><p>点开下载好的 APK。提示“禁止安装未知应用”时，按提示允许浏览器安装应用，再点一次安装。</p></div>
+      <div class="card"><span class="n">2</span><h3>授权</h3><p>打开小助手，点「去完成授权」，按引导装好并启动 Shizuku，在弹窗里选「始终允许」。</p></div>
+      <div class="card"><span class="n">3</span><h3>开始</h3><p>在「任务」页选好要做的事，回到首页点「开始日常」，剩下的交给三月七。</p></div>
+    </div>
+    <div class="env">
+      <span>需要 <strong>Android 10 及以上</strong>的 64 位手机，并安装<strong>国服《崩坏：星穹铁道》官服</strong>、手动登录过一次。运行时请保持手机解锁，不要按电源键。</span>
+      <a class="more" href="/docs/#/assets/docs/Android">安卓版使用教程<svg class="i"><use href="#i-arrow"/></svg></a>
+    </div>
+    <div class="env" style="margin-top:8px">
+      <span>目前支持日常、每日实训和清体力，其他任务请使用电脑版。也可以用电脑版通过 ADB 连接手机或模拟器运行，见 <a href="/docs/#/assets/docs/Android">安卓版教程</a>最后一节。</span>
+    </div>
     </div>
     <p class="resale"><svg class="i"><use href="#i-warn"/></svg><span><strong>三月七小助手从未授权任何人售卖。</strong>如果你在闲鱼等平台付费买到了它，请立即退款并举报商家。Mirror酱 是官方合作的下载加速服务，不属于售卖行为。</span></p>
   </div>
@@ -755,7 +941,15 @@ html:not(.js) .tablist{display:none}
       </details>
       <details>
         <summary>电脑和游戏需要怎么设置？</summary>
-        <div><p>需要 Windows 10 / 11 和 PC 版游戏客户端。游戏以 1920×1080 分辨率窗口化运行（不可用时再选全屏），语言设为简体中文，并关闭帧率监控、HDR、N 卡游戏滤镜等会遮挡或改变画面的软件。macOS / Linux 用户可以使用云·星穹铁道模式。</p></div>
+        <div><p>需要 Windows 10 / 11 和 PC 版游戏客户端。游戏以 1920×1080 分辨率窗口化运行（不可用时再选全屏），语言设为简体中文，并关闭帧率监控、HDR、N 卡游戏滤镜等会遮挡或改变画面的软件。macOS / Linux 用户可以使用云·星穹铁道模式，安卓手机请使用安卓版。</p></div>
+      </details>
+      <details>
+        <summary>手机上能用吗？安卓版和电脑版有什么不同？</summary>
+        <div><p>安卓手机可以直接安装安卓版（Android 10 及以上的 64 位手机），游戏在后台虚拟屏里运行，运行期间手机可以照常使用。目前支持日常、每日实训和清体力，游戏需要是国服官服。</p><p>货币战争、差分宇宙、锄大地、逐光捡金等任务，以及定时启动和消息推送，暂时只有电脑版支持。iPhone 暂不支持。</p></div>
+      </details>
+      <details>
+        <summary>安卓版需要 Root 或者电脑吗？</summary>
+        <div><p>不需要 Root。安卓版借助 Shizuku 授权，App 里内置了安装包和一步步的权限引导。Android 11 及以上用系统自带的「无线调试」在手机上就能完成；Android 10 需要用数据线连一次电脑。</p><p>重启手机后，需要回到 Shizuku 重新启动一次服务。详细步骤见 <a href="/docs/#/assets/docs/Android">安卓版使用教程</a>。</p></div>
       </details>
       <details>
         <summary>运行的时候还能用电脑吗？</summary>
@@ -763,7 +957,7 @@ html:not(.js) .tablist{display:none}
       </details>
       <details>
         <summary>以后怎么更新？</summary>
-        <div><p>有新版本时小助手会弹窗提示，点击即可下载更新；也可以在设置页最底部手动检查更新。默认从 GitHub 免费下载更新，填写 Mirror酱 CDK 后可以在国内高速增量更新。</p></div>
+        <div><p>有新版本时小助手会弹窗提示，点击即可下载更新；也可以在设置页最底部手动检查更新。默认从 GitHub 免费下载更新，填写 Mirror酱 CDK 后可以在国内高速增量更新。</p><p>安卓版有新版本时首页会提示，也可以在 App 的「设置 → 应用更新」里检查和安装更新。</p></div>
       </details>
       <details>
         <summary>被杀毒软件拦截或删除了怎么办？</summary>
@@ -809,8 +1003,8 @@ html:not(.js) .tablist{display:none}
         <a class="brand" href="/"><img src="/website/img/m7a-mark-120.webp" width="36" height="36" alt=""><span>三月七小助手<small>March7thAssistant</small></span></a>
         <p>日常交给三月七，开拓留给你。免费开源的《崩坏：星穹铁道》自动化助手。</p>
       </div>
-      <div><h4>产品</h4><ul><li><a href="#download">下载</a></li><li><a href="/docs/#/assets/docs/Changelog">更新日志</a></li><li><a href="/docs/#/assets/docs/TasksTable">每日实训支持表</a></li><li><a href="https://github.com/moesnow/March7thAssistant/releases" target="_blank" rel="noopener">历史版本</a></li></ul></div>
-      <div><h4>文档</h4><ul><li><a href="/docs/#/assets/docs/Tutorial">使用教程</a></li><li><a href="/docs/#/assets/docs/FAQ">常见问题</a></li><li><a href="/docs/#/assets/docs/Workflow">流程编排</a></li><li><a href="/docs/#/assets/docs/Background">后台运行</a></li></ul></div>
+      <div><h4>产品</h4><ul><li><a href="#download">下载</a></li><li><a href="#android">安卓版</a></li><li><a href="/docs/#/assets/docs/Changelog">更新日志</a></li><li><a href="/docs/#/assets/docs/TasksTable">每日实训支持表</a></li><li><a href="https://github.com/moesnow/March7thAssistant/releases" target="_blank" rel="noopener">历史版本</a></li></ul></div>
+      <div><h4>文档</h4><ul><li><a href="/docs/#/assets/docs/Tutorial">使用教程</a></li><li><a href="/docs/#/assets/docs/Android">安卓版教程</a></li><li><a href="/docs/#/assets/docs/FAQ">常见问题</a></li><li><a href="/docs/#/assets/docs/Workflow">流程编排</a></li><li><a href="/docs/#/assets/docs/Background">后台运行</a></li></ul></div>
       <div><h4>AI 助手</h4><ul><li><a href="/docs/#/assets/docs/Agent">使用说明</a></li><li><a href="/assets/agent/skills/march7th-assistant/SKILL.md">SKILL.md</a></li><li><a href="https://github.com/moesnow/March7thAssistant/tree/main/assets/agent/skills/march7th-assistant" target="_blank" rel="noopener">Skill 源文件</a></li></ul></div>
       <div><h4>Language</h4><ul><li><a href="/docs/#/README_TW">繁體中文</a></li><li><a href="/docs/#/README_EN">English</a></li><li><a href="/docs/#/README_JA">日本語</a></li><li><a href="/docs/#/README_KR">한국어</a></li></ul></div>
     </div>
@@ -857,10 +1051,10 @@ html:not(.js) .tablist{display:none}
     else fallback();
   });
 
-  // 选项卡（无 JS 时三块内容全部展开）
-  var tabs = [].slice.call(document.querySelectorAll('[role=tab]'));
+  // 选项卡（无 JS 时各块内容全部展开）。页面上有多组，每组只切换自己的面板
+  function tabsOf(list) { return [].slice.call(list.querySelectorAll('[role=tab]')); }
   function select(tab, focus) {
-    tabs.forEach(function (t) {
+    tabsOf(tab.parentNode).forEach(function (t) {
       var on = t === tab;
       t.setAttribute('aria-selected', on);
       t.tabIndex = on ? 0 : -1;
@@ -868,12 +1062,13 @@ html:not(.js) .tablist{display:none}
     });
     if (focus) tab.focus();
   }
-  if (tabs.length) {
+  [].forEach.call(document.querySelectorAll('[role=tablist]'), function (list) {
+    var tabs = tabsOf(list);
     select(tabs[0]);
-    tabs[0].parentNode.addEventListener('click', function (e) {
+    list.addEventListener('click', function (e) {
       var t = e.target.closest('[role=tab]'); if (t) select(t);
     });
-    tabs[0].parentNode.addEventListener('keydown', function (e) {
+    list.addEventListener('keydown', function (e) {
       var i = tabs.indexOf(document.activeElement), n = tabs.length;
       if (i < 0) return;
       if (e.key === 'ArrowRight') select(tabs[(i + 1) % n], true);
@@ -881,7 +1076,18 @@ html:not(.js) .tablist{display:none}
       else return;
       e.preventDefault();
     });
+  });
+
+  // 用安卓手机打开时，下载区默认显示安卓版，并隐藏写给 iPhone 用户的提示；「下载安卓版」等链接跳转前先切到对应选项卡
+  var androidTab = document.getElementById('t-and');
+  if (androidTab && /Android/i.test(navigator.userAgent)) {
+    select(androidTab);
+    document.querySelector('.on-phone').hidden = true;
   }
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('[data-tab]');
+    if (a) select(document.getElementById(a.getAttribute('data-tab')));
+  });
 
   // 对话示例进入视野后：三月七探出头，对话逐行出现
   var demo = document.querySelector('.demo');

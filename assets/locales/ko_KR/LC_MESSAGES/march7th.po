@@ -8166,6 +8166,18 @@ msgstr "전략 우선"
 msgid "图鉴优先"
 msgstr "도감 우선"
 
+#: app/components/evey_animation.py:28
+msgid "忆灵「长夜」"
+msgstr "기억 정령 Evey"
+
+#: app/home_interface.py:54
+msgid "别晃啦！本姑娘头好晕( ꩜ ᯅ ꩜;)"
+msgstr "그만 흔들어! 나 어지럽단 말이야! ( ꩜ ᯅ ꩜;)"
+
+#: app/home_interface.py:123
+msgid "长夜月小助手"
+msgstr "Evernight 도우미"
+
 #: app/setting_interface.py:615
 msgid "总时限"
 msgstr "총 제한 시간"
@@ -8201,3 +8213,31 @@ msgstr "해결 방법 보기"
 #: app/setting_interface.py:2569
 msgid "后台操作模式已移至「游戏连接」"
 msgstr "백그라운드 조작 모드가 ‘게임 연결’로 이동했습니다"
+
+#: app/setting_interface.py:1163
+msgid "界面主题"
+msgstr "앱 테마"
+
+#: app/setting_interface.py:1164
+msgid "选择应用的显示主题"
+msgstr "앱의 표시 테마를 선택합니다"
+
+#: app/setting_interface.py:1165
+msgid "跟随系统"
+msgstr "시스템 설정 따르기"
+
+#: app/setting_interface.py:1165
+msgid "浅色"
+msgstr "밝게"
+
+#: app/setting_interface.py:1165
+msgid "深色"
+msgstr "어둡게"
+
+#: app/card/comboboxsettingcard2.py:58 app/main_window.py:452
+msgid "长夜"
+msgstr "긴 밤"
+
+#: module/game/adb_ready.py:118
+msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
+msgstr "열차 보급 팝업에서 제한 시간 안에 메인 화면으로 돌아가지 못했습니다. 게임에서 보상을 받았는지 확인하세요."

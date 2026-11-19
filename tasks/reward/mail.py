@@ -6,12 +6,17 @@ from .receipt import RewardError, close_item_reward, confirm_item_reward
 from .rewardtemplate import RewardTemplate
 
 
+RECEIVE_CROP = (316 / 1920, 942 / 1080, 250 / 1920, 76 / 1080)
+
+
 class Mail(RewardTemplate):
     def run(self):
         button = auto.find_element("./assets/images/zh_CN/reward/mail/receive_all.png", "image", 0.8,
-                                   max_retries=4, retry_delay=0.3)
+                                   crop=RECEIVE_CROP, max_retries=4, retry_delay=0.3)
         if not button:
-            button = auto.find_element("全部领取", "text", max_retries=3, retry_delay=0.3)
+            button = auto.find_element("全部领取", "text", crop=RECEIVE_CROP, max_retries=3, retry_delay=0.3)
+        if not button:
+            button = auto.find_element("全部领取", "text")
         if not button:
             if auto.find_element(("暂无邮件", "没有邮件"), "text", include=True,
                                  take_screenshot=False, need_ocr=False):
@@ -29,15 +34,14 @@ class Mail(RewardTemplate):
         )))
         if not pixels.size:
             raise RewardError("未确认邮箱的全部领取按钮状态")
+        # 置灰按钮的底色随主界面变化，浅灰字形只占 OCR 框的一小部分。
+        brightest = pixels.max(axis=-1)
+        darkest = pixels.min(axis=-1)
+        if ((darkest >= 145) & (brightest - darkest <= 35)).mean() >= 0.10:
+            log.info("邮箱暂无可领取附件")
+            return False
         red, green, blue = np.moveaxis(pixels, -1, 0)
         if ((red > 180) & (green > 125) & (blue < 155)).mean() < 0.25:
-            brightest = pixels.max(axis=-1)
-            darkest = pixels.min(axis=-1)
-            gray_text = ((darkest >= 145) & (brightest - darkest <= 35)).mean()
-            muted_background = (brightest < 170).mean()
-            if gray_text >= 0.50 and muted_background >= 0.20:
-                log.info("邮箱暂无可领取附件")
-                return False
             raise RewardError("未确认邮箱的全部领取按钮状态")
         if not auto.click_element_with_pos(button):
             raise RewardError("无法点击邮箱的全部领取按钮")

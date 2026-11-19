@@ -8,6 +8,7 @@ from module.screen import screen
 from module.automation import auto
 from module.config import cfg
 from module.logger import log
+from tasks.base.task_steps import optional_reward
 
 
 class Apocalyptic(BaseChallenge):
@@ -361,6 +362,7 @@ class Apocalyptic(BaseChallenge):
         if not screen.check_screen('apocalyptic'):
             raise RuntimeError("结算后返回末日幻影失败")
 
+    @optional_reward("末日幻影奖励")
     def collect_rewards(self):
         '''领取奖励'''
         # 星启结束后也可领取之前获得的奖励，零分结算不能记为本次通关。

@@ -4,6 +4,7 @@ import time
 
 from module.automation import auto
 from module.logger import log
+from tasks.base.task_steps import FATAL_GAME_ERRORS
 from utils.screenshot_util import save_error_screenshot
 
 
@@ -53,5 +54,5 @@ def wait_for_weekly_reward():
         time.sleep(1)
 
     log.warning(reason)
-    save_error_screenshot(log)
+    save_error_screenshot(log, propagate_errors=FATAL_GAME_ERRORS)
     return False

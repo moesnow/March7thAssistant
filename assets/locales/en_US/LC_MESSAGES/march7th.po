@@ -8495,6 +8495,18 @@ msgstr "Strategy first"
 msgid "图鉴优先"
 msgstr "Uncollected entries first"
 
+#: app/components/evey_animation.py:28
+msgid "忆灵「长夜」"
+msgstr "Memosprite: Evey"
+
+#: app/home_interface.py:54
+msgid "别晃啦！本姑娘头好晕( ꩜ ᯅ ꩜;)"
+msgstr "Stop shaking me! I'm getting dizzy! ( ꩜ ᯅ ꩜;)"
+
+#: app/home_interface.py:123
+msgid "长夜月小助手"
+msgstr "Evernight Assistant"
+
 #: app/setting_interface.py:615
 msgid "总时限"
 msgstr "Time limit"
@@ -8535,3 +8547,33 @@ msgstr "Troubleshooting"
 #: app/setting_interface.py:2569
 msgid "后台操作模式已移至「游戏连接」"
 msgstr "Background mode moved to Game connection"
+
+#: app/setting_interface.py:1163
+msgid "界面主题"
+msgstr "App theme"
+
+#: app/setting_interface.py:1164
+msgid "选择应用的显示主题"
+msgstr "Choose the application's appearance"
+
+#: app/setting_interface.py:1165
+msgid "跟随系统"
+msgstr "Follow system"
+
+#: app/setting_interface.py:1165
+msgid "浅色"
+msgstr "Light"
+
+#: app/setting_interface.py:1165
+msgid "深色"
+msgstr "Dark"
+
+#: app/card/comboboxsettingcard2.py:58 app/main_window.py:452
+msgid "长夜"
+msgstr "Long Night"
+
+#: module/game/adb_ready.py:118
+msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
+msgstr ""
+"Timed out waiting for the Express Supply pop-up to close and the main "
+"screen to return. Check in-game whether you received the reward."

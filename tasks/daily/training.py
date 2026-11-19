@@ -1,4 +1,6 @@
+from module.automation.automation import screenshot_retry_timeout
 from module.logger import log
+from tasks.base.task_steps import optional_reward
 from utils.date import Date
 
 
@@ -27,6 +29,18 @@ def needs_action(activity, tasks):
 
 def can_collect(config):
     return config.reward_enable and config.reward_quest_enable
+
+
+def full_activity_visible(lines):
+    return any("本日活跃度已满" in text for _, (text, _) in lines or ())
+
+
+def confirm_full_activity(automation, recognize, crop):
+    """领取已发出，徽标迟到时用新画面上的满分提示复核一次。"""
+    with optional_reward("实训任务卡片回执复核"), screenshot_retry_timeout(0):
+        frame, _, _ = automation.take_screenshot(crop=crop)
+        return full_activity_visible(recognize(frame))
+    return False
 
 
 def claimable_milestones(automation, template, crop):

@@ -1,3 +1,4 @@
+import os
 import sys
 import math
 import time
@@ -27,8 +28,8 @@ _SCREEN_WAIT_TIMEOUT = 10.0
 
 
 def _screen_match_workers(screen_count):
-    """按界面数量决定并发匹配的线程数，最多 _SCREEN_MATCH_WORKERS 个。"""
-    return max(1, min(_SCREEN_MATCH_WORKERS, screen_count))
+    """按界面数量与 CPU 数决定并发匹配的线程数，最多 _SCREEN_MATCH_WORKERS 个。"""
+    return max(1, min(_SCREEN_MATCH_WORKERS, screen_count, os.cpu_count() or 4))
 
 
 class Screen(metaclass=SingletonMeta):

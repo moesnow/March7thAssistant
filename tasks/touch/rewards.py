@@ -11,7 +11,7 @@ from module.localization import tr
 from module.logger import log
 from module.screen import screen
 from tasks.base.list_drag import changed_ratio, drag_list
-from tasks.base.task_steps import run_steps
+from tasks.base.task_steps import optional_reward, run_steps
 from tasks.reward.menu_alert import menu_alert
 from tasks.reward.receipt import RewardError, notify_reward
 from tasks.reward.sms import close_sms_receipt, find_thread_title, first_unblocked_thread
@@ -54,10 +54,11 @@ def _confirm_item_reward():
 def _close_item_reward(*, notify=None):
     if notify:
         notify_reward(auto, notify, crop=daily.REWARD_REPORT_CROP)
-    if not auto.click_element(daily.REWARD_CLOSE_CROP, "crop"):
+    with optional_reward("获得物品弹窗收尾"):
+        if auto.click_element(daily.REWARD_CLOSE_CROP, "crop"):
+            return True
         log.warning("已确认到账，获得物品弹窗仍未关闭")
-        return False
-    return True
+    return False
 
 
 def claim_dispatch():
@@ -150,8 +151,9 @@ def claim_srpass():
             log.info("手机菜单暂无无名勋礼")
             return
     _open_srpass()
-    screen.change_to("pass2", max_recursion=1)
-    _claim_srpass_tab("pass2", "本周及本期任务经验")
+    with optional_reward("无名勋礼任务经验"):
+        screen.change_to("pass2", max_recursion=1)
+        _claim_srpass_tab("pass2", "本周及本期任务经验")
     screen.change_to("pass1", max_recursion=1)
     if auto.find_element("解锁无名客的荣勋", "text", crop=SRPASS_PAID_UNLOCK, max_retries=4, retry_delay=0.3):
         _claim_srpass_tab("pass1", "等级奖励")
@@ -327,31 +329,35 @@ def claim_messages():
         raise RewardError(f"有 {timed_out} 个短信会话超时")
 
 
-def _claim():
-    return run_steps((name, action) for enabled, name, action in (
-        (cfg.reward_dispatch_enable, "委托", claim_dispatch),
-        (cfg.reward_mail_enable, "邮件", claim_mail),
-        (cfg.reward_assist_enable, "支援礼盒", claim_assist),
-        (cfg.reward_srpass_enable, "无名勋礼", claim_srpass),
-        (cfg.reward_message_enable, "短信", claim_messages),
-    ) if enabled)
-
-
 def claim():
     """领取启用的日常奖励。"""
     log.hr("开始触屏领奖", 0)
     with screenshot_retry_timeout(5):
-        return _claim()
+        for enabled, name, action in (
+            (cfg.reward_dispatch_enable, "委托奖励", claim_dispatch),
+            (cfg.reward_mail_enable, "邮件奖励", claim_mail),
+            (cfg.reward_assist_enable, "支援礼盒", claim_assist),
+            (cfg.reward_srpass_enable, "无名勋礼奖励", claim_srpass),
+            (cfg.reward_message_enable, "短信奖励", claim_messages),
+        ):
+            if not enabled:
+                continue
+            with optional_reward(name):
+                action()
+                continue
+            with optional_reward(f"{name}收尾"):
+                if screen.check_screen("item_reward"):
+                    _close_item_reward()
+    return True
 
 
 def run(*, complete_training=False, on_summary=None):
     def report_daily(summary):
         on_summary(tr("奖励检查完成，{daily_summary}").format(daily_summary=summary))
 
-    log.hr("开始触屏领奖", 0)
+    if cfg.reward_enable:
+        claim()
     with screenshot_retry_timeout(5):
-        if cfg.reward_enable and not _claim():
-            return False
         return daily.run(complete_training=complete_training, on_summary=report_daily if on_summary is not None else None)
 
 
@@ -399,7 +405,8 @@ def routine(*, on_summary=None, full_run=False, on_step=None):
     with screenshot_retry_timeout(5):
         result = run_steps(steps, on_step=None if on_step is None else report)
         if result:
-            screen.change_to("main", max_recursion=1)
+            with optional_reward("触屏日常收尾"):
+                screen.change_to("main", max_recursion=1)
     if summaries and on_summary is not None:
         on_summary(tr("；").join(summaries))
     return result

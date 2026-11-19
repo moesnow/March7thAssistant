@@ -37,6 +37,7 @@ MAX_ENTRY_ATTEMPTS = 4
 MAX_CAPTURE_ATTEMPTS = 5
 CAPTURE_SECONDS = 3
 MATCH_UNIDENTIFIED_SECONDS = 60
+STALLED_LAYOUT_SECONDS = 18
 BATTLE_SECONDS = 10 * 60
 MAX_AUTO_ATTEMPTS = 2
 AUTO_RETRY_SECONDS = 12
@@ -56,14 +57,14 @@ RANK_CLICK_HOLD = 0.03
 PROMOTION_CAP_ENEMY_RANK = 28  # 入画奇航超频博弈 A4 冰钛 6
 PREP_OVERLAYS = frozenset((Page.SHOP, Page.TIMED_SHOP, Page.RAIL_SHOP, Page.BLACK_MARKET, Page.REVEAL, Page.CHOICE,
                            Page.DANCE, Page.RANGER, Page.SVAROG_MODIFICATION, Page.DRAGON_CLEANSE,
-                           Page.GARDEN, Page.HACK,
+                           Page.GARDEN, Page.HACK, Page.TREASURY,
                            Page.BENCH_FULL, Page.HALO_TIP, Page.HALO_INFO, Page.HALO_MENTOR, Page.EMPTY_FRONT))
 PLAY_PAGES = PREP_OVERLAYS | {Page.BOARD, Page.BATTLE, Page.NODE_RESULT, Page.MATCH_RESULT,
                              Page.HALO, Page.HALO_DETAIL, Page.HALO_REPLACE, Page.TEA}
 ACTIVE_PAGES = PLAY_PAGES | {Page.DETAIL, Page.PARTNER_DETAIL, Page.EQUIPMENT, Page.CONFIRM_FIGHT}
 BATTLE_RESULT_PAGES = {Page.BATTLE, Page.NODE_RESULT, Page.MATCH_RESULT}
 ESC_RECOVERY_PAGES = (ACTIVE_PAGES - BATTLE_RESULT_PAGES
-                      - {Page.BLACK_MARKET, Page.HALO_REPLACE, Page.HALO_MENTOR, Page.DRAGON_CLEANSE}
+                      - {Page.BLACK_MARKET, Page.HALO_REPLACE, Page.HALO_MENTOR, Page.DRAGON_CLEANSE, Page.TREASURY}
                       | {Page.UNKNOWN, Page.CONFLICT})
 HALO_EXIT_PAGES = (ACTIVE_PAGES | {Page.HOME, Page.WEEKLY}) - {Page.HALO}
 REWARD_PAGES = {Page.HOME, Page.WEEKLY, Page.REWARD_RECEIPT, Page.REWARD_LIMIT}
@@ -160,6 +161,14 @@ class CurrencyWarsRestartRequested(CurrencyWarsError):
         super().__init__(reason)
         self.frame = frame
         self.owns_exit_prompt = owns_exit_prompt
+
+
+class CurrencyWarsLayoutStalled(CurrencyWarsRestartRequested):
+    """备战界面可信，但同一节点的布局在多轮观察中始终无法核对。"""
+
+    def __init__(self, frame, board_key):
+        super().__init__(frame, "棋盘卡位与部署人数持续冲突")
+        self.board_key = board_key
 
 
 class CurrencyWarsOpeningBlocked(CurrencyWarsRestartRequested):
@@ -931,7 +940,8 @@ class CurrencyWars:
     def _native_exit_prompt(frame):
         return frame.page == Page.END_MATCH_CONFIRM and frame.end_match_confirm_area == ui.END_ACTIVE_MATCH_CONFIRM_BUTTON
 
-    def _restart_match(self, frame, *, can_exit, recovered=None, start_new=True, owns_exit_prompt=False):
+    def _restart_match(self, frame, *, can_exit, recovered=None, start_new=True, owns_exit_prompt=False,
+                       require_same_origin=False):
         """核对局内退局回执，返回当前画面和原局是否已放弃。"""
         location = frame.stage or frame.page.value
         in_match = self.in_match
@@ -939,6 +949,9 @@ class CurrencyWars:
         escape_sent = owns_exit_prompt
 
         def advanced(f):
+            # 冲突棋盘的证据只用于当前 ESC：输入前有任何不同/不可读帧，先把现场交回原局。
+            if require_same_origin and not escape_sent and not can_exit(f):
+                return True
             return (f.page in {Page.END_MATCH_CONFIRM, Page.MATCH_RESULT, Page.HOME, Page.MODES, Page.RANK}
                     or recovered is not None and recovered(f))
 
@@ -1261,6 +1274,7 @@ class CurrencyWars:
 
         def destination_free(f):
             return (not f.slot_occupied(destination.point)
+                    and (destination.zone != "front" or destination.point not in f.front_markers)
                     and (destination.zone != "bench"
                          or destination.point not in f.black_hole_slots | f.locked_bench_slots))
 
@@ -2933,6 +2947,27 @@ class CurrencyWars:
         field = frame.field_slots()
         return bool(any(s.zone == "front" for s in field) and frame.field_count_matches(field))
 
+    def _conflicted_board_key(self, frame, tried=None):
+        # 这些是棋盘自身的锚点，不依赖读出任何一个卡位。不可读、蒙层和刚出战的画面不能用于弃局。
+        try:
+            if (not self.in_match or self.result is not None
+                    or frame.page != Page.BOARD or not frame.stage or not frame.capacity
+                    or frame.combat_buttons or frame.shop_open or frame.preparation_banner or frame.halo_preview()
+                    or not frame.has("备战阶段", area=ui.BOARD_STAGE) or not frame.find("商店", area=ui.BOARD_SHOP)
+                    or not (advance := frame.board_advance)):
+                return None
+            key = frame.stage, frame.capacity, advance.text
+            # 只有本次亲自尝试推进、却仍停留在完全相同棋盘时，才允许继续观察。真正的战斗转场不在这里。
+            if self._battle_entry_stage is not None and (tried != key or self._battle_entry_stage != frame.stage):
+                return None
+            field = frame.field_slots()
+            return None if field and frame.field_count_matches(field) else key
+        except CurrencyWarsTerminalError:
+            raise
+        except Exception as error:
+            log.debug(f"无法独立核对卡住的备战页：{error}")
+            return None
+
     def _opening_front_empty(self, frame):
         if (not self.default_strategy or self.result is not None or frame.page != Page.BOARD
                 or frame.stage != "1-1" or frame.shop_open or frame.halo_preview()):
@@ -4112,6 +4147,16 @@ class CurrencyWars:
                     raise CurrencyWarsPageBlocked(self.frame, f"{message}，已保留当前现场") from error
                 log.warning(f"{event.value}仍在等待选择，复核后重试：{error}")
 
+    def _claim_treasury(self, frame):
+        try:
+            return self._click_to(
+                frame, lambda f: ui.point(f.enabled_button(f.treasury_claim)),
+                lambda f: f.page in ACTIVE_PAGES - {Page.TREASURY} and f.treasury_claim is None,
+                "未确认珠珠鱼宝库领取全部奖励并转场", seconds=12, attempts=2, retry_after=5,
+            )
+        except (CurrencyWarsRecoverable, CurrencyWarsPageBlocked) as error:
+            raise CurrencyWarsUnavailable(f"{error}，已保留当前现场") from error
+
     def _choose_dragon_cleanse(self, frame):
         stage = frame.stage
 
@@ -4584,6 +4629,7 @@ class CurrencyWars:
                 except CurrencyWarsRestartRequested as error:
                     frame, reason = error.frame, str(error)
                     opening = isinstance(error, CurrencyWarsOpeningBlocked)
+                    conflict = error.board_key if isinstance(error, CurrencyWarsLayoutStalled) else None
                     owns_exit_prompt = error.owns_exit_prompt
                 stage = frame.stage
                 location = stage or frame.page.value
@@ -4594,6 +4640,8 @@ class CurrencyWars:
                     log.warning(f"{location} {reason}，已达重开上限，尝试结束当前对局")
 
                 def can_exit(f):
+                    if conflict is not None:
+                        return self._conflicted_board_key(f, conflict) == conflict
                     if opening:
                         return self._opening_front_empty(f)
                     return f.stage == stage and self._restartable_board(f)
@@ -4603,11 +4651,15 @@ class CurrencyWars:
                     field = tuple((s.zone, s.point, s.occupied) for s in f.field_slots())
                     return f.stage, f.capacity, advance.text if advance else None, field
 
-                blocked_state = board_state(frame) if frame.page == Page.BOARD and not opening else None
+                blocked_state = (board_state(frame)
+                                 if frame.page == Page.BOARD and not opening and conflict is None else None)
 
                 def recovered(f):
                     if f.page != Page.BOARD:
                         return f.page in ACTIVE_PAGES
+                    if conflict is not None:
+                        # ESC 发出前棋盘已恢复、节点/控件已变或不再可信，交回原局，不弃局。
+                        return self._conflicted_board_key(f, conflict) != conflict
                     if f.stage and f.halo_preview():
                         return True
                     if opening:
@@ -4616,6 +4668,7 @@ class CurrencyWars:
 
                 frame, ended = self._restart_match(
                     frame, can_exit=can_exit, recovered=recovered, start_new=retry, owns_exit_prompt=owns_exit_prompt,
+                    require_same_origin=conflict is not None,
                 )
                 if ended and not retry:
                     limit = "开局重开" if opening else "对局重开"
@@ -4668,7 +4721,11 @@ class CurrencyWars:
         preparation_fallbacks = 0
         page_failures = 0
         failed_context = None
+        tried_conflict = None
         while True:
+            if tried_conflict is not None and frame.page != Page.BOARD:
+                same_stage = prepare_failures = preparation_fallbacks = 0
+                tried_conflict = None
             if frame.page in ACTIVE_PAGES:
                 self._last_match_page = frame.page
             if frame.page in (Page.HOME, Page.WEEKLY):
@@ -4683,6 +4740,7 @@ class CurrencyWars:
                     self._reset_supply()
                 current_stage = frame.stage
                 if current_stage and current_stage != stage:
+                    tried_conflict = None
                     stage = current_stage
                     self.last_result_stage = stage
                     same_stage = 0
@@ -4700,7 +4758,26 @@ class CurrencyWars:
                     if same_stage == 17:
                         log.warning(f"节点 {stage or '开局'} 转场较慢，优先推进现有阵容")
                 if frame.page == Page.BOARD and (same_stage > 16 or prepare_failures >= 2):
-                    if preparation_fallbacks >= MAX_PREPARATION_FALLBACKS:
+                    conflict = self._conflicted_board_key(frame, tried_conflict)
+                    if tried_conflict is not None:
+                        if conflict == tried_conflict:
+                            # 已用原方法尝试推进；另行观察整段时间，不把之前其它备战失败算作人数冲突。
+                            until = time.monotonic() + STALLED_LAYOUT_SECONDS
+                            while time.monotonic() < until:
+                                time.sleep(ACTION_POLL)
+                                frame = self._observe()
+                                if self._conflicted_board_key(frame, tried_conflict) != conflict:
+                                    break
+                            else:
+                                raise CurrencyWarsLayoutStalled(frame, conflict)
+                        # 推进返回时就已恢复，或观察途中变了：都交回普通备战，不继承旧的降级次数。
+                        same_stage = prepare_failures = preparation_fallbacks = 0
+                        tried_conflict = None
+                        continue
+                    if conflict is not None:
+                        # 保留正常的推进机会。例如角色数不符时，明确的「出战」仍可能由游戏判定成功。
+                        tried_conflict = conflict
+                    elif preparation_fallbacks >= MAX_PREPARATION_FALLBACKS:
                         if self._opening_front_empty(frame):
                             raise CurrencyWarsOpeningBlocked(frame, "多次复核后仍无法部署前台角色")
                         reason = "多次复核后仍无法完成备战并推进"
@@ -4744,6 +4821,7 @@ class CurrencyWars:
                     same_stage = prepare_failures = preparation_fallbacks = 0
                     page_failures = 0
             if self.preparation_progress != progress:
+                tried_conflict = None
                 # 连续待安放时可留在同一页。只用已确认的经验到账、出队部署或腾位回执重置停滞计数。
                 same_stage = 0
                 prepare_failures = 0
@@ -4797,6 +4875,8 @@ class CurrencyWars:
             return self._watch_battle(frame)
         if page == Page.CHOICE:
             return self._choose(frame)
+        if page == Page.TREASURY:
+            return self._claim_treasury(frame)
         if page in (Page.DANCE, Page.RANGER):
             return self._employee_event(frame)
         if page == Page.SVAROG_MODIFICATION:

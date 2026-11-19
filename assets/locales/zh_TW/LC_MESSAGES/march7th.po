@@ -8086,6 +8086,18 @@ msgstr "策略優先"
 msgid "图鉴优先"
 msgstr "圖鑑優先"
 
+#: app/components/evey_animation.py:28
+msgid "忆灵「长夜」"
+msgstr "憶靈「長夜」"
+
+#: app/home_interface.py:54
+msgid "别晃啦！本姑娘头好晕( ꩜ ᯅ ꩜;)"
+msgstr "別晃啦！本姑娘頭好暈( ꩜ ᯅ ꩜;)"
+
+#: app/home_interface.py:123
+msgid "长夜月小助手"
+msgstr "長夜月小助手"
+
 #: app/setting_interface.py:615
 msgid "总时限"
 msgstr "總時限"
@@ -8121,3 +8133,31 @@ msgstr "查看排查方法"
 #: app/setting_interface.py:2569
 msgid "后台操作模式已移至「游戏连接」"
 msgstr "背景操作模式已移至「遊戲連線」"
+
+#: app/setting_interface.py:1163
+msgid "界面主题"
+msgstr "介面主題"
+
+#: app/setting_interface.py:1164
+msgid "选择应用的显示主题"
+msgstr "選擇應用程式的顯示主題"
+
+#: app/setting_interface.py:1165
+msgid "跟随系统"
+msgstr "跟隨系統"
+
+#: app/setting_interface.py:1165
+msgid "浅色"
+msgstr "淺色"
+
+#: app/setting_interface.py:1165
+msgid "深色"
+msgstr "深色"
+
+#: app/card/comboboxsettingcard2.py:58 app/main_window.py:452
+msgid "长夜"
+msgstr "長夜"
+
+#: module/game/adb_ready.py:118
+msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
+msgstr "未能在時限內從「列車補給」視窗返回主畫面。請在遊戲中確認是否已領取獎勵。"

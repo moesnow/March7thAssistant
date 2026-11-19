@@ -8,7 +8,7 @@ from .common.style_sheet import StyleSheet
 from .common.icon import UiIcon, BrandIcon
 from .components.pivot import SettingPivot
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
-from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog, ComboBoxSettingCardLanguage
+from .card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardUpdateSource, ComboBoxSettingCardLog, ComboBoxSettingCardLanguage, ComboBoxSettingCardTheme
 from .card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardWithAction, TimestampSwitchSettingCard, SwitchSettingCardTeam, SwitchSettingCardGardenofplenty, SwitchSettingCardEchoofwar, SwitchSettingCardHotkey, SwitchSettingCardCloudGameStatus
 from .card.autostart_setting_card import AutostartSettingCard
 from .card.uac_free_setting_card import UacFreeSettingCard
@@ -1156,6 +1156,7 @@ class SettingInterface(ScrollArea):
             tr('任务完成后列车长唱歌提示帕！'),
             "play_audio"
         )
+        self.themeCard = ComboBoxSettingCardTheme(self.parent)
         self.closeWindowActionCard = ComboBoxSettingCard2(
             "close_window_action",
             FIF.CLOSE,
@@ -2895,6 +2896,7 @@ class SettingInterface(ScrollArea):
         ])
         self.ProgramGroup.addSettingCard(self.exitAppAfterSuccess)
         self.ProgramGroup.addSettingCard(self.playAudioCard)
+        self.ProgramGroup.addSettingCard(self.themeCard)
         self.ProgramGroup.addSettingCard(self.closeWindowActionCard)
         self.ProgramGroup.addSettingCard(self.windowMemoryCard)
 

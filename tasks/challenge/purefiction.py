@@ -8,6 +8,7 @@ from module.screen import screen
 from module.automation import auto
 from module.config import cfg
 from module.logger import log
+from tasks.base.task_steps import optional_reward
 
 
 class PureFiction(BaseChallenge):
@@ -253,6 +254,7 @@ class PureFiction(BaseChallenge):
         log.error("结算后返回虚构叙事失败")
         raise RuntimeError("结算后返回虚构叙事失败")
 
+    @optional_reward("虚构叙事奖励")
     def collect_rewards(self):
         '''领取奖励'''
         if self.max_level > 0:
