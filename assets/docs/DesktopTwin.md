@@ -133,7 +133,9 @@ Get-ItemPropertyValue 'HKLM:\SYSTEM\CurrentControlSet\Services\TermService\Param
 
 ### 每次连接都要输入密码
 
-这是 Windows 的安全策略：用 PIN 或 Windows Hello 登录 Windows 时，只有第一次连接分身可以用 PIN 验证，之后都要输入账户密码；组策略「允许分配默认凭据」被禁用时也会每次询问。需要多次运行任务时，可以保持分身开启、只隐藏窗口。
+此实验分支支持在分身说明页点击「管理分身密码」，然后打开 Windows 凭据管理器。在「Windows 凭据」下添加普通凭据，地址填写 March7thAssistant/DesktopTwin/localhost，用户名填写系统分身登录框显示的完整账户名，密码填写该账户的密码。下次启动分身时小助手会尝试使用此条目，主桌面可以继续使用 PIN。改密后可在凭据管理器编辑此条目，删除条目即可恢复交互登录。当前 Windows 用户下的其他程序也可能读取已保存的普通凭据。
+
+如果 Windows 仍要求输入账户密码，可以保持分身开启、只隐藏窗口，之后在同一会话里继续运行任务。
 
 ### 输入密码后提示不正确
 

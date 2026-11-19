@@ -2,6 +2,7 @@
 
 import ctypes
 import os
+import subprocess
 import time
 from ctypes import wintypes
 
@@ -424,9 +425,28 @@ class DesktopTwinDialog(QDialog):
         layout.addLayout(header)
         layout.addSpacing(20)
         layout.addWidget(self._pointsCard)
+        self._credentials_button = PushButton(intro)
+        self._credentials_button.clicked.connect(self._manage_credentials)
+        layout.addSpacing(8)
+        layout.addWidget(self._credentials_button, 0, Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self._errorHolder)
         layout.addStretch(1)
         return intro
+
+    def _manage_credentials(self):
+        from app.tools.desktop_twin_credentials import CREDENTIAL_TARGET
+
+        instructions = tr(
+            "打开「Windows 凭据 → 添加普通凭据」，地址填写 {target}，用户名沿用分身登录框显示的完整账户名，"
+            "密码填写 Windows 账户密码。以后可在同一位置编辑或删除这个条目。\n\n"
+            "保存后，以你的 Windows 用户身份运行的其他程序也可能读取此密码。"
+        ).format(target=CREDENTIAL_TARGET)
+        if self._ask(tr("管理分身密码"), instructions, tr("打开凭据管理器")) == "accept":
+            try:
+                control = os.path.join(os.environ["SystemRoot"], "System32", "control.exe")
+                subprocess.Popen([control, "/name", "Microsoft.CredentialManager"])
+            except OSError as exc:
+                self._report(exc)
 
     @property
     def active(self):
@@ -697,6 +717,7 @@ class DesktopTwinDialog(QDialog):
     def retranslateUi(self):
         self.setWindowTitle(tr("桌面分身（实验）"))
         self._titleLabel.setText(tr("桌面分身"))
+        self._credentials_button.setText(tr("管理分身密码"))
         self._experimentalPill.setText(tr("实验性"))
         self._descLabel.setText(tr("在独立的 Windows 桌面中运行游戏和小助手，执行任务时不占用你的鼠标和键盘。"))
         points = (
