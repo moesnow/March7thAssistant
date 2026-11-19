@@ -3,6 +3,7 @@
 from dataclasses import replace
 from types import SimpleNamespace
 from unittest.mock import Mock
+import zlib
 
 import numpy as np
 from PIL import Image, ImageDraw
@@ -4028,6 +4029,11 @@ def test_equipment_keeps_the_same_recipe_when_ocr_misses_it_or_reorders_the_row(
     worn.image = CANVAS.copy()
     ImageDraw.Draw(worn.image).rectangle((1706, 793, 1756, 840), fill=(233, 151, 133))
     ImageDraw.Draw(worn.image).rectangle((1720, 805, 1743, 828), fill=(172, 220, 206))
+    # 配上后同一页还剩另一项，直接继续。用完后关闭，不再重开推荐页。
+    done = page(Page.EQUIPMENT, name, stage=stage)
+    done.image = worn.image.copy()
+    ImageDraw.Draw(done.image).rectangle((1794, 793, 1844, 840), fill=(120, 200, 90))
+    ImageDraw.Draw(done.image).rectangle((1806, 805, 1830, 828), fill=(40, 60, 160))
     changed = page(Page.EQUIPMENT, name, equip, other, stage=stage)
     changed.image = CANVAS.copy()
     ImageDraw.Draw(changed.image).rectangle((983, 818, 1084, 885), fill=(216, 164, 113))
@@ -4038,7 +4044,7 @@ def test_equipment_keeps_the_same_recipe_when_ocr_misses_it_or_reorders_the_row(
     monkeypatch.setattr(after, "slot_portrait_matches", lambda point, _: point == target.point)
     routes = {(initial, target.point): detail, (detail, (1512, 818)): menu,
               (reordered, equip[1:]): worn if has_receipt else changed,
-              (worn, (12, 12)): after, (changed, (12, 12)): after}
+              (worn, other[1:]): done, (done, (12, 12)): after, (changed, (12, 12)): after}
     menu_scans = 0
 
     def capture(s):
@@ -4052,9 +4058,11 @@ def test_equipment_keeps_the_same_recipe_when_ocr_misses_it_or_reorders_the_row(
 
     state = drive(monkeypatch, world, initial, lambda s, p: setattr(s, "frame", routes[s.frame, p]),
                   after_capture=capture)
-    assert world.war._equip_once(initial, target) == (after, has_receipt)
+    assert world.war._equip_once(initial, target) == (after, False)
     assert world.war.equipment_deferred_stage == (None if has_receipt else stage)
-    assert [point for page_kind, point in state.clicks if page_kind == Page.EQUIPMENT] == [equip[1:], (12, 12)]
+    clicks = [equip[1:], other[1:], (12, 12)] if has_receipt else [equip[1:], (12, 12)]
+    assert [point for page_kind, point in state.clicks if page_kind == Page.EQUIPMENT] == clicks
+    assert ((target.unit.name, target.point) in world.war.equipment_checks) is has_receipt
 
 
 @pytest.mark.parametrize("same_recipe", (True, False))
@@ -9216,10 +9224,14 @@ def test_halo_identity_recheck_only_forgets_front_names(monkeypatch, world):
 
 
 def stock(frame, *items, worn=None):
-    """给棋盘帧设置物品栏装备名和卡面装备数。"""
+    """给棋盘帧的物品栏画出按名称区分的图标，并设置卡面装备数。不在图鉴里的物品（如羁绊徽章）按名称识别为 None。"""
     points = tuple((1844, 248 + 77 * index) for index in range(len(items)))
+    image = np.array(frame.image)
+    for (x, y), item in zip(points, items):
+        image[y - 24:y + 24, x - 24:x + 24] = np.random.default_rng(zlib.crc32(item.encode())).integers(30, 226, (48, 48, 3))
+    frame.image = Image.fromarray(image)
     frame.inventory_items = lambda: points
-    frame.inventory_equipment = lambda: tuple(zip(points, items))
+    frame.inventory_equipment = lambda: tuple(zip(points, (item if item in ui.ITEMS else None for item in items)))
     frame.card_equipment = lambda s: (worn or {}).get(s.point, 0)
     return frame
 
@@ -9260,53 +9272,6 @@ def test_anaxa_equipment_reopens_only_after_new_materials_arrive(monkeypatch, wo
     skips = [call.args[0] for call in debug.call_args_list if "配装跳过" in call.args[0]]
     assert skips[0] == "货币战争 标准博弈 2-5 配装跳过：瓦尔特（装备已满）"
     assert "那刻夏（物品栏没有新增装备）" in skips[1] and "刻律德菈（物品栏没有新增装备）" in skips[1]
-
-
-def test_known_recommendations_skip_materials_that_cannot_form_them(monkeypatch, world):
-    stage = "2-5"
-    core = slot("front", 0, CORE)
-    team = board(core, stage=stage, used=1, capacity=1)
-    menu = page(Page.EQUIPMENT, stage=stage)
-    menu.recommended_equipment = lambda: ("火力风暴潮", "反螺旋舞步")
-    menu.equipped_names = lambda: ()
-    screens, opened = [], []
-    monkeypatch.setattr(world.war, "_open_equipment", lambda f, s: opened.append(s.unit.name) or menu)
-    state = drive(monkeypatch, world, menu, lambda s, _: setattr(s, "frame", screens[-1]))
-
-    for items, expected in ((("生命之花",), 1), (("生命之花", "量产型装甲"), 1), (("生命之花", "轮滑鞋"), 2)):
-        screens.append(stock(page(Page.BOARD, stage=stage, capacity=(1, 1)), *items))
-        state.frame = screens[-1]
-        world.war._equip_board(screens[-1], team)
-        assert len(opened) == expected
-    assert world.war.equipment_recommendations == {"那刻夏": ("火力风暴潮", "反螺旋舞步")}
-    assert world.war.equipment_prediction_enabled
-
-
-@pytest.mark.parametrize(("recommended", "actionable", "enabled"), (
-    (("反螺旋舞步",), False, True),
-    (("反螺旋舞步",), True, False),
-    (("胜利之旗",), True, True),
-))
-def test_recommendation_prediction_turns_off_when_a_page_contradicts_it(world, recommended, actionable, enabled):
-    core = slot("front", 0, CORE)
-    board_frame = stock(page(Page.BOARD, stage="2-5"), "生命之花")
-    menu = page(Page.EQUIPMENT, stage="2-5")
-    menu.recommended_equipment = lambda: recommended
-    menu.equipped_names = lambda: ()
-    world.war._learn_recommendation(board_frame, core, menu, actionable)
-    assert world.war.equipment_prediction_enabled is enabled
-
-
-def test_recommendation_reachability_uses_recipe_counts_and_worn_parts():
-    from tasks.weekly.currency_wars_equipment import recommendation_reachable
-
-    assert recommendation_reachable(("生命之花",), ("生命之花",))
-    assert not recommendation_reachable(("生命之环",), ("生命之花",))
-    assert recommendation_reachable(("生命之环",), ("生命之花", "生命之花"))
-    assert recommendation_reachable(("生命之环",), ("生命之花",), ("生命之花",))
-    assert not recommendation_reachable(("折叠小刀", "高周波电锯"), ("生命之花", "轮滑鞋"))
-    # 配方未知的成品无法排除合成路径。
-    assert recommendation_reachable(("胜利之旗",), ("轮滑鞋",))
 
 
 def test_high_equipment_rescan_skips_teammates_already_without_options(monkeypatch, world, high_lineup):
@@ -9594,3 +9559,319 @@ def test_default_board_fallback_neither_checks_nor_writes_real_names(monkeypatch
     assert world.war._move(before, team, source, target, named=False) is after
     assert world.auto.drag_mouse.call_count == 1
     assert ("bench", 0) not in world.war.slot_cache and ("front", 0) not in world.war.slot_cache
+
+
+GUINAIFEN = policy.Unit("桂乃芬", True, True, 1)
+# 1-1 换人场景：桂乃芬先回备战席，再让刻律德菈上后台第 1 格。
+SWAP_SEEDS = {"那刻夏": 31, "桂乃芬": 32, "长夜月": 33, "刻律德菈": 34}
+SWAP_ROLES = {31: (True, False), 32: (True, True), 33: (True, True), 34: (False, True)}
+
+
+def swap_screen(cards, *, capacity=None, fight=(1818, 750), stage="1-1"):
+    """cards 为 (卡位, 角色名[, 亮度偏移])。卡位按 slot() 的几何，占用、站位和人口按给定卡片返回。"""
+    places = (("front", 0), ("front", 1), ("front", 2), ("back", 0), ("back", 1), ("bench", 0), ("bench", 1))
+    taken = {(zone, index): (name, *shift) for (zone, index), name, *shift in cards}
+    layout = tuple(slot(zone, index, occupied=(zone, index) in taken) for zone, index in places)
+    seeds = {s.point: SWAP_SEEDS[taken[s.zone, s.index][0]] for s in layout if s.occupied}
+    image = portraits(*((s.point, seeds[s.point], *taken[s.zone, s.index][1:]) for s in layout if s.occupied))
+    frame = board_screen(image, layout, ("出战", *fight), stage=stage, gold=0, experience_cost=4)
+    if capacity is not None:
+        frame.capacity = capacity
+    frame.card_role = lambda s: SWAP_ROLES[seeds[s.point]]
+    return frame
+
+
+def test_move_keeps_a_known_card_whose_portrait_only_brightened(monkeypatch, world):
+    """拖动前的核对与读盘一致：卡面抬起或变亮只改变缩略图，仍按已认出的角色移动。"""
+    source, destination = slot("front", 1, GUINAIFEN), slot("bench", 1)
+    team = board(slot("front", 0, CORE), source, slot("bench", 0, CER), destination, stage="1-1", used=2, capacity=2)
+    normal = swap_screen(((("front", 0), "那刻夏"), (("front", 1), "桂乃芬"), (("bench", 0), "刻律德菈")),
+                         capacity=(2, 2))
+    lifted = swap_screen(((("front", 0), "那刻夏"), (("front", 1), "桂乃芬", 30), (("bench", 0), "刻律德菈")),
+                         capacity=(2, 2))
+    moved = swap_screen(((("front", 0), "那刻夏"), (("bench", 0), "刻律德菈"), (("bench", 1), "桂乃芬")),
+                        capacity=(1, 2))
+    mark = normal.slot_mark(source.point)
+    world.war.slot_cache[("front", 1)] = task.SlotIdentity(
+        task.cv2.resize(mark, (12, 12)).astype(np.int16), "桂乃芬", False, mark.copy())
+    assert world.war._cached_identity(lifted, source) is not None
+    state = drive(monkeypatch, world, lifted)
+    world.auto.drag_mouse.side_effect = lambda *_, **__: setattr(state, "frame", moved) or True
+
+    assert world.war._move(lifted, team, source, destination) is moved
+    assert world.auto.drag_mouse.call_count == 1
+    world.auto.move_mouse.assert_called_once_with((12 / 1920, 12 / 1080))
+    assert world.war.slot_cache[("bench", 1)].name == "桂乃芬" and ("front", 1) not in world.war.slot_cache
+
+
+def test_confirmed_move_names_the_destination_even_when_the_card_size_changes(monkeypatch, world):
+    """备战席和场上的卡面大小不同。原位已空、目标格新占用时，落下的就是拖动的那张卡，不必回头重读详情。"""
+    source, destination = slot("bench", 0, CER), slot("back", 0)
+    team = board(slot("front", 0, CORE), source, destination, stage="1-1", used=1, capacity=2)
+    before = swap_screen(((("front", 0), "那刻夏"), (("bench", 0), "刻律德菈")), capacity=(1, 2))
+    # 上场后的卡面与备战席的肖像对不上（另一组纹理和亮度）。
+    after = swap_screen(((("front", 0), "那刻夏"), (("back", 0), "长夜月", 60)), capacity=(2, 2))
+    state = drive(monkeypatch, world, before)
+    world.auto.drag_mouse.side_effect = lambda *_, **__: setattr(state, "frame", after) or True
+
+    assert world.war._move(before, team, source, destination) is after
+    assert world.war.slot_cache[("back", 0)].name == "刻律德菈"
+
+
+@pytest.mark.parametrize("delivered", (True, False))
+def test_drag_parks_the_pointer_only_after_a_delivered_drag(monkeypatch, world, delivered):
+    frame = page(Page.BOARD, stage="1-1")
+    drive(monkeypatch, world, frame)
+    world.auto.drag_mouse.return_value = delivered
+    assert world.war._drag(frame, (735, 910), (735, 405)) is delivered
+    world.auto.drag_mouse.assert_called_once_with((735 / 1920, 910 / 1080), (735 / 1920, 405 / 1080),
+                                                  duration=0.5, end_pause=0.10, take_screenshot=False)
+    assert world.auto.move_mouse.call_count == int(delivered)
+
+
+def test_unsent_held_move_keeps_confirmed_names_and_replans_once(monkeypatch, world):
+    """暂存这一步还没拖动就失败时角色仍在原位：只作废对不上的那格，本节点保留一次重新规划。"""
+    stage = "1-1"
+    frame = page(Page.BOARD, ("出战", 1818, 750), stage=stage, gold=0, capacity=(2, 2))
+    team = board(slot("front", 0, CORE), slot("front", 1, GUINAIFEN), slot("back", 0), slot("bench", 0, CER),
+                 slot("bench", 1), stage=stage, used=2, capacity=2, gold=0)
+    benched = board(slot("front", 0, CORE), slot("front", 1), slot("back", 0), slot("bench", 0, CER),
+                    slot("bench", 1, GUINAIFEN), stage=stage, used=1, capacity=2, gold=0)
+    deployed = board(slot("front", 0, CORE), slot("front", 1), slot("back", 0, CER), slot("bench", 0),
+                     slot("bench", 1, GUINAIFEN), stage=stage, used=2, capacity=2, gold=0)
+    for key in (("front", 0), ("front", 1), ("bench", 0)):
+        world.war.slot_cache[key] = task.SlotIdentity(np.zeros((12, 12, 3), np.int16), "那刻夏", False)
+    moves = []
+    current = [team]
+
+    def move(f, b, source, destination, **_):
+        moves.append((source.unit.name, destination.zone))
+        if len(moves) == 1:
+            world.war.slot_cache.pop((source.zone, source.index), None)
+            raise task.CurrencyWarsActionUnready(f"{source.unit.name}移动前待核对的卡位肖像已变化")
+        current[0] = benched if source.unit.name == "桂乃芬" else deployed
+        return f
+
+    monkeypatch.setattr(world.war, "_settle_board", lambda f: f)
+    monkeypatch.setattr(world.war, "_collect_preparation_rewards", lambda f: (f, True))
+    monkeypatch.setattr(world.war, "_read_board", lambda f: (f, current[0]))
+    monkeypatch.setattr(world.war, "_stable_preparation", lambda *_: frame)
+    monkeypatch.setattr(world.war, "_move", move)
+    monkeypatch.setattr(world.war, "_finish_preparation", lambda f, b: f)
+    world.war.deployment_history.clear()
+    drive(monkeypatch, world, frame)
+
+    assert world.war._prepare(frame) is frame
+    assert moves[:3] == [("桂乃芬", "bench"), ("桂乃芬", "bench"), ("刻律德菈", "back")]
+    assert set(world.war.slot_cache) == {("front", 0), ("bench", 0)}
+    assert world.war.deployment_replan_stage == stage
+
+
+def test_level_up_replans_a_deferred_deployment(monkeypatch, world):
+    """部署暂缓后买经验升到更高人口，备战席上的角色按新棋盘补上。"""
+    stage = "1-1"
+    frame = page(Page.BOARD, ("购买经验", 297, 862), ("出战", 1818, 750), stage=stage, gold=4, experience_cost=4,
+                 capacity=(3, 3))
+    upgraded = page(Page.BOARD, ("购买经验", 297, 862), ("出战", 1818, 750), stage=stage, gold=0,
+                    experience_cost=4, capacity=(3, 4), experience=(0, 6))
+    full = board(slot("front", 0, CORE), slot("front", 1), slot("back", 0, CER), slot("back", 1, EVERNIGHT),
+                 slot("bench", 1, GUINAIFEN), stage=stage, used=3, capacity=3, level=3, gold=4, exp=(0, 4))
+    room = replace(full, capacity=4, level=4, gold=0, exp=(0, 6))
+    boards = {frame: full, upgraded: room}
+    moves = []
+    world.war.deferred_operations.add((stage, "部署"))
+    monkeypatch.setattr(world.war, "_settle_board", lambda f: f)
+    monkeypatch.setattr(world.war, "_collect_preparation_rewards", lambda f: (f, True))
+    monkeypatch.setattr(world.war, "_read_board", lambda f: (f, boards[f]))
+    monkeypatch.setattr(world.war, "_can_buy_exp", lambda b, price: b is full)
+    monkeypatch.setattr(world.war, "_buy_exp", lambda f, b, price: upgraded)
+    monkeypatch.setattr(world.war, "_move", lambda f, b, source, destination, **_: moves.append(
+        (source.unit.name, destination.zone, destination.index)) or f)
+    monkeypatch.setattr(world.war, "_finish_preparation", lambda f, b: f)
+    drive(monkeypatch, world, frame)
+
+    world.war._prepare(frame)
+    assert moves and moves[0] == ("桂乃芬", "front", 1)
+    assert (stage, "部署") not in world.war.deferred_operations
+
+
+def test_anaxa_equipment_follows_up_on_the_same_page_and_remembers_the_result(monkeypatch, world):
+    """配上后推荐页还有可执行项就在同一页继续；用完后按物品栏记下，材料没新增时不再打开推荐页。"""
+    stage = "2-1"
+    core = slot("front", 0, CORE)
+    team = board(core, stage=stage, used=1, capacity=1)
+    name = ("那刻夏", 1520, 231)
+    first, second = ("穿戴", 1034, 720), ("合成", 1170, 909)
+    initial = stock(page(Page.BOARD, stage=stage, capacity=(1, 1)), "轮滑鞋", "生命之花", "生命之花")
+    detail = page(Page.DETAIL, name, ("推荐", 1512, 818), stage=stage)
+    menu = page(Page.EQUIPMENT, name, first, second, stage=stage)
+    once = page(Page.EQUIPMENT, name, second, stage=stage)
+    once.image = CANVAS.copy()
+    ImageDraw.Draw(once.image).rectangle((1621, 793, 1671, 840), fill=(233, 151, 133))
+    ImageDraw.Draw(once.image).rectangle((1633, 805, 1657, 828), fill=(172, 220, 206))
+    twice = page(Page.EQUIPMENT, name, stage=stage)
+    twice.image = once.image.copy()
+    ImageDraw.Draw(twice.image).rectangle((1706, 793, 1756, 840), fill=(120, 200, 90))
+    ImageDraw.Draw(twice.image).rectangle((1720, 805, 1743, 828), fill=(40, 60, 160))
+    after = stock(page(Page.BOARD, stage=stage, capacity=(1, 1)), "轮滑鞋", worn={core.point: 2})
+    monkeypatch.setattr(initial, "slot_occupied", lambda point: point == core.point)
+    routes = {(initial, core.point): detail, (detail, (1512, 818)): menu, (menu, first[1:]): once,
+              (once, second[1:]): twice, (twice, (12, 12)): after}
+    state = drive(monkeypatch, world, initial, lambda s, p: setattr(s, "frame", routes[s.frame, p]))
+
+    assert world.war._equip_board(initial, team) is after
+    assert [point for kind, point in state.clicks] == [core.point, (1512, 818), first[1:], second[1:], (12, 12)]
+    assert world.war._equipment_skip_reason(after, core) == "物品栏没有新增装备"
+
+
+def test_anaxa_equipment_only_checks_the_core_and_back_lead(monkeypatch, world):
+    """同 S1，只给核心和后台主力配装，其余上阵角色不再逐个打开推荐页。"""
+    stage = "2-5"
+    core, support, other = slot("front", 0, CORE), slot("back", 0, CER), slot("front", 1, FILLER)
+    frame = stock(page(Page.BOARD, stage=stage, capacity=(3, 3)), "轮滑鞋", "生命之花")
+    frame.slot_occupied = lambda point: True
+    opened = []
+    menu = page(Page.EQUIPMENT, stage=stage)
+    monkeypatch.setattr(world.war, "_open_equipment", lambda f, s: opened.append(s.unit.name) or menu)
+    monkeypatch.setattr(world.war, "_return_from_equipment", lambda f: frame)
+    drive(monkeypatch, world, frame)
+    assert policy.EQUIPMENT_FOCUS[policy.STRATEGY_ID] == policy.EQUIPMENT_FOCUS[policy.HIGH_ANAXA] == {"那刻夏", "刻律德菈"}
+    world.war.equipment_focus = policy.EQUIPMENT_FOCUS[policy.STRATEGY_ID]
+
+    world.war._equip_board(frame, board(core, support, other, stage=stage, used=3, capacity=3))
+    assert opened == ["那刻夏", "刻律德菈"]
+    opened.clear()
+    world.war.equipment_checks.clear()
+    world.war.lineup = policy.LINEUPS[policy.HIGH_ANAXA]
+    world.war._equip_team(frame, board(core, support, other, stage=stage, used=3, capacity=3, lineup=world.war.lineup))
+    assert sorted(opened) == ["刻律德菈", "那刻夏"]
+
+
+def test_equipment_memo_compares_unrecognized_items_by_image(monkeypatch, world):
+    """羁绊徽章等认不出名字的物品不影响记录：物品栏只少不多时不再打开推荐页，新增物品后才重新检查。"""
+    stage = "2-5"
+    core = slot("front", 0, CORE)
+    team = board(core, stage=stage, used=1, capacity=1)
+    menu = page(Page.EQUIPMENT, stage=stage)
+    screens, opened = [], []
+    monkeypatch.setattr(world.war, "_open_equipment", lambda f, s: opened.append(s.unit.name) or menu)
+    state = drive(monkeypatch, world, menu, lambda s, _: setattr(s, "frame", screens[-1]))
+
+    for items, expected in ((("追击星徽", "生命之花"), 1), (("追击星徽", "生命之花"), 1), (("生命之花",), 1),
+                            (("生命之花", "连击星徽"), 2)):
+        screens.append(stock(page(Page.BOARD, stage=stage, capacity=(1, 1)), *items))
+        state.frame = screens[-1]
+        world.war._equip_board(screens[-1], team)
+        assert len(opened) == expected
+
+
+def test_shop_reads_a_price_whose_coin_icon_is_read_as_a_question_mark():
+    x = 367 + 269 * 3
+    frame = page(Page.SHOP, ("飞霄", x + 90, 306), ("?3", x + 225, 306), stage="3-1")
+    assert [(offer.name, offer.cost, offer.column) for offer in frame.offers] == [("飞霄", 3, 3)]
+
+
+def test_auto_opened_shop_is_remembered_before_closing(monkeypatch, world):
+    """奖励节点自动展开的商店先记下稳定的商品，备战时按当前阵容复算，不需要购买就不再打开。"""
+    stage = "2-5"
+    shop = unwanted_shop(stage, gold=10)
+    closed = page(Page.BOARD, stage=stage)
+    monkeypatch.setattr(world.war, "_settle_shop", lambda f: f)
+    monkeypatch.setattr(world.war, "_close_shop", lambda f: closed)
+    drive(monkeypatch, world, shop)
+
+    assert world.war._play_step(shop) is closed
+    assert world.war.shop_catalog.stage == stage and [o.name for o in world.war.shop_catalog.offers] == ["罗刹", "桂乃芬"]
+    assert not world.war._shop_needs_visit(preparation_board(stage, 10), 0, 4)
+
+
+@pytest.mark.parametrize(("entry", "fault"), (
+    ("single", "none"), ("loop", "none"), ("takeover", "none"), ("daily", "none"),
+    ("takeover", "step_failure"), ("loop", "step_failure"), ("takeover", "budget"), ("takeover", "stopped"),
+))
+def test_anaxa_swap_survives_a_lifted_card_through_the_task_entry(monkeypatch, world, entry, fault):
+    """复现 1-1：最后一张详情关闭时前台卡面变亮（指针停留等）。读盘按肖像认出同一张卡，换人计划照常执行，不清空姓名重读、不暂缓部署。"""
+    stage, fight, settlement = "1-1", (1818, 750), (960, 899)
+    start = ((("front", 0), "那刻夏"), (("front", 1), "桂乃芬"), (("back", 1), "长夜月"), (("bench", 0), "刻律德菈"))
+    clean = swap_screen(start)
+    lifted = swap_screen((*start[:1], (("front", 1), "桂乃芬", 30), *start[2:]))
+    benched = swap_screen(((("front", 0), "那刻夏"), (("back", 1), "长夜月"), (("bench", 0), "刻律德菈"),
+                           (("bench", 1), "桂乃芬")), capacity=(2, 3))
+    deployed = swap_screen(((("front", 0), "那刻夏"), (("back", 0), "刻律德菈"), (("back", 1), "长夜月"),
+                            (("bench", 1), "桂乃芬")))
+    details = {SWAP_SEEDS[name]: employee(name, role, stage)
+               for name, role in (("那刻夏", "前台"), ("桂乃芬", "前后台"), ("长夜月", "前后台"), ("刻律德菈", "后台"))}
+    won = page(Page.MATCH_RESULT, ("对局胜利", 960, 233), ("返回货币战争", *settlement))
+    lobby, modes = home(), mode(("进入超频博弈", 1638, 960))
+    rank_page = page(Page.RANK, ("开始对局", 1680, 965), rank_mode="overclock", enemy_rank=1)
+    routes = {(lobby, (1600, 972)): modes, (modes, (1638, 960)): rank_page, (rank_page, (1680, 965)): clean,
+              (won, settlement): lobby}
+    world.cfg.currencywars_type = "overclock"
+    world.cfg.currencywars_rank_difficulty = "lowest"
+    world.cfg.currencywars_strategy = policy.STRATEGY_ID
+    reads, fights, failures = [], [], []
+    boards = [clean]
+
+    def seat(frame, point):
+        return next((SWAP_SEEDS[name] for (zone, index), name, *_ in start if slot(zone, index).point == point), None)
+
+    def click(state, point):
+        current = state.frame
+        if current.page == Page.BOARD and point == fight:
+            fights.append(current.stage)
+            state.frame = won
+        elif current.page == Page.BOARD and current in (clean, lifted) and (seed := seat(current, point)):
+            reads.append(point)
+            state.frame = details[seed]
+        elif current.page == Page.DETAIL:
+            if len(reads) == 4 and boards[-1] is clean:
+                # 关闭最后一张详情时前台卡面变亮。
+                boards.append(lifted)
+                if fault == "budget":
+                    world.now[0] = world.war.deadline
+                elif fault == "stopped":
+                    task.pause_ctl.checkpoint.side_effect = RunStopRequested
+            state.frame = boards[-1]
+        else:
+            state.frame = routes[current, point]
+
+    def drag(*_, **__):
+        boards.append(benched if boards[-1] is lifted else deployed)
+        state.frame = boards[-1]
+        return True
+
+    play_step = world.war._play_step
+
+    def flaky_step(frame):
+        if fault == "step_failure" and frame.page == Page.BOARD and not failures:
+            failures.append(frame.page)
+            raise task.CurrencyWarsActionUnready("备战页暂未确认")
+        return play_step(frame)
+
+    state = drive(monkeypatch, world, clean if entry == "takeover" else lobby, click)
+    world.auto.drag_mouse.side_effect = drag
+    warnings = Mock()
+    monkeypatch.setattr(task.log, "warning", warnings)
+    monkeypatch.setattr(world.war, "_gather", lambda f: f)
+    monkeypatch.setattr(world.war, "_play_step", flaky_step)
+    monkeypatch.setattr(world.war, "get_reward", lambda f: (f, (18000 if world.war.result else 15000, 18000), False))
+    first_reads = [slot("front", 0).point, slot("front", 1).point, slot("back", 1).point, slot("bench", 0).point]
+
+    if fault in ("budget", "stopped"):
+        with pytest.raises(task.CurrencyWarsBudgetExceeded if fault == "budget" else RunStopRequested):
+            world.war.start(resume=True)
+        assert reads == first_reads and world.auto.drag_mouse.call_count == 0 and not fights
+        return
+    if entry == "daily":
+        from tasks.daily import daily
+
+        monkeypatch.setattr(daily, "CurrencyWars", lambda: world.war)
+        assert daily.Daily._run_currency_wars()
+    else:
+        assert world.war.start(resume=entry == "takeover", loop=entry == "loop")
+    assert reads == first_reads
+    assert world.auto.drag_mouse.call_count == 2 and boards[-1] is deployed
+    assert world.auto.move_mouse.call_count == 2
+    assert fights == [stage] and failures == ([Page.BOARD] if fault == "step_failure" else [])
+    assert not any("部署暂缓" in str(call.args[0]) for call in warnings.call_args_list)
+    assert state.frame is lobby and world.war.result is True

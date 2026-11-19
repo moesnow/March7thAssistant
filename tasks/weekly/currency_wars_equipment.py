@@ -13,8 +13,7 @@ ITEMS = (
     "掩体生成枪", "蓄能帆", "随便骰子", "热血沸腾拳", "胜利之旗", "生命之环", "痛觉阻断芯片",
     "反重力皮靴", "火力风暴潮", "电磁弹射器", "反螺旋舞步", "流星飞翼", "星航履",
 )
-# 同一材料成对合成时，frozenset 只保留一项，按配方核对材料数量时使用原始的两项。
-RECIPE_PAIRS = {
+RECIPES = {frozenset(parts): name for parts, name in {
     ("轮滑鞋", "轮滑鞋"): "反重力皮靴",
     ("折叠小刀", "轮滑鞋"): "火力风暴潮",
     ("和平手枪", "轮滑鞋"): "电磁弹射器",
@@ -30,9 +29,7 @@ RECIPE_PAIRS = {
     ("折叠小刀", "量产型装甲"): "信心注入器",
     ("幸运星", "折叠小刀"): "高周波电锯",
     ("和平手枪", "折叠小刀"): "武器大师",
-}
-RECIPES = {frozenset(parts): name for parts, name in RECIPE_PAIRS.items()}
-RECIPE_PARTS = {name: parts for parts, name in RECIPE_PAIRS.items()}
+}.items()}
 SPEED = {"轮滑鞋", "反重力皮靴", "星航履", "光速螺旋桨", "追逐星辰", "胜利之旗"}
 OPENING = {"蓄能帆", "光能电池", "星航履", "反螺旋舞步"}
 DEFENSE = {"掩体生成枪", "生命之环", "痛觉阻断芯片", "反螺旋舞步", "流星飞翼", "量产型装甲", "生命之花"}
@@ -103,24 +100,6 @@ def equipment_score(board: Board, option: EquipmentOption) -> int:
     if not option.action.ingredients:
         score += 8
     return score
-
-
-def recommendation_reachable(recommended: tuple[str, ...], inventory: tuple[str, ...],
-                             worn: tuple[str, ...] = ()) -> bool:
-    """推荐装备能否直接从物品栏穿戴，或用物品栏与已穿戴的材料合成。配方未知的成品按可能合成处理。"""
-    stock = Counter(inventory)
-    parts = stock + Counter(worn)
-    for item in recommended:
-        if stock[item]:
-            return True
-        recipe = RECIPE_PARTS.get(item)
-        if recipe is None:
-            if item not in ITEMS[:8]:
-                return True
-            continue
-        if all(parts[part] >= count for part, count in Counter(recipe).items()):
-            return True
-    return False
 
 
 def equipment_order(board: Board, options: tuple[EquipmentOption, ...]) -> tuple[EquipmentOption, ...]:
