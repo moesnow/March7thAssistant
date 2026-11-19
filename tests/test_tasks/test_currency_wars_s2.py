@@ -9977,15 +9977,30 @@ def test_lost_experience_press_is_topped_up_once_in_the_same_node(monkeypatch, w
     assert ((stage, "经验") in world.war.deferred_operations) is (outcome != "topped_up")
 
 
-@pytest.mark.parametrize(("labels", "stored"), (((("星", 90), ("?3", 225)), True), (((("3", 225),), False))))
+@pytest.mark.parametrize(("labels", "stored"), (
+    ((("星", 90), ("?3", 225)), True),
+    # 单字角色「刃」不是开拓者，没读成商品时照常重开核对。
+    ((("刃", 90), ("?3", 225)), False),
+    ((("3", 225),), False),
+))
 def test_shop_record_treats_a_single_character_name_as_the_player_trailblazer(world, labels, stored):
-    """开拓者显示玩家自定的名字（这个账号是「星」）。单字名只会是开拓者，商店照常记录；只读到价格的栏仍要重开核对。"""
+    """开拓者显示玩家自定的名字（这个账号是「星」）。单字名除「刃」外按开拓者处理，商店照常记录；只读到价格的栏仍要重开核对。"""
     stage = "2-5"
     x = 367 + 269 * 3
     shop = unwanted_shop(stage, gold=18, empty=(2, 4))
     shop.labels = shop.labels + tuple(Label(text, (x + offset, 306)) for text, offset in labels)
     world.war._remember_catalog(shop, stage, shop.offers, 0)
     assert (world.war.shop_catalog is not None) is stored
+
+
+def test_single_character_blade_is_read_as_a_character():
+    """「刃」是单字名的角色：商店按商品读出，详情页读出姓名；其他单字名仍是玩家自定的开拓者名，读不出。"""
+    x = 367 + 269 * 2
+    shop = page(Page.SHOP, ("刃", x + 90, 306), ("?3", x + 225, 306), stage="2-5")
+    assert [(offer.name, offer.cost, offer.column) for offer in shop.offers] == [("刃", 3, 2)]
+    assert page(Page.DETAIL, ("刃", 1610, 228), ("前后台", 1575, 279)).employee_name() == "刃"
+    assert page(Page.DETAIL, ("星", 1610, 228), ("前后台", 1575, 279)).employee_name() is None
+    assert page(Page.DETAIL, ("千冶·刃", 1610, 228), ("后台", 1575, 279)).employee_name() == "千冶·刃"
 
 
 def test_sold_reserve_forgets_the_slot_name(monkeypatch, world):

@@ -65,7 +65,9 @@ SHOP_REFRESH = (1540, 451, 1700, 564)
 SHOP_REFRESH_LABELS = ('刷新', '免费刷新')
 SHOP_REFRESH_COST = (1594, 505, 1670, 558)
 DETAIL_NAME = (1480, 199, 1806, 251)
-EMPLOYEE_NAME = r"[\u3400-\u9fffA-Za-z&＆·.★☆]{2,18}(?:\d{1,3})?"
+# 角色名通常不少于两个字，单字名只有「刃」。开拓者显示玩家自定的名字，可能是任意单字。
+SINGLE_CHARACTER_NAMES = frozenset(("刃",))
+EMPLOYEE_NAME = r"(?:[\u3400-\u9fffA-Za-z&＆·.★☆]{2,18}|刃)(?:\d{1,3})?"
 DETAIL_ROLE = (1508, 251, 1660, 315)
 DETAIL_FUNCTION = (1740, 242, 1888, 340)
 BENCH_BOX = (375, 925, 1496, 981)
