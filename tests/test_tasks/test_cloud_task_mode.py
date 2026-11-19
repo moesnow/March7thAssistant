@@ -578,7 +578,7 @@ def test_currency_wars_entry_rechecks_unattempted_deployment_after_picture_recov
         Label("出战", (1818, 750)), Label("前台区域", (973, 316)), Label("后台区域", (976, 575)),
         Label("0", (1640, 923)),
     )
-    monkeypatch.setattr(currency_wars.cfg, "currencywars_strategy", "s2_anaxa")
+    monkeypatch.setattr(currency_wars.cfg, "currencywars_strategy", "s2_anaxa_high")
     monkeypatch.setattr(Frame, "read_local", lambda *args, **kwargs: None)
 
     def preparation(*, deployed=False, flashing=False):

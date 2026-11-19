@@ -744,10 +744,11 @@ def test_high_lineup_stops_cyclic_replacements_and_keeps_preparing(monkeypatch, 
     frame = page(Page.BOARD, ("出战", *fight), ("购买经验", 298, 863), stage=stage, experience_cost=4)
     won = page(Page.MATCH_RESULT, ("对局胜利", 960, 260), ("返回货币战争", 960, 899))
     lobby = home()
-    fu_xuan = policy.Unit("符玄", False, True, 2)
+    # 不死途和缇宝都在阵容的后台偏好里，缇宝排在前面。
+    backup = policy.Unit("不死途", False, True, 2)
     tribbie = policy.Unit("缇宝", False, True, 3)
     initial = board(
-        slot("front", 0, CORE), slot("back", 0, BAILU), slot("back", 3, fu_xuan), slot("back", 5),
+        slot("front", 0, CORE), slot("back", 0, BAILU), slot("back", 3, backup), slot("back", 5),
         slot("bench", 2), slot("bench", 3, tribbie), slot("bench", 4), slot("bench", 5),
         stage=stage, used=3, capacity=3, lineup=policy.LINEUPS[policy.HIGH_ANAXA],
     )
@@ -793,7 +794,7 @@ def test_high_lineup_stops_cyclic_replacements_and_keeps_preparing(monkeypatch, 
 
     assert world.war.start(resume=True)
     assert shops and shops[0] == initial
-    expected = [("符玄", "bench", 2), ("缇宝", "back", 5), ("缇宝", "bench", 3), ("符玄", "back", 3)]
+    expected = [("不死途", "bench", 2), ("缇宝", "back", 5), ("缇宝", "bench", 3), ("不死途", "back", 3)]
     if expand:
         expected.append(("缇宝", "back", 5))
         assert current.used == current.capacity == 4
@@ -2542,7 +2543,7 @@ def test_shop_refresh_records_only_dispatched_input(monkeypatch, world, fault):
 @pytest.mark.parametrize("missed_stage", (False, True))
 def test_shop_retry_keeps_refresh_budget_after_a_recognition_failure(monkeypatch, world, missed_stage):
     stage = "1-3"
-    team = board(slot("front", 0, FILLER), slot("bench", 0), stage=stage, used=1, gold=30)
+    team = board(slot("front", 0, FILLER), slot("bench", 0), stage=stage, used=1, gold=30, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     boards, shops = [], []
     for index in range(3):
         gold = team.gold - 2 * index
@@ -2564,6 +2565,8 @@ def test_shop_retry_keeps_refresh_budget_after_a_recognition_failure(monkeypatch
 
     shops[0].__dict__["offers"] = ()
     monkeypatch.setattr(ui, "template", template)
+    # 是否继续刷新交给策略自身的用例，这里只核对识别失败后本节点的刷新次数不丢。
+    monkeypatch.setattr(task.strategy, "should_refresh", lambda team, price, refreshes, **_: refreshes < 2)
     monkeypatch.setattr(world.war, "_collect_preparation_rewards", lambda f: (f, True))
     monkeypatch.setattr(world.war, "_read_board", lambda f: (f, replace(team, gold=f.gold)))
     monkeypatch.setattr(world.war, "_equip", lambda f, _: f)
@@ -8235,7 +8238,7 @@ def test_buy_timeout_reconciles_actual_shop_and_finishes_without_a_second_purcha
         monkeypatch.setattr(f, "slots", lambda: units)
     monkeypatch.setattr(sold, "shop_changed", lambda f, col: f is shop)
     monkeypatch.setattr(sold, "shop_slot_empty", lambda col: col == 0)
-    team = board(*units, stage=stage, used=1, gold=5)
+    team = board(*units, stage=stage, used=1, gold=5, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     monkeypatch.setattr(world.war, "_read_board", lambda f: (f, replace(team, gold=f.gold)))
     battle_frame = battle(True)
     end = page(Page.MATCH_RESULT, ("挑战成功", 960, 230), ("返回货币战争", 958, 890))
@@ -8286,7 +8289,7 @@ def test_shop_purchase_interrupted_by_supply_is_not_repeated_after_return(monkey
     shop = page(Page.SHOP, ("收起", *shop_button), stage=stage, gold=9, offers=(offer,))
     supply = Frame(CANVAS, labels(("补给阶段", 961, 162), ("已选择1/1", 1683, 924), (stage, 470, 76)))
     result = page(Page.MATCH_RESULT, ("挑战成功", 960, 233), ("返回货币战争", *return_button))
-    team = board(*units, stage=stage, used=1, gold=9)
+    team = board(*units, stage=stage, used=1, gold=9, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     lobby = home()
     state = SimpleNamespace(frame=initial, clicks=[])
     routes = {(initial, shop_button): shop, (shop, offer_point): supply, (supply, supply_button): initial,
@@ -9558,10 +9561,11 @@ def test_node_preparation_reads_each_card_once_across_the_halo_return(monkeypatc
 def test_anaxa_node_reads_each_card_once_through_the_task_entry(monkeypatch, world, entry, fault):
     """从任务入口跑完一个节点：认人、商店收起、提示弹层返回后的第二遍备战，再到整局结算。"""
     stage, fight, settlement, tip = "2-5", (1818, 750), (960, 899), (125, 170)
-    flower, core = slot("front", 0, occupied=True), slot("front", 1, occupied=True)
+    # 那刻夏已在前台首位，不需要先调位。
+    core, flower = slot("front", 0, occupied=True), slot("front", 1, occupied=True)
     trailblazer, spare = slot("bench", 2, occupied=True), slot("bench", 3)
-    layout = (flower, core, trailblazer, spare)
-    cards = ((flower.point, 11), (core.point, 12), (trailblazer.point, 7))
+    layout = (core, flower, trailblazer, spare)
+    cards = ((core.point, 12), (flower.point, 11), (trailblazer.point, 7))
     clean = board_screen(portraits(*cards), layout, ("出战", *fight), stage=stage, experience_cost=4)
     covered = board_screen(portraits(*cards, ((flower.point[0], flower.point[1] - 8), 99)), layout,
                            ("出战", *fight), stage=stage, experience_cost=4)
@@ -9622,7 +9626,7 @@ def test_anaxa_node_reads_each_card_once_through_the_task_entry(monkeypatch, wor
     monkeypatch.setattr(world.war, "_close_shop", close_shop)
     monkeypatch.setattr(world.war, "_play_step", flaky_step)
     monkeypatch.setattr(world.war, "get_reward", lambda f: (f, (18000 if world.war.result else 15000, 18000), False))
-    reads = [(Page.BOARD, flower.point), (Page.DETAIL, (12, 12)), (Page.BOARD, core.point),
+    reads = [(Page.BOARD, core.point), (Page.DETAIL, (12, 12)), (Page.BOARD, flower.point),
              (Page.DETAIL, (12, 12)), (Page.BOARD, trailblazer.point), (Page.DETAIL, (12, 12))]
 
     if fault in ("budget", "stopped"):
