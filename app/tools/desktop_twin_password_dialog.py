@@ -4,7 +4,7 @@ from PySide6.QtCore import QPoint, QPropertyAnimation, QTimer
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QApplication, QVBoxLayout
 from qfluentwidgets import (BodyLabel, CaptionLabel, InfoBarIcon, LineEdit, MessageBoxBase,
-                            PasswordLineEdit, SubtitleLabel)
+                            PasswordLineEdit, SubtitleLabel, setCustomStyleSheet)
 
 from app.components.notice_bar import NoticeBar
 from app.tools import desktop_twin_credentials as credentials
@@ -25,6 +25,11 @@ class TwinPasswordDialog(MessageBoxBase):
         account_label = BodyLabel(tr("Windows 账户"), self.widget)
         form.addWidget(account_label)
         self.account = LineEdit(self.widget)
+        setCustomStyleSheet(
+            self.account,
+            "LineEdit:read-only { background-color: #eeeeee; color: #606060; }",
+            "LineEdit:read-only { background-color: #323232; color: #bdbdbd; }",
+        )
         account_label.setBuddy(self.account)
         self.account.setAccessibleName(account_label.text())
         self.account.setPlaceholderText(tr("MicrosoftAccount\\邮箱 或 计算机名\\用户名"))
