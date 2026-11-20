@@ -662,16 +662,19 @@ class DesktopTwinDialog(QDialog):
 
     def _toggle_mute(self, checked):
         if checked:
-            self._mute_audio()
-        else:
+            self._mute_button.setChecked(self._mute_audio())
+        if not self._mute_button.isChecked() and self._audio.muting:
+            # 静音中途失败时，也要恢复已经处理过的音频会话。
             self._restore_audio()
         self.retranslateUi()
 
-    def _mute_audio(self):
+    def _mute_audio(self) -> bool:
         try:
             self._audio.mute()
+            return True
         except Exception as error:
             self._audio_failed(error)
+            return False
 
     def _restore_audio(self):
         try:
