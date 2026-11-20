@@ -93,7 +93,6 @@ def editor_parent(qtbot):
 
 
 def test_password_editor_round_trip(qtbot, editor_parent, monkeypatch, storage):
-    from PySide6.QtCore import Qt
     from PySide6.QtWidgets import QLineEdit, QMessageBox
     from app.tools.desktop_twin_password_dialog import TwinPasswordDialog
     from module.localization import tr
@@ -107,13 +106,11 @@ def test_password_editor_round_trip(qtbot, editor_parent, monkeypatch, storage):
     monkeypatch.setattr(QMessageBox, "question", confirm)
     box = TwinPasswordDialog(None, editor_parent)
     box.show()
-    assert box.account_display.text() == r"PC\example" and box.account.isHidden()
-    assert box.account_display.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
+    assert box.account.text() == r"PC\example" and box.account.isVisible()
+    assert not box.account.isReadOnly() and box.feedback.isHidden()
     assert box.password.echoMode() == QLineEdit.EchoMode.Password
     assert box.yesButton.text() == tr("保存密码")
 
-    box.edit_account.click()
-    assert box.account.isVisible() and box.focusWidget() is box.account
     box.account.setText(r"PC\corrected")
     box.password.setText(" initial 🔑 ")
     box.yesButton.click()
@@ -123,7 +120,7 @@ def test_password_editor_round_trip(qtbot, editor_parent, monkeypatch, storage):
         "Persist": creds.win32cred.CRED_PERSIST_LOCAL_MACHINE,
     }, 0)
     assert box.feedback.content() == tr("已保存分身密码") and box.feedback.isVisible()
-    assert box.account_display.text() == r"PC\corrected" and box.edit_account.isHidden()
+    assert box.account.text() == r"PC\corrected" and box.account.isReadOnly()
     assert box.password.isHidden() and not box.password.text()
     assert box.yesButton.text() == tr("删除密码")
     box.yesButton.click()
@@ -134,9 +131,9 @@ def test_password_editor_round_trip(qtbot, editor_parent, monkeypatch, storage):
     box.yesButton.click()
     confirm.assert_not_called()
     deleter.assert_called_once_with(creds.CREDENTIAL_TARGET, creds.win32cred.CRED_TYPE_GENERIC, 0)
-    assert box.feedback.content() == tr("已删除保存的分身密码") and box.feedback.isVisible()
-    assert box.account_display.text() == r"PC\corrected"
-    assert box.password.isVisible() and box.edit_account.isVisible()
+    assert box.feedback.isHidden() and box.hint.isVisible()
+    assert box.account.text() == r"PC\corrected" and not box.account.isReadOnly()
+    assert box.password.isVisible()
     assert box.yesButton.text() == tr("保存密码")
     qtbot.waitUntil(box.yesButton.isEnabled)
     assert box.isVisible()
@@ -155,7 +152,7 @@ def test_missing_account_opens_editor(qtbot, editor_parent, monkeypatch, storage
     box = TwinPasswordDialog(None, editor_parent)
     box.show()
     assert box.account.isVisible() and box.focusWidget() is box.account
-    assert box.account_display.isHidden() and box.edit_account.isHidden()
+    assert not box.account.isReadOnly() and box.feedback.isHidden()
 
 
 def test_empty_save_shakes_only_password_and_restores_position(qtbot, editor_parent, storage, monkeypatch):
@@ -200,12 +197,19 @@ def test_intro_actions(qtbot, monkeypatch, storage):
     observed = []
 
     def cancel(box):
-        observed.append((box.parentWidget(), box.account_display.text(), box.edit_account.isHidden(), box.password.isHidden()))
+        observed.append((box.account.text(), box.account.isReadOnly(), box.password.isHidden(),
+                         not box.feedback.isHidden(), box.feedback.content()))
         return ui.QDialog.DialogCode.Rejected
 
     monkeypatch.setattr(TwinPasswordDialog, "exec", cancel)
     dialog._credentials_button.click()
-    assert observed == [(dialog, storage[1].return_value["UserName"], True, True)]
+    dialog._credentials_button.click()
+    creds, reader = storage
+    assert observed == [(reader.return_value["UserName"], True, True, True, ui.tr("已保存分身密码"))] * 2
+    reader.side_effect = creds.pywintypes.error(1168, "CredRead", "not found")
+    monkeypatch.setattr(creds, "current_account", lambda: r"PC\example")
+    dialog._credentials_button.click()
+    assert observed[-1][:4] == (r"PC\example", False, False, False)
     assert dialog._credentials_button.text() == ui.tr("自动登录")
     index = dialog._footer.indexOf(dialog._credentials_button)
     assert dialog._footer.indexOf(dialog._docs_button) < index < dialog._footer.indexOf(dialog._connect_button)
@@ -242,7 +246,7 @@ def test_credential_success_preserves_connection_error(qtbot, monkeypatch, stora
         if not deleted:
             box.password.setText("example")
         box.yesButton.click()
-        assert not box.feedback.isHidden()
+        assert box.feedback.isHidden() == deleted
         return ui.QDialog.DialogCode.Rejected
 
     monkeypatch.setattr(TwinPasswordDialog, "exec", apply_and_close)

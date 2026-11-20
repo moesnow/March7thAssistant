@@ -8573,11 +8573,7 @@ msgstr ""
 "Timed out waiting for the Express Supply pop-up to close and the main "
 "screen to return. Check in-game whether you received the reward."
 
-#: app/tools/desktop_twin_password_dialog.py:124
-msgid "已删除保存的分身密码"
-msgstr "Saved Desktop Twin password deleted"
-
-#: app/tools/desktop_twin_password_dialog.py:127
+#: app/tools/desktop_twin_password_dialog.py:69
 msgid "已保存分身密码"
 msgstr "Desktop Twin password saved"
 
@@ -8651,7 +8647,3 @@ msgstr "Delete password"
 #: app/tools/desktop_twin_password_dialog.py:34
 msgid "保存密码"
 msgstr "Save password"
-
-#: app/tools/desktop_twin_password_dialog.py:26
-msgid "修改账户名"
-msgstr "Edit account name"

@@ -8157,11 +8157,7 @@ msgstr "长夜"
 msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
 msgstr "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
 
-#: app/tools/desktop_twin_password_dialog.py:124
-msgid "已删除保存的分身密码"
-msgstr "已删除保存的分身密码"
-
-#: app/tools/desktop_twin_password_dialog.py:127
+#: app/tools/desktop_twin_password_dialog.py:69
 msgid "已保存分身密码"
 msgstr "已保存分身密码"
 
@@ -8224,7 +8220,3 @@ msgstr "删除密码"
 #: app/tools/desktop_twin_password_dialog.py:34
 msgid "保存密码"
 msgstr "保存密码"
-
-#: app/tools/desktop_twin_password_dialog.py:26
-msgid "修改账户名"
-msgstr "修改账户名"

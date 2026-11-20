@@ -8239,11 +8239,7 @@ msgstr "長夜"
 msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
 msgstr "「列車補給」のポップアップから制限時間内にメイン画面に戻れませんでした。ゲーム内で報酬を受け取れたか確認してください。"
 
-#: app/tools/desktop_twin_password_dialog.py:124
-msgid "已删除保存的分身密码"
-msgstr "保存した分身パスワードを削除しました"
-
-#: app/tools/desktop_twin_password_dialog.py:127
+#: app/tools/desktop_twin_password_dialog.py:69
 msgid "已保存分身密码"
 msgstr "分身パスワードを保存しました"
 
@@ -8306,7 +8302,3 @@ msgstr "パスワードを削除"
 #: app/tools/desktop_twin_password_dialog.py:34
 msgid "保存密码"
 msgstr "パスワードを保存"
-
-#: app/tools/desktop_twin_password_dialog.py:26
-msgid "修改账户名"
-msgstr "アカウント名を変更"
