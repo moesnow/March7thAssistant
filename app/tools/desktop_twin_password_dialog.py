@@ -51,9 +51,9 @@ class TwinPasswordDialog(MessageBoxBase):
         self.hint = CaptionLabel(tr("若保存的密码有误，启动分身时仍会要求输入"), self.widget)
         self.hint.setTextColor(QColor(96, 96, 96), QColor(206, 206, 206))
         self.hint.setWordWrap(True)
-        self.viewLayout.addWidget(self.hint)
         self.feedback = NoticeBar(parent=self.widget)
         self.viewLayout.addWidget(self.feedback)
+        self.viewLayout.addWidget(self.hint)
 
         self.cancelButton.setText(tr("关闭"))
         saved = saved_account is not None
@@ -79,7 +79,7 @@ class TwinPasswordDialog(MessageBoxBase):
             (self.password if name else self.account).setFocus()
 
     def _show_feedback(self, icon, message):
-        self.hint.hide()
+        self.hint.setVisible(icon == InfoBarIcon.SUCCESS)
         self.feedback.setIcon(icon)
         self.feedback.setContent(message)
         self.feedback.show()

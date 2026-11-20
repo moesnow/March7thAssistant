@@ -120,6 +120,7 @@ def test_password_editor_round_trip(qtbot, editor_parent, monkeypatch, storage):
         "Persist": creds.win32cred.CRED_PERSIST_LOCAL_MACHINE,
     }, 0)
     assert box.feedback.content() == tr("已保存分身密码") and box.feedback.isVisible()
+    assert box.hint.isVisible() and box.hint.text() == tr("若保存的密码有误，启动分身时仍会要求输入")
     assert box.account.text() == r"PC\corrected" and box.account.isReadOnly()
     assert box.password.isHidden() and not box.password.text()
     assert box.yesButton.text() == tr("删除密码")
@@ -197,6 +198,7 @@ def test_intro_actions(qtbot, monkeypatch, storage):
     observed = []
 
     def cancel(box):
+        assert not box.hint.isHidden()
         observed.append((box.account.text(), box.account.isReadOnly(), box.password.isHidden(),
                          not box.feedback.isHidden(), box.feedback.content()))
         return ui.QDialog.DialogCode.Rejected
