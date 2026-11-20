@@ -103,7 +103,7 @@ class LocalGameController(GameControllerBase):
                                  original, winreg.REG_BINARY)
 
     def start_game_process(self) -> bool:
-        """启动游戏。直启标记为 True，复用窗口标记为 False，渠道启动的归属待确认。"""
+        """启动游戏。直启标记为 True，复用游戏标记为 False，渠道启动的归属待确认。"""
         self.launched_new_process = None
         # 包括图形界面的“启动游戏”：先恢复已退出任务的备份，不给手动启动降画质。
         if self.logger is not None:
@@ -113,9 +113,10 @@ class LocalGameController(GameControllerBase):
             self.log_info("游戏已运行，复用现有游戏窗口")
             return True
 
+        from utils.windows_session import process_session_id
+
         if in_desktop_twin():
             from utils.desktop_twin import check_game_config
-            from utils.windows_session import process_session_id
             check_game_config(self._config, process_session_id())
 
         if not os.path.exists(self.game_path):
@@ -128,6 +129,13 @@ class LocalGameController(GameControllerBase):
         if self.launch_method != "direct":
             self.log_error(f"未知的游戏启动方式：{self.launch_method}")
             return False
+
+        from module.automation.windows_input import WindowsInputApi
+
+        if WindowsInputApi().process_running(self.process_name, session_id=process_session_id()):
+            self.launched_new_process = False
+            self.log_info("游戏进程已在运行，等待游戏窗口就绪")
+            return True
 
         game_folder = self.game_path.rpartition('\\')[0]
         if not os.system(f'cmd /C start "" /D "{game_folder}" "{self.game_path}"'):
