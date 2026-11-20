@@ -979,25 +979,37 @@ class Automation(metaclass=SingletonMeta):
             self.take_screenshot()
         else:
             pause_ctl.checkpoint()
-        if self.screenshot is None or self.screenshot_pos is None:
-            raise RuntimeError("无法获取游戏窗口尺寸")
-
-        scale_factor = self.screenshot_scale_factor or 1
-        width = int(self.screenshot_pos[2] / scale_factor)
-        height = int(self.screenshot_pos[3] / scale_factor)
-        if width <= 0 or height <= 0:
-            raise RuntimeError("无法获取游戏窗口尺寸")
-        offset_x, offset_y = self.screenshot_pos[:2]
-        start_xy = (offset_x + min(int(start[0] * width), width - 1),
-                    offset_y + min(int(start[1] * height), height - 1))
-        end_xy = (offset_x + min(int(end[0] * width), width - 1),
-                  offset_y + min(int(end[1] * height), height - 1))
+        start_xy, end_xy = self._window_points(start, end)
 
         if repeats != 1:
             return bool(self.mouse_drag(*start_xy, *end_xy, duration, end_pause, repeats))
         if end_pause:
             return bool(self.mouse_drag(*start_xy, *end_xy, duration, end_pause))
         return bool(self.mouse_drag(*start_xy, *end_xy, duration))
+
+    def move_mouse(self, point, *, take_screenshot=False):
+        """把指针移到归一化坐标处，不按下按键。调用方已核对画面时可复用它的截图定位。"""
+        if any(not 0 <= value <= 1 for value in point):
+            raise ValueError("坐标必须在 0 到 1 之间")
+        if take_screenshot:
+            self.take_screenshot()
+        else:
+            pause_ctl.checkpoint()
+        (x, y), = self._window_points(point)
+        return self.mouse_move(x, y) is not False
+
+    def _window_points(self, *points):
+        """把归一化坐标换算成游戏窗口内的屏幕坐标。截图可能被缩放，按窗口实际宽高换算，端点保持在窗口内。"""
+        if self.screenshot is None or self.screenshot_pos is None:
+            raise RuntimeError("无法获取游戏窗口尺寸")
+        scale_factor = self.screenshot_scale_factor or 1
+        width = int(self.screenshot_pos[2] / scale_factor)
+        height = int(self.screenshot_pos[3] / scale_factor)
+        if width <= 0 or height <= 0:
+            raise RuntimeError("无法获取游戏窗口尺寸")
+        offset_x, offset_y = self.screenshot_pos[:2]
+        return tuple((offset_x + min(int(x * width), width - 1), offset_y + min(int(y * height), height - 1))
+                     for x, y in points)
 
     def click_element(self, target, find_type, threshold=None, max_retries=1, crop=(0, 0, 1, 1), take_screenshot=True, relative=False, scale_range=None, include=None, need_ocr=True, source=None, source_type=None, pixel_bgr=None, position="bottom_right", offset=(0, 0), action="click", retry_delay: float = 1.0, use_background_screenshot=None, press_duration: float = 0.0, prefer_frame_screenshot=True):
         """

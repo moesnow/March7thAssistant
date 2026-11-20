@@ -5,6 +5,7 @@ from typing import Literal
 import unicodedata
 from utils.singleton import SingletonMeta
 
+from .appendfilehandler import AppendFileHandler
 from .coloredformatter import ColoredFormatter
 from .colorcodefilter import ColorCodeFilter
 
@@ -44,7 +45,8 @@ class Logger(metaclass=SingletonMeta):
 
         # 文件日志
         self._ensure_log_directory_exists()
-        file_handler = logging.FileHandler(f"./logs/{self._current_datetime()}.log", encoding="utf-8")
+        # 界面、任务进程和测试可能同时写当天的日志，普通追加模式在 Windows 上会互相覆盖。
+        file_handler = AppendFileHandler(f"./logs/{self._current_datetime()}.log", encoding="utf-8")
         file_formatter = ColorCodeFilter('%(asctime)s | %(levelname)s | %(message)s')
         file_handler.setFormatter(file_formatter)
         self.logger.addHandler(file_handler)
@@ -63,7 +65,7 @@ class Logger(metaclass=SingletonMeta):
 
         # 文件日志
         self._ensure_log_directory_exists()
-        file_handler = logging.FileHandler(f"./logs/{self._current_datetime()}.log", encoding="utf-8")
+        file_handler = AppendFileHandler(f"./logs/{self._current_datetime()}.log", encoding="utf-8")
         file_formatter = logging.Formatter('%(message)s')
         file_handler.setFormatter(file_formatter)
         self.logger_title.addHandler(file_handler)

@@ -4,10 +4,10 @@ import android.content.AttributionSource;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.os.Build;
+import android.os.Looper;
 import android.os.Process;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
+import java.util.StringJoiner;
 
 /**
  * 以 com.android.shell 的身份向系统服务报到的 Context。
@@ -16,47 +16,47 @@ import java.lang.reflect.Field;
  * Context 里的包名做权限校验。做法参照 scrcpy（Apache-2.0）的 FakeContext 与 Workarounds。
  *
  * Android 10 到 13 用空底座就够了：建虚拟屏只读包名，输入走 InputManager.getInstance()。
- * Android 14 起取 InputManager 要靠 Context，这时才借一个系统 Context 做底座（未在实机验证）；
+ * Android 14 起输入服务及新版 DisplayManager 会查询系统服务，这时才借一个系统 Context 做底座；
  * 在 MIUI 12.5 上构造系统 Context 会往标准错误打一段主题配置缺失的堆栈，所以低版本不去碰它。
  */
 final class ShellContext extends ContextWrapper {
     static final String PACKAGE = "com.android.shell";
 
     private static ShellContext instance;
+    private static ReflectiveOperationException initFailure;
+    private static String initTrace;
 
     private ShellContext(Context base) {
         super(base);
     }
 
-    /** 第一次调用必须在已经 prepare 过 Looper 的线程上（构造系统 Context 需要）。 */
-    static synchronized ShellContext get() {
+    /** API 34+ 的第一次调用在服务启动线程上进行，构造系统 Context 需要它已准备好的 Looper。 */
+    static synchronized ShellContext get() throws ReflectiveOperationException {
+        if (initFailure != null) {
+            throw initFailure;
+        }
         if (instance == null) {
-            instance = new ShellContext(Build.VERSION.SDK_INT >= 34 ? systemContextOrNull() : null);
+            StringJoiner steps = new StringJoiner("\n");
+            steps.add("shell context sdk=" + Build.VERSION.SDK_INT
+                    + " mainLooper=" + (Looper.myLooper() != null && Looper.myLooper() == Looper.getMainLooper()));
+            try {
+                Context base = (Context) SystemContext.resolve(Build.VERSION.SDK_INT, ShellContext.class.getClassLoader(), steps::add);
+                instance = new ShellContext(base);
+                steps.add("base=" + (base == null ? "null (legacy)" : base.getClass().getName()));
+            } catch (ReflectiveOperationException e) {
+                // 当前进程只在已准备 Looper 的启动线程初始化一次；命令线程复用这次失败及其原始调用栈。
+                initFailure = e;
+                throw e;
+            } finally {
+                initTrace = steps.toString();
+                Logger.i(initTrace);
+            }
         }
         return instance;
     }
 
-    boolean hasBase() {
-        return getBaseContext() != null;
-    }
-
-    private static Context systemContextOrNull() {
-        try {
-            Class<?> activityThread = Class.forName("android.app.ActivityThread");
-            Constructor<?> constructor = activityThread.getDeclaredConstructor();
-            constructor.setAccessible(true);
-            Object thread = constructor.newInstance();
-            Field current = activityThread.getDeclaredField("sCurrentActivityThread");
-            current.setAccessible(true);
-            current.set(null, thread);
-            Field systemThread = activityThread.getDeclaredField("mSystemThread");
-            systemThread.setAccessible(true);
-            systemThread.setBoolean(thread, true);
-            return (Context) activityThread.getDeclaredMethod("getSystemContext").invoke(thread);
-        } catch (Throwable error) {
-            Logger.w("system context unavailable, continuing without it", error);
-            return null;
-        }
+    static synchronized String initializationTrace() {
+        return initTrace;
     }
 
     @Override

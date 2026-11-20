@@ -9,6 +9,7 @@ import struct
 from subprocess import CompletedProcess
 import sys
 from threading import Thread
+import traceback
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -52,6 +53,7 @@ class FakeS1(socketserver.ThreadingTCPServer):
         self.version = "0.1.1"
         self.features = ["frame_after_ns"]
         self.keep_awake_error = None
+        self.display_error = None
         self.display_id = 42
         self.task_visible = True
         self.target_mismatch = False
@@ -80,7 +82,7 @@ class FakeS1(socketserver.ThreadingTCPServer):
         if cmd == "keep_awake":
             return ({"error": self.keep_awake_error} if self.keep_awake_error else {}), b""
         if cmd == "create_display":
-            return dict(display_id=self.display_id), b""
+            return ({"error": self.display_error} if self.display_error else dict(display_id=self.display_id)), b""
         if cmd == "watchdog":
             self.display_id = header["display_id"]
             return {}, b""
@@ -256,6 +258,27 @@ def test_authentication_and_protocol(s1):
         assert s1.requests[-1]["cmd"] == "hello"
     finally:
         client.close()
+
+
+@pytest.mark.parametrize("code,diagnostic", [
+    ("shell_context_init_failed", "ShellContext sdk=36 base=false\nCaused by: java.lang.NoSuchMethodException"),
+    ("display_failed", "DisplayManager.createVirtualDisplay sdk=36 base=true\njava.lang.SecurityException"),
+    ("display_failed", None),  # 旧版设备服务只返回 code/message。
+])
+def test_prepare_display_preserves_java_trace_and_short_error(adb, s1, code, diagnostic):
+    controller, _ = adb
+    s1.display_error = {"code": code, "message": "failed stage"}
+    if diagnostic:
+        s1.display_error["diagnostic"] = diagnostic
+    with pytest.raises(transport.AdbError, match="failed stage") as failure:
+        controller.prepare_display()
+    assert failure.value.code == code
+    if diagnostic:
+        assert diagnostic in "".join(traceback.format_exception(failure.value))
+        assert diagnostic not in str(failure.value)
+    else:
+        assert not getattr(failure.value, "__notes__", [])
+    assert all(request["cmd"] != "launch" for request in s1.requests)
 
 
 @pytest.mark.parametrize("miui, switch, granted, expected", [

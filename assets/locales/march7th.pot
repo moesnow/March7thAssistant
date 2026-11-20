@@ -42,7 +42,7 @@ msgid "自动短信 (自动点击关闭手机短信页面)"
 msgstr ""
 
 #: app/card/autoplot_setting_card.py:83
-msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
+msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录，非 .exe 版）"
 msgstr ""
 
 #: app/card/autoplot_setting_card.py:93
@@ -7590,7 +7590,7 @@ msgid "当前后端不支持，未执行"
 msgstr ""
 
 #: app/setting_interface.py:614
-msgid "改用连击那刻夏（S2）"
+msgid "改用连击那刻夏"
 msgstr ""
 
 #: app/setting_interface.py:616
@@ -7602,11 +7602,7 @@ msgid "仅在首领节点处理装备"
 msgstr ""
 
 #: tasks/weekly/currency_wars_strategy.py:62
-msgid "连击那刻夏（S2）"
-msgstr ""
-
-#: tasks/weekly/currency_wars_strategy.py:62
-msgid "连击那刻夏（高难）"
+msgid "连击那刻夏"
 msgstr ""
 
 #: tasks/weekly/currency_wars_strategy.py:62

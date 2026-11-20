@@ -578,7 +578,7 @@ def test_currency_wars_entry_rechecks_unattempted_deployment_after_picture_recov
         Label("出战", (1818, 750)), Label("前台区域", (973, 316)), Label("后台区域", (976, 575)),
         Label("0", (1640, 923)),
     )
-    monkeypatch.setattr(currency_wars.cfg, "currencywars_strategy", "s2_anaxa")
+    monkeypatch.setattr(currency_wars.cfg, "currencywars_strategy", "s2_anaxa_high")
     monkeypatch.setattr(Frame, "read_local", lambda *args, **kwargs: None)
 
     def preparation(*, deployed=False, flashing=False):
@@ -858,10 +858,16 @@ def test_currency_wars_entry_stops_when_clear_frames_remain_unidentified(
     unknown = Frame(Image.new("RGB", (1920, 1080)), ())
     capture = MagicMock(return_value=unknown)
     monkeypatch.setattr(currency_wars.CurrencyWars, "_capture", staticmethod(capture))
-    navigation = MagicMock()
-    navigation.get_current_screen.return_value = False
+    screen_module = import_module("module.screen.screen")
+    navigation = object.__new__(screen_module.Screen)
+    navigation.__init__(Path("assets/config/screens.json"), MagicMock())
+    auto = currency_wars.auto
+    auto.find_element.side_effect = None
+    auto.find_element.return_value = None
+    monkeypatch.setattr(screen_module, "auto", auto)
+    monkeypatch.setattr(screen_module, "time", currency_wars.time)
     monkeypatch.setattr(currency_wars, "screen", navigation)
-    # 旧循环需要在一次实际运行内触发显式终止，回归时用有限时钟防止测试自身无限等待。
+    # 若入口重试失去上限，测试最多采集 32 帧。
     normal_checkpoint = currency_wars.pause_ctl.checkpoint
 
     def checkpoint():
@@ -876,6 +882,10 @@ def test_currency_wars_entry_stops_when_clear_frames_remain_unidentified(
         "failed", "currencywars_unavailable", EXIT_FAILED)
     assert state.clicks == [] and state.completed == 0 and state.later_steps == []
     assert capture.call_count < 32
+    assert auto.take_screenshot.call_count == currency_wars.MAX_ENTRY_ATTEMPTS
+    auto.find_element.assert_called()
+    auto.press_key.assert_not_called()
+    auto.click_element.assert_not_called()
     task_steps.screen.change_to.assert_not_called()
 
 
