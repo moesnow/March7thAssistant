@@ -152,6 +152,8 @@ instance_teams: []
 # 开拓力使用设置
 use_reserved_trailblaze_power: False # 是否使用后备开拓力。true 使用，false 不使用。
 use_fuel: False # 是否使用燃料。true 使用，false 不使用。
+prefer_fuel_tickets: False # PC 先使用助燃券快速刷取花萼/凝滞虚影（实验功能）。
+fuel_ticket_batch_enable: False # 实验：按剩余体力、助燃券和单批上限尽量合并刷取，默认关闭。
 
 # 历战余响设置
 echo_of_war_enable: false # 是否体力优先完成3次「历战余响」。true 开启，false 关闭。
