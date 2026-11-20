@@ -6183,8 +6183,8 @@ msgid "按下 {stop} 停止 · {pause} 继续"
 msgstr "按下 {stop} 停止 · {pause} 继续"
 
 #: app/card/autoplot_setting_card.py:83
-msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
-msgstr "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
+msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录，非 .exe 版）"
+msgstr "自动阅读翁法罗斯英雄纪（请先打开该书目录，非 .exe 版）"
 
 #: app/card/autoplot_setting_card.py:53
 msgid "记住自动对话开关状态"
@@ -7818,8 +7818,8 @@ msgid "当前后端不支持，未执行"
 msgstr "当前后端不支持，未执行"
 
 #: app/setting_interface.py:614
-msgid "改用连击那刻夏（S2）"
-msgstr "改用连击那刻夏（S2）"
+msgid "改用连击那刻夏"
+msgstr "改用连击那刻夏"
 
 #: app/setting_interface.py:616
 msgid "请更新货币战争策略"
@@ -7830,12 +7830,8 @@ msgid "仅在首领节点处理装备"
 msgstr "仅在首领节点处理装备"
 
 #: tasks/weekly/currency_wars_strategy.py:62
-msgid "连击那刻夏（S2）"
-msgstr "连击那刻夏（S2）"
-
-#: tasks/weekly/currency_wars_strategy.py:62
-msgid "连击那刻夏（高难）"
-msgstr "连击那刻夏（高难）"
+msgid "连击那刻夏"
+msgstr "连击那刻夏"
 
 #: tasks/weekly/currency_wars_strategy.py:62
 msgid "寒鸦流萤（高难）"

@@ -4,6 +4,8 @@ import android.util.Log;
 
 import org.march7th.deviceservice.protocol.Protocol;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -48,5 +50,11 @@ public final class Logger {
             cause = cause.getCause();
         }
         return cause.getClass().getSimpleName() + ": " + cause.getMessage();
+    }
+
+    static String stackTrace(Throwable error) {
+        StringWriter text = new StringWriter();
+        error.printStackTrace(new PrintWriter(text));
+        return text.toString();
     }
 }

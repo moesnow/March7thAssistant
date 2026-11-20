@@ -368,9 +368,14 @@ class ServiceClient:
         if not header["ok"]:
             error = header.get("error") or {}
             code = error.get("code", "unknown")
-            raise AdbError(code, tr("ADB 设备端服务错误 {code}：{message}").format(
+            failure = AdbError(code, tr("ADB 设备端服务错误 {code}：{message}").format(
                 code=code, message=error.get("message", "")
             ))
+            diagnostic = error.get("diagnostic")
+            if cmd == "create_display" and isinstance(diagnostic, str) and diagnostic:
+                # 导出的 traceback 包含 Java 调用栈，界面仍可单独显示简短的失败原因。
+                failure.add_note(diagnostic)
+            raise failure
         return header, payload
 
 

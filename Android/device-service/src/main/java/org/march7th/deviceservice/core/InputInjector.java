@@ -71,19 +71,20 @@ final class InputInjector {
 
     /**
      * Android 10 到 13：InputManager.getInstance()。
-     * Android 14 起 getInstance() 依赖 Application，改从 Context 取，再退到 InputManagerGlobal（未在实机验证）。
+     * Android 14 起从 Context 取输入服务，取不到时使用 InputManagerGlobal。
      */
     private static Object findInputManager() throws ReflectiveOperationException {
-        Class<?> inputManager = Class.forName("android.hardware.input.InputManager");
         if (Build.VERSION.SDK_INT < 34) {
+            Class<?> inputManager = Class.forName("android.hardware.input.InputManager");
             return inputManager.getMethod("getInstance").invoke(null);
         }
-        ShellContext context = ShellContext.get();
-        if (context.hasBase()) {
-            Object manager = context.getSystemService("input");
+        try {
+            Object manager = ShellContext.get().getSystemService("input");
             if (manager != null) {
                 return manager;
             }
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            Logger.w("input context unavailable, using InputManagerGlobal", e);
         }
         return Class.forName("android.hardware.input.InputManagerGlobal").getMethod("getInstance").invoke(null);
     }
