@@ -69,6 +69,7 @@ class CloudGameController(GameControllerBase):
     BROWSER_TAG = "--march-7th-assistant-sr-cloud-game"  # 自定义浏览器参数作为标识，用于识别哪些浏览器进程属于三月七小助手
     QUEUE_STATES = frozenset(("game_running", "in_queue", "select_queue"))
     LOBBY_STATES = frozenset(("lobby", "signed_in_lobby"))
+    LOGIN_STATE_PROBE_ATTEMPTS = 3  # 登录状态连续无法确认的检测次数上限（每次检测等待 5 秒）
     _ENTRY_STATE_SCRIPT = """
         const visible = el => el && el.getClientRects().length && getComputedStyle(el).visibility === 'visible';
         const hasVisible = selector => Array.from(document.querySelectorAll(selector)).some(visible);
@@ -651,8 +652,8 @@ class CloudGameController(GameControllerBase):
             self.log_debug(f"获取剩余时长失败: {e}")
             return None, None
 
-    def _check_login(self, timeout=5) -> bool:
-        """检查是否已经登录"""
+    def _check_login(self, timeout=5) -> bool | None:
+        """检查是否已经登录；无法确认登录状态时返回 None"""
         if not self.driver:
             return None
 
@@ -1478,14 +1479,24 @@ class CloudGameController(GameControllerBase):
             if entry in self.QUEUE_STATES:
                 return self._finish_cloud_entry()
             # 检测登录状态
+            unconfirmed_probes = 0
             while not signed_in_lobby_only:
                 pause_ctl.checkpoint()
                 logged_in = self._check_login()
                 pause_ctl.checkpoint()
                 if logged_in:
                     break
-                if logged_in is None and self._preserve_browser_on_exit:
-                    raise CloudGameProbeUnready("未确认云游戏登录状态，等待重新读取")
+                if logged_in is None:
+                    if self._preserve_browser_on_exit:
+                        raise CloudGameProbeUnready("未确认云游戏登录状态，等待重新读取")
+                    # 未确认不等于未登录：当作未登录会误触发扫码或重启浏览器，
+                    # 页面始终未就绪时还会一直等到登录超时。
+                    unconfirmed_probes += 1
+                    if unconfirmed_probes >= self.LOGIN_STATE_PROBE_ATTEMPTS:
+                        raise CloudGameProbeUnready("多次未能确认云游戏登录状态")
+                    continue
+                # 登录流程可能重启浏览器，新页面重新计数
+                unconfirmed_probes = 0
                 login_timeout_seconds = self._get_login_timeout_seconds()
                 login_deadline = time.monotonic() + login_timeout_seconds
                 self.log_info("未登录")
