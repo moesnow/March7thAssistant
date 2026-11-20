@@ -67,12 +67,13 @@ class CloudGameController(GameControllerBase):
     COOKIE_PATH = "settings/cookies.enc"          # Cookies 保存地址（仅用于调试）
     GAME_URL = "https://sr.mihoyo.com/cloud"            # 游戏地址
     BROWSER_TAG = "--march-7th-assistant-sr-cloud-game"  # 自定义浏览器参数作为标识，用于识别哪些浏览器进程属于三月七小助手
-    QUEUE_STATES = frozenset(("game_running", "in_queue", "select_queue"))
+    QUEUE_STATES = frozenset(("game_running", "in_queue", "select_queue","game_loading"))
     LOBBY_STATES = frozenset(("lobby", "signed_in_lobby"))
     _ENTRY_STATE_SCRIPT = """
         const visible = el => el && el.getClientRects().length && getComputedStyle(el).visibility === 'visible';
         const hasVisible = selector => Array.from(document.querySelectorAll(selector)).some(visible);
         const entryState = () => {
+            if (hasVisible('.game-loading'))return "game_loading";
             if (hasVisible('.game-player')) return "game_running";
             if (hasVisible("[aria-labelledby*='请选择排队队列']")) return "select_queue";
             if (hasVisible("[class*='waiting-in-queue']")) return "in_queue";
@@ -719,7 +720,7 @@ class CloudGameController(GameControllerBase):
         if not disconnected and not entry_pending and not self._preserve_browser_on_exit:
             return "enter"
         state = self._read_entry_state()
-        if state == "in_queue" or (state == "select_queue" and self._can_continue_queue_selection()):
+        if state in ("in_queue", "game_loading") or (state == "select_queue" and self._can_continue_queue_selection()):
             return "resume_queue"
         if disconnected:
             return "signed_in_lobby" if not entry_pending and state == "signed_in_lobby" else None
@@ -734,7 +735,7 @@ class CloudGameController(GameControllerBase):
         # 暂停恢复或 DOM 更新可能使旧大厅失效。重入时在浏览器内确认页面和派发输入。
         return self.driver.execute_script(self._ENTRY_STATE_SCRIPT + """
             const state = entryState();
-            if (state === "game_running") return state;
+            if (state === "game_running" || state === "game_loading") return state;
             const button = arguments[0];
             if (state !== "signed_in_lobby" || !button.isConnected || !visible(button)) return false;
             button.click();
@@ -799,6 +800,20 @@ class CloudGameController(GameControllerBase):
             self.log_error(f"点击进入游戏按钮游戏异常: {e}")
             raise e
 
+    def _wait_game_loading_complete(self, poll_interval=2) -> str | None:
+        """等待游戏启动状态结束"""
+        if not self.driver:return None
+        while True:
+            pause_ctl.checkpoint()
+            state = self._read_entry_state()
+            if state is not None and state != "game_loading":
+                return state
+            remaining = self._queue_deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            time.sleep(min(poll_interval, remaining))
+        raise CloudGameQueueTimeoutError("云游戏排队已达到等待时限")
+
     def _wait_game_canvas_ready(self, timeout=30) -> bool:
         """等待游戏画面 canvas/video 元素出现且尺寸就绪"""
         try:
@@ -827,7 +842,7 @@ class CloudGameController(GameControllerBase):
         if self._queue_deadline is None:
             self._queue_deadline = time.monotonic() + timeout
 
-        queue_states = ("in_queue", "game_running") if resume_queue else self.QUEUE_STATES
+        queue_states = ("in_queue", "game_running","game_loading") if resume_queue else self.QUEUE_STATES
 
         def queue_status(_):
             pause_ctl.checkpoint()
@@ -869,6 +884,16 @@ class CloudGameController(GameControllerBase):
                 status = WebDriverWait(self.driver, 10).until(queue_status)
 
             pause_ctl.checkpoint()
+            if status == "game_loading":
+                self.log_info("检测到游戏启动界面，等待启动完成...")
+                status = self._wait_game_loading_complete()
+
+                if status != "game_running":
+                    self.log_warning(
+                        f"游戏启动结束，但未进入游戏，当前状态：{status!r}"
+                    )
+                    return False
+
             if status == "game_running":
                 self.log_info("游戏已启动，无需排队，等待游戏画面加载...")
                 self._wait_game_canvas_ready()
@@ -882,6 +907,9 @@ class CloudGameController(GameControllerBase):
                 while time.monotonic() < self._queue_deadline:
                     pause_ctl.checkpoint()
                     state = self._read_entry_state()
+                    if state == "game_loading":
+                        self.log_info("排队成功，等待游戏启动完成...")
+                        return True
                     if state == "game_running":
                         pause_ctl.checkpoint()
                         self.log_info("排队成功，等待游戏画面加载...")
@@ -1468,7 +1496,7 @@ class CloudGameController(GameControllerBase):
             if signed_in_lobby_only and entry != "signed_in_lobby":
                 if entry == "game_running":
                     return entry
-                if entry == "in_queue":
+                if entry in ("in_queue", "game_loading"):
                     return self._finish_cloud_entry(resume_queue=True)
                 raise CloudGameProbeUnready("重入前无法确认已登录的云游戏大厅")
             if entry == "select_queue" and self.cfg.cloud_game_use_paid_time:
@@ -1545,7 +1573,7 @@ class CloudGameController(GameControllerBase):
                     entry = self._read_entry_state()
                     if entry == "game_running":
                         return entry
-                    if entry == "in_queue":
+                    if entry in ("in_queue", "game_loading"):
                         return self._finish_cloud_entry(resume_queue=True)
                     if entry != "signed_in_lobby":
                         raise CloudGameProbeUnready("核对剩余时长时已无法确认已登录的云游戏大厅")
