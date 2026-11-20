@@ -16,6 +16,8 @@ from win32com.server.util import wrap
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget
 
+from app.tools.desktop_twin_credentials import apply_saved_credential
+
 
 _RDP_CLSID = "{A0C63C30-F08D-4AB4-907C-34905D770C7D}"  # MsRdpClient10NotSafeForScripting
 _EXTENDED_SETTINGS = UUID("302d8188-0052-4807-806a-362b628f9ac5").bytes_le
@@ -151,6 +153,7 @@ class RdpControl(QWidget):
             raise
 
     def connect_child(self):
+        apply_saved_credential(self._client)
         self._client.Connect()
 
     def dispose(self):
