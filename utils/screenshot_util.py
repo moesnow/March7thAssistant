@@ -45,6 +45,7 @@ def save_error_screenshot(logger, *, propagate_errors=()):
         if auto.screenshot is not None:
             auto.screenshot.save(filepath)
             logger.info(f"错误截图已保存: {filepath}")
+            logger.info(f"当前软件版本: {cfg.version}")
             logger.info("反馈问题时请附上此截图以协助诊断")
             return filepath
         logger.debug("截图对象为空，无法保存")
