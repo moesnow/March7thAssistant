@@ -9,6 +9,11 @@ from module.logger import log
 from .basechallenge import BaseChallenge
 
 
+APOCALYPTIC_MODE_CROP = (0.40, 0.65, 0.20, 0.08)
+APOCALYPTIC_LEVEL_CARD_CROP = (0.64, 0.87, 0.16, 0.06)
+APOCALYPTIC_FIRST_ENTRY_CROP = (0.35, 0.72, 0.30, 0.12)
+
+
 class StellarChallenge:
     def __init__(self, challenge, highest_level, team3=None, enabled=False):
         self.challenge = challenge
@@ -48,9 +53,8 @@ class StellarChallenge:
 
     def ensure_mode(self, stellar):
         target, other = ("星启模式", "常规模式") if stellar else ("常规模式", "星启模式")
-        crop = (0.55, 0.15, 0.4, 0.25)
-        if self.challenge.name == "末日幻影":
-            crop = (0.40, 0.65, 0.20, 0.08)
+        apocalyptic = self.challenge.name == "末日幻影"
+        crop = APOCALYPTIC_MODE_CROP if apocalyptic else (0.55, 0.15, 0.4, 0.25)
         for attempt in range(5):
             target_visible = auto.find_element(target, "text", crop=crop, include=False)
             other_visible = auto.find_element(other, "text", crop=crop, include=False)
@@ -67,6 +71,11 @@ class StellarChallenge:
                 auto.click_element(other, "text", crop=crop, include=False)
                 time.sleep(2)
                 continue
+            elif apocalyptic and stellar and attempt < 2:
+                # 末日幻影只有选中难度 IV 才显示模式开关。
+                if auto.find_element("未解锁", "text", crop=APOCALYPTIC_LEVEL_CARD_CROP, include=True):
+                    raise RuntimeError("末日幻影难度 IV 未解锁，请先通关难度 III")
+                auto.click_element(f"{self.highest_level:02}", "text", crop=APOCALYPTIC_LEVEL_CARD_CROP, include=True)
             # 切换入口在解锁前不存在；常规模式仍能照常运行。
             if not stellar and attempt == 0 and not target_visible and not other_visible:
                 log.info("未发现模式切换入口，按常规模式执行")
@@ -158,8 +167,15 @@ class StellarChallenge:
     def _open_apocalyptic_teams(self):
         nodes = ["节点一", "节点—", "节点二", "节点三"]
         node_crop = (0.20, 0.74, 0.60, 0.07)
-        # 先用底部节点文字确认主页，避免套用旧版关卡页面的图片和流程。
-        if not auto.find_element(nodes, "text", max_retries=5, crop=node_crop, include=False):
+        for _ in range(5):
+            first_entry = auto.find_element("前往挑战", "text", crop=APOCALYPTIC_FIRST_ENTRY_CROP, include=False)
+            if first_entry:
+                self._open_first_apocalyptic_teams(first_entry)
+                return
+            if auto.find_element(nodes, "text", crop=node_crop, include=False):
+                break
+            time.sleep(1)
+        else:
             raise RuntimeError("未确认末日幻影星启主页的节点入口")
         if not auto.click_element(f"{self.highest_level:02}", "text", max_retries=5,
                                   crop=(0.20, 0.87, 0.60, 0.06), include=True):
@@ -174,11 +190,56 @@ class StellarChallenge:
             time.sleep(1)
         raise RuntimeError("未进入末日幻影星启三节点编队界面")
 
+    def _open_first_apocalyptic_teams(self, first_entry):
+        # 首次挑战可能依次展示三个首领，也可能直接进入编队。
+        deadline = time.monotonic() + 20
+        next_input_at = 0
+        attempts = {}
+        title_crop = (0.04, 0.025, 0.14, 0.08)
+        stellar_crop = (0.32, 0.05, 0.20, 0.10)
+        while time.monotonic() < deadline:
+            if self._apocalyptic_team_screen():
+                return
+            if time.monotonic() < next_input_at:
+                time.sleep(0.5)
+                continue
+            page, button = None, None
+            if first_entry:
+                page, button = "挑战入口", first_entry
+                first_entry = None
+            elif (auto.find_element("首领信息", "text", crop=title_crop, include=False)
+                  and auto.find_element("星启模式", "text", crop=stellar_crop, include=False)):
+                if auto.find_element(["节点一", "节点—", "节点二", "节点三"], "text",
+                                     crop=(0.45, 0.10, 0.46, 0.07), include=True):
+                    page = auto.matched_text.replace("—", "一")
+                    button = auto.find_element(["下一步", "前往编队"], "text",
+                                               crop=(0.74, 0.87, 0.24, 0.10), include=False)
+            elif (auto.find_element("编队", "text", crop=title_crop, include=False)
+                  and auto.find_element("星启模式", "text", crop=stellar_crop, include=False)):
+                page = "编队"
+            elif auto.find_element("星启模式", "text", crop=APOCALYPTIC_MODE_CROP, include=False):
+                page = "挑战入口"
+                button = auto.find_element("前往挑战", "text", crop=APOCALYPTIC_FIRST_ENTRY_CROP, include=False)
+            if (button or page == "编队") and attempts.get(page, 0) < 2 and time.monotonic() < deadline:
+                if button:
+                    auto.click_element_with_pos(button)
+                else:
+                    self._click_ratio(1488 / 1920, 330 / 1080)
+                attempts[page] = attempts.get(page, 0) + 1
+                next_input_at = time.monotonic() + 2
+            time.sleep(0.5)
+        raise RuntimeError("未进入末日幻影星启三节点编队界面")
+
     def _confirm_apocalyptic_teams(self):
         if not self._apocalyptic_team_screen():
             raise RuntimeError("未确认末日幻影星启角色列表，无法确认编队")
-        if not auto.click_element("确认", "text", max_retries=5,
-                                  crop=(0.77, 0.87, 0.22, 0.08), include=False):
+        button = auto.find_element(["确认", "前往挑战"], "text", max_retries=5,
+                                   crop=(0.77, 0.87, 0.22, 0.08), include=False)
+        if not button:
+            raise RuntimeError("确认末日幻影星启编队失败")
+        if auto.matched_text == "前往挑战":
+            return
+        if not auto.click_element_with_pos(button):
             raise RuntimeError("确认末日幻影星启编队失败")
         for _ in range(10):
             if auto.find_element("当前队伍", "text", crop=(0.36, 0.70, 0.15, 0.07), include=False):

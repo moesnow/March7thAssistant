@@ -28,8 +28,8 @@ private const val MAX_EVENT_AGE_SECONDS = 55 * 60L
 
 private val reportedErrors = setOf(
     "permission_unavailable", "game_not_installed", "keyguard_locked", "foreground_start",
-    "service_busy", "service_start", "root_unavailable", "protocol_mismatch", "service_version",
-    "display_failed", "display_exists", "no_display", "launch_failed", "game_start_timeout", "game_exited",
+    "service_busy", "service_start", "shizuku_unsupported", "root_unavailable", "protocol_mismatch", "service_version",
+    "shell_context_init_failed", "display_failed", "display_exists", "no_display", "launch_failed", "game_start_timeout", "game_exited",
     "manual_action_required", "move_back_failed", "device_asleep", "inject_denied", "inject_failed",
     "disconnected", "timeout", "invalid_response", "frame_clock_unavailable", "game_not_on_display",
     "template_missing", "task_failed", "runtime_error", "cleanup_pending", "interrupted",

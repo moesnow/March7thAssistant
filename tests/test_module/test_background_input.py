@@ -1390,16 +1390,18 @@ def test_window_missing_for_whole_timeout_is_reported_as_window_lost(backend):
 def test_hidden_window_timeout_names_state(backend):
     b = backend
     b.api.problem = 'hidden'
-    with pytest.raises(InputInterrupted, match='不可见'):
+    with pytest.raises(InputInterrupted, match='不可见') as error:
         b.input.wait_for_window(5)
+    assert error.value.frame_only is False
 
 
 def test_zero_timeout_reports_without_waiting_or_logging(backend):
     """图形界面（自动对话）只尝试一次：不等待，也不刷屏日志。"""
     b = backend
     b.api.minimized = True
-    with pytest.raises(InputInterrupted, match='最小化'):
+    with pytest.raises(InputInterrupted, match='最小化') as error:
         b.input.wait_for_window(0)
+    assert error.value.frame_only is True
     assert b.clock.now == 0
     b.input.logger.warning.assert_not_called()
 

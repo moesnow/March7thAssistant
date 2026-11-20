@@ -90,10 +90,10 @@ public final class DeviceService implements Watchdog.Host {
 
     /** cleanupJarPath 是善后进程可读取的设备端 DEX jar 路径；null 时沿用 CLASSPATH。 */
     public DeviceService(String cleanupJarPath) throws ReflectiveOperationException {
-        ShellContext.get();
+        // API 34+ 在此线程准备输入与系统 Context；初始化失败时尚未启动采集线程。
+        injector = new InputInjector();
         captureThread.start();
         captureHandler = new Handler(captureThread.getLooper());
-        injector = new InputInjector();
         sideEffects = new SideEffects(cleanupJarPath);
     }
 
@@ -336,12 +336,7 @@ public final class DeviceService implements Watchdog.Host {
                             "a " + current.width + "x" + current.height + "/" + current.dpi + " display already exists");
                 }
             } else {
-                try {
-                    current = new VirtualScreen(name, width, height, dpi, destroyContent, sequencer, captureHandler);
-                } catch (ReflectiveOperationException | RuntimeException e) {
-                    Logger.e("cannot create virtual display", e);
-                    throw new CommandException(Protocol.E_DISPLAY_FAILED, Logger.describe(e));
-                }
+                current = new VirtualScreen(name, width, height, dpi, destroyContent, sequencer, captureHandler);
                 screen = current;
                 Logger.i("virtual display " + current.displayId + " created: " + width + "x" + height + "/" + dpi
                         + " flags=0x" + Integer.toHexString(current.flags));

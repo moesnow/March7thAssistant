@@ -1,4 +1,8 @@
+import sys
+
 from PIL import Image
+from .background_input import GameWindowLost
+from .windows_input import WindowsInputApi
 from module.config import cfg
 from module.config.platform import get_control_backend, get_ui_profile
 
@@ -203,4 +207,15 @@ class Screenshot:
 
             return screenshot, screenshot_pos, screenshot_scale_factor
 
+        if sys.platform == "win32" and not require_background and title == getattr(cfg, "game_title_name", None):
+            process_name = getattr(cfg, "game_process_name", None)
+            if process_name:
+                from utils.windows_session import process_session_id
+
+                try:
+                    running = WindowsInputApi().process_running(process_name, session_id=process_session_id())
+                except Exception:
+                    return False
+                if running is False:
+                    raise GameWindowLost("游戏进程已退出，游戏窗口已关闭")
         return False

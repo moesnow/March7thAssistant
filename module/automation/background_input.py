@@ -215,7 +215,10 @@ class BackgroundInput(InputBase):
                 raise GameWindowLost('游戏进程已退出，游戏窗口已关闭')
             if time.monotonic() >= deadline:
                 self._window_wait_expired = timeout > 0
-                raise self._window_timeout(problem, timeout)
+                error = self._window_timeout(problem, timeout)
+                # 零秒探测只确认当前取不到画面。进程退出和持续不可用仍在上面单独报告。
+                error.frame_only = timeout <= 0
+                raise error
             paused_at = time.monotonic()
             self._pause.checkpoint()
             # 暂停期间不计入等待时长。

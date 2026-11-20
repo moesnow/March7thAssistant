@@ -11,11 +11,11 @@ from module.logger import log
 from module.ocr import ocr
 from module.screen import screen
 from tasks.base.list_drag import changed_ratio, drag_list, drag_to_edge
-from tasks.base.task_steps import FATAL_GAME_ERRORS
+from tasks.base.task_steps import optional_reward
 from tasks.daily.tasks import Tasks
 from tasks.daily.training import (
     TARGET_ACTIVITY, MATERIAL_TASK, SUPPORT_TASK, DailyTrainingError, TrainingCards,
-    can_collect, can_complete, claimable_milestones, needs_action, record_progress,
+    can_collect, can_complete, claimable_milestones, confirm_full_activity, needs_action, record_progress,
 )
 from tasks.power.policy import SupportDemand
 from tasks.reward.receipt import notify_reward
@@ -73,6 +73,7 @@ def scan_cards(activity, collect, *, read_tasks=True):
         tasks.task_mappings["助燃券"] = "使用1次「助燃券」或「深度沉浸器」"
     available = False
     claimed = 0
+    card_interrupted = False
     drag_options = {"crop": CARDS_CROP, "duration": 0.5, "end_pause": 0.2, "settle": 0.5}
     if not drag_to_edge(auto, DRAG_LEFT, DRAG_RIGHT, max_drags=MAX_DRAGS, **drag_options):
         raise DailyTrainingError("拖动任务卡片列表后未能确认左端")
@@ -80,17 +81,29 @@ def scan_cards(activity, collect, *, read_tasks=True):
     unchanged = 0
     for _ in range(MAX_DRAGS):
         while activity < MAX_ACTIVITY:  # 每次领取至少增加一档，且以 500 为上限。
-            button = auto.find_element(f"{IMAGE_ROOT}/receive_activity.png", "image", 0.9, crop=CARD_BUTTONS_CROP)
-            available = available or bool(button)
-            if not collect or not button:
-                break
-            if not auto.click_element_with_pos(button):
-                raise DailyTrainingError("任务卡片的领取按钮无法点击")
-            time.sleep(0.5)
-            activity = read_activity(minimum=activity + ACTIVITY_STEP)
-            claimed += 1
-            log.info(f"已领取任务卡片活跃度，当前活跃度 {activity}/{MAX_ACTIVITY}")
-        if activity == MAX_ACTIVITY:
+            awaiting_receipt = False
+            with optional_reward("实训任务卡片奖励"):
+                button = auto.find_element(f"{IMAGE_ROOT}/receive_activity.png", "image", 0.9, crop=CARD_BUTTONS_CROP)
+                available = available or bool(button)
+                if not collect or not button:
+                    break
+                awaiting_receipt = True
+                if not auto.click_element_with_pos(button):
+                    raise DailyTrainingError("任务卡片的领取按钮无法点击")
+                time.sleep(0.5)
+                activity = read_activity(minimum=activity + ACTIVITY_STEP)
+                awaiting_receipt = False
+                claimed += 1
+                log.info(f"已领取任务卡片活跃度，当前活跃度 {activity}/{MAX_ACTIVITY}")
+                continue
+            if awaiting_receipt:
+                if confirm_full_activity(auto, ocr.recognize_multi_lines, CARDS_CROP):
+                    return MAX_ACTIVITY, available, claimed + 1, TrainingCards({})
+                # 领取可能已使实训满分，本轮补做不能沿用此前的卡片状态。
+                return activity, available, claimed, TrainingCards({})
+            card_interrupted = True
+            break
+        if activity == MAX_ACTIVITY or card_interrupted:
             break
 
         frame, _, _ = auto.take_screenshot(crop=CARDS_CROP)
@@ -116,7 +129,7 @@ def scan_cards(activity, collect, *, read_tasks=True):
 
     if tasks is None:
         return activity, available, claimed, TrainingCards({})
-    if activity < MAX_ACTIVITY and not tasks.daily_tasks:
+    if not card_interrupted and activity < MAX_ACTIVITY and not tasks.daily_tasks:
         raise DailyTrainingError("未识别到每日实训任务卡片的名称和进度")
     for name, pending in tasks.daily_tasks.items():
         log.info(f"{name}：{'待完成' if pending else '已完成'}")
@@ -129,29 +142,22 @@ def click_milestone(button):
     if not auto.find_element(REWARD_POPUP, "image", 0.9, max_retries=8, retry_delay=0.3, crop=REWARD_POPUP_CROP):
         raise DailyTrainingError("点击实训档位礼盒后，未找到「获得物品」弹窗")
     log.info("已领取实训档位奖励")
-    if not auto.click_element(REWARD_CLOSE_CROP, "crop"):
-        log.warning("已确认实训档位奖励到账，获得物品弹窗仍未关闭")
-        return False
-    time.sleep(0.6)
-    try:
+    with optional_reward("实训档位奖励到账后的弹窗收尾"):
+        if not auto.click_element(REWARD_CLOSE_CROP, "crop"):
+            log.warning("已确认实训档位奖励到账，获得物品弹窗仍未关闭")
+            return False
+        time.sleep(0.6)
         screen.wait_for_screen_change("guide2", max_recursion=0)
-    except FATAL_GAME_ERRORS:
-        raise
-    except RuntimeError as error:
-        log.warning(f"已确认档位奖励到账，后续档位待检查：{error}")
-        return False
-    return True
+        return True
+    return False
 
 
 def needs_support():
-    with screenshot_retry_timeout(5):
+    with screenshot_retry_timeout(5), optional_reward("支援实训查询"):
         screen.change_to("guide2", max_recursion=1)
-        try:
-            activity, _, _, tasks = scan_cards(read_activity(), collect=False)
-        except DailyTrainingError as error:
-            log.warning(f"未能查询支援实训：{error}")
-            return False
-    return needs_action(activity, tasks) and tasks.get(SUPPORT_TASK, False)
+        activity, _, _, tasks = scan_cards(read_activity(), collect=False)
+        return needs_action(activity, tasks) and tasks.get(SUPPORT_TASK, False)
+    return False
 
 
 def support_demand(*, full_run=False):
@@ -169,11 +175,12 @@ def run(*, complete_training=False, on_summary=None, full_run=False):
     activity = None
     received = 0
     success = True
+    cards_checked = False
     read_tasks = complete and cfg.daily_material_enable
     log.hr("开始触屏每日实训", 1)
     with screenshot_retry_timeout(5):
-        screen.change_to("guide2", max_recursion=1)
-        try:
+        with optional_reward("实训任务卡片检查"):
+            screen.change_to("guide2", max_recursion=1)
             activity = read_activity()
             log.info(f"当前活跃度 {activity}/{MAX_ACTIVITY}")
             activity, card_available, received, tasks = scan_cards(activity, collect, read_tasks=read_tasks)
@@ -192,30 +199,30 @@ def run(*, complete_training=False, on_summary=None, full_run=False):
                     # 合成已经到账。这里继续查待领奖励，不再用卡片文字判定合成结果。
                     activity, card_available, extra_claims, _ = scan_cards(read_activity(), collect, read_tasks=False)
                     received += extra_claims
-        except DailyTrainingError as error:
-            log.error(f"实训任务卡片检查未完成：{error}")
+            cards_checked = True
+        if not cards_checked:
             success = False
 
         if activity is not None:
             record_progress(cfg, activity)
 
         if collect:
-            try:
+            with optional_reward("实训档位奖励"):
+                if not cards_checked:
+                    screen.change_to("guide2", max_recursion=1)
                 for button in claimable_milestones(auto, RECEIVE_MILESTONE, MILESTONES):
                     closed = click_milestone(button)
                     received += 1
                     if not closed:
                         break
-            except DailyTrainingError as error:
-                log.error(f"实训档位奖励：{error}")
-                success = False
             if received:
-                message = "已领取实训奖励"
-                if activity == MAX_ACTIVITY:
-                    message = cfg.notify_template["DailyPracticeCompleted"]
-                elif activity is not None:
-                    message = f"已领取实训奖励，活跃度 {activity}/{MAX_ACTIVITY}"
-                notify_reward(auto, message, crop=REWARD_REPORT_CROP)
+                with optional_reward("实训奖励通知"):
+                    message = "已领取实训奖励"
+                    if activity == MAX_ACTIVITY:
+                        message = cfg.notify_template["DailyPracticeCompleted"]
+                    elif activity is not None:
+                        message = f"已领取实训奖励，活跃度 {activity}/{MAX_ACTIVITY}"
+                    notify_reward(auto, message, crop=REWARD_REPORT_CROP)
         elif success:
             log.info(f"任务卡片：{'有可领取活跃度' if card_available else '无可领取活跃度'}，每日实训领奖未开启")
 

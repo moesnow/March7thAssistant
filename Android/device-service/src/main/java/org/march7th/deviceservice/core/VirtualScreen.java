@@ -1,5 +1,6 @@
 package org.march7th.deviceservice.core;
 
+import android.content.Context;
 import android.graphics.PixelFormat;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
@@ -8,9 +9,13 @@ import android.media.ImageReader;
 import android.os.Build;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.view.Surface;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.march7th.deviceservice.protocol.FrameEncoder;
 import org.march7th.deviceservice.protocol.FrameSequencer;
+import org.march7th.deviceservice.protocol.Protocol;
 
 import java.lang.reflect.Constructor;
 import java.util.concurrent.TimeoutException;
@@ -54,7 +59,7 @@ final class VirtualScreen {
     private int pending;
 
     VirtualScreen(String name, int width, int height, int dpi, boolean destroyContent,
-                  FrameSequencer sequencer, Handler captureHandler) throws ReflectiveOperationException {
+                  FrameSequencer sequencer, Handler captureHandler) throws CommandException, JSONException {
         this.name = name;
         this.width = width;
         this.height = height;
@@ -62,27 +67,55 @@ final class VirtualScreen {
         this.destroyContent = destroyContent;
         this.sequencer = sequencer;
         this.flags = flagsFor(destroyContent);
-        reader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, MAX_IMAGES);
-        synchronized (sequencer) {
-            reader.setOnImageAvailableListener(this::onImageAvailable, captureHandler);
-            VirtualDisplay created = null;
-            try {
-                Constructor<DisplayManager> constructor = DisplayManager.class.getDeclaredConstructor(android.content.Context.class);
-                constructor.setAccessible(true);
-                DisplayManager manager = constructor.newInstance(ShellContext.get());
-                created = manager.createVirtualDisplay(name, width, height, dpi, reader.getSurface(), flags);
-                if (created == null) {
-                    throw new IllegalStateException("createVirtualDisplay returned null");
-                }
-            } finally {
-                if (created == null) {
+        String stage = "ShellContext";
+        ShellContext context = null;
+        try {
+            context = ShellContext.get();
+            stage = "DisplayManager.<init>";
+            Logger.i(stage + " start");
+            Constructor<DisplayManager> constructor = DisplayManager.class.getDeclaredConstructor(Context.class);
+            constructor.setAccessible(true);
+            DisplayManager manager = constructor.newInstance(context);
+            Logger.i(stage + " ready");
+            stage = "ImageReader.newInstance";
+            reader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, MAX_IMAGES);
+            synchronized (sequencer) {
+                VirtualDisplay created = null;
+                try {
+                    stage = "ImageReader.setOnImageAvailableListener";
+                    reader.setOnImageAvailableListener(this::onImageAvailable, captureHandler);
+                    stage = "ImageReader.getSurface";
+                    Surface surface = reader.getSurface();
+                    stage = "DisplayManager.createVirtualDisplay";
+                    Logger.i(stage + " start");
+                    created = manager.createVirtualDisplay(name, width, height, dpi, surface, flags);
+                    if (created == null) {
+                        throw new IllegalStateException("returned null");
+                    }
+                    stage = "VirtualDisplay.getDisplay";
+                    displayId = created.getDisplay().getDisplayId();
+                    display = created;
+                    generation = sequencer.setActive(true);
+                } catch (RuntimeException | Error e) {
                     released = true;
-                    reader.close();
+                    try {
+                        closeResources(created, null);
+                    } catch (RuntimeException cleanup) {
+                        e.addSuppressed(cleanup);
+                    }
+                    throw e;
                 }
             }
-            display = created;
-            displayId = display.getDisplay().getDisplayId();
-            generation = sequencer.setActive(true);
+        } catch (ReflectiveOperationException | RuntimeException | LinkageError e) {
+            String message = stage + ": " + Logger.describe(e);
+            String device = "sdk=" + Build.VERSION.SDK_INT + " release=" + Build.VERSION.RELEASE
+                    + " incremental=" + Build.VERSION.INCREMENTAL + " manufacturer=" + Build.MANUFACTURER
+                    + " model=" + Build.MODEL + " device=" + Build.DEVICE
+                    + " base=" + (context != null && context.getBaseContext() != null);
+            Logger.e(message + " (" + device + ")", e);
+            String diagnostic = stage + " " + device + "\n" + ShellContext.initializationTrace() + "\n" + Logger.stackTrace(e);
+            String code = context == null ? Protocol.E_SHELL_CONTEXT_INIT_FAILED : Protocol.E_DISPLAY_FAILED;
+            throw new CommandException(code, message, new JSONObject().put("diagnostic", diagnostic));
         }
     }
 
@@ -189,14 +222,23 @@ final class VirtualScreen {
             latest = null;
             sequencer.setActive(false);
         }
+        closeResources(display, last);
+    }
+
+    private void closeResources(VirtualDisplay created, Image last) {
+        if (created != null) {
+            try {
+                created.release();
+            } catch (RuntimeException e) {
+                Logger.w("virtual display release failed", e);
+            }
+        }
         try {
-            display.release();
-        } catch (RuntimeException e) {
-            Logger.w("virtual display release failed", e);
+            if (last != null) {
+                last.close();
+            }
+        } finally {
+            reader.close();
         }
-        if (last != null) {
-            last.close();
-        }
-        reader.close();
     }
 }

@@ -17,6 +17,7 @@ from module.config import asu_config
 from utils.console import pause_on_error, pause_and_retry
 from tasks.power.power import Power
 from tasks.weekly.weekly_reward import wait_for_weekly_reward
+from tasks.base.task_steps import optional_reward
 
 
 class Universe:
@@ -167,7 +168,8 @@ class Universe:
         if save:
             cfg.save_timestamp("universe_timestamp")
 
-        screen.wait_for_screen_change('main')
+        with optional_reward("模拟宇宙领奖准备"):
+            screen.wait_for_screen_change('main')
         Universe.get_reward(category)
 
     @staticmethod
@@ -240,29 +242,33 @@ class Universe:
     @staticmethod
     def get_reward(category):
         log.info("开始领取奖励")
-        if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)):
-            auto.press_key("f")
-            if category == "divergent":
-                screen.wait_for_screen_change('divergent_main')
+        claimed = False
+        with optional_reward("模拟宇宙周期奖励"):
+            lobby = "divergent_main" if category == "divergent" else "universe_main"
+            if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)):
+                auto.press_key("f")
+                screen.wait_for_screen_change(lobby)
             else:
-                screen.wait_for_screen_change('universe_main')
-        else:
-            if category == "divergent":
-                screen.change_to('divergent_main')
-            else:
-                screen.change_to('universe_main')
-        time.sleep(1)
-        if auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, crop=(0 / 1920, 877.0 / 1080, 422.0 / 1920, 202.0 / 1080)):
-            if auto.click_element("./assets/images/zh_CN/universe/one_key_receive.png", "image", 0.9, max_retries=10):
-                if wait_for_weekly_reward():
-                    time.sleep(2)
+                screen.change_to(lobby)
+            time.sleep(1)
+            if (
+                auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9,
+                                   crop=(0 / 1920, 877.0 / 1080, 422.0 / 1920, 202.0 / 1080))
+                and auto.click_element("./assets/images/zh_CN/universe/one_key_receive.png", "image", 0.9, max_retries=10)
+                and wait_for_weekly_reward()
+            ):
+                claimed = True
+                time.sleep(2)
+                with optional_reward("模拟宇宙周期奖励通知"):
                     Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseRewardClaimed'], NotificationLevel.ALL)
-                    auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10)
-                    time.sleep(1)
-                    auto.press_key("esc")
-                    if category == "divergent" and cfg.universe_bonus_enable:
-                        Universe.process_ornament()
-        Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseCompleted'], NotificationLevel.ALL)
+                auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10)
+                time.sleep(1)
+                auto.press_key("esc")
+        if claimed and category == "divergent" and cfg.universe_bonus_enable:
+            with optional_reward("模拟宇宙周期奖励饰品提取"):
+                Universe.process_ornament()
+        with optional_reward("模拟宇宙完成通知"):
+            Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseCompleted'], NotificationLevel.ALL)
 
     @staticmethod
     def process_ornament():

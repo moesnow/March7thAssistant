@@ -56,6 +56,7 @@ BOARD_LEVEL = (242, 881, 352, 932)
 BOARD_XP_COST = (303, 972, 342, 1008)
 BOARD_FIGHT = (1690, 704, 1918, 800)
 FRONT_Y, BACK_Y, BENCH_Y = 405, 667, 912
+FRONT_X = (745, 888, 1030, 1173)
 BENCH_POINTS = tuple((440 + i * 125, BENCH_Y) for i in range(9))
 CARD_COST_PALETTE = np.array(((128, 131, 148), (44, 130, 121), (89, 112, 226), (143, 109, 248),
                               (209, 170, 79)), dtype=np.int16)
@@ -64,12 +65,17 @@ SHOP_REFRESH = (1540, 451, 1700, 564)
 SHOP_REFRESH_LABELS = ('刷新', '免费刷新')
 SHOP_REFRESH_COST = (1594, 505, 1670, 558)
 DETAIL_NAME = (1480, 199, 1806, 251)
-EMPLOYEE_NAME = r"[\u3400-\u9fffA-Za-z&＆·.★☆]{2,18}(?:\d{1,3})?"
+# 角色名通常不少于两个字，单字名只有「刃」。开拓者显示玩家自定的名字，可能是任意单字。
+SINGLE_CHARACTER_NAMES = frozenset(("刃",))
+EMPLOYEE_NAME = r"(?:[\u3400-\u9fffA-Za-z&＆·.★☆]{2,18}|刃)(?:\d{1,3})?"
 DETAIL_ROLE = (1508, 251, 1660, 315)
 DETAIL_FUNCTION = (1740, 242, 1888, 340)
 BENCH_BOX = (375, 925, 1496, 981)
 DETAIL_EQUIP = (1360, 765, 1610, 900)
 DETAIL_RECOMMEND = ('推荐', '装备推荐')
+# 物品栏右列放满后向左扩列的区域。右列按格读取。
+# 物品栏右列，以及物品超过六件后依次向左扩出的列。
+INVENTORY_COLUMNS = (1844, 1766, 1688)
 DETAIL_SELL = (1670, 879, 1885, 958)
 DETAIL_SELL_PRICE = (1604, 885, 1725, 947)
 DETAIL_SELL_DIGITS = (1650, 899, 1691, 932)
@@ -101,7 +107,8 @@ EMPLOYEE_EVENT_TITLE = (600, 43, 1465, 102)
 EMPLOYEE_EVENT_SUBTITLE = (636, 103, 1485, 161)
 EMPLOYEE_EVENT_DETAILS = (440, 385, 1650, 436)
 EMPLOYEE_EVENT_CONFIRM = (1280, 541, 1700, 626)
-DANCE_CONFIRM_POINT = (1487, 576)
+DANCE_SELECTION_PROMPT = (1300, 501, 1684, 542)
+DANCE_CONFIRM_X = 1487
 DANCE_MIN_CARD_GAP = 136
 SVAROG_TITLE = (900, 51, 1190, 107)
 SVAROG_SUBTITLE = (880, 114, 1210, 160)
@@ -129,6 +136,10 @@ RAIL_LAUNCH = (937, 352, 1093, 409)
 RAIL_UNLOCK = (1470, 312, 1640, 354)
 RAIL_SPENT = (1480, 380, 1640, 434)
 RAIL_COLUMNS = (556, 806, 1056, 1306)
+TREASURY_TITLE = (885, 37, 1210, 83)
+TREASURY_PROMPT = (885, 83, 1210, 118)
+TREASURY_REFRESH = (1090, 483, 1255, 540)
+TREASURY_CLAIM = (1340, 483, 1650, 540)
 BOARD_ADVANCE = ("出战", "跳过", "选择主角", "开启宝库", "幕后茶歇", "开始茶歇", "前往茶歇", "前往补给")
 REVEAL_CONTINUE = (525, 650, 1780, 1065)
 PARTNER_REVEAL_TITLE = (680, 453, 902, 520)
@@ -215,6 +226,7 @@ class Page(Enum):
     PARTNER_DETAIL = "奇遇伙伴详情"
     EQUIPMENT = "装备推荐"
     CHOICE = "节点选择"
+    TREASURY = "珠珠鱼宝库"
     DANCE = "梦境交织共舞"
     RANGER = "巡海游侠任命"
     SVAROG_MODIFICATION = "机心巧匠改装"
@@ -283,7 +295,7 @@ class Frame:
     def action_context(self):
         """输入必须始终属于同一节点和同一层界面。"""
         # 独立弹层的操作只依赖弹层本身。背景节点号漏读或跳变不代表弹层已关闭。
-        if self.page in (Page.SVAROG_MODIFICATION, Page.HALO_MENTOR):
+        if self.page in (Page.SVAROG_MODIFICATION, Page.HALO_MENTOR, Page.TREASURY):
             return self.page, None, None
         dialog = {Page.CHOICE: "choice", Page.REVEAL: "reveal_kind"}.get(self.page)
         return self.page, self.stage, getattr(self, dialog) if dialog else None
@@ -562,7 +574,13 @@ class Frame:
 
     @cached_property
     def shop_open(self) -> bool:
-        return self.has("收起", area=BOARD_SHOP) and self.has(*SHOP_REFRESH_LABELS, area=SHOP_REFRESH)
+        return self.has("收起", area=BOARD_SHOP) and (
+            self.has(*SHOP_REFRESH_LABELS, area=SHOP_REFRESH) or self.shop_auto_refreshing)
+
+    @cached_property
+    def shop_auto_refreshing(self) -> bool:
+        """奇遇「菇菇兔」每 4 秒强制刷新商店、共 7 次：刷新按钮换成「自动刷新」和次数，期间不能手动刷新。"""
+        return self.has("自动刷新", area=SHOP_REFRESH)
 
     @cached_property
     def end_match_confirm_area(self) -> Area | None:
@@ -628,6 +646,10 @@ class Frame:
             return Page.END_MATCH_CONFIRM
         if self.empty_front_confirm():
             return Page.EMPTY_FRONT
+        if (self.has("珠珠鱼宝库", "珠珠鱼的幸运宝库", area=TREASURY_TITLE, contains=True)
+                or self.has("刷新宝库或者拿走全部奖励", area=TREASURY_PROMPT)
+                or self.treasury_claim and self.has("刷新", area=TREASURY_REFRESH)):
+            return Page.TREASURY
         if self.mentor_prompt or (self.has("从师", area=MENTOR_TITLE) and (
                 self.mentor_confirm_label or self.mentor_selection_prompt or self.mentor_confirm())):
             return Page.HALO_MENTOR
@@ -736,6 +758,10 @@ class Frame:
         return Page.UNKNOWN
 
     @cached_property
+    def treasury_claim(self) -> Label | None:
+        return self.find("全部拿走", area=TREASURY_CLAIM)
+
+    @cached_property
     def board_advance(self) -> Label | None:
         buttons = tuple(
             label for label in self.texts(BOARD_FIGHT)
@@ -765,11 +791,13 @@ class Frame:
             x = 367 + 269 * index
             names = self.texts((x, SHOP_ROW[1], x + 242, SHOP_ROW[3]))
             joined = "".join(label.text for label in sorted(names, key=lambda label: label.point[0]))
+            # 报价前的金币图标常被识别成问号，例如「飞霄?3」。
+            joined = re.sub(r"[?？](?=[1-9]\d?$)", "", joined)
             # 二星商店卡的底栏仍显示原费阶颜色。只根据可见金币报价成交。
             stars = 2 if self.match("screen/currency_wars/s2_shop_two_star.png",
                                     (x + 61, 61, x + 181, 125), 0.72) else 1
             price_area = (x + 208, 282, x + 245, 333)
-            raw_price = self.read_local(price_area, recognition_only=True) if stars == 2 else None
+            raw_price = (self.read_local(price_area, recognition_only=True) or "").lstrip("?？") if stars == 2 else None
             if stars == 2 and not re.fullmatch(r"[1-9]\d?", raw_price or ""):
                 continue
             ceiling = 15 if stars == 2 else 5
@@ -798,6 +826,13 @@ class Frame:
                 offers.append(Offer(name, cost, (x + 106, 194), index, is_front,
                                     is_back if is_front or is_back else None, stars))
         return tuple(offers)
+
+    def shop_column_name(self, column: int) -> str:
+        """商店一栏底部名字条上的文字，去掉末尾的报价。"""
+        x = 367 + 269 * column
+        names = self.texts((x, SHOP_ROW[1], x + 242, SHOP_ROW[3]))
+        joined = "".join(label.text for label in sorted(names, key=lambda label: label.point[0]))
+        return re.sub(r"[?？]?[1-9]\d?$", "", joined)
 
     def shop_card_image(self, column: int) -> np.ndarray:
         x = 367 + 269 * column
@@ -839,14 +874,17 @@ class Frame:
         x, y = point
         return self.crop((x - 30, y - 31, x + 30, y + 30))
 
-    def slot_portrait_matches(self, point: Point, previous: np.ndarray) -> bool:
+    def slot_portrait_score(self, point: Point, previous: np.ndarray) -> float:
         x, y = point
         # 忽略卡边和星徽。拖放后角色卡可能抬起，允许肖像在目标格内偏移。
         face = previous[1:47, 6:54]
         if face.std() < 12:
-            return False
+            return 0.0
         area = self.crop((x - 55, y - 67, x + 55, y + 48))
-        return bool(cv2.matchTemplate(area, face, cv2.TM_CCOEFF_NORMED).max() >= 0.70)
+        return float(cv2.matchTemplate(area, face, cv2.TM_CCOEFF_NORMED).max())
+
+    def slot_portrait_matches(self, point: Point, previous: np.ndarray) -> bool:
+        return self.slot_portrait_score(point, previous) >= 0.70
 
     def deployed_copy(self, source: Slot, deployed: tuple[Slot, ...]) -> Slot | None:
         """同一肖像在前后台比备战席略大，卡片上抬时也会偏移。"""
@@ -867,6 +905,8 @@ class Frame:
         return None
 
     def slot_occupied(self, point: Point) -> bool:
+        if point[1] == FRONT_Y and point in self.front_markers:
+            return False
         if point[1] == BENCH_Y and point in self.black_hole_slots:
             return False
         # 空卡位只有低对比的背景和细框。采用内区纹理，避免边框、星徽和光环。
@@ -910,17 +950,25 @@ class Frame:
         if not xs:
             return ()
         result = []
-        for zone, centers, y in (("front", (745, 888, 1030, 1173), FRONT_Y),
+        for zone, centers, y in (("front", FRONT_X, FRONT_Y),
                                  ("back", xs, BACK_Y)):
             for i, x in enumerate(centers):
                 point = (x, y)
                 occupied = self.slot_occupied(point)
-                result.append(Slot(zone, i, point, occupied, blocked=occupied and self.fixed_partner(point)))
+                blocked = point in self.front_markers or occupied and self.fixed_partner(point)
+                result.append(Slot(zone, i, point, occupied, blocked=blocked))
         return tuple(result)
 
     def slots(self) -> tuple[Slot, ...]:
         field = self.field_slots()
         return field + self.bench_slots() if field else ()
+
+    @cached_property
+    def front_markers(self) -> frozenset[Point]:
+        # 金色弯月星标既不是人物肖像，也没有可确认的空卡位，不能计入人口或用作拖动目标。
+        return frozenset((x, FRONT_Y) for x in FRONT_X if not any(self._card_role((x, FRONT_Y), 44))
+                         and self.match("screen/currency_wars/s2_front_star_marker.png",
+                                        (x - 52, FRONT_Y - 46, x + 52, FRONT_Y + 46), 0.86))
 
     @cached_property
     def black_hole_slots(self) -> frozenset[Point]:
@@ -1158,12 +1206,23 @@ class Frame:
         return value
 
     def card_equipment(self, slot: Slot) -> int | None:
-        # 卡片下方的装备按已有卡位中心相对布局取样。暗边与邻近背景的差异不作为装备。
+        # 卡片下方的装备图标按件数居中排列，每件约 38 像素宽、间隔约 3 像素，四周是金色边框。
+        # 透视使整组图标随卡位略向两侧偏移。按卡片正下方那组金框的总宽度换算件数；
+        # 「0」等角标遮住底边一角时，左右竖边仍在。
         x, y = slot.point
-        boxes = (self.crop((x + dx - 9, y + 68, x + dx + 10, y + 84)) for dx in (-29, 0, 29))
-        return sum(bool(mark.size > 0 and mark.std(axis=(0, 1)).max() >= 38
-                        and ((mark.max(axis=2) > 155) & (np.ptp(mark, axis=2) > 28)).mean() >= 0.19)
-                   for mark in boxes)
+        left = max(0, x - 110)
+        band = self.crop((left, y + 66, x + 110, y + 100)).astype(np.int16)
+        red, green, blue = band[..., 0], band[..., 1], band[..., 2]
+        gold = (red > 165) & (green > 120) & (blue < 125) & (red - blue > 70)
+        groups = []
+        for column in np.flatnonzero(gold.sum(axis=0) >= 2):
+            if groups and column - groups[-1][1] <= 16:
+                groups[-1][1] = column
+            else:
+                groups.append([column, column])
+        center = x + (x - 960) * 0.04 - left
+        width = next((end - start + 1 for start, end in groups if start - 12 <= center <= end + 12), 0)
+        return min(3, round(width / 41.5))
 
     def reward_close(self) -> Point | None:
         if label := self.find("点击空白处关闭", area=REWARD_DISMISS, contains=True):
@@ -1236,16 +1295,23 @@ class Frame:
 
     def inventory_items(self) -> tuple[Point, ...]:
         # 装备格有贯穿其宽度的水平边缘。左列的场景纹理容易误判，右列覆盖所有行。
+        return self._inventory_column(INVENTORY_COLUMNS[0])
+
+    def spare_inventory_items(self) -> tuple[Point, ...]:
+        """物品超过六件时向左扩出的列。只用于逐件比对配装记录：误认的底纹前后一致，不影响对照。"""
+        return tuple(point for x in INVENTORY_COLUMNS[1:] for point in self._inventory_column(x))
+
+    def _inventory_column(self, x: int) -> tuple[Point, ...]:
         positions = []
         # 追踪条会把装备列整体下移约 23 像素。
         start = 271 if self.has("装备追踪中", area=(1695, 99, 1900, 148)) else 248
         for y in range(start, start + 77 * 6, 77):
             edges = []
             for top, bottom in ((y - 43, y - 25), (y + 28, y + 45)):
-                crop = self.crop((1815, top, 1874, bottom)).mean(axis=2)
+                crop = self.crop((x - 29, top, x + 30, bottom)).mean(axis=2)
                 edges.append((np.abs(np.diff(crop, axis=0)) > 16).mean(axis=1).max())
             if min(edges) >= 0.65:
-                positions.append((1844, y))
+                positions.append((x, y))
         return tuple(positions)
 
     def equipment_actions(self) -> tuple[Label, ...]:
@@ -1478,9 +1544,16 @@ class Frame:
         )
 
     @cached_property
+    def dance_needs_pair(self) -> bool:
+        return self.has("请选择2名共舞的角色", "请选择2个共舞的角色",
+                        area=DANCE_SELECTION_PROMPT, contains=True)
+
+    @cached_property
     def unlabeled_dance_confirm(self) -> Label | None:
-        if self.page == Page.DANCE and not self.has("确认选择", area=EMPLOYEE_EVENT_CONFIRM):
-            return self.enabled_button(Label("确认选择", DANCE_CONFIRM_POINT))
+        if (self.page == Page.DANCE and not self.dance_needs_pair
+                and not self.has("确认选择", area=EMPLOYEE_EVENT_CONFIRM)):
+            # 共舞弹层下可能保留角色详情，中心亮块需和按钮两侧的底色同时吻合。
+            return self._wide_confirm(None, EMPLOYEE_EVENT_CONFIRM, DANCE_CONFIRM_X)
         return None
 
     @cached_property
@@ -1489,6 +1562,10 @@ class Frame:
 
     def employee_event_confirm(self) -> Label | None:
         if button := self.find("确认选择", area=EMPLOYEE_EVENT_CONFIRM):
+            if self.page == Page.DANCE:
+                if self.dance_needs_pair:
+                    return None
+                return self._wide_confirm(button, EMPLOYEE_EVENT_CONFIRM, DANCE_CONFIRM_X)
             return self.enabled_button(button)
         if self.unlabeled_dance_confirm and self.dance_pair_selected:
             return self.unlabeled_dance_confirm
@@ -1658,7 +1735,7 @@ class Frame:
         return bool(re.search(r"占用[2-9二两三四五六七八九](?:个)?(?:团队规模|人口|上阵位置)", text)
                     or self.halo_title(index) == "高傲巨人")
 
-    def halo_effect(self, *, max_difficulty=0, allow_support=False, allowed=(0, 1)):
+    def halo_effect(self, *, max_difficulty=0, allow_support=False, allowed=(0, 1), preferred=()):
         ranked = []
         for index in allowed:
             area = HALO_EFFECTS[index]
@@ -1683,8 +1760,9 @@ class Frame:
                 shielding = "获得" in text and "护盾强度" in text and "分摊" not in text
                 extending_battle = "倒计时延后" in text and "行动值" in text and "终结技" in text
                 score = int(healing or shielding or extending_battle)
-            if score:
-                ranked.append((score * 10 - difficulty, index, title))
+            # 策略首选的光环遇到就选，排在其它增益之前。
+            if score or title.text in preferred:
+                ranked.append((score * 10 - difficulty + 1000 * (title.text in preferred), index, title))
         return max(ranked, key=lambda option: option[0], default=None)
 
     def halo_fallbacks(self) -> tuple[Label, ...]:

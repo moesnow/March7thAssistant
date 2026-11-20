@@ -222,6 +222,44 @@ class TestWeeklyRewardEntrypoints(unittest.TestCase):
                     else:
                         self.assertNotIn("esc", [call.args[0] for call in self.auto.press_key.call_args_list])
 
+    def test_divergent_reaches_weekly_score_check_when_reward_receipt_is_unreadable(self):
+        module = self.load_entrypoint("divergent_universe.py")
+        task = module.DivergentUniverse()
+        task.run = Mock(return_value=True)
+        task.process_ornament = Mock()
+        self.cfg.weekly_divergent_bonus_enable = True
+        self.wait.side_effect = RuntimeError("周期奖励回执未识别")
+        self.auto.find_element.return_value = None
+        self.auto.get_single_line_text.return_value = "18000/18000"
+
+        self.assertTrue(task.start())
+
+        module.screen.change_to.assert_called_once_with("divergent_main", max_recursion=1)
+        self.cfg.save_timestamp.assert_called_once_with("weekly_divergent_timestamp")
+        self.assertEqual(self.auto.click_element.call_count, 2)
+        task.process_ornament.assert_not_called()
+
+    def test_universe_finishes_even_when_receipt_cannot_be_read(self):
+        module = self.load_entrypoint("universe.py")
+        self.wait.side_effect = RuntimeError("周期奖励回执未识别")
+        with patch.object(module.time, "sleep"):
+            module.Universe.finalize_simulation(True, "universe")
+        self.cfg.save_timestamp.assert_called_once_with("universe_timestamp")
+        self.base.send_notification_with_screenshot.assert_called_once_with(
+            "模拟宇宙已完成", module.NotificationLevel.ALL,
+        )
+        self.assertEqual(self.auto.click_element.call_count, 2)
+
+    def test_universe_attempts_ornament_after_confirmed_reward_close_fails(self):
+        module = self.load_entrypoint("universe.py")
+        self.cfg.universe_bonus_enable = True
+        self.wait.return_value = True
+        self.auto.click_element.side_effect = [True, True, RuntimeError("关闭奖励弹窗时截图失败")]
+        with patch.object(module.time, "sleep"), patch.object(module.Universe, "process_ornament") as ornament:
+            module.Universe.get_reward("divergent")
+        ornament.assert_called_once_with()
+        self.assertEqual(self.base.send_notification_with_screenshot.call_count, 2)
+
 
 if __name__ == "__main__":
     unittest.main()

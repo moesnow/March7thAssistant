@@ -68,7 +68,7 @@
 
 如果你是完全不懂的小白，請直接使用上面的方式下載安裝，可以不用往下看。
 
-需要 Python 3.12 或更高版本。
+需要 Python 3.12 至 3.14。
 
 Windows 下如果透過終端啟動，建議使用系統管理員模式開啟 PowerShell、Windows Terminal 或 CMD；Windows 11 24H2 及以上也可以依照 [Sudo for Windows](https://learn.microsoft.com/zh-cn/windows/advanced-settings/sudo/) 的方式執行。
 

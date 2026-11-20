@@ -2,12 +2,13 @@ import os
 from datetime import datetime
 
 
-def save_error_screenshot(logger):
+def save_error_screenshot(logger, *, propagate_errors=()):
     """
     保存错误截图到日志目录。
     尝试捕获当前游戏窗口的截图并保存为错误截图。
 
     :param logger: Logger实例，用于记录日志
+    :param propagate_errors: 需要向调用方传播的异常类型
     :return: 截图保存路径，如果失败则返回None。
     """
     try:
@@ -34,26 +35,23 @@ def save_error_screenshot(logger):
         filepath = os.path.join(screenshot_dir, filename)
 
         # 尝试捕获截图
-        try:
-            if getattr(auto.input_handler, 'is_background', False) is True:
-                # 后台模式出错时窗口往往已不可用（最小化、游戏退出），只尝试一次，不再等待窗口恢复
-                from module.automation.automation import screenshot_retry_timeout
-                with screenshot_retry_timeout(0):
-                    auto.take_screenshot()
-            else:
+        if getattr(auto.input_handler, 'is_background', False) is True:
+            # 后台模式出错时窗口往往已不可用（最小化、游戏退出），只尝试一次，不再等待窗口恢复
+            from module.automation.automation import screenshot_retry_timeout
+            with screenshot_retry_timeout(0):
                 auto.take_screenshot()
-            # 验证截图是否成功捕获
-            if auto.screenshot is not None:
-                auto.screenshot.save(filepath)
-                logger.info(f"错误截图已保存: {filepath}")
-                logger.info(f"反馈问题时请附上此截图以协助诊断")
-                return filepath
-            else:
-                logger.debug("截图对象为空，无法保存")
-        except Exception as e:
-            logger.debug(f"捕获游戏窗口截图失败: {e}")
+        else:
+            auto.take_screenshot()
+        if auto.screenshot is not None:
+            auto.screenshot.save(filepath)
+            logger.info(f"错误截图已保存: {filepath}")
+            logger.info("反馈问题时请附上此截图以协助诊断")
+            return filepath
+        logger.debug("截图对象为空，无法保存")
 
     except Exception as e:
+        if isinstance(e, propagate_errors) and not getattr(e, "frame_only", False):
+            raise
         # 静默处理截图保存失败，不影响错误处理流程
         logger.debug(f"保存错误截图失败: {e}")
 

@@ -6217,8 +6217,8 @@ msgid "按下 {stop} 停止 · {pause} 继续"
 msgstr "{stop} 중지 · {pause} 재개"
 
 #: app/card/autoplot_setting_card.py:83
-msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
-msgstr "앰포리어스 영웅기 자동 읽기 (먼저 해당 책의 목차를 여세요)"
+msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录，非 .exe 版）"
+msgstr "앰포리어스 영웅기 자동 읽기 (먼저 목차 열기, .exe 버전 제외)"
 
 #: app/card/autoplot_setting_card.py:53
 msgid "记住自动对话开关状态"
@@ -7897,8 +7897,8 @@ msgid "当前后端不支持，未执行"
 msgstr "현재 백엔드에서 지원하지 않아 실행하지 않았습니다"
 
 #: app/setting_interface.py:614
-msgid "改用连击那刻夏（S2）"
-msgstr "아낙사 연격 조합(S2)으로 변경"
+msgid "改用连击那刻夏"
+msgstr "아낙사 연격 조합으로 변경"
 
 #: app/setting_interface.py:616
 msgid "请更新货币战争策略"
@@ -7909,12 +7909,8 @@ msgid "仅在首领节点处理装备"
 msgstr "보스 노드에서만 장비를 착용합니다"
 
 #: tasks/weekly/currency_wars_strategy.py:62
-msgid "连击那刻夏（S2）"
-msgstr "연격 아낙사 (S2)"
-
-#: tasks/weekly/currency_wars_strategy.py:62
-msgid "连击那刻夏（高难）"
-msgstr "연격 아낙사 (고난도)"
+msgid "连击那刻夏"
+msgstr "연격 아낙사"
 
 #: tasks/weekly/currency_wars_strategy.py:62
 msgid "寒鸦流萤（高难）"
