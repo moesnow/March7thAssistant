@@ -8238,3 +8238,19 @@ msgstr "長夜"
 #: module/game/adb_ready.py:118
 msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
 msgstr "「列車補給」のポップアップから制限時間内にメイン画面に戻れませんでした。ゲーム内で報酬を受け取れたか確認してください。"
+
+#: app/tools/desktop_twin.py:748
+msgid "取消静音"
+msgstr "ミュート解除"
+
+#: app/tools/desktop_twin.py:748
+msgid "静音"
+msgstr "ミュート"
+
+#: app/tools/desktop_twin.py:746
+msgid "声音关闭"
+msgstr "サウンドオフ"
+
+#: app/tools/desktop_twin.py:746
+msgid "声音开启"
+msgstr "サウンドオン"

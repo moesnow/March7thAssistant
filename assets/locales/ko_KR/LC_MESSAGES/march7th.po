@@ -8237,3 +8237,19 @@ msgstr "긴 밤"
 #: module/game/adb_ready.py:118
 msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
 msgstr "열차 보급 팝업에서 제한 시간 안에 메인 화면으로 돌아가지 못했습니다. 게임에서 보상을 받았는지 확인하세요."
+
+#: app/tools/desktop_twin.py:748
+msgid "取消静音"
+msgstr "음소거 해제"
+
+#: app/tools/desktop_twin.py:748
+msgid "静音"
+msgstr "음소거"
+
+#: app/tools/desktop_twin.py:746
+msgid "声音关闭"
+msgstr "소리 꺼짐"
+
+#: app/tools/desktop_twin.py:746
+msgid "声音开启"
+msgstr "소리 켜짐"
