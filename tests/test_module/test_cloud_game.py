@@ -532,6 +532,83 @@ class TestCloudGameHeadlessOverride(unittest.TestCase):
             mock_cloud_game.start_game_process.assert_called_once_with(headless=False)
 
 
+class TestCloudGameUnconfirmedLogin(unittest.TestCase):
+    """登录状态未确认（_check_login 返回 None）不等于未登录。"""
+
+    def create_controller(self, restart_on_not_logged_in=False):
+        controller = object.__new__(CloudGameController)
+        controller.cfg = MagicMock(
+            browser_headless_enable=True,
+            browser_headless_restart_on_not_logged_in=restart_on_not_logged_in,
+            browser_dump_cookies_enable=False,
+        )
+        controller._headless_override = None
+        controller.driver = None
+        controller.logger = MagicMock()
+        controller._connect_or_create_browser = MagicMock()
+        controller._confirm_viewport_resolution = MagicMock()
+        controller._get_login_timeout_seconds = MagicMock(return_value=300)
+        controller._check_login_timeout = MagicMock()
+        controller._restart_browser = MagicMock()
+        controller._run_qr_login_flow = MagicMock()
+        controller._get_remaining_playtime = MagicMock(return_value=(60, 0))
+        controller._click_enter_game = MagicMock()
+        controller._wait_in_queue = MagicMock(return_value=True)
+        controller._save_cookies = MagicMock()
+        controller.try_dump_page = MagicMock()
+        self.assertTrue(controller.start_game_process())
+        return controller
+
+    def test_unconfirmed_then_logged_in_skips_login_flow(self):
+        for restart in (False, True):
+            with self.subTest(browser_headless_restart_on_not_logged_in=restart):
+                controller = self.create_controller(restart_on_not_logged_in=restart)
+                controller._check_login = MagicMock(side_effect=[None, True, True])
+
+                self.assertTrue(controller.enter_cloud_game())
+
+                controller._run_qr_login_flow.assert_not_called()
+                controller._restart_browser.assert_not_called()
+
+    def test_unconfirmed_then_not_logged_in_still_logs_in(self):
+        controller = self.create_controller()
+        controller._check_login = MagicMock(side_effect=[None, False, True, True])
+
+        self.assertTrue(controller.enter_cloud_game())
+
+        controller._run_qr_login_flow.assert_called_once()
+
+    def test_unconfirmed_count_restarts_after_login_flow(self):
+        # 登录后重启回无窗口，新页面的未确认不应沿用重启前的计数
+        controller = self.create_controller(restart_on_not_logged_in=True)
+        controller._check_login = MagicMock(side_effect=[None, None, False, True, None, True])
+
+        self.assertTrue(controller.enter_cloud_game())
+
+        self.assertEqual(controller._restart_browser.call_count, 2)
+
+    def test_preserved_browser_still_fails_on_first_unconfirmed_state(self):
+        controller = self.create_controller()
+        controller._preserve_browser_on_exit = True
+        controller._check_login = MagicMock(side_effect=[None, True])
+
+        self.assertFalse(controller.enter_cloud_game())
+
+        controller._check_login.assert_called_once()
+        controller._run_qr_login_flow.assert_not_called()
+
+    def test_persistently_unconfirmed_fails_entry_instead_of_waiting_for_login(self):
+        controller = self.create_controller()
+        controller._check_login = MagicMock(side_effect=[None] * 10)
+
+        self.assertFalse(controller.enter_cloud_game())
+
+        controller._run_qr_login_flow.assert_not_called()
+        controller._get_login_timeout_seconds.assert_not_called()
+        self.assertEqual(controller._check_login.call_count,
+                         CloudGameController.LOGIN_STATE_PROBE_ATTEMPTS)
+
+
 class TestCloudGameDebugPort(unittest.TestCase):
     def create_controller(self):
         controller = object.__new__(CloudGameController)
