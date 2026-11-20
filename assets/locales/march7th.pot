@@ -1472,6 +1472,14 @@ msgstr ""
 msgid "使用燃料"
 msgstr ""
 
+#: app/setting_interface.py:303
+msgid "优先使用助燃券（实验）"
+msgstr ""
+
+#: app/setting_interface.py:304
+msgid "PC 花萼、凝滞虚影优先快速刷取，保留支援实训，券不足时普通挑战"
+msgstr ""
+
 #: app/setting_interface.py:287
 msgid "每周清理遗器"
 msgstr ""
