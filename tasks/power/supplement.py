@@ -76,6 +76,14 @@ def _prepare_exchange(auto, screen, config, locate_entry, return_screen, desktop
     ):
         if not enabled:
             continue
+        if desktop:
+            # PC 会把未耗尽的资源卡片重新居中；按图标定位，避免读到相邻星琼卡片。
+            template = "reserved_trailblaze_power" if source == "后备开拓力" else "fuel"
+            card = auto.find_element(f"./assets/images/share/power/trailblaze_power/{template}.png",
+                                     "image", 0.9, relative=True, scale_range=(0.9, 1.1))
+            if not card:
+                continue
+            x = (card[0][0] + card[1][0]) * 640 / auto.screenshot.width
         _tap(auto, x, 327)
         if not _find_text(auto, label, DESCRIPTION, retries=6):
             raise PowerError("未确认开拓力补充方式")
