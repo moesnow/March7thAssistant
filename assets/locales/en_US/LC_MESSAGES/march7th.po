@@ -8618,10 +8618,10 @@ msgid "分身密码仅用于本机连接"
 msgstr "The Desktop Twin password can only be used for local connections."
 
 #: app/tools/desktop_twin_credentials.py:111
-msgid "已保存的凭据格式有误。请打开「自动登录」更新或删除已保存的密码。"
+msgid "已保存的凭据格式有误。请在「自动登录」中删除密码后重新保存。"
 msgstr ""
-"The saved credential is invalid. Open Auto Login to update or delete the "
-"saved password."
+"The saved credential is invalid. Open Auto Login, delete the password, then "
+"save it again."
 
 #: app/tools/desktop_twin_credentials.py:118
 msgid "无法向本机分身提供已保存的凭据"
@@ -8639,18 +8639,14 @@ msgstr "Windows account"
 msgid "账户密码"
 msgstr "Account password"
 
-#: app/tools/desktop_twin_password_dialog.py:44
-msgid "若保存的密码有误，启动时仍会要求输入"
+#: app/tools/desktop_twin_password_dialog.py:47
+msgid "若保存的密码有误，启动分身时仍会要求输入"
 msgstr ""
-"If the saved password is incorrect, you’ll be asked to enter it at startup."
+"If the saved password is incorrect, Desktop Twin will ask for it at startup."
 
-#: app/tools/desktop_twin_password_dialog.py:36
-msgid "删除已保存的密码"
-msgstr "Delete saved password"
-
-#: app/tools/desktop_twin_password_dialog.py:34
-msgid "更新密码"
-msgstr "Update password"
+#: app/tools/desktop_twin_password_dialog.py:56
+msgid "删除密码"
+msgstr "Delete password"
 
 #: app/tools/desktop_twin_password_dialog.py:34
 msgid "保存密码"

@@ -15,7 +15,7 @@ CREDENTIAL_TARGET = "March7thAssistant/DesktopTwin/localhost"
 
 
 def saved_account():
-    """None 表示没有条目；即使旧条目的用户名已损坏，也允许更新或删除。"""
+    """None 表示没有条目；即使旧条目的用户名已损坏，也允许删除。"""
     try:
         return win32cred.CredRead(CREDENTIAL_TARGET, win32cred.CRED_TYPE_GENERIC, 0)["UserName"] or ""
     except pywintypes.error as exc:
@@ -108,7 +108,7 @@ def apply_saved_credential(client):
     except (AttributeError, ValueError):
         password = ""
     if not password or "\0" in password:
-        raise ValueError(tr("已保存的凭据格式有误。请打开「自动登录」更新或删除已保存的密码。"))
+        raise ValueError(tr("已保存的凭据格式有误。请在「自动登录」中删除密码后重新保存。"))
     try:
         client.Domain = domain
         client.UserName = username

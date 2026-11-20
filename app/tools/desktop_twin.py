@@ -435,14 +435,14 @@ class DesktopTwinDialog(QDialog):
         from app.tools.desktop_twin_password_dialog import TwinPasswordDialog
 
         try:
-            box = TwinPasswordDialog(saved_account(), self)
+            account = saved_account()
+            box = TwinPasswordDialog(account, self)
         except RuntimeError as exc:
             self._report(exc)
             return
         try:
-            result = box.exec()
-            if result in (QDialog.DialogCode.Accepted, box.FORGOTTEN):
-                message = tr("已删除保存的分身密码") if result == box.FORGOTTEN else tr("已保存分身密码")
+            if box.exec() == QDialog.DialogCode.Accepted:
+                message = tr("已删除保存的分身密码") if account is not None else tr("已保存分身密码")
                 InfoBar.success(title=message, content="", duration=2500, parent=self)
         finally:
             box.deleteLater()

@@ -8276,8 +8276,8 @@ msgid "分身密码仅用于本机连接"
 msgstr "分身パスワードはこの PC への接続でのみ使用できます。"
 
 #: app/tools/desktop_twin_credentials.py:111
-msgid "已保存的凭据格式有误。请打开「自动登录」更新或删除已保存的密码。"
-msgstr "保存した資格情報の形式が正しくありません。「自動ログイン」で保存済みのパスワードを更新または削除してください。"
+msgid "已保存的凭据格式有误。请在「自动登录」中删除密码后重新保存。"
+msgstr "保存した資格情報の形式が正しくありません。「自動ログイン」でパスワードを削除してから、もう一度保存してください。"
 
 #: app/tools/desktop_twin_credentials.py:118
 msgid "无法向本机分身提供已保存的凭据"
@@ -8295,17 +8295,13 @@ msgstr "Windows アカウント"
 msgid "账户密码"
 msgstr "アカウントのパスワード"
 
-#: app/tools/desktop_twin_password_dialog.py:44
-msgid "若保存的密码有误，启动时仍会要求输入"
-msgstr "保存したパスワードが正しくない場合は、起動時に入力を求められます"
+#: app/tools/desktop_twin_password_dialog.py:47
+msgid "若保存的密码有误，启动分身时仍会要求输入"
+msgstr "保存したパスワードが正しくない場合は、デスクトップ分身の起動時に入力を求められます"
 
-#: app/tools/desktop_twin_password_dialog.py:36
-msgid "删除已保存的密码"
-msgstr "保存したパスワードを削除"
-
-#: app/tools/desktop_twin_password_dialog.py:34
-msgid "更新密码"
-msgstr "パスワードを更新"
+#: app/tools/desktop_twin_password_dialog.py:56
+msgid "删除密码"
+msgstr "パスワードを削除"
 
 #: app/tools/desktop_twin_password_dialog.py:34
 msgid "保存密码"
