@@ -349,18 +349,23 @@ def test_apocalyptic_confirms_teams_before_starting_challenge(stellar, monkeypat
     owner.use_technique_and_attack_monster = Mock()
 
     def find(target, *args, **kwargs):
+        if target == ['确认', '前往挑战'] and state['page'] == 'teams':
+            stellar.auto.matched_text = '确认'
+            return ((1600, 970), (1700, 990))
         return target in ({'角色列表', '星启模式'} if state['page'] == 'teams' else {'当前队伍'})
 
+    def confirm(coordinates):
+        assert state['page'] == 'teams' and coordinates == ((1600, 970), (1700, 990))
+        state['page'] = 'details'
+        return True
+
     def click(target, *args, **kwargs):
-        if target == '确认':
-            assert state['page'] == 'teams'
-            state['page'] = 'details'
-        else:
-            assert '前往挑战' in target and state['page'] == 'details'
-            state['page'] = 'battle'
+        assert '前往挑战' in target and state['page'] == 'details'
+        state['page'] = 'battle'
         return True
 
     stellar.auto.find_element.side_effect = find
+    stellar.auto.click_element_with_pos.side_effect = confirm
     stellar.auto.click_element.side_effect = click
     stellar.runner.run()
     assert state['page'] == 'battle'
@@ -372,12 +377,14 @@ def test_apocalyptic_failed_confirmation_does_not_start_challenge(stellar, monke
     for name in ('ensure_mode', '_open_highest_level', '_prepare_teams'):
         monkeypatch.setattr(stellar.runner, name, Mock())
     stellar.auto.find_element.side_effect = None
-    stellar.auto.find_element.return_value = True
-    stellar.auto.click_element.side_effect = None
-    stellar.auto.click_element.return_value = False
+    coordinates = ((1600, 970), (1700, 990))
+    stellar.auto.find_element.return_value = coordinates
+    stellar.auto.matched_text = '确认'
+    stellar.auto.click_element_with_pos.return_value = False
     with pytest.raises(RuntimeError, match='确认末日幻影星启编队失败'):
         stellar.runner.run()
-    assert [c.args[0] for c in stellar.auto.click_element.call_args_list] == ['确认']
+    stellar.auto.click_element_with_pos.assert_called_once_with(coordinates)
+    stellar.auto.click_element.assert_not_called()
 
 
 @pytest.mark.parametrize('mode', ['虚构叙事', '混沌回忆', '末日幻影'])

@@ -10,6 +10,7 @@ from module.automation import auto
 from module.config import cfg
 from module.logger import log
 from tasks.base.list_drag import drag_list
+from tasks.base.task_steps import optional_reward
 
 
 class MemoryOfChaos(BaseChallenge):
@@ -260,6 +261,7 @@ class MemoryOfChaos(BaseChallenge):
             return
         raise RuntimeError("结算后返回混沌回忆失败")
 
+    @optional_reward("混沌回忆奖励")
     def collect_rewards(self):
         '''领取奖励'''
         if self.max_level > 0:

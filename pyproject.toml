@@ -3,7 +3,8 @@ name = "march7thassistant"
 version = "0.1.0"
 description = "March7thAssistant automation app"
 readme = "README.md"
-requires-python = ">=3.12"
+# 当前锁定的 ONNX Runtime 依赖尚未提供 CPython 3.15 的 wheel。
+requires-python = ">=3.12,<3.15"
 dependencies = [
     "ruamel.yaml==0.19.1",
     "playsound3==3.3.1",

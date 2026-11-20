@@ -63,7 +63,7 @@
 
 完全な初心者であれば、上の配布版を使ってください。この先は見なくて構いません。
 
-Python 3.12 以上が必要です。
+Python 3.12～3.14 が必要です。
 
 Windows でターミナルから起動する場合は、管理者権限で PowerShell、Windows Terminal、または CMD を開くことを推奨します。Windows 11 24H2 以降であれば [Sudo for Windows](https://learn.microsoft.com/zh-cn/windows/advanced-settings/sudo/) も利用できます。
 

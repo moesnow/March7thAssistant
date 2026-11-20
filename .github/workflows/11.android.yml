@@ -67,9 +67,12 @@ jobs:
         run: |
           platform=$(sed -n 's/^m7a\.androidPlatform=//p' gradle.properties)
           build_tools=$(sed -n 's/^m7a\.buildTools=//p' gradle.properties)
+          ndk=$(sed -n 's/^m7a\.ndk=//p' gradle.properties)
+          cmake=$(sed -n 's/^m7a\.cmake=//p' gradle.properties)
           tools_dir="$ANDROID_HOME/build-tools/$build_tools"
-          if [[ ! -f "$ANDROID_HOME/platforms/$platform/android.jar" || ! -f "$tools_dir/lib/d8.jar" ]]; then
-            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "platforms;$platform" "build-tools;$build_tools"
+          if [[ ! -f "$ANDROID_HOME/platforms/$platform/android.jar" || ! -f "$tools_dir/lib/d8.jar" ||
+                ! -f "$ANDROID_HOME/ndk/$ndk/source.properties" || ! -x "$ANDROID_HOME/cmake/$cmake/bin/cmake" ]]; then
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "platforms;$platform" "build-tools;$build_tools" "ndk;$ndk" "cmake;$cmake"
           fi
           echo "tools=$tools_dir" >> "$GITHUB_OUTPUT"
 
@@ -78,6 +81,8 @@ jobs:
         env:
           APK_VERSION_CODE: ${{ inputs.version-code || 0 }}
         run: |
+          cc -Wall -Wextra -Werror -pthread app/src/test/native/launcher_contract.c -o "$RUNNER_TEMP/m7a-launcher-test"
+          "$RUNNER_TEMP/m7a-launcher-test"
           tasks=(:device-service:test :device-service:dexJar :app:testDebugUnitTest :app:assembleRelease)
           if [[ "$APK_VERSION_CODE" == '0' ]]; then
             APK_VERSION_CODE=1

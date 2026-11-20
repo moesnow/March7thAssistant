@@ -503,8 +503,9 @@ def run_main_actions(no_run_immediately=False):
                         game.after_finish_is_loop()
                         continue
                     notif.flush_batch()
-                    if cfg.after_finish == "Exit":
-                        game.get_game_controller().stop_game()
+                    if cfg.after_finish != "Loop":
+                        # 任务链已走完，普通步骤失败仍执行完成后操作，但保留失败退出码。
+                        game.stop(False, success=False)
                     return False
                 game.stop(True)
             except CloudGameZeroDurationError as e:

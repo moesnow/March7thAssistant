@@ -2,6 +2,7 @@ from module.logger import log
 from module.automation import auto
 from module.ocr import ocr
 from tasks.base.list_drag import drag_to_edge
+from tasks.daily.training import full_activity_visible
 import time
 import json
 import sys
@@ -46,10 +47,9 @@ class Tasks:
         return self.parse_ocr(ocr.recognize_multi_lines(screenshot))
 
     def parse_ocr(self, result, *, x_gap=100, require_status=False):
-        for coords, text_data in result:
-            if "本日活跃度已满" in text_data[0]:
-                log.info("检测到本日活跃度已满提示，跳过后续任务检测")
-                return False
+        if full_activity_visible(result):
+            log.info("检测到本日活跃度已满提示，跳过后续任务检测")
+            return False
         merged_texts = self._merge_ocr_blocks(result, x_gap=x_gap)
         log.debug(f"每日实训分栏拼接的文本: {merged_texts}")
         progress_pattern = re.compile(r'(\d+)\s*[/／]\s*(\d+)')  # 用于匹配“X/Y”格式的正则表达式

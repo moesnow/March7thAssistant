@@ -1,5 +1,6 @@
 - **新手入门**
   - [使用教程](/assets/docs/Tutorial.md)
+  - [安卓版教程](/assets/docs/Android.md)
   - [常见问题](/assets/docs/FAQ.md)
   - [更新日志](/assets/docs/Changelog.md)
 - **进阶使用**

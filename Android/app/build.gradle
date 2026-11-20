@@ -16,6 +16,7 @@ if (!(versionCodeValue in 1..2_100_000_000)) {
 }
 def hostPython = providers.gradleProperty('m7a.hostPython')
 def wheelhouse = providers.gradleProperty('m7a.wheelhouse').getOrElse('build/wheelhouse')
+def shizukuVersion = '13.1.5'
 def repo = rootProject.file('..')
 layout.buildDirectory.set(layout.projectDirectory.dir("build/$abi"))
 def generatedAssets = layout.buildDirectory.dir('generated/project-assets')
@@ -29,6 +30,15 @@ android {
         }
     }
     buildToolsVersion = providers.gradleProperty('m7a.buildTools').get()
+    ndkVersion = providers.gradleProperty('m7a.ndk').get()
+    externalNativeBuild {
+        cmake {
+            path = file('src/main/native/CMakeLists.txt')
+            version = providers.gradleProperty('m7a.cmake').get()
+        }
+    }
+    // PackageManager 将前台 launcher 安装到只读、可执行的 nativeLibraryDir。
+    packaging.jniLibs.useLegacyPackaging = true
 
     defaultConfig {
         applicationId = 'top.m7a'
@@ -36,12 +46,12 @@ android {
         targetSdk = 37
         versionCode = versionCodeValue
         versionName = new File(repo, 'assets/config/version.txt').getText('UTF-8').trim()
+        buildConfigField 'String', 'SHIZUKU_SDK_VERSION', "\"${shizukuVersion}\""
         ndk {
             abiFilters.addAll(abi == 'universal' ? supportedAbis : [abi])
         }
     }
     buildFeatures {
-        aidl = true
         buildConfig = true
         compose = true
     }
@@ -72,8 +82,8 @@ chaquopy {
 
 dependencies {
     implementation project(':device-service')
-    implementation 'dev.rikka.shizuku:api:13.1.5'
-    implementation 'dev.rikka.shizuku:provider:13.1.5'
+    implementation "dev.rikka.shizuku:api:${shizukuVersion}"
+    implementation "dev.rikka.shizuku:provider:${shizukuVersion}"
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2'
     implementation platform('androidx.compose:compose-bom:2026.09.00')
     implementation 'androidx.compose.foundation:foundation'

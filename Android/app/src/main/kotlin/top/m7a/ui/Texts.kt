@@ -192,6 +192,8 @@ internal fun errorInfo(
     "service_busy" -> ErrorInfo(R.string.error_busy_title, R.string.error_busy_advice, ErrorFix.NONE)
     "cleanup_pending" -> ErrorInfo(R.string.error_cleanup_pending_title, R.string.error_busy_advice, ErrorFix.NONE)
     "service_start" -> ErrorInfo(R.string.error_service_title, R.string.error_service_advice, ErrorFix.GUIDE)
+    "permission_unavailable" -> ErrorInfo(R.string.error_service_title, R.string.error_service_advice, ErrorFix.GUIDE)
+    "shizuku_unsupported" -> ErrorInfo(R.string.error_shizuku_api_title, R.string.error_shizuku_api_advice, ErrorFix.GUIDE)
     "root_unavailable" -> ErrorInfo(R.string.error_root_title, R.string.error_root_advice, ErrorFix.GUIDE)
     "game_not_installed" -> ErrorInfo(R.string.error_game_title, R.string.error_game_advice, ErrorFix.NONE)
     "game_exited" -> ErrorInfo(R.string.error_game_exited_title, R.string.error_game_exited_advice, ErrorFix.LOGS)

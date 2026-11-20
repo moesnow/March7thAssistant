@@ -80,7 +80,7 @@ class AutoPlotSettingCard(ExpandSettingCard):
         self.autoPhoneDetectCheckBox.setChecked(bool(cfg.get_value("autoplot_phone_detect_enable", True)))
         self.viewLayout.addWidget(self.autoPhoneDetectCheckBox)
 
-        self.heroChronicleCheckBox = CheckBox(tr('自动阅读翁法罗斯英雄纪（请先打开该书目录）'), self.view)
+        self.heroChronicleCheckBox = CheckBox(tr('自动阅读翁法罗斯英雄纪（请先打开该书目录，非 .exe 版）'), self.view)
         self.heroChronicleCheckBox.setChecked(bool(cfg.get_value('autoplot_hero_chronicle_enable', False)))
         self.viewLayout.addWidget(self.heroChronicleCheckBox)
         self.heroChronicleCheckBox.stateChanged.connect(self._on_option_changed)
@@ -182,7 +182,7 @@ class AutoPlotSettingCard(ExpandSettingCard):
         self.autoClickCheckBox.setText(tr('自动选择 (自动选择任意对话选项)'))
         self.autoBattleDetectCheckBox.setText(tr('自动战斗检测 (检测到未自动战斗时按V开启)'))
         self.autoPhoneDetectCheckBox.setText(tr('自动短信 (自动点击关闭手机短信页面)'))
-        self.heroChronicleCheckBox.setText(tr('自动阅读翁法罗斯英雄纪（请先打开该书目录）'))
+        self.heroChronicleCheckBox.setText(tr('自动阅读翁法罗斯英雄纪（请先打开该书目录，非 .exe 版）'))
         self.hotkeyToggleCheckBox.setText(tr('启用快捷键切换自动对话'))
         self.updateHotkeyHint()
         self._adjustViewSize()

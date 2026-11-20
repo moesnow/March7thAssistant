@@ -315,7 +315,9 @@ def currency_wars_game(runner, monkeypatch):
     factory = MagicMock(side_effect=create_task)
     factory.game_screen_ready = currency_wars.CurrencyWars.game_screen_ready
     runner.main.__globals__["CurrencyWars"] = factory
-    runner.game.stop.side_effect = lambda detect_loop: sys.exit(EXIT_OK) if detect_loop else None
+    runner.game.stop.side_effect = lambda detect_loop, *, success=True: (
+        sys.exit(EXIT_OK if success else EXIT_FAILED) if detect_loop or not success else None
+    )
     monkeypatch.setattr(daily, "cfg", cfg)
     monkeypatch.setattr(daily, "CurrencyWars", factory)
     monkeypatch.setattr(daily, "Date", MagicMock(wraps=daily.Date, is_next_mon_x_am=lambda *_: True))
@@ -576,7 +578,7 @@ def test_currency_wars_entry_rechecks_unattempted_deployment_after_picture_recov
         Label("出战", (1818, 750)), Label("前台区域", (973, 316)), Label("后台区域", (976, 575)),
         Label("0", (1640, 923)),
     )
-    monkeypatch.setattr(currency_wars.cfg, "currencywars_strategy", "s2_anaxa")
+    monkeypatch.setattr(currency_wars.cfg, "currencywars_strategy", "s2_anaxa_high")
     monkeypatch.setattr(Frame, "read_local", lambda *args, **kwargs: None)
 
     def preparation(*, deployed=False, flashing=False):
@@ -856,10 +858,16 @@ def test_currency_wars_entry_stops_when_clear_frames_remain_unidentified(
     unknown = Frame(Image.new("RGB", (1920, 1080)), ())
     capture = MagicMock(return_value=unknown)
     monkeypatch.setattr(currency_wars.CurrencyWars, "_capture", staticmethod(capture))
-    navigation = MagicMock()
-    navigation.get_current_screen.return_value = False
+    screen_module = import_module("module.screen.screen")
+    navigation = object.__new__(screen_module.Screen)
+    navigation.__init__(Path("assets/config/screens.json"), MagicMock())
+    auto = currency_wars.auto
+    auto.find_element.side_effect = None
+    auto.find_element.return_value = None
+    monkeypatch.setattr(screen_module, "auto", auto)
+    monkeypatch.setattr(screen_module, "time", currency_wars.time)
     monkeypatch.setattr(currency_wars, "screen", navigation)
-    # 旧循环需要在一次实际运行内触发显式终止，回归时用有限时钟防止测试自身无限等待。
+    # 若入口重试失去上限，测试最多采集 32 帧。
     normal_checkpoint = currency_wars.pause_ctl.checkpoint
 
     def checkpoint():
@@ -874,6 +882,10 @@ def test_currency_wars_entry_stops_when_clear_frames_remain_unidentified(
         "failed", "currencywars_unavailable", EXIT_FAILED)
     assert state.clicks == [] and state.completed == 0 and state.later_steps == []
     assert capture.call_count < 32
+    assert auto.take_screenshot.call_count == currency_wars.MAX_ENTRY_ATTEMPTS
+    auto.find_element.assert_called()
+    auto.press_key.assert_not_called()
+    auto.click_element.assert_not_called()
     task_steps.screen.change_to.assert_not_called()
 
 
@@ -1075,6 +1087,207 @@ def test_failed_task_exits_with_failure_code(runner, action):
     runner.telemetry.track_task_complete.assert_called_once_with(action, False, 0)
     runner.game.stop.assert_not_called()
     runner.game.get_game_controller.assert_not_called()
+
+
+@pytest.fixture
+def full_run_cleanup(runner, monkeypatch):
+    """执行真实日常任务链和收尾函数，隔离游戏、系统操作和 CLI 初始化。"""
+    import tasks.game as game
+
+    for option in ("asset_manager_enable", "currencywars_enable", "weekly_divergent_enable", "fight_enable",
+                   "universe_enable", "forgottenhall_enable", "purefiction_enable", "apocalyptic_enable"):
+        setattr(runner.cfg, option, False)
+    runner.cfg.play_audio = False
+    monkeypatch.setattr(daily, "cfg", runner.cfg)
+    prepare = MagicMock(return_value=False)
+    rewards = MagicMock(return_value=True)
+    training = MagicMock(return_value=True)
+    monkeypatch.setattr(daily.Daily, "prepare_daily", prepare)
+    monkeypatch.setattr(daily.reward, "start", rewards)
+    monkeypatch.setattr(daily.Daily, "run", training)
+    monkeypatch.setattr(task_steps, "screen", MagicMock())
+    monkeypatch.setattr(task_steps, "log", MagicMock())
+    runner.Daily.start.side_effect = daily.Daily.start
+
+    controller = MagicMock()
+    controller.shutdown.side_effect = lambda action, *, on_stopped: on_stopped() or True
+    monkeypatch.setattr(game, "get_game_controller", MagicMock(return_value=controller))
+    for name in ("cfg", "notif", "pause_ctl", "log", "restore_temporary_graphics", "task_power_request"):
+        monkeypatch.setattr(game, name, getattr(runner, name))
+    monkeypatch.setattr(game, "ocr", MagicMock())
+    monkeypatch.setattr(game, "notify_after_finish_not_loop", MagicMock())
+    monkeypatch.setattr(game, "pause_on_success", MagicMock())
+    runner.game.stop.side_effect = game.stop
+    return SimpleNamespace(game=game, controller=controller, prepare=prepare, rewards=rewards, training=training)
+
+
+@pytest.mark.parametrize("backend", ["local", "cloud"])
+@pytest.mark.parametrize("after_finish", [
+    "None", "Exit", "Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript",
+])
+@pytest.mark.parametrize("failure", ["returned_false", "ordinary_exception", "final_step"])
+def test_completed_full_run_applies_cleanup_without_losing_failure(
+        runner, full_run_cleanup, backend, after_finish, failure):
+    cleanup = full_run_cleanup
+    runner.cfg.control_backend = backend
+    runner.cfg.after_finish = after_finish
+    if failure == "ordinary_exception":
+        cleanup.prepare.side_effect = RuntimeError("日常准备未完成")
+    elif failure == "final_step":
+        cleanup.prepare.return_value = True
+        cleanup.training.return_value = False
+
+    record = run_currency_wars_cli(runner, "main")
+
+    assert (record["status"], record["exit_code"]) == ("failed", EXIT_FAILED)
+    cleanup.rewards.assert_called_once_with()
+    cleanup.training.assert_called_once_with(full_run=True)
+    runner.telemetry.track_task_complete.assert_called_once_with("main", False, 0)
+    runner.notif.flush_batch.assert_called_once_with()
+    cleanup.game.notify_after_finish_not_loop.assert_not_called()
+    cleanup.game.pause_on_success.assert_not_called()
+    if after_finish == "None":
+        cleanup.controller.shutdown.assert_not_called()
+    else:
+        cleanup.controller.shutdown.assert_called_once_with(after_finish, on_stopped=cleanup.game._finish_game_run)
+    runner.task_power_request.release.assert_called()
+    runner.restore_temporary_graphics.assert_called_with(final=True)
+
+
+@pytest.mark.parametrize("success", [True, None])
+def test_successful_full_run_keeps_success_cleanup(runner, full_run_cleanup, success):
+    full_run_cleanup.prepare.return_value = success
+    runner.cfg.after_finish = "Shutdown"
+
+    record = run_currency_wars_cli(runner, "main")
+
+    assert (record["status"], record["exit_code"]) == ("success", EXIT_OK)
+    runner.telemetry.track_task_complete.assert_called_once_with("main", True, 0)
+    full_run_cleanup.game.notify_after_finish_not_loop.assert_called_once_with()
+    full_run_cleanup.controller.shutdown.assert_called_once_with(
+        "Shutdown", on_stopped=full_run_cleanup.game._finish_game_run,
+    )
+
+
+@pytest.mark.parametrize("success", [False, True])
+def test_touch_full_run_applies_cleanup_and_keeps_result(runner, full_run_cleanup, monkeypatch, success):
+    from tasks.touch import rewards
+
+    runner.cfg.control_backend = "adb"
+    runner.cfg.ui_profile = "touch_720"
+    runner.cfg.after_finish = "Shutdown"
+    routine = MagicMock(return_value=success)
+    monkeypatch.setattr(rewards, "routine", routine)
+
+    record = run_currency_wars_cli(runner, "main")
+
+    assert record["exit_code"] == (EXIT_OK if success else EXIT_FAILED)
+    routine.assert_called_once_with(full_run=True)
+    runner.Daily.start.assert_not_called()
+    runner.telemetry.track_task_complete.assert_called_once_with("main", success, 0)
+    full_run_cleanup.controller.shutdown.assert_called_once_with(
+        "Shutdown", on_stopped=full_run_cleanup.game._finish_game_run,
+    )
+
+
+@pytest.mark.parametrize("error", [
+    RunStopRequested(), task_steps.GameRecoveryError("无法回到主界面"),
+    AdbError("disconnected", "设备已断开"), task_steps.GameWindowLost("游戏窗口已丢失"),
+])
+def test_interrupted_full_run_never_applies_completion_action(runner, full_run_cleanup, error):
+    runner.cfg.after_finish = "Shutdown"
+    full_run_cleanup.prepare.side_effect = error
+
+    record = run_currency_wars_cli(runner, "main")
+
+    assert record["exit_code"] == (EXIT_STOPPED if isinstance(error, RunStopRequested) else EXIT_FAILED)
+    full_run_cleanup.rewards.assert_not_called()
+    full_run_cleanup.training.assert_not_called()
+    runner.game.stop.assert_not_called()
+    full_run_cleanup.controller.shutdown.assert_not_called()
+
+
+def test_stop_requested_after_last_step_prevents_completion_action(runner, full_run_cleanup):
+    runner.cfg.after_finish = "Shutdown"
+    runner.pause_ctl.check_stop.side_effect = RunStopRequested
+
+    record = run_currency_wars_cli(runner, "main")
+
+    assert (record["status"], record["exit_code"]) == (STATUS_STOPPED, EXIT_STOPPED)
+    full_run_cleanup.training.assert_called_once_with(full_run=True)
+    full_run_cleanup.controller.shutdown.assert_not_called()
+
+
+@pytest.mark.parametrize("stage", ["version", "game", "daily"])
+@pytest.mark.parametrize("error_type", [RuntimeError, KeyboardInterrupt])
+def test_unfinished_full_run_never_applies_completion_action(runner, full_run_cleanup, stage, error_type):
+    runner.cfg.after_finish = "Shutdown"
+    handler = {"version": runner.version.start, "game": runner.game.start, "daily": runner.Daily.start}[stage]
+    handler.side_effect = error_type("完整运行中断")
+
+    with pytest.raises(error_type):
+        runner.run_main_actions()
+
+    runner.game.stop.assert_not_called()
+    full_run_cleanup.controller.shutdown.assert_not_called()
+
+
+def test_completion_action_failure_is_not_reported_as_success(runner, full_run_cleanup):
+    runner.cfg.after_finish = "Shutdown"
+    full_run_cleanup.controller.shutdown.side_effect = None
+    full_run_cleanup.controller.shutdown.return_value = False
+
+    record = run_currency_wars_cli(runner, "main")
+
+    assert (record["status"], record["exit_code"]) == ("failed", EXIT_FAILED)
+    assert record["error"] == "任务完成后的操作失败：Shutdown"
+    full_run_cleanup.game.pause_on_success.assert_not_called()
+
+
+def test_failed_full_run_dispatches_shutdown_with_system_command_mocked(runner, full_run_cleanup, monkeypatch):
+    from module.game import base
+
+    runner.cfg.after_finish = "Shutdown"
+    controller = base.GameControllerBase()
+    controller.stop_game = MagicMock(return_value=True)
+    full_run_cleanup.game.get_game_controller.return_value = controller
+    clock = SimpleNamespace(sleep=MagicMock())
+    system = MagicMock()
+    monkeypatch.setattr(base, "time", clock)
+    monkeypatch.setattr(base, "os", SimpleNamespace(system=system))
+
+    record = run_currency_wars_cli(runner, "main")
+
+    assert (record["status"], record["exit_code"]) == ("failed", EXIT_FAILED)
+    controller.stop_game.assert_called_once_with()
+    clock.sleep.assert_called_once_with(60)
+    system.assert_called_once_with("shutdown /s /t 0")
+
+
+def test_failed_gui_full_run_does_not_enter_cli_loop(runner, full_run_cleanup):
+    runner.cfg.after_finish = "Loop"
+    runner.run_main_actions.__globals__["is_gui_started"] = lambda: True
+
+    assert runner.run_main_actions() is False
+
+    runner.game.stop.assert_not_called()
+    runner.game.after_finish_is_loop.assert_not_called()
+    runner.notif.flush_batch.assert_called_once_with()
+    full_run_cleanup.controller.shutdown.assert_not_called()
+
+
+def test_failed_desktop_twin_full_run_keeps_system_actions_disabled(runner, full_run_cleanup, monkeypatch):
+    from module.config import cfg
+
+    monkeypatch.setenv("MARCH7TH_DESKTOP_TWIN", "1")
+    monkeypatch.setenv("MARCH7TH_AFTER_FINISH", "Shutdown")
+    runner.cfg.after_finish = cfg.after_finish
+    assert runner.cfg.after_finish == "None"
+
+    record = run_currency_wars_cli(runner, "main")
+
+    assert (record["status"], record["exit_code"]) == ("failed", EXIT_FAILED)
+    full_run_cleanup.controller.shutdown.assert_not_called()
 
 
 def test_currency_wars_respects_explicit_exit_after_a_settled_loss(runner):
@@ -1340,14 +1553,14 @@ def test_adb_full_run_uses_touch_routine(runner, monkeypatch, result):
     runner.cfg.control_backend = "adb"
     routine = MagicMock(return_value=result)
     monkeypatch.setattr(rewards, "routine", routine)
+    runner.game.stop.side_effect = SystemExit(EXIT_OK if result else EXIT_FAILED)
+    with pytest.raises(SystemExit) as raised:
+        runner.main(action="main")
+    assert raised.value.code == (EXIT_OK if result else EXIT_FAILED)
     if result:
-        runner.game.stop.side_effect = SystemExit(EXIT_OK)
-        with pytest.raises(SystemExit) as raised:
-            runner.main(action="main")
-        assert raised.value.code == EXIT_OK
+        runner.game.stop.assert_called_once_with(True)
     else:
-        assert runner.main(action="main") is False
-        runner.game.stop.assert_not_called()
+        runner.game.stop.assert_called_once_with(False, success=False)
     routine.assert_called_once_with(full_run=True)
     runner.Daily.start.assert_not_called()
     runner.telemetry.track_task_complete.assert_called_once_with("main", result, 0)

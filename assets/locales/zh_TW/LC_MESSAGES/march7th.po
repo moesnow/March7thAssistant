@@ -6192,8 +6192,8 @@ msgid "按下 {stop} 停止 · {pause} 继续"
 msgstr "按下 {stop} 停止 · {pause} 繼續"
 
 #: app/card/autoplot_setting_card.py:83
-msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录）"
-msgstr "自動閱讀翁法羅斯英雄紀（請先開啟該書目錄）"
+msgid "自动阅读翁法罗斯英雄纪（请先打开该书目录，非 .exe 版）"
+msgstr "自動閱讀翁法羅斯英雄紀（請先開啟該書目錄，非 .exe 版）"
 
 #: app/card/autoplot_setting_card.py:53
 msgid "记住自动对话开关状态"
@@ -7827,8 +7827,8 @@ msgid "当前后端不支持，未执行"
 msgstr "目前的後端不支援，未執行"
 
 #: app/setting_interface.py:614
-msgid "改用连击那刻夏（S2）"
-msgstr "改用連擊那刻夏（S2）"
+msgid "改用连击那刻夏"
+msgstr "改用連擊那刻夏"
 
 #: app/setting_interface.py:616
 msgid "请更新货币战争策略"
@@ -7839,12 +7839,8 @@ msgid "仅在首领节点处理装备"
 msgstr "僅在首領節點處理裝備"
 
 #: tasks/weekly/currency_wars_strategy.py:62
-msgid "连击那刻夏（S2）"
-msgstr "連擊那刻夏（S2）"
-
-#: tasks/weekly/currency_wars_strategy.py:62
-msgid "连击那刻夏（高难）"
-msgstr "連擊那刻夏（高難）"
+msgid "连击那刻夏"
+msgstr "連擊那刻夏"
 
 #: tasks/weekly/currency_wars_strategy.py:62
 msgid "寒鸦流萤（高难）"
@@ -8094,6 +8090,18 @@ msgstr "策略優先"
 msgid "图鉴优先"
 msgstr "圖鑑優先"
 
+#: app/components/evey_animation.py:28
+msgid "忆灵「长夜」"
+msgstr "憶靈「長夜」"
+
+#: app/home_interface.py:54
+msgid "别晃啦！本姑娘头好晕( ꩜ ᯅ ꩜;)"
+msgstr "別晃啦！本姑娘頭好暈( ꩜ ᯅ ꩜;)"
+
+#: app/home_interface.py:123
+msgid "长夜月小助手"
+msgstr "長夜月小助手"
+
 #: app/setting_interface.py:615
 msgid "总时限"
 msgstr "總時限"
@@ -8129,3 +8137,31 @@ msgstr "查看排查方法"
 #: app/setting_interface.py:2569
 msgid "后台操作模式已移至「游戏连接」"
 msgstr "背景操作模式已移至「遊戲連線」"
+
+#: app/setting_interface.py:1163
+msgid "界面主题"
+msgstr "介面主題"
+
+#: app/setting_interface.py:1164
+msgid "选择应用的显示主题"
+msgstr "選擇應用程式的顯示主題"
+
+#: app/setting_interface.py:1165
+msgid "跟随系统"
+msgstr "跟隨系統"
+
+#: app/setting_interface.py:1165
+msgid "浅色"
+msgstr "淺色"
+
+#: app/setting_interface.py:1165
+msgid "深色"
+msgstr "深色"
+
+#: app/card/comboboxsettingcard2.py:58 app/main_window.py:452
+msgid "长夜"
+msgstr "長夜"
+
+#: module/game/adb_ready.py:118
+msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
+msgstr "未能在時限內從「列車補給」視窗返回主畫面。請在遊戲中確認是否已領取獎勵。"

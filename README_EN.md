@@ -63,7 +63,7 @@ Download the latest release from [Releases](https://github.com/moesnow/March7thA
 
 If you are completely new to this, use the packaged release above. You can ignore the rest of this section.
 
-Python 3.12 or newer is required.
+Use Python 3.12 through 3.14.
 
 On Windows, if you launch from a terminal, it is recommended to open PowerShell, Windows Terminal, or CMD as Administrator. On Windows 11 24H2 or later, you can also use [Sudo for Windows](https://learn.microsoft.com/zh-cn/windows/advanced-settings/sudo/).
 

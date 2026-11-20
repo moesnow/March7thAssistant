@@ -1,10 +1,13 @@
 from utils.game_options import game_option_enabled
 from utils.desktop_twin import in_desktop_twin
-from PySide6.QtCore import Qt, QSize, QPoint, QFileSystemWatcher, Signal, QObject, QTimer, QThread, QSignalBlocker
-from PySide6.QtGui import QIcon, QAction
-from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QLabel, QHBoxLayout, QVBoxLayout
+from PySide6.QtCore import Qt, QSize, QPoint, QFileSystemWatcher, Signal, QObject, QTimer, QThread, QSignalBlocker, QEvent, QVariantAnimation
+from PySide6.QtGui import QAction, QPainter
+from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsEffect, QWidget
 
-from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, setTheme, Theme, themeColor, qconfig
+from .components.evey_decoration import EveyControlDecoration, EveyTitleDecoration
+from .common.accent import MARCH7TH_PINK, EVERNIGHT_RED, set_accent_color
+
+from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, themeColor, qconfig
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import InfoBar, InfoBarIcon, InfoBarPosition, PrimaryPushButton, SystemTrayMenu, ToolTipFilter, ToolTipPosition
 from app.tools.game_starter import GameStartStatus, GameLaunchThread
@@ -18,10 +21,15 @@ from .workflow_interface import WorkflowInterface
 from .setting_interface import SettingInterface
 from .log_interface import LogInterface
 from .common.signal_bus import signalBus
+from .common.evernight import EvernightEasterEgg
+from .common.evernight_artwork import evernight_artwork
+from .common.theme_assets import application_icon_path
+from .common.window_icon import set_application_icon
+from .components.evey_animation import EveyAnimation
 
 from .card.messagebox_custom import MessageBoxSupport
 from .tools.check_update import checkUpdate
-from .tools.check_theme_change import checkThemeChange
+from .tools.check_theme_change import checkThemeChange, applyTheme
 from .tools.announcement import checkAnnouncement
 from .tools.disclaimer import disclaimer
 
@@ -113,6 +121,80 @@ class ClickableLabel(QLabel):
         super().mousePressEvent(event)
 
 
+class LogoShakeEffect(QGraphicsEffect):
+    """Rotate only the artwork, keeping the logo's layout and hit area fixed."""
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.angle = 0.0
+        self.timeline = QVariantAnimation(self)
+        self.timeline.setDuration(440)
+        self.timeline.setKeyValues([(0.0, 0.0), (0.16, -14.0), (0.34, 12.0),
+                                    (0.54, -8.0), (0.74, 5.0), (1.0, 0.0)])
+        self.timeline.valueChanged.connect(self._advance)
+
+    def shake(self):
+        self.timeline.stop()
+        self.timeline.start()
+
+    def _advance(self, angle):
+        self.angle = angle
+        self.update()
+
+    def boundingRectFor(self, rect):
+        return rect.adjusted(-4, -4, 4, 4)
+
+    def draw(self, painter):
+        offset = QPoint()
+        pixmap = self.sourcePixmap(Qt.CoordinateSystem.LogicalCoordinates, offset,
+                                   QGraphicsEffect.PixmapPadMode.NoPad)
+        center = self.sourceBoundingRect().center()
+        painter.save()
+        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        painter.translate(center)
+        painter.rotate(self.angle)
+        painter.translate(-center)
+        painter.drawPixmap(offset, pixmap)
+        painter.restore()
+
+
+class EasterEggClickFilter(QObject):
+    clicked = Signal()
+
+    def __init__(self, logo):
+        super().__init__(logo)
+        self.logo = logo
+        self.shake_effect = LogoShakeEffect(logo)
+        logo.setGraphicsEffect(self.shake_effect)
+        self.hit_target = QWidget(logo.parentWidget())
+        self.hit_target.setObjectName('logoClickTarget')
+        self.hit_target.setFixedSize(48, 48)
+        self.hit_target.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.hit_target.installEventFilter(self)
+        logo.installEventFilter(self)
+        self._position_target()
+
+    def _position_target(self):
+        self.hit_target.move(self.logo.x() - (self.hit_target.width() - self.logo.width()) // 2,
+                             self.logo.y() - (self.hit_target.height() - self.logo.height()) // 2)
+        self.hit_target.raise_()
+
+    def eventFilter(self, obj, event):
+        if obj is self.logo and event.type() in (QEvent.Type.Move, QEvent.Type.Resize):
+            self._position_target()
+        if (event.type() in (QEvent.Type.MouseButtonPress, QEvent.Type.MouseButtonDblClick,
+                             QEvent.Type.MouseButtonRelease)
+                and event.button() == Qt.MouseButton.LeftButton):
+            # 只记录完整点击；吞掉双击，避免快速连点 LOGO 使窗口最大化。
+            if (event.type() == QEvent.Type.MouseButtonRelease
+                    and obj.rect().contains(event.position().toPoint())):
+                self.shake_effect.shake()
+                self.clicked.emit()
+            return True
+        if event.type() == QEvent.Type.MouseMove and event.buttons() & Qt.MouseButton.LeftButton:
+            return True
+        return super().eventFilter(obj, event)
+
+
 class MainWindow(MSFluentWindow):
     TASK_EXIT_DELAY_MS = 5000
 
@@ -144,13 +226,19 @@ class MainWindow(MSFluentWindow):
         self._defer_startup_checks = False  # 静默启动时推迟的启动检查（检查更新/公告）
         self.detected_update_version = None
         self.updateVersionBadge = None
-        qconfig.themeChanged.connect(self._on_theme_changed)
+        self._evernight = EvernightEasterEgg()
+        self._evernight_active = False
+        self._evey_animation = None
+        self._evernight.selected = self._load_evernight_selection()
 
         self.initWindow()
 
         self.initInterface()
         self.initNavigation()
         self.initSystemTray()
+        qconfig.themeChanged.connect(self._on_theme_changed)
+        if self._evernight.selected:
+            self._on_theme_changed()
 
         if self.start_minimized_to_tray:
             self.hide()
@@ -182,8 +270,8 @@ class MainWindow(MSFluentWindow):
         # 要求 PySideSix-Frameless-Window>=0.7.0
         # self.setMicaEffectEnabled(False)
 
-        setThemeColor('#f18cb9', lazy=True)
-        setTheme(Theme.AUTO, lazy=True)
+        setThemeColor(MARCH7TH_PINK, lazy=True)
+        applyTheme(self)
 
         # 禁用最大化
         # self.titleBar.maxBtn.setHidden(True)
@@ -211,10 +299,14 @@ class MainWindow(MSFluentWindow):
         else:
             self.resize(min_width, min_height)
 
-        self.setWindowIcon(QIcon('./assets/logo/March7th.ico'))
+        easter_egg_click = EasterEggClickFilter(self.titleBar.iconLabel)
+        easter_egg_click.clicked.connect(self._on_logo_clicked)
+        set_application_icon(self, application_icon_path(), 'March7th Assistant')
         self.setWindowTitle("March7th Assistant")
         # 分离系统窗口标题与应用内标题栏文本
         self._refreshWindowTitleBar()
+
+        self._evey_title_decoration = EveyTitleDecoration(self.titleBar)
 
         # 创建启动画面
         self.splashScreen = SplashScreen(self.windowIcon(), self)
@@ -260,7 +352,10 @@ class MainWindow(MSFluentWindow):
             self.setGeometry(target_geometry)
 
     def _baseTitleBarText(self):
-        return f"March7th Assistant {cfg.version}"
+        return f"{self._assistant_name()} {cfg.version}"
+
+    def _assistant_name(self):
+        return 'Evernight Assistant' if self._evernight_active else 'March7th Assistant'
 
     def _refreshDesktopTwinBadge(self):
         """分身内的小助手在标题栏标出身份，透过分身画面也能和主桌面的小助手区分开。"""
@@ -324,8 +419,111 @@ class MainWindow(MSFluentWindow):
             except Exception:
                 pass
 
+    @staticmethod
+    def _prepare_evernight():
+        try:
+            evernight_artwork()
+        except OSError as error:
+            log.warning(f'无法加载长夜主题：{error}')
+            return False
+        return True
+
+    def _load_evernight_selection(self):
+        if not self._evernight.unlocked and cfg.get_value('evernight_unlocked') is True:
+            self._evernight = EvernightEasterEgg(unlocked=True)
+        return (self._evernight.unlocked and cfg.get_value('ui_theme') == 'evernight'
+                and self._prepare_evernight())
+
+    def _apply_ui_theme(self, evernight_selected):
+        selection_changed = evernight_selected != self._evernight.selected
+        previous_palette = qconfig.theme
+        self._evernight.selected = evernight_selected
+        applyTheme(self)
+        # 深色和长夜共用调色板，切换时 Qt 可能不发出 themeChanged。
+        if selection_changed and qconfig.theme == previous_palette:
+            self._on_theme_changed()
+
+    def set_ui_theme(self, preference, *, unlock_evernight=False):
+        if cfg.writes_suspended:
+            return False
+        selected = preference == 'evernight'
+        if selected and (not self._evernight.unlocked or not self._prepare_evernight()):
+            return False
+
+        values = {'ui_theme': preference}
+        if unlock_evernight:
+            values['evernight_unlocked'] = True
+        previous = {key: cfg.config[key] for key in values if key in cfg.config}
+        try:
+            if unlock_evernight:
+                cfg.set_values(values)
+            else:
+                cfg.set_value('ui_theme', preference)
+        except OSError as error:
+            for key in values.keys() - previous.keys():
+                cfg.config.pop(key, None)
+            cfg.config.update(previous)
+            log.warning(f'无法保存界面主题：{error}')
+            return False
+
+        self._apply_ui_theme(selected)
+        return True
+
     def _on_theme_changed(self):
+        selected = self._evernight.selected
+        if not selected and self._evey_animation is not None:
+            self._evey_animation.close()  # closed 回调按当前主题统一刷新。
+            return
+        # 首次动画到中点时替换角色，动画继续；之后随主题即时切换。
+        active = (selected and self._evernight.animation_played
+                  and (self._evey_animation is None
+                       or self._evey_animation.timeline.currentValue() >= 0.5))
+        if active != self._evernight_active:
+            self._evernight_active = active
+            set_accent_color(EVERNIGHT_RED if active else MARCH7TH_PINK)
+            self.setWindowTitle(self._assistant_name())
+            self._refreshDesktopTwinIndicators()
+            set_application_icon(self, application_icon_path(active), self._assistant_name())
+        self._evey_title_decoration.setActive(active)
+        self.settingInterface.themeCard.setEvernightMode(active)
+        self._evey_settings_decoration.setActive(active)
+        self.homeInterface.setEvernightMode(active, animate=self._evey_animation is not None)
         self._refreshWindowTitleBar()
+        # 先让深色三月七界面重绘，再播放首次替换动画。
+        if selected and not self._evernight.animation_played:
+            QTimer.singleShot(0, self._play_evey_animation)
+
+    def _on_logo_clicked(self):
+        result = self._evernight.record_click()
+        if result == 'warning':
+            self.homeInterface.banner.logoHint.play()
+            return
+        if result != 'unlocked':
+            return
+        self.homeInterface.banner.logoHint.dismiss()
+        if not self.set_ui_theme('evernight', unlock_evernight=True):
+            self._evernight.unlocked = False
+            return
+        self.settingInterface.themeCard.showEvernightOption()
+
+    def _play_evey_animation(self):
+        if not self.isVisible() or self.isMinimized():
+            return
+        if not self._evernight.consume_animation(self._evernight.selected):
+            return
+        animation = EveyAnimation(self)
+        self._evey_animation = animation
+        animation.midpointReached.connect(self._on_theme_changed)
+        animation.closed.connect(self._on_evey_animation_closed)
+        if animation.sprite.isNull():
+            animation.close()  # A missing intro alone need not prevent the prepared theme from working.
+        else:
+            animation.play()
+
+    def _on_evey_animation_closed(self):
+        self._evey_animation = None
+        if not self._evernight_active or not self._evernight.selected:
+            self._on_theme_changed()
 
     def _on_update_version_badge_clicked(self):
         if self.detected_update_version:
@@ -375,12 +573,6 @@ class MainWindow(MSFluentWindow):
         #     self._on_config_file_changed,
         #     NavigationItemPosition.BOTTOM)
 
-        # self.navigationInterface.addWidget(
-        #     'themeButton',
-        #     NavigationBarPushButton(FIF.BRUSH, '主题', isSelectable=False),
-        #     lambda: toggleTheme(lazy=True),
-        #     NavigationItemPosition.BOTTOM)
-
         self.navigationInterface.addWidget(
             'avatar',
             NavigationBarPushButton(FIF.HEART, tr('赞赏'), isSelectable=False),
@@ -400,6 +592,9 @@ class MainWindow(MSFluentWindow):
             routeKey=self.settingInterface.objectName(), icon=FIF.SETTING, text=tr('设置'),
             onClick=lambda: self.switchTo(self.settingInterface), position=NavigationItemPosition.BOTTOM
         )
+        self._evey_settings_decoration = EveyControlDecoration(
+            self.navigationInterface.widget('settingInterface'),
+            'evey-decoration-upright.png', (-4, -9, 4, 3))
 
         self.splashScreen.finish()
 
@@ -412,7 +607,7 @@ class MainWindow(MSFluentWindow):
     def initSystemTray(self):
         """初始化系统托盘"""
         self.tray_icon = QSystemTrayIcon(self)
-        self.tray_icon.setIcon(QIcon('./assets/logo/March7th.ico'))
+        self.tray_icon.setIcon(self.windowIcon())
         self.tray_icon.setToolTip('March7th Assistant')
 
         # 创建托盘菜单
@@ -475,6 +670,8 @@ class MainWindow(MSFluentWindow):
             self._defer_startup_checks = False
             checkUpdate(self, flag=True)
             checkAnnouncement(self)
+        if self._evernight.unlocked and not self._evernight.animation_played:
+            QTimer.singleShot(0, self._play_evey_animation)
 
     def _show_main_window(self):
         """显示主界面，macOS 下确保窗口置顶"""
@@ -648,7 +845,7 @@ class MainWindow(MSFluentWindow):
             self._desktop_twin_tray_action.setText(tr("桌面分身（运行中）") if hosting else tr("桌面分身"))
         if hasattr(self, 'tray_icon'):
             self.tray_icon.setToolTip(
-                f"March7th Assistant\n{tr('桌面分身运行中')}" if hosting else 'March7th Assistant')
+                f"{self._assistant_name()}\n{tr('桌面分身运行中')}" if hosting else self._assistant_name())
             fit_menu_width(self.tray_icon.contextMenu())
         notice = self._desktop_twin_notice
         if notice is not None:
@@ -873,6 +1070,7 @@ class MainWindow(MSFluentWindow):
             # 重新加载配置
             log.info("[config-watch] 重新加载配置文件并刷新界面")
             cfg._load_config(None, save=False)
+            self._apply_ui_theme(self._load_evernight_selection())
 
             # 重新初始化通知器
             try:

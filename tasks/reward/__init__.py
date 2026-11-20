@@ -2,7 +2,7 @@ from module.automation import auto
 from module.config import cfg
 from module.logger import log
 from module.screen import screen
-from tasks.base.task_steps import run_steps
+from tasks.base.task_steps import optional_reward
 from .achievement import Achievement
 from .assist import Assist
 from .dispatch import Dispatch
@@ -27,21 +27,21 @@ class RewardManager:
 
     def check_and_collect_rewards(self):
         log.hr("开始领取奖励", 0)
-
-        def collect(key):
-            # 领取结果的 False 表示页内确认暂无奖励；无法确认时由任务抛出异常。
+        for key in ("dispatch", "mail", "assist", "srpass", "message", "achievement"):
             self.check_and_collect_specific_reward(key)
-
-        return run_steps(
-            (self.reward_instances[key].name, lambda key=key: collect(key))
-            for key in ("dispatch", "mail", "assist", "srpass", "message", "achievement")
-            if self.reward_instances[key].enabled
-        )
+        return True
 
     def check_and_collect_specific_reward(self, reward_type):
         instance = self.reward_instances.get(reward_type)
         if not instance or not instance.enabled:
             return False
+        with optional_reward(f"{instance.name}奖励"):
+            if self._should_collect(reward_type):
+                return instance.start()
+        return False
+
+    @staticmethod
+    def _should_collect(reward_type):
         if reward_type == "mail":
             screen.change_to("menu")
             if menu_alert(auto, (0.925, 0.185, 0.075, 0.15), "./assets/images/share/menu/mail.png") is False:
@@ -59,7 +59,7 @@ class RewardManager:
             if not auto.find_element(f"./assets/images/share/menu/{reward_type}_reward.png", "image", threshold,
                                      crop=(1263 / 1920, 52 / 1080, 642 / 1920, 982 / 1080)):
                 return False
-        return instance.start()
+        return True
 
 
 def start():
