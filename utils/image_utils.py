@@ -6,6 +6,20 @@ import numpy as np
 
 class ImageUtils:
     @staticmethod
+    def to_gray(image):
+        """返回灰度图；已经是单通道时原样返回。"""
+        if image.ndim == 2:
+            return image
+        return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    @staticmethod
+    def match_template(image, template):
+        """单次 TM_CCOEFF_NORMED 匹配，返回最高相似度及其位置。"""
+        result = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
+        _, max_val, _, max_loc = cv2.minMaxLoc(result)
+        return max_val, max_loc
+
+    @staticmethod
     def read_image(image_path, flags=cv2.IMREAD_COLOR):
         path = image_path
         try:
@@ -44,12 +58,17 @@ class ImageUtils:
             # 我不知道为什么这里要用低分匹配方法，这导致了部分文件识别设置阈值要设置的很大很大（如界域锚点要设置到3,000,000)
             # 另外，就是用mask的图片和不用mask的图片判断逻辑是完全相反的，一个阈值要设置的高一个阈值要设置的低 带mask的是越低越好
             # 但是这个代码耦合的内容太多了，我不知道还有什么地方会受到影响，姑且就先这么用着了
-            result = cv2.matchTemplate(screenshot, template, cv2.TM_SQDIFF, mask=mask)
+            #
+            # 阈值 <= 1 视为归一化相似度（0~1，越接近 0 越像），使用 TM_SQDIFF_NORMED；
+            # 更大的阈值沿用历史语义（原始平方差和，越大表示越不像），现有调用点不受影响。
+            if threshold is not None and threshold <= 1:
+                result = cv2.matchTemplate(screenshot, template, cv2.TM_SQDIFF_NORMED, mask=mask)
+            else:
+                result = cv2.matchTemplate(screenshot, template, cv2.TM_SQDIFF, mask=mask)
             min_val, _, min_loc, _ = cv2.minMaxLoc(result)
             return min_val, min_loc
         else:
-            result = cv2.matchTemplate(screenshot, template, cv2.TM_CCOEFF_NORMED)
-        _, max_val, _, max_loc = cv2.minMaxLoc(result)
+            max_val, max_loc = ImageUtils.match_template(screenshot, template)
 
         if scale_range and (math.isinf(max_val) or threshold is None or max_val < threshold):
             for scale in np.arange(scale_range[0], scale_range[1] + 0.0001, 0.05):

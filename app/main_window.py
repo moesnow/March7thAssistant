@@ -121,6 +121,14 @@ class ClickableLabel(QLabel):
         super().mousePressEvent(event)
 
 
+def _twin_idle_pause_enabled():
+    """桌面分身空闲最小化是否启用（配置缺失时默认启用）。"""
+    try:
+        return bool(cfg.get_value("desktop_twin_idle_pause", True))
+    except Exception:
+        return True
+
+
 class LogoShakeEffect(QGraphicsEffect):
     """Rotate only the artwork, keeping the logo's layout and hit area fixed."""
     def __init__(self, parent):
@@ -197,13 +205,13 @@ class EasterEggClickFilter(QObject):
 
 class MainWindow(MSFluentWindow):
     TASK_EXIT_DELAY_MS = 5000
-
     def __init__(self, task=None, exit_on_complete=False, start_minimized_to_tray=False):
         super().__init__()
         self._desktop_twin_hosting = False
         self._desktop_twin_tray_action = None
         self._desktop_twin_notice = None
         self._desktop_twin_badge = None
+        self._twin_game_paused = False
         self._backend_connection = display_connection(cfg)
         self._pending_ui_language = None
         self._navigation_animation_running = False
@@ -250,8 +258,9 @@ class MainWindow(MSFluentWindow):
         elif self.start_minimized_to_tray:
             # 最小化到托盘启动：不弹出任何窗口，检查更新与公告推迟到主窗口首次显示
             self._defer_startup_checks = True
-        else:
-            # 检查更新
+        elif not in_desktop_twin():
+            # 桌面分身里的小助手只负责执行任务与预览：更新检查与公告留给主会话，
+            # 避免在隐藏的子会话里重复请求和弹窗。
             checkUpdate(self, flag=True)
             checkAnnouncement(self)
 
@@ -260,6 +269,33 @@ class MainWindow(MSFluentWindow):
         if self.startup_task:
             from tasks.base.tasks import start_task
             start_task(self.startup_task)
+
+    def pauseTwinGame(self):
+        """桌面分身空闲（窗口隐藏且没有任务）时最小化游戏，降低后台占用。"""
+        if not in_desktop_twin() or not _twin_idle_pause_enabled():
+            return
+        if self.logInterface.isTaskRunning():
+            return
+        if self._twin_game_paused:
+            return
+        from utils.twin_resource import minimize_game_window
+        if minimize_game_window(cfg.get_value("game_title_name")):
+            self._twin_game_paused = True
+            self.logInterface.appendLog("桌面分身：窗口隐藏且没有任务，已最小化游戏以降低资源占用\n")
+
+    def resumeTwinGame(self):
+        """恢复因空闲暂停而最小化的游戏窗口。"""
+        if not self._twin_game_paused:
+            return
+        from utils.twin_resource import restore_game_window
+        if restore_game_window(cfg.get_value("game_title_name")):
+            self._twin_game_paused = False
+            self.logInterface.appendLog("桌面分身：已恢复游戏窗口\n")
+
+    def prepareTwinGameForTask(self):
+        """任务开始前恢复游戏窗口，避免任务在最小化窗口上截图失败。"""
+        if in_desktop_twin():
+            self.resumeTwinGame()
 
     def initWindow(self):
         # 开启 “在标题栏和窗口边框上显示强调色” 后，会导致窗口顶部出现异色横条 bug 已经修复
@@ -621,8 +657,9 @@ class MainWindow(MSFluentWindow):
         super().showEvent(event)
         if self._defer_startup_checks:
             self._defer_startup_checks = False
-            checkUpdate(self, flag=True)
-            checkAnnouncement(self)
+            if not in_desktop_twin():
+                checkUpdate(self, flag=True)
+                checkAnnouncement(self)
         if self._evernight.unlocked and not self._evernight.animation_played:
             QTimer.singleShot(0, self._play_evey_animation)
 

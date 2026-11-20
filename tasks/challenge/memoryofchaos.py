@@ -83,7 +83,7 @@ class MemoryOfChaos(BaseChallenge):
                 log.error(f"第{level}层挑战失败")
                 return False
 
-            time.sleep(6)
+            # 结算动画由 wait_for_screen_change 轮询确认，不再固定等待
             screen.wait_for_screen_change('memory_of_chaos')
         return True
 
@@ -266,7 +266,6 @@ class MemoryOfChaos(BaseChallenge):
         '''领取奖励'''
         if self.max_level > 0:
             self.save_timestamp_into_config()
-            time.sleep(2)
             screen.wait_for_screen_change('memory_of_chaos')
             # 领取星琼
             if auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, max_retries=5, crop=(1775.0 / 1920, 902.0 / 1080, 116.0 / 1920, 110.0 / 1080)):

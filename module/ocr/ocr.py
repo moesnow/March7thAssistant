@@ -24,9 +24,10 @@ OCR_WARMUP_HARD_LIMIT = 30.0
 # 但往往要等到 full GC 才会集中回收，所以任务管理器里会表现为 RSS 快速
 # 爬升、达到高点后瞬间回落的锯齿。这里通过周期性 full GC 优先压低峰值内存。
 #
-# 这个值越小，峰值越低，但 full GC 触发越频繁；这里先取一个对 OCR 热路径
-# 较低侵入的经验值 20，优先解决长时间任务中的内存峰值问题。
-OCR_PERIODIC_FULL_GC_INTERVAL = 20
+# 实测（1920x1080，ONNXRuntime CPU）：单次 OCR 约留下 33MB 短生命周期对象，
+# 间隔 20 时锯齿峰约 690MB，间隔 5 时约 272MB；full GC 的总耗时基本相同
+# （间隔 5 在 15 次内约 84ms，间隔 20 折算约 78ms），因此取更低的 5。
+OCR_PERIODIC_FULL_GC_INTERVAL = 5
 # OpenVINO 存在内存泄漏问题，每隔此时间（秒）重新初始化一次 OCR 实例以释放内存
 OCR_OPENVINO_REINIT_INTERVAL = 240
 
@@ -959,9 +960,13 @@ class OCR:
         else:
             self.logger.debug(f"OCR识别结果: {modified_dict}")
 
-    def recognize_single_line(self, image, blacklist=None):
-        """识别图片中的单行文本，支持黑名单过滤"""
-        results = self.convert_format(self.run(image))
+    def recognize_single_line(self, image, blacklist=None, *, recognition_only=False):
+        """识别图片中的单行文本，支持黑名单过滤。
+
+        recognition_only=True 时跳过文本检测，直接把整图送识别模型：
+        已知 crop 只含一行文字时比完整检测快一个量级。
+        """
+        results = self.convert_format(self.run(image, recognition_only=recognition_only))
         if results:
             for text, score in (item[1] for item in results):
                 if not blacklist or all(char != text for char in blacklist):

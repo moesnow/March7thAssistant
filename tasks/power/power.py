@@ -255,7 +255,7 @@ class Power:
         screen.change_to("map")
 
         def read():
-            return read_number(auto, MAP_POWER, parse_pc_power, "未能确认当前开拓力")
+            return read_number(auto, MAP_POWER, parse_pc_power, "未能确认当前开拓力", single_line=True)
 
         balance = read()
         if use_supplement:

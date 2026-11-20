@@ -1,6 +1,5 @@
 """不启动真实进程：覆盖渠道协议、窗口归属、句柄截图、OCR 和暂停后的点击保护。"""
 import json
-from contextlib import nullcontext
 from types import SimpleNamespace
 from unittest.mock import Mock
 from urllib.parse import unquote, urlsplit
@@ -47,8 +46,8 @@ def launch_env(monkeypatch):
     monkeypatch.setattr(epic.win32gui, "ClientToScreen", lambda *_: (100, 200))
     monkeypatch.setattr(epic.win32gui, "GetForegroundWindow", lambda: 42)
     from module.automation.launcher_automation import LauncherAutomation
+    from module.automation import screenshot as screenshot_module
     from module.ocr import ocr
-    import mss
     mouse_click = Mock(side_effect=lambda *_: state.update(clicked=True, running=True))
     def init_input(automation):
         automation.mouse_click = mouse_click
@@ -57,7 +56,7 @@ def launch_env(monkeypatch):
     monkeypatch.setattr(LauncherAutomation, "_init_input", init_input)
     image = Image.new("RGB", (400, 240))
     capture = Mock(return_value=SimpleNamespace(size=image.size, rgb=image.tobytes()))
-    monkeypatch.setattr(mss, "mss", lambda: nullcontext(SimpleNamespace(grab=capture)))
+    monkeypatch.setattr(screenshot_module, "_mss_instance", lambda: SimpleNamespace(grab=capture))
     recognize = Mock(return_value=[([[20, 30], [120, 30], [120, 60], [20, 60]], ("Start Game", 0.99))])
     monkeypatch.setattr(ocr, "recognize_multi_lines", recognize)
     flow = epic.EpicGameLauncher(game)

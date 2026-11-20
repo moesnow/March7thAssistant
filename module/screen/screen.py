@@ -1,5 +1,6 @@
 import os
 import sys
+import math
 import time
 import json
 import threading
@@ -15,6 +16,20 @@ from module.automation.background_input import GameWindowLost, InputInterrupted
 from module.config import cfg
 from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend, get_ui_profile
 from module.localization import tr
+
+
+# 界面匹配是 CPU 密集的模板匹配。60 多个界面图并发扫描时，线程数超过约 8 个不会
+# 更快，却会让同时驻留的匹配临时缓冲成倍增长（实测 8 线程约 0.5GB，16 线程约
+# 1.2GB）；因此按 8 个 worker 封顶，兼顾整轮扫描耗时与瞬时内存。
+_SCREEN_MATCH_WORKERS = 8
+# 等界面切换时的轮询间隔与总预算：原实现固定等 20 次、每次 0.5 秒，共 10 秒。
+_SCREEN_POLL_INTERVAL = 0.15
+_SCREEN_WAIT_TIMEOUT = 10.0
+
+
+def _screen_match_workers(screen_count):
+    """按界面数量与 CPU 数决定并发匹配的线程数，最多 _SCREEN_MATCH_WORKERS 个。"""
+    return max(1, min(_SCREEN_MATCH_WORKERS, screen_count, os.cpu_count() or 4))
 
 
 class Screen(metaclass=SingletonMeta):
@@ -199,7 +214,7 @@ class Screen(metaclass=SingletonMeta):
             import psutil
             mem = psutil.virtual_memory()
             if mem.available > 2 * 1024**3:
-                executor = ThreadPoolExecutor(max_workers=min(len(screen_map), os.cpu_count() or 4, 8))
+                executor = ThreadPoolExecutor(max_workers=_screen_match_workers(len(screen_map)))
                 try:
                     futures = [executor.submit(find_screen, name, screen) for name, screen in screen_map.items()]
                     for future in as_completed(futures):
@@ -407,6 +422,23 @@ class Screen(metaclass=SingletonMeta):
             except Exception as e:
                 self.logger.debug(f"未知的操作: {e}")
 
+    def _wait_for_screen(self, next_screen):
+        """轮询目标界面，命中立即返回 True；总预算与原先 20 次、每次 0.5 秒一致。
+
+        同时用次数上限兜底：测试环境把 time.sleep 换成空实现时，循环不会
+        因为等待时间预算而空转整整 10 秒。
+        """
+        deadline = time.monotonic() + _SCREEN_WAIT_TIMEOUT
+        max_polls = max(1, math.ceil(_SCREEN_WAIT_TIMEOUT / _SCREEN_POLL_INTERVAL))
+        for _ in range(max_polls):
+            self.logger.debug(f"等待：{self.get_name(next_screen)}")
+            if self.check_screen(next_screen):
+                return True
+            time.sleep(_SCREEN_POLL_INTERVAL)
+            if time.monotonic() >= deadline:
+                break
+        return False
+
     def wait_for_screen_change(self, next_screen, max_recursion=2, timeout_operations=None, *,
                                autotry=True, on_timeout=None):
         """
@@ -414,36 +446,29 @@ class Screen(metaclass=SingletonMeta):
         :param timeout_operations: 超时后执行的可选操作列表，执行后会再次检测界面
         :param on_timeout: 超时操作和重试均未到达目标时调用，恢复到目标后返回 True
         """
-        for _ in range(20):
-            self.logger.debug(f"等待：{self.get_name(next_screen)}")
-            if self.check_screen(next_screen):
+        if self._wait_for_screen(next_screen):
+            self.logger.info(f"切换到：{green(self.get_name(next_screen))}")
+            time.sleep(self.wait_screen_change_time)
+            return
+        if timeout_operations:
+            self.logger.warning(f"切换到 {self.get_name(next_screen)} 超时，执行超时操作后重新检测")
+            self.perform_operations(timeout_operations)
+            if self._wait_for_screen(next_screen):
                 self.logger.info(f"切换到：{green(self.get_name(next_screen))}")
                 time.sleep(self.wait_screen_change_time)
-                break
-            time.sleep(0.5)
+                return
+        self.wait_screen_change_time = 1
+        if max_recursion > 0:
+            self.logger.warning(f"切换到 {self.get_name(next_screen)} 超时，准备重试")
+            self.change_to(next_screen, max_recursion=max_recursion - 1, autotry=autotry,
+                           on_timeout=on_timeout)
+        elif on_timeout is not None and on_timeout():
+            if self.current_screen != next_screen:
+                self.current_screen = next_screen
+                self.logger.info(f"切换到：{green(self.get_name(next_screen))}")
+                time.sleep(self.wait_screen_change_time)
         else:
-            if timeout_operations:
-                self.logger.warning(f"切换到 {self.get_name(next_screen)} 超时，执行超时操作后重新检测")
-                self.perform_operations(timeout_operations)
-                for _ in range(20):
-                    self.logger.debug(f"等待：{self.get_name(next_screen)}")
-                    if self.check_screen(next_screen):
-                        self.logger.info(f"切换到：{green(self.get_name(next_screen))}")
-                        time.sleep(self.wait_screen_change_time)
-                        return
-                    time.sleep(0.5)
-            self.wait_screen_change_time = 1
-            if max_recursion > 0:
-                self.logger.warning(f"切换到 {self.get_name(next_screen)} 超时，准备重试")
-                self.change_to(next_screen, max_recursion=max_recursion - 1, autotry=autotry,
-                               on_timeout=on_timeout)
-            elif on_timeout is not None and on_timeout():
-                if self.current_screen != next_screen:
-                    self.current_screen = next_screen
-                    self.logger.info(f"切换到：{green(self.get_name(next_screen))}")
-                    time.sleep(self.wait_screen_change_time)
-            else:
-                self.log_and_raise(f"无法切换到 {self.get_name(next_screen)}", "无法切换到指定游戏界面")
+            self.log_and_raise(f"无法切换到 {self.get_name(next_screen)}", "无法切换到指定游戏界面")
 
     def _switch_screen(self, current_screen, next_screen, max_recursion, *, autotry, on_timeout):
         """

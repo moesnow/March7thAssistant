@@ -199,9 +199,16 @@ _pending_messages = []
 
 
 def _handle_local_message(window, message):
-    if message.get("action") == "quit-desktop-twin":
+    action = message.get("action")
+    if action == "quit-desktop-twin":
         if _desktop_twin_context:
             QTimer.singleShot(0, window.quitApp)
+        return
+    if action == "idle-pause":
+        window.pauseTwinGame()
+        return
+    if action == "idle-resume":
+        window.resumeTwinGame()
         return
     window.handle_external_activate(task=message.get("task"), exit_on_complete=message.get("exit", False))
 

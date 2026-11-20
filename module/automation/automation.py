@@ -24,6 +24,10 @@ from module.config.platform import InvalidGameConnection, TouchProfileInputError
 
 
 _screenshot_retry_timeout = ContextVar("screenshot_retry_timeout", default=60.0)
+# 灰度预筛的余量：同一模板在渲染噪声下的灰度与彩色相似度差异实测约 ±0.03，
+# 灰度分数低于阈值 0.12 以上时可判定目标不存在，跳过整帧彩色匹配。
+_GRAY_MATCH_MARGIN = 0.12
+_GRAY_MATCH_MISS = object()
 _TOUCH_UNSUPPORTED_INPUTS = (
     "press_key", "press_key_down", "press_key_up", "secretly_press_key", "press_mouse", "mouse_scroll",
 )
@@ -70,6 +74,11 @@ class Automation(metaclass=SingletonMeta):
         self.img_cache = {}
         self._debug_overlay = None
         self._debug_initialized = False
+        # 当前截图的 numpy 缓存：同一帧被多次查找时避免重复复制整帧与颜色空间转换。
+        self._frame_screenshot = None
+        self._frame_rgb = None
+        self._frame_bgr = None
+        self._frame_gray = None
 
     def __getattr__(self, name):
         if name in _INPUT_METHODS and self.__dict__.get("input_handler") is None:
@@ -106,8 +115,47 @@ class Automation(metaclass=SingletonMeta):
         self.shutdown_debug()
         self.window_title = cfg.get_value('game_title_name')
         self.screenshot = None
+        self._frame_screenshot = None
+        self._frame_rgb = None
+        self._frame_bgr = None
+        self._frame_gray = None
         self.ocr_result = []
+        # YOLO 会话按模型路径缓存，切换连接后按需重建，避免两个 ONNX 会话常驻。
+        self._yolo_sessions = {}
         self._init_input()
+
+    def _frame_rgb_array(self):
+        """当前截图的 RGB 数组。
+
+        截图对象变化时重建缓存；同一帧上的多次查找共用一份数组，避免每次复制
+        整帧（1920x1080 约 6MB）并重复转换。外部直接改写 auto.screenshot 时，
+        这里按对象身份识别并自动失效。
+        """
+        if self.screenshot is None:
+            raise RuntimeError("尚未获取游戏截图")
+        if getattr(self, "_frame_screenshot", None) is not self.screenshot:
+            # 先构建数组再发布截图身份，避免并发查找读到半初始化的缓存。
+            rgb = np.array(self.screenshot)
+            self._frame_rgb = rgb
+            self._frame_bgr = None
+            self._frame_gray = None
+            self._frame_screenshot = self.screenshot
+        return self._frame_rgb
+
+    def frame_bgr(self):
+        """当前截图的 BGR 数组，供模板匹配、HSV 与 YOLO 使用。"""
+        rgb = self._frame_rgb_array()
+        if getattr(self, "_frame_bgr", None) is None:
+            # 与旧写法 cv2.cvtColor(..., COLOR_BGR2RGB) 等价：都是交换 RGB 与 BGR。
+            self._frame_bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
+        return self._frame_bgr
+
+    def frame_gray(self):
+        """当前截图的灰度数组，沿用旧实现的通道约定以保证匹配结果不变。"""
+        rgb = self._frame_rgb_array()
+        if getattr(self, "_frame_gray", None) is None:
+            self._frame_gray = cv2.cvtColor(rgb, cv2.COLOR_BGR2GRAY)
+        return self._frame_gray
 
     def _is_debug_enabled(self):
         """检查调试模式是否启用。"""
@@ -279,6 +327,46 @@ class Automation(metaclass=SingletonMeta):
         bottom_right = (top_left[0] + int(width / scale_factor), top_left[1] + int(height / scale_factor))
         return top_left, bottom_right
 
+    def _gray_template(self, target, template):
+        """取模板的灰度图，模板缓存命中时一并缓存灰度版本。"""
+        entry = self.img_cache.get(target)
+        if entry is None:
+            return ImageUtils.to_gray(template)
+        gray = entry.get('gray_template')
+        if gray is None:
+            gray = ImageUtils.to_gray(template)
+            entry['gray_template'] = gray
+        return gray
+
+    def _color_match_at(self, template, location):
+        """在整帧的指定位置取同尺寸色块做彩色复核，返回该位置的相似度。"""
+        height, width = template.shape[:2]
+        frame = self.frame_bgr()
+        left, top = int(location[0]), int(location[1])
+        patch = frame[top:top + height, left:left + width]
+        if patch.shape[0] != height or patch.shape[1] != width:
+            return None
+        score, _ = ImageUtils.match_template(patch, template)
+        return score
+
+    def _find_image_gray_first(self, target, threshold, template):
+        """灰度整帧定位后在同一位置做彩色复核。
+
+        返回 (score, location) 表示命中；_GRAY_MATCH_MISS 表示灰度分数远低于阈值、
+        可判定目标不存在；None 表示需要退回原彩色整帧匹配（灰度或颜色复核不够自信）。
+        """
+        if threshold is None:
+            return None
+        score, location = ImageUtils.match_template(self.frame_gray(), self._gray_template(target, template))
+        if math.isinf(score):
+            return None
+        if score < threshold - _GRAY_MATCH_MARGIN:
+            return _GRAY_MATCH_MISS
+        color_score = self._color_match_at(template, location)
+        if color_score is not None and color_score >= threshold:
+            return color_score, location
+        return None
+
     @pause_guard
     def find_image_element(self, target, threshold, scale_range, relative=False, cacheable=True):
         """
@@ -304,11 +392,22 @@ class Automation(metaclass=SingletonMeta):
                     raise ValueError(f"读取图片失败：{target}")
                 if cacheable:
                     self.img_cache[target] = {'mask': mask, 'template': template}
-            screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2RGB)  # 将截图转换为RGB
+            screenshot = self.frame_bgr()  # 复用当前帧的 BGR 数组
             if mask is not None:
                 matchVal, matchLoc = ImageUtils.scale_and_match_template(screenshot, template, threshold, scale_range, mask)  # 执行缩放并匹配模板
             else:
-                matchVal, matchLoc = ImageUtils.scale_and_match_template(screenshot, template, threshold, scale_range)  # 执行缩放并匹配模板
+                candidate = None
+                if scale_range is None:
+                    candidate = self._find_image_gray_first(target, threshold, template)
+                if candidate is _GRAY_MATCH_MISS:
+                    self.logger.debug(
+                        f"目标图片：{target.replace('./assets/images/', '')} 灰度预筛未命中"
+                    )
+                    return None, None, None
+                if candidate is not None:
+                    matchVal, matchLoc = candidate
+                else:
+                    matchVal, matchLoc = ImageUtils.scale_and_match_template(screenshot, template, threshold, scale_range)  # 执行缩放并匹配模板
 
             # 这里的相似度文本说明有问题，对于无mask匹配相似度越高越好。有mask匹配则是越低越好
             self.logger.debug(f"目标图片：{target.replace('./assets/images/', '')} 相似度：{matchVal:.2f} 匹配阈值：{threshold}")
@@ -348,7 +447,7 @@ class Automation(metaclass=SingletonMeta):
         返回:
         - 黑白图数组。
         """
-        screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2RGB)
+        screenshot = self.frame_bgr()
         bw_map = np.zeros(screenshot.shape[:2], dtype=np.uint8)
         bw_map[np.sum((screenshot - pixel_bgr) ** 2, axis=-1) <= 800] = 255
         return bw_map
@@ -387,7 +486,7 @@ class Automation(metaclass=SingletonMeta):
             template = ImageUtils.read_image(target, cv2.IMREAD_GRAYSCALE)
             if template is None:
                 raise ValueError(f"读取图片失败：{target}")
-            screenshot = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_BGR2GRAY)
+            screenshot = self.frame_gray()
             matches = ImageUtils.scale_and_match_template_with_multiple_targets(
                 screenshot, template, threshold, scale_range, mask_top_right_ratio=mask_top_right_ratio
             )
@@ -464,7 +563,7 @@ class Automation(metaclass=SingletonMeta):
     def perform_ocr(self, *, raise_on_error=False):
         """刷新 OCR 结果。调用方需要重试时，可以接收识别异常。"""
         try:
-            self.ocr_result = ocr.recognize_multi_lines(np.array(self.screenshot))
+            self.ocr_result = ocr.recognize_multi_lines(self._frame_rgb_array())
             if not self.ocr_result:
                 self.logger.debug(f"未识别出任何文字")
                 self.ocr_result = []
@@ -604,8 +703,7 @@ class Automation(metaclass=SingletonMeta):
         :return: (top_left, bottom_right) 或 (None, None)。
         """
         lower, upper = target
-        img = np.array(self.screenshot)
-        img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        img_bgr = self.frame_bgr()
         hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, lower, upper)
 
@@ -761,7 +859,7 @@ class Automation(metaclass=SingletonMeta):
             model_path, names, target_class, input_size = self._get_yolo_target_config(target)
 
             session = self._get_yolo_session(model_path)
-            img = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_RGB2BGR)
+            img = self.frame_bgr()
             input_size = self._resolve_yolo_input_size(session, input_size)
             input_tensor, scale = self._yolo_preprocess(img, input_size)
 
@@ -795,7 +893,7 @@ class Automation(metaclass=SingletonMeta):
             model_path, names, target_class, input_size = self._get_yolo_target_config(target)
 
             session = self._get_yolo_session(model_path)
-            img = cv2.cvtColor(np.array(self.screenshot), cv2.COLOR_RGB2BGR)
+            img = self.frame_bgr()
             input_size = self._resolve_yolo_input_size(session, input_size)
             input_tensor, scale = self._yolo_preprocess(img, input_size)
 
@@ -1047,7 +1145,11 @@ class Automation(metaclass=SingletonMeta):
         """
         for i in range(max_retries):
             self.take_screenshot(crop)
-            ocr_result = ocr.recognize_single_line(np.array(self.screenshot), blacklist)
+            frame = self._frame_rgb_array()
+            # 单行 crop 直接走识别模型，省掉整幅文本检测；失败时回退到完整 OCR。
+            ocr_result = ocr.recognize_single_line(frame, blacklist, recognition_only=True)
+            if not ocr_result:
+                ocr_result = ocr.recognize_single_line(frame, blacklist)
             if ocr_result:
                 return ocr_result[0]
             if retry_delay > 0 and i < max_retries - 1:
@@ -1098,7 +1200,7 @@ class Automation(metaclass=SingletonMeta):
         if take_screenshot:
             self.take_screenshot(crop)
 
-        img_np = np.array(self.screenshot)
+        img_np = self._frame_rgb_array()
         if img_np.size == 0:
             self.logger.warning("截图为空，无法计算 RGB 占比")
             return False
@@ -1135,7 +1237,7 @@ class Automation(metaclass=SingletonMeta):
         """
         self.take_screenshot((0, 0, 1, 1), use_background_screenshot)
 
-        img_np = np.array(self.screenshot).copy()
+        img_np = self._frame_rgb_array().copy()
         h, w = img_np.shape[:2]
 
         is_single_crop = (

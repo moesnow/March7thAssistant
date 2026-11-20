@@ -335,6 +335,14 @@ from module.config.platform import (
     get_control_backend, get_ui_profile, pin_game_connection,
 )
 
+# 桌面分身里的任务进程降到低于正常优先级：主桌面仍能流畅操作，代价是分身内自动化略慢。
+if desktop_twin_context and cfg.get_value("desktop_twin_low_priority", True):
+    try:
+        from utils.twin_resource import lower_current_process_priority
+        lower_current_process_priority()
+    except Exception:
+        pass
+
 
 def _report_invalid_connection(error):
     print(str(error), file=sys.stderr, flush=True)
