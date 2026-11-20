@@ -6,10 +6,16 @@ import darkdetect
 from module.config import cfg
 
 
+def current_theme_preference(window):
+    if window is not None and window._evernight.selected:
+        return 'evernight'
+    preference = cfg.get_value('ui_theme', 'auto')
+    return 'auto' if preference == 'evernight' else preference
+
+
 def applyTheme(window, theme=None):
-    """Apply the session theme or the saved preference; auto follows the system."""
-    evernight_selected = window is not None and window._evernight.selected
-    preference = 'evernight' if evernight_selected else cfg.get_value('ui_theme', 'auto')
+    """Apply the current theme preference, following the system in auto mode."""
+    preference = current_theme_preference(window)
     if theme is not None:
         if preference != 'auto':
             return

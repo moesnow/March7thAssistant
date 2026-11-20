@@ -8,7 +8,7 @@ from module.config import cfg
 from module.localization import tr
 from utils.desktop import open_log_folder
 from ..tools.check_update import checkUpdate
-from ..tools.check_theme_change import applyTheme
+from ..tools.check_theme_change import applyTheme, current_theme_preference
 from ..components.evey_decoration import EveyControlDecoration
 from app.common.signal_bus import signalBus
 
@@ -35,7 +35,7 @@ class ComboBoxSettingCard2(SettingCard):
 
 
 class ComboBoxSettingCardTheme(ComboBoxSettingCard2):
-    """Keep the unlocked theme in this window, never in the saved preference."""
+    """Include Evernight in the theme list once unlocked."""
 
     def __init__(self, window):
         self._window = window if hasattr(window, '_evernight') else None
@@ -49,24 +49,28 @@ class ComboBoxSettingCardTheme(ComboBoxSettingCard2):
             return
         self.setEvernightMode(window._evernight_active)
         if window._evernight.unlocked:
-            with QSignalBlocker(self.comboBox):
+            self.showEvernightOption()
+
+    def showEvernightOption(self):
+        with QSignalBlocker(self.comboBox):
+            index = self.comboBox.findData('evernight')
+            if index < 0:
                 self.comboBox.addItem(tr('长夜'), userData='evernight')
-                if window._evernight.selected:
-                    self.comboBox.setCurrentIndex(self.comboBox.findData('evernight'))
+                index = self.comboBox.count() - 1
+            if self._window._evernight.selected:
+                self.comboBox.setCurrentIndex(index)
 
     def setEvernightMode(self, active):
         self.eveyDecoration.setActive(active)
 
     def _onCurrentIndexChanged(self, index):
-        selected = self.comboBox.itemData(index) == 'evernight'
-        if self._window is not None:
-            self._window._evernight.selected = selected
-        if not selected:
+        if self._window is None:
             super()._onCurrentIndexChanged(index)
-        applyTheme(self._window)
-        # Dark and Evernight share a palette, so Qt may not emit themeChanged.
-        if self._window is not None:
-            self._window._on_theme_changed()
+            applyTheme(None)
+        elif not self._window.set_ui_theme(self.comboBox.itemData(index)):
+            previous = self.comboBox.findData(current_theme_preference(self._window))
+            with QSignalBlocker(self.comboBox):
+                self.comboBox.setCurrentIndex(max(0, previous))
 
 
 class ComboBoxSettingCardUpdateSource(SettingCard):

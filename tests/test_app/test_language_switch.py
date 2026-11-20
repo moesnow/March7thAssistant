@@ -115,12 +115,17 @@ def test_resume_uses_new_language_and_custom_name_is_not_translated(log_page, mo
 
 
 @pytest.fixture
-def window(qtbot, monkeypatch, tmp_path):
+def window(qtbot, monkeypatch, tmp_path, request):
     from app import main_window as module
     from module.config import cfg
     original = localization.get_current_language()
     original_ui = getattr(cfg, 'ui_language_now', 'zh_CN')
-    monkeypatch.setattr(cfg, 'config', deepcopy(cfg.config))
+    config = deepcopy(cfg.config)
+    config['evernight_unlocked'] = False
+    if config.get('ui_theme') == 'evernight':
+        config['ui_theme'] = 'auto'
+    config.update(getattr(request, 'param', {}))
+    monkeypatch.setattr(cfg, 'config', config)
     monkeypatch.setattr(cfg, 'config_path', str(tmp_path / 'config.yaml'))
     monkeypatch.setattr(cfg, 'set_value', Mock())
     monkeypatch.setattr(cfg, 'set_values', Mock())

@@ -1,4 +1,4 @@
-"""Session-only Easter egg state; system theme changes never count as clicks."""
+"""Logo click sequence and first-unlock animation state."""
 from collections import deque
 from time import monotonic
 
@@ -9,13 +9,13 @@ EVEY_ANIMATION = './assets/app/images/evernight/evey-floating.png'
 
 
 class EvernightEasterEgg:
-    def __init__(self, clock=monotonic):
+    def __init__(self, clock=monotonic, *, unlocked=False):
         self._clock = clock
         self._clicks = deque(maxlen=5)
         self._warning_until = None
-        self.unlocked = False
+        self.unlocked = unlocked
         self.selected = False
-        self.animation_played = False
+        self.animation_played = unlocked
 
     def record_click(self):
         """Five quick clicks warn; five more within the warning unlock the egg."""
@@ -37,7 +37,7 @@ class EvernightEasterEgg:
         return None
 
     def consume_animation(self, selected):
-        """Claim the one playback only when the session theme is selected."""
+        """Claim the first-unlock animation while the theme is selected."""
         if not selected or not self.unlocked or self.animation_played:
             return False
         self.animation_played = True

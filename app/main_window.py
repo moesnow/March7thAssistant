@@ -229,6 +229,7 @@ class MainWindow(MSFluentWindow):
         self._evernight = EvernightEasterEgg()
         self._evernight_active = False
         self._evey_animation = None
+        self._evernight.selected = self._load_evernight_selection()
 
         self.initWindow()
 
@@ -236,6 +237,8 @@ class MainWindow(MSFluentWindow):
         self.initNavigation()
         self.initSystemTray()
         qconfig.themeChanged.connect(self._on_theme_changed)
+        if self._evernight.selected:
+            self._on_theme_changed()
 
         if self.start_minimized_to_tray:
             self.hide()
@@ -416,6 +419,56 @@ class MainWindow(MSFluentWindow):
             except Exception:
                 pass
 
+    @staticmethod
+    def _prepare_evernight():
+        try:
+            evernight_artwork()
+        except OSError as error:
+            log.warning(f'无法加载长夜主题：{error}')
+            return False
+        return True
+
+    def _load_evernight_selection(self):
+        if not self._evernight.unlocked and cfg.get_value('evernight_unlocked') is True:
+            self._evernight = EvernightEasterEgg(unlocked=True)
+        return (self._evernight.unlocked and cfg.get_value('ui_theme') == 'evernight'
+                and self._prepare_evernight())
+
+    def _apply_ui_theme(self, evernight_selected):
+        selection_changed = evernight_selected != self._evernight.selected
+        previous_palette = qconfig.theme
+        self._evernight.selected = evernight_selected
+        applyTheme(self)
+        # 深色和长夜共用调色板，切换时 Qt 可能不发出 themeChanged。
+        if selection_changed and qconfig.theme == previous_palette:
+            self._on_theme_changed()
+
+    def set_ui_theme(self, preference, *, unlock_evernight=False):
+        if cfg.writes_suspended:
+            return False
+        selected = preference == 'evernight'
+        if selected and (not self._evernight.unlocked or not self._prepare_evernight()):
+            return False
+
+        values = {'ui_theme': preference}
+        if unlock_evernight:
+            values['evernight_unlocked'] = True
+        previous = {key: cfg.config[key] for key in values if key in cfg.config}
+        try:
+            if unlock_evernight:
+                cfg.set_values(values)
+            else:
+                cfg.set_value('ui_theme', preference)
+        except OSError as error:
+            for key in values.keys() - previous.keys():
+                cfg.config.pop(key, None)
+            cfg.config.update(previous)
+            log.warning(f'无法保存界面主题：{error}')
+            return False
+
+        self._apply_ui_theme(selected)
+        return True
+
     def _on_theme_changed(self):
         selected = self._evernight.selected
         if not selected and self._evey_animation is not None:
@@ -448,16 +501,10 @@ class MainWindow(MSFluentWindow):
         if result != 'unlocked':
             return
         self.homeInterface.banner.logoHint.dismiss()
-        # No optional artwork is decoded at startup, on theme/config reload, or on the first hint.
-        try:
-            evernight_artwork()
-        except OSError as error:
-            self._evernight.unlocked = False  # Do not expose a broken option on later settings rebuilds.
-            log.warning(f'无法加载长夜月彩蛋，保留当前主题：{error}')
+        if not self.set_ui_theme('evernight', unlock_evernight=True):
+            self._evernight.unlocked = False
             return
-        combo = self.settingInterface.themeCard.comboBox
-        combo.addItem(tr('长夜'), userData='evernight')
-        combo.setCurrentIndex(combo.findData('evernight'))
+        self.settingInterface.themeCard.showEvernightOption()
 
     def _play_evey_animation(self):
         if not self.isVisible() or self.isMinimized():
@@ -1023,7 +1070,7 @@ class MainWindow(MSFluentWindow):
             # 重新加载配置
             log.info("[config-watch] 重新加载配置文件并刷新界面")
             cfg._load_config(None, save=False)
-            applyTheme(self)
+            self._apply_ui_theme(self._load_evernight_selection())
 
             # 重新初始化通知器
             try:
