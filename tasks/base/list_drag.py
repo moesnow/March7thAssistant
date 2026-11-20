@@ -14,7 +14,7 @@ def changed_ratio(before, after):
 
 
 def drag_list(auto, start, end, *, crop, duration=0.8, settle=1.0, tolerance=0.01, text_pattern=None,
-              end_pause=0.0, poll_interval=0.25):
+              end_pause=0.0, poll_interval=0.25, is_stable=None):
     """只发送一次手势；中断或 16 轮内未静止时返回 False，由调用方重新识别。
 
     drag_mouse 会截全屏；这里在松手后重新截图，不能复用手势开始时的帧。
@@ -29,7 +29,9 @@ def drag_list(auto, start, end, *, crop, duration=0.8, settle=1.0, tolerance=0.0
     for _ in range(16):
         time.sleep(poll_interval)
         current, _, _ = auto.take_screenshot(crop=crop)
-        if text_pattern is None:
+        if is_stable is not None:
+            stable = is_stable(previous, current)
+        elif text_pattern is None:
             stable = changed_ratio(previous, current) <= tolerance
         else:
             # 忘却之庭的水晶一直在动，只比较关卡数字的位置，避免把动画当成惯性。
