@@ -1,9 +1,12 @@
-from module.automation import auto
-from module.logger import log
-from module.config import cfg
 import time
+
+import numpy as np
+
+from module.automation import auto
 from module.automation.screenshot import Screenshot
-from tasks.base.list_drag import drag_list
+from module.config import cfg
+from module.logger import log
+from tasks.base.list_drag import changed_ratio, drag_list
 
 
 SUPPORT_BUTTON_CROPS = {
@@ -17,6 +20,34 @@ SUPPORT_RETRY_CROPS = {
 }
 SUPPORT_LIST_TITLES = ["支援列表", "支援角色"]
 SUPPORT_LIST_TITLE_CROP = (157 / 1920, 22 / 1080, 300 / 1920, 81 / 1080)
+SUPPORT_LIST_CROP = (40 / 1920, 180 / 1080, 544 / 1920, 770 / 1080)
+
+
+def _support_scrollbar(frame):
+    # 1080P 下轨道位于 x=568–583，滑块比左右两侧亮。
+    track = frame.crop((round(frame.width * 528 / 544), 0, frame.width, frame.height))
+    gray = np.asarray(track.convert("L"), dtype=np.int16)
+    width = track.width
+    side = round(width * 5 / 16)
+    center = np.median(gray[:, round(width * 6 / 16):round(width * 10 / 16)], axis=1)
+    sides = (np.median(gray[:, :side], axis=1) + np.median(gray[:, -side:], axis=1)) / 2
+    edges = np.flatnonzero(np.diff(np.r_[False, center - sides >= 30, False]))
+    top, bottom = max(zip(edges[::2], edges[1::2]), key=lambda span: span[1] - span[0], default=(0, 0))
+    if bottom - top >= round(24 * frame.height / 770):
+        return top, bottom
+    return None
+
+
+def _support_list_stable(before, after):
+    previous = _support_scrollbar(before)
+    current = _support_scrollbar(after)
+    if previous is None and current is None:
+        # 没有滑块时只比较头像列，避开持续播放的横幅。
+        avatars = (0, 0, round(before.width * 106 / 544), before.height)
+        return changed_ratio(before.crop(avatars), after.crop(avatars)) <= 0.01
+    return previous is not None and current is not None and all(
+        abs(a - b) <= 1 for a, b in zip(previous, current)
+    )
 
 
 def _button_in_crop(button, crop, frame_crop):
@@ -186,7 +217,7 @@ class Character:
     def scroll_support_list():
         """拖动支援列表，失败时由调用方退出，不继续选择角色。"""
         completed = drag_list(auto, (400 / 1920, 850 / 1080), (400 / 1920, 400 / 1080),
-                              crop=(40 / 1920, 152 / 1080, 531 / 1920, 809 / 1080), duration=1.0)
+                              crop=SUPPORT_LIST_CROP, duration=1.0, is_stable=_support_list_stable)
         time.sleep(0.5)
         return completed
 
