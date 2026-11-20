@@ -11,7 +11,7 @@ from PySide6.QtCore import QEvent, QRect, QRectF, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QTextLayout
 from PySide6.QtWidgets import (QApplication, QBoxLayout, QDialog, QFrame, QHBoxLayout, QLayout, QPushButton,
                                QSizePolicy, QVBoxLayout, QWidget)
-from qfluentwidgets import (BodyLabel, Dialog, HyperlinkButton, IconWidget, IndeterminateProgressRing, InfoBar, InfoBarIcon,
+from qfluentwidgets import (BodyLabel, Dialog, HyperlinkButton, IconWidget, IndeterminateProgressRing, InfoBarIcon,
                             PrimaryPushButton, PushButton, SubtitleLabel, TextWrap, ToolTipFilter, ToolTipPosition,
                             isDarkTheme, qconfig)
 from qfluentwidgets import FluentIcon as FIF
@@ -435,15 +435,12 @@ class DesktopTwinDialog(QDialog):
         from app.tools.desktop_twin_password_dialog import TwinPasswordDialog
 
         try:
-            account = saved_account()
-            box = TwinPasswordDialog(account, self)
+            box = TwinPasswordDialog(saved_account(), self)
         except RuntimeError as exc:
             self._report(exc)
             return
         try:
-            if box.exec() == QDialog.DialogCode.Accepted:
-                message = tr("已删除保存的分身密码") if account is not None else tr("已保存分身密码")
-                InfoBar.success(title=message, content="", duration=2500, parent=self)
+            box.exec()
         finally:
             box.deleteLater()
 

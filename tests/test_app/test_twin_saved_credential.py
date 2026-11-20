@@ -93,56 +93,69 @@ def editor_parent(qtbot):
 
 
 def test_password_editor_round_trip(qtbot, editor_parent, monkeypatch, storage):
-    from PySide6.QtWidgets import QDialog, QLineEdit, QMessageBox
+    from PySide6.QtCore import Qt
+    from PySide6.QtWidgets import QLineEdit, QMessageBox
     from app.tools.desktop_twin_password_dialog import TwinPasswordDialog
     from module.localization import tr
 
-    creds, reader = storage
+    creds, _ = storage
     writer, deleter = Mock(), Mock()
     monkeypatch.setattr(creds.win32cred, "CredWrite", writer)
     monkeypatch.setattr(creds.win32cred, "CredDelete", deleter)
     monkeypatch.setattr(creds, "current_account", lambda: r"PC\example")
-    box = TwinPasswordDialog(None, editor_parent)
-    assert box.account.text() == r"PC\example"
-    assert box.password.echoMode() == QLineEdit.EchoMode.Password
-    assert box.yesButton.text() == tr("保存密码")
-    box.yesButton.click()
-    writer.assert_not_called()
-    assert box.error.isHidden()
-    box.password.setText(" initial 🔑 ")
-    box.yesButton.click()
-    record, flags = writer.call_args.args
-    assert flags == 0
-    assert record == {"UserName": r"PC\example", "CredentialBlob": " initial 🔑 ",
-                      "Type": creds.win32cred.CRED_TYPE_GENERIC, "TargetName": creds.CREDENTIAL_TARGET,
-                      "Persist": creds.win32cred.CRED_PERSIST_LOCAL_MACHINE}
-    qtbot.waitUntil(lambda: box.result() == QDialog.DialogCode.Accepted)
-    assert not box.password.text()
-    reader.return_value = dict(record, CredentialBlob=record["CredentialBlob"].encode("utf-16-le"))
-
-    box = TwinPasswordDialog(creds.saved_account(), editor_parent)
-    assert box.account.isReadOnly() and box.password is None
-    assert box.yesButton.text() == tr("删除密码")
-    box.cancelButton.click()
-    deleter.assert_not_called()
-    writer.assert_called_once()
-
-    box = TwinPasswordDialog(creds.saved_account(), editor_parent)
     confirm = Mock(return_value=QMessageBox.StandardButton.No)
     monkeypatch.setattr(QMessageBox, "question", confirm)
+    box = TwinPasswordDialog(None, editor_parent)
+    box.show()
+    assert box.account_display.text() == r"PC\example" and box.account.isHidden()
+    assert box.account_display.textInteractionFlags() & Qt.TextInteractionFlag.TextSelectableByMouse
+    assert box.password.echoMode() == QLineEdit.EchoMode.Password
+    assert box.yesButton.text() == tr("保存密码")
+
+    box.edit_account.click()
+    assert box.account.isVisible() and box.focusWidget() is box.account
+    box.account.setText(r"PC\corrected")
+    box.password.setText(" initial 🔑 ")
+    box.yesButton.click()
+    writer.assert_called_once_with({
+        "UserName": r"PC\corrected", "CredentialBlob": " initial 🔑 ",
+        "Type": creds.win32cred.CRED_TYPE_GENERIC, "TargetName": creds.CREDENTIAL_TARGET,
+        "Persist": creds.win32cred.CRED_PERSIST_LOCAL_MACHINE,
+    }, 0)
+    assert box.feedback.content() == tr("已保存分身密码") and box.feedback.isVisible()
+    assert box.account_display.text() == r"PC\corrected" and box.edit_account.isHidden()
+    assert box.password.isHidden() and not box.password.text()
+    assert box.yesButton.text() == tr("删除密码")
+    box.yesButton.click()
+    deleter.assert_not_called()
+    qtbot.waitUntil(box.yesButton.isEnabled)
+    assert box.isVisible()
+
     box.yesButton.click()
     confirm.assert_not_called()
     deleter.assert_called_once_with(creds.CREDENTIAL_TARGET, creds.win32cred.CRED_TYPE_GENERIC, 0)
-    qtbot.waitUntil(lambda: box.result() == QDialog.DialogCode.Accepted)
-    writer.assert_called_once()
-
-    reader.side_effect = creds.pywintypes.error(1168, "CredRead", "not found")
-    box = TwinPasswordDialog(creds.saved_account(), editor_parent)
+    assert box.feedback.content() == tr("已删除保存的分身密码") and box.feedback.isVisible()
+    assert box.account_display.text() == r"PC\corrected"
+    assert box.password.isVisible() and box.edit_account.isVisible()
     assert box.yesButton.text() == tr("保存密码")
+    qtbot.waitUntil(box.yesButton.isEnabled)
+    assert box.isVisible()
     box.password.setText("new")
     box.yesButton.click()
     assert writer.call_args.args[0]["CredentialBlob"] == "new"
-    qtbot.waitUntil(lambda: box.result() == QDialog.DialogCode.Accepted)
+    box.cancelButton.click()
+    qtbot.waitUntil(lambda: not box.isVisible())
+
+
+def test_missing_account_opens_editor(qtbot, editor_parent, monkeypatch, storage):
+    from app.tools.desktop_twin_password_dialog import TwinPasswordDialog
+
+    creds, _ = storage
+    monkeypatch.setattr(creds, "current_account", lambda: "")
+    box = TwinPasswordDialog(None, editor_parent)
+    box.show()
+    assert box.account.isVisible() and box.focusWidget() is box.account
+    assert box.account_display.isHidden() and box.edit_account.isHidden()
 
 
 def test_empty_save_shakes_only_password_and_restores_position(qtbot, editor_parent, storage, monkeypatch):
@@ -171,7 +184,7 @@ def test_empty_save_shakes_only_password_and_restores_position(qtbot, editor_par
     assert box.password.x() > origin.x()
     with qtbot.waitSignal(animation.finished, timeout=1000):
         pass
-    assert box.password.pos() == origin and box.error.isHidden()
+    assert box.password.pos() == origin and box.feedback.isHidden()
     writer.assert_not_called()
 
 
@@ -187,12 +200,12 @@ def test_intro_actions(qtbot, monkeypatch, storage):
     observed = []
 
     def cancel(box):
-        observed.append((box.parentWidget(), box.account.text(), box.password))
+        observed.append((box.parentWidget(), box.account_display.text(), box.edit_account.isHidden(), box.password.isHidden()))
         return ui.QDialog.DialogCode.Rejected
 
     monkeypatch.setattr(TwinPasswordDialog, "exec", cancel)
     dialog._credentials_button.click()
-    assert observed == [(dialog, storage[1].return_value["UserName"], None)]
+    assert observed == [(dialog, storage[1].return_value["UserName"], True, True)]
     assert dialog._credentials_button.text() == ui.tr("自动登录")
     index = dialog._footer.indexOf(dialog._credentials_button)
     assert dialog._footer.indexOf(dialog._docs_button) < index < dialog._footer.indexOf(dialog._connect_button)
@@ -221,17 +234,25 @@ def test_credential_success_preserves_connection_error(qtbot, monkeypatch, stora
     creds, _ = storage
     monkeypatch.setattr(creds, "saved_account", lambda: r"PC\example" if deleted else None)
     monkeypatch.setattr(creds, "current_account", lambda: r"PC\example")
-    monkeypatch.setattr(TwinPasswordDialog, "exec", lambda self: ui.QDialog.DialogCode.Accepted)
-    notice = Mock()
-    monkeypatch.setattr(ui.InfoBar, "success", notice)
+    save, delete = Mock(), Mock()
+    monkeypatch.setattr(creds, "save_credential", save)
+    monkeypatch.setattr(creds, "forget_credential", delete)
+
+    def apply_and_close(box):
+        if not deleted:
+            box.password.setText("example")
+        box.yesButton.click()
+        assert not box.feedback.isHidden()
+        return ui.QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(TwinPasswordDialog, "exec", apply_and_close)
 
     dialog._credentials_button.click()
 
     assert not dialog._errorHolder.isHidden()
     assert dialog._errorBar.content() == "RDP 516"
     assert dialog._error_docs_button.getUrl() == troubleshooting_url
-    notice.assert_called_once()
-    assert notice.call_args.kwargs["title"] == ui.tr("已删除保存的分身密码" if deleted else "已保存分身密码")
+    (delete if deleted else save).assert_called_once()
 
 
 @pytest.mark.parametrize("saved_account", [None, ""], ids=["save", "delete-entry-with-empty-account"])
@@ -245,16 +266,18 @@ def test_failed_credential_action_can_be_retried(qtbot, editor_parent, monkeypat
     monkeypatch.setattr(creds.win32cred, "CredDelete", deleter)
     monkeypatch.setattr(creds, "current_account", lambda: r"PC\example")
     box = TwinPasswordDialog(saved_account, editor_parent)
+    box.show()
     if saved_account is None:
         box.password.setText("fictional-value")
         writer.side_effect = [creds.pywintypes.error(5, "CredWrite", "denied"), None]
     else:
         deleter.side_effect = [creds.pywintypes.error(5, "CredDelete", "denied"), None]
     box.yesButton.click()
-    assert not box.error.isHidden() and "fictional-value" not in box.error.text()
+    assert not box.feedback.isHidden() and "fictional-value" not in box.feedback.content()
     assert box.result() != QDialog.DialogCode.Accepted
     box.yesButton.click()
-    qtbot.waitUntil(lambda: box.result() == QDialog.DialogCode.Accepted)
+    qtbot.waitUntil(box.yesButton.isEnabled)
+    assert box.isVisible() and box.password.isHidden() == (saved_account is None)
     if saved_account is None:
         assert not box.password.text()
         deleter.assert_not_called()
