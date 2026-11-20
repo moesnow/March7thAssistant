@@ -8302,3 +8302,11 @@ msgstr "パスワードを削除"
 #: app/tools/desktop_twin_password_dialog.py:34
 msgid "保存密码"
 msgstr "パスワードを保存"
+
+#: app/tools/desktop_twin_credentials.py:100
+msgid "暂时无法更改分身密码，请稍后重试。"
+msgstr "現在、デスクトップ分身のパスワードを変更できません。しばらくしてからもう一度お試しください。"
+
+#: app/tools/desktop_twin_password_dialog.py:114
+msgid "分身凭据已在其他位置更改，请核对后再操作。"
+msgstr "分身の資格情報が別の場所で変更されました。アカウントを確認してから操作してください。"

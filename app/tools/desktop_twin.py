@@ -11,7 +11,7 @@ from PySide6.QtCore import QEvent, QRect, QRectF, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QTextLayout
 from PySide6.QtWidgets import (QApplication, QBoxLayout, QDialog, QFrame, QHBoxLayout, QLayout, QPushButton,
                                QSizePolicy, QVBoxLayout, QWidget)
-from qfluentwidgets import (BodyLabel, Dialog, HyperlinkButton, IconWidget, IndeterminateProgressRing, InfoBarIcon,
+from qfluentwidgets import (BodyLabel, Dialog, HyperlinkButton, IconWidget, IndeterminateProgressRing, InfoBar, InfoBarIcon,
                             PrimaryPushButton, PushButton, SubtitleLabel, TextWrap, ToolTipFilter, ToolTipPosition,
                             isDarkTheme, qconfig)
 from qfluentwidgets import FluentIcon as FIF
@@ -435,10 +435,12 @@ class DesktopTwinDialog(QDialog):
         from app.tools.desktop_twin_password_dialog import TwinPasswordDialog
 
         try:
-            box = TwinPasswordDialog(saved_account(), self)
+            account = saved_account()
         except RuntimeError as exc:
-            self._report(exc)
+            self._log.appendLog(f"桌面分身：{exc}\n")
+            InfoBar.error(tr("自动登录"), str(exc), orient=Qt.Vertical, duration=5000, parent=self)
             return
+        box = TwinPasswordDialog(account, self)
         try:
             box.exec()
         finally:

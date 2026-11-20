@@ -7,11 +7,14 @@ import pywintypes
 import win32api
 import win32con
 import win32cred
+from PySide6.QtCore import QLockFile, QStandardPaths
 
 from module.localization import tr
 
 
 CREDENTIAL_TARGET = "March7thAssistant/DesktopTwin/localhost"
+_EDIT_LOCK_PATH = (QStandardPaths.writableLocation(QStandardPaths.GenericDataLocation)
+                   + "/March7thAssistant-DesktopTwin-credential.lock")
 
 
 def saved_account():
@@ -88,6 +91,24 @@ def forget_credential():
     except pywintypes.error as exc:
         if exc.winerror != 1168:
             raise RuntimeError(tr("无法删除已保存的分身密码，请检查 Windows 凭据服务。")) from None
+
+
+def change_credential(expected_account, account, password):
+    """返回操作后的已存账户及是否执行了操作。不同安装的分身窗口共用同一把锁。"""
+    lock = QLockFile(_EDIT_LOCK_PATH)
+    if not lock.tryLock(0):
+        raise RuntimeError(tr("暂时无法更改分身密码，请稍后重试。"))
+    try:
+        current = saved_account()
+        if current != expected_account:
+            return current, False
+        if current is None:
+            save_credential(account, password)
+            return account, True
+        forget_credential()
+        return None, True
+    finally:
+        lock.unlock()
 
 
 def apply_saved_credential(client):

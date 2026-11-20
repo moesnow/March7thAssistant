@@ -8,7 +8,7 @@ pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="使用 Windows 
 
 
 @pytest.fixture
-def storage(monkeypatch):
+def storage(monkeypatch, tmp_path):
     from app.tools import desktop_twin_credentials as creds
 
     reader = Mock(return_value={
@@ -16,6 +16,7 @@ def storage(monkeypatch):
         "CredentialBlob": "离线示例🔑".encode("utf-16-le"),
     })
     monkeypatch.setattr(creds.win32cred, "CredRead", reader)
+    monkeypatch.setattr(creds, "_EDIT_LOCK_PATH", str(tmp_path / "credential.lock"))
     return creds, reader
 
 
@@ -92,15 +93,31 @@ def editor_parent(qtbot):
     return parent
 
 
-def test_password_editor_round_trip(qtbot, editor_parent, monkeypatch, storage):
+@pytest.fixture
+def editor_store(monkeypatch, storage):
+    creds, reader = storage
+    entry = {}
+
+    def read(*args):
+        if not entry:
+            raise creds.pywintypes.error(1168, "CredRead", "not found")
+        return entry
+
+    reader.side_effect = read
+    writer = Mock(side_effect=lambda value, flags: entry.update(value))
+    deleter = Mock(side_effect=lambda *args: entry.clear())
+    monkeypatch.setattr(creds.win32cred, "CredWrite", writer)
+    monkeypatch.setattr(creds.win32cred, "CredDelete", deleter)
+    return entry, writer, deleter
+
+
+def test_password_editor_round_trip(qtbot, editor_parent, monkeypatch, storage, editor_store):
     from PySide6.QtWidgets import QLineEdit, QMessageBox
     from app.tools.desktop_twin_password_dialog import TwinPasswordDialog
     from module.localization import tr
 
     creds, _ = storage
-    writer, deleter = Mock(), Mock()
-    monkeypatch.setattr(creds.win32cred, "CredWrite", writer)
-    monkeypatch.setattr(creds.win32cred, "CredDelete", deleter)
+    _, writer, deleter = editor_store
     monkeypatch.setattr(creds, "current_account", lambda: r"PC\example")
     confirm = Mock(return_value=QMessageBox.StandardButton.No)
     monkeypatch.setattr(QMessageBox, "question", confirm)
@@ -136,13 +153,67 @@ def test_password_editor_round_trip(qtbot, editor_parent, monkeypatch, storage):
     assert box.account.text() == r"PC\corrected" and not box.account.isReadOnly()
     assert box.password.isVisible()
     assert box.yesButton.text() == tr("保存密码")
-    qtbot.waitUntil(box.yesButton.isEnabled)
+    assert box.yesButton.isEnabled()
+    box.password.setPasswordVisible(True)
+    box.password.undo()
+    assert not box.password.text()
     assert box.isVisible()
     box.password.setText("new")
     box.yesButton.click()
     assert writer.call_args.args[0]["CredentialBlob"] == "new"
     box.cancelButton.click()
     qtbot.waitUntil(lambda: not box.isVisible())
+
+
+@pytest.mark.parametrize(("initial", "external"), [
+    (None, r"PC\other"), (r"PC\first", r"PC\other"), (r"PC\first", None),
+])
+def test_editor_refreshes_external_changes_without_writing(editor_parent, monkeypatch, storage, editor_store,
+                                                          initial, external):
+    from app.tools.desktop_twin_password_dialog import TwinPasswordDialog
+    from module.localization import tr
+
+    creds, _ = storage
+    entry, writer, deleter = editor_store
+    monkeypatch.setattr(creds, "current_account", lambda: r"PC\first")
+    if initial is not None:
+        entry["UserName"] = initial
+    box = TwinPasswordDialog(creds.saved_account(), editor_parent)
+    box.show()
+    if initial is None:
+        box.password.setText("offline-example")
+    if external is None:
+        entry.clear()
+    else:
+        entry["UserName"] = external
+    box.yesButton.click()
+
+    writer.assert_not_called()
+    deleter.assert_not_called()
+    assert creds.saved_account() == external
+    assert box.account.text() == (external or initial)
+    assert box.account.isReadOnly() == (external is not None)
+    assert box.password.isVisible() == (external is None)
+    assert not box.password.text()
+    assert box.feedback.content() == tr("分身凭据已在其他位置更改，请核对后再操作。")
+    assert box.yesButton.isEnabled() == (external is None)
+
+
+def test_simultaneous_editor_cannot_change_a_locked_entry(storage, editor_store):
+    from PySide6.QtCore import QLockFile
+
+    creds, _ = storage
+    _, writer, deleter = editor_store
+    other_editor = QLockFile(creds._EDIT_LOCK_PATH)
+    assert other_editor.tryLock(0)
+    try:
+        with pytest.raises(RuntimeError):
+            creds.change_credential(None, r"PC\example", "example")
+        writer.assert_not_called()
+        deleter.assert_not_called()
+    finally:
+        other_editor.unlock()
+    assert creds.change_credential(None, r"PC\example", "example") == (r"PC\example", True)
 
 
 def test_missing_account_opens_editor(qtbot, editor_parent, monkeypatch, storage):
@@ -225,8 +296,8 @@ def test_intro_actions(qtbot, monkeypatch, storage):
     assert labels[1] == ui.tr("通过“自动登录”保存Windows密码至本地凭证，后续启动无需输入密码")
 
 
-@pytest.mark.parametrize("deleted", [False, True], ids=["save", "delete"])
-def test_credential_success_preserves_connection_error(qtbot, monkeypatch, storage, deleted):
+@pytest.mark.parametrize("action", ["save", "delete", "read-error"])
+def test_credential_action_preserves_connection_error(qtbot, monkeypatch, storage, action):
     from app.tools import desktop_twin as ui
     from app.tools.desktop_twin_password_dialog import TwinPasswordDialog
 
@@ -237,8 +308,13 @@ def test_credential_success_preserves_connection_error(qtbot, monkeypatch, stora
     dialog._timer.stop()
     dialog._report("RDP 516", rdp_code=516)
     troubleshooting_url = dialog._error_docs_button.getUrl()
-    creds, _ = storage
-    monkeypatch.setattr(creds, "saved_account", lambda: r"PC\example" if deleted else None)
+    creds, reader = storage
+    deleted = action == "delete"
+    if action == "read-error":
+        reader.side_effect = creds.pywintypes.error(5, "CredRead", "denied")
+        dialog.show()
+    else:
+        monkeypatch.setattr(creds, "saved_account", lambda: r"PC\example" if deleted else None)
     monkeypatch.setattr(creds, "current_account", lambda: r"PC\example")
     save, delete = Mock(), Mock()
     monkeypatch.setattr(creds, "save_credential", save)
@@ -258,7 +334,15 @@ def test_credential_success_preserves_connection_error(qtbot, monkeypatch, stora
     assert not dialog._errorHolder.isHidden()
     assert dialog._errorBar.content() == "RDP 516"
     assert dialog._error_docs_button.getUrl() == troubleshooting_url
-    (delete if deleted else save).assert_called_once()
+    if action == "read-error":
+        notice = dialog.findChild(ui.InfoBar)
+        assert notice is not None and notice.isVisible()
+        assert notice.content == ui.tr("无法读取分身密码，请检查 Windows 凭据服务。")
+        notice.close()
+        save.assert_not_called()
+        delete.assert_not_called()
+    else:
+        (delete if deleted else save).assert_called_once()
 
 
 @pytest.mark.parametrize("saved_account", [None, ""], ids=["save", "delete-entry-with-empty-account"])
@@ -268,6 +352,7 @@ def test_failed_credential_action_can_be_retried(qtbot, editor_parent, monkeypat
 
     creds, _ = storage
     writer, deleter = Mock(), Mock()
+    monkeypatch.setattr(creds, "saved_account", lambda: saved_account)
     monkeypatch.setattr(creds.win32cred, "CredWrite", writer)
     monkeypatch.setattr(creds.win32cred, "CredDelete", deleter)
     monkeypatch.setattr(creds, "current_account", lambda: r"PC\example")

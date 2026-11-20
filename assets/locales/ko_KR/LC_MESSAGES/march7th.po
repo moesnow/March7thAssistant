@@ -8301,3 +8301,11 @@ msgstr "암호 삭제"
 #: app/tools/desktop_twin_password_dialog.py:34
 msgid "保存密码"
 msgstr "비밀번호 저장"
+
+#: app/tools/desktop_twin_credentials.py:100
+msgid "暂时无法更改分身密码，请稍后重试。"
+msgstr "지금은 데스크톱 분신 비밀번호를 변경할 수 없습니다. 잠시 후 다시 시도하세요."
+
+#: app/tools/desktop_twin_password_dialog.py:114
+msgid "分身凭据已在其他位置更改，请核对后再操作。"
+msgstr "저장된 자격 증명이 다른 곳에서 변경되었습니다. 계정을 확인한 후 계속하세요."

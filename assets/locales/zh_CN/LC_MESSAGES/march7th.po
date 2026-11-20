@@ -8220,3 +8220,11 @@ msgstr "删除密码"
 #: app/tools/desktop_twin_password_dialog.py:34
 msgid "保存密码"
 msgstr "保存密码"
+
+#: app/tools/desktop_twin_credentials.py:100
+msgid "暂时无法更改分身密码，请稍后重试。"
+msgstr "暂时无法更改分身密码，请稍后重试。"
+
+#: app/tools/desktop_twin_password_dialog.py:114
+msgid "分身凭据已在其他位置更改，请核对后再操作。"
+msgstr "分身凭据已在其他位置更改，请核对后再操作。"

@@ -56,14 +56,16 @@ class TwinPasswordDialog(MessageBoxBase):
         self.viewLayout.addWidget(self.hint)
 
         self.cancelButton.setText(tr("关闭"))
-        saved = saved_account is not None
-        self._set_mode(saved_account if saved else credentials.current_account(), saved=saved)
+        self._set_mode(saved_account)
 
-    def _set_mode(self, name, *, saved):
-        self._has_saved_password = saved
+    def _set_mode(self, saved_account, fallback_account=""):
+        self._saved_account = saved_account
+        saved = saved_account is not None
+        name = saved_account if saved else fallback_account or credentials.current_account()
         self.account.setText(name)
         self.account.setReadOnly(saved)
-        self.password.clear()
+        # setText 同时清空撤销历史，删除密码后无法从输入框恢复旧值。
+        self.password.setText("")
         self.password.setPasswordVisible(False)
         self.password.setVisible(not saved)
         self.password_label.setVisible(not saved)
@@ -86,7 +88,7 @@ class TwinPasswordDialog(MessageBoxBase):
 
     def accept(self):
         """主按钮在当前窗口应用操作，关闭由次要按钮处理。"""
-        if not self._has_saved_password and not self.password.text():
+        if self._saved_account is None and not self.password.text():
             self.feedback.hide()
             self.hint.show()
             self.password.setFocus()
@@ -103,19 +105,19 @@ class TwinPasswordDialog(MessageBoxBase):
             return
         name = self.account.text().strip()
         try:
-            if self._has_saved_password:
-                credentials.forget_credential()
-            else:
-                credentials.save_credential(name, self.password.text())
+            saved_account, applied = credentials.change_credential(self._saved_account, name, self.password.text())
         except (ValueError, RuntimeError) as exc:
             self._show_feedback(InfoBarIcon.ERROR, str(exc))
             return
-        self._set_mode(name or credentials.current_account(), saved=not self._has_saved_password)
-        # 新动作在同一位置，避免双击保存时第二下误删密码。
-        self.yesButton.setEnabled(False)
-        QTimer.singleShot(QApplication.doubleClickInterval(), self.yesButton, lambda: self.yesButton.setEnabled(True))
+        self._set_mode(saved_account, name)
+        if not applied:
+            self._show_feedback(InfoBarIcon.WARNING, tr("分身凭据已在其他位置更改，请核对后再操作。"))
+        if saved_account is not None:
+            # 刚保存或刷新出了其他账户，双击的第二下都不应删除这条凭据。
+            self.yesButton.setEnabled(False)
+            QTimer.singleShot(QApplication.doubleClickInterval(), self.yesButton, lambda: self.yesButton.setEnabled(True))
 
     def done(self, result):
-        self.password.clear()
+        self.password.setText("")
         self.widget.setEnabled(False)
         super().done(result)
