@@ -53,6 +53,8 @@ class Lineup:
     emblems: tuple[str, ...] = ()
     # 梦境交织共舞优先指定的角色。
     dancers: tuple[str, ...] = ()
+    # 卡面的前后台标记是游戏推荐，多数角色照推荐站位；这里列出攻略要求不按推荐、也能站前台的角色。
+    guide_front: frozenset[str] = frozenset()
 
     @property
     def preferences(self) -> tuple[str, ...]:
@@ -64,12 +66,13 @@ FRONT_SUPPORT = ("星期日", "花火", "知更鸟")
 REAR_SUPPORT = (*COMBO_SUPPORT, "缇宝", "符玄", "藿藿", "镜流", "砂金", "千冶·刃")
 # 按《货币战争 S2 梦境那刻夏攻略》：那刻夏、刻律德菈、星期日、白露、花火五人口过渡，九人口为前台那刻夏、花火、
 # 知更鸟、昔涟，后台刻律德菈、寒鸦、星期日、风堇、千冶·刃，更多人口再补缇宝、不死途。白露在换上寒鸦、风堇时退场，
-# 部署时仍保持四连击。1-4 前不买经验；主角光环遇到「逐日」就选。
+# 部署时仍保持四连击。刻律德菈卡面推荐后台，攻略让她前期也站前台、开局给那刻夏挂军功，等知更鸟、昔涟、星期日等在攻略
+# 前台顺序里排在她前面的角色能坐满前台（不看星级和装备），再去后台一号位。1-4 前不买经验；主角光环遇到「逐日」就选。
 # 开局只为二星那刻夏、花火和四连击刷新；三者到位后停搜升级，只在新开人口位时找还没有的关键辅助。
 # 核心迟迟没来时少刷：一张都没有时每节点最多刷两次；第二位面起一星那刻夏在场也算停搜，同名卡见到照买。
 # 追三星排在上人口和补关键辅助之后：九级前那刻夏和刻律德菈只做到二星，九级起也只在离三星差两张以内时为它刷新，
 # 同名卡见到照买；白露、缇宝不设追星目标。
-ANAXA_FRONT = (CORE, "花火", "知更鸟", "昔涟", "星期日")
+ANAXA_FRONT = (CORE, "花火", "知更鸟", "昔涟", "星期日", BACK_LEAD)
 ANAXA_BACK = (BACK_LEAD, "寒鸦", "星期日", "风堇", "千冶·刃", "白露", "缇宝", "不死途")
 LINEUPS = {
     HIGH_ANAXA: Lineup(CORE, ANAXA_FRONT, ANAXA_BACK,
@@ -77,7 +80,8 @@ LINEUPS = {
                       frozenset(("花火", "知更鸟", "昔涟", "星期日")),
                       halos=("逐日",), level_from=(1, 4), three_star_level=9, emblems=("梦境交织星徽",),
                       dancers=(CORE, "花火"), settle_with=("花火",), combo=frozenset((CORE, *COMBO_SUPPORT)),
-                      combo_goal=4, key_supports=("昔涟", "知更鸟", "寒鸦", "风堇", "千冶·刃")),
+                      combo_goal=4, key_supports=("昔涟", "知更鸟", "寒鸦", "风堇", "千冶·刃"),
+                      guide_front=frozenset((BACK_LEAD,))),
     HIGH_FIREFLY: Lineup("流萤", ("流萤", *FRONT_SUPPORT, "雪衣", "忘归人"), (*REAR_SUPPORT, "大丽花"),
                         (("流萤", 3), ("寒鸦", 2), ("白露", 2), ("刻律德菈", 2), ("星期日", 2), ("花火", 2)),
                         frozenset(FRONT_SUPPORT)),
@@ -88,10 +92,11 @@ LINEUPS = {
                        frozenset(("星期日", "椒丘", "雪衣", "花火")),
                        frozenset(("希露瓦", "海瑟音", "黑天鹅", "桑博", "椒丘", "卡芙卡"))),
 }
-# 配装先给攻略里的优先角色：那刻夏的火力风暴潮、昔涟的永动机、刻律德菈的加速装备。那刻夏穿满三件后，其余上阵角色
-# 留到最终节点或小队生命值低于 EQUIPMENT_SPREAD_HP 时再配：物品栏每变一次都要重开全队推荐页，多数一无所获。
+# 配装先给攻略里的优先角色：那刻夏的火力风暴潮、昔涟的永动机、刻律德菈的加速装备。其余上阵角色留到最终节点或
+# 小队生命值低于 EQUIPMENT_SPREAD_HP 时再配：物品栏每变一次都要重开全队推荐页，多数一无所获。到了这两种情况不再等
+# 那刻夏穿满三件。
 EQUIPMENT_FOCUS = {HIGH_ANAXA: frozenset((CORE, "昔涟", BACK_LEAD))}
-EQUIPMENT_SPREAD_HP = 90
+EQUIPMENT_SPREAD_HP = 80
 STRATEGY_NAMES = {
     DEFAULT_STRATEGY: "默认",
     HIGH_ANAXA: "连击那刻夏",
@@ -222,8 +227,6 @@ def slot_priority(board: Board, unit: Unit, zone: Zone) -> int:
     quality = 16 * ((unit.stars or 1) - 1)
     if unit.name in preferred:
         base = 96 - 5 * preferred.index(unit.name)
-    elif unit.name in board.sustain:
-        base = 62
     else:
         base = 26 if zone == "front" and unit.is_output else 20
     if zone == "back" and unit.name in lineup.dot and unit.name in preferred:
@@ -243,15 +246,80 @@ def _prefers_back(board: Board, name: str) -> bool:
     return board.core == CORE and name == EVERNIGHT
 
 
+def _zone_allowed(board: Board, unit: Unit, zone: Zone) -> bool:
+    """卡面标记是游戏推荐的站位，多数角色照推荐站；攻略有特殊要求的角色（lineup.guide_front）也能站前台。"""
+    if _can_use_zone(unit, zone, board.core):
+        return True
+    return zone == "front" and board.lineup is not None and unit.name in board.lineup.guide_front
+
+
 def _can_deploy_to(board: Board, unit: Unit, zone: Zone) -> bool:
-    # 策略偏好只用于自动布阵。物理站位仍由游戏标记和 can_move 复核。
-    return _can_use_zone(unit, zone, board.core) and (zone != "front" or not _prefers_back(board, unit.name))
+    # 策略偏好只用于自动布阵。实际能否放下仍由 can_move 和拖动后的新画面复核。
+    return _zone_allowed(board, unit, zone) and (zone != "front" or not _prefers_back(board, unit.name))
 
 
 def _guards_front(board: Board) -> bool:
     """二星核心在前台，且寒鸦、星期日或刻律德菈在场时，前台不放与核心争位的输出。"""
     field = {slot.unit.name for slot in board.field if slot.unit}
     return board.lineup is not None and board.core_ready and bool(field & {"寒鸦", "星期日", BACK_LEAD})
+
+
+def _front_competitor(board: Board, unit: Unit) -> bool:
+    return (_guards_front(board) and unit.is_output and unit.name != board.core
+            and unit.name not in board.lineup.compatible_front and unit.name not in board.sustain | SPECIAL)
+
+
+def _front_rank(board: Board, unit: Unit) -> tuple[int, int]:
+    """补前台时的先后：前台优先级高的先上，同分时后台优先级低的先上。"""
+    return slot_priority(board, unit, "front"), -slot_priority(board, unit, "back")
+
+
+def _lead_holds_front(board: Board) -> bool:
+    """攻略要求刻律德菈前期站前台，开局给那刻夏挂军功。攻略前台顺序里排在她前面的场上角色能坐满前台时，她再回后台
+    一号位，四连击在那里新增连击地格。只按攻略顺序比，不看星级和装备：二星、穿了装备的她也排在一星的星期日后面。"""
+    lineup = board.lineup
+    if lineup is None or BACK_LEAD not in lineup.guide_front:
+        return False
+    if not any(slot.unit and slot.unit.name == BACK_LEAD for slot in (*board.field, *_bench_candidates(board))):
+        return False
+    order = lineup.front[:lineup.front.index(BACK_LEAD)] if BACK_LEAD in lineup.front else lineup.front
+    seats = sum(slot.zone == "front" and not slot.blocked for slot in board.slots)
+    ahead = sum(1 for slot in board.field if slot.unit and slot.unit.name in order
+                and _can_deploy_to(board, slot.unit, "front"))
+    return ahead < seats
+
+
+def _front_fill_candidate(board: Board, unit: Unit) -> bool:
+    return (unit.name not in SPECIAL and unit.name != board.core and _can_deploy_to(board, unit, "front")
+            and not _front_competitor(board, unit) and (unit.name != BACK_LEAD or _lead_holds_front(board)))
+
+
+def _front_vacancy_source(board: Board, rear: tuple[Slot, ...]) -> Slot | None:
+    """前台有空位时最该从后台挪上去的角色：只挑卡面推荐（或攻略要求）可站前台的角色。"""
+    rear_sustain = sum(1 for slot in rear if slot.unit and slot.unit.name in board.sustain)
+    options = (slot for slot in rear if slot.unit and not slot.blocked and _front_fill_candidate(board, slot.unit)
+               # 后台只剩这一名生存角色时，部署会把前台的生存角色挪回后台，不能把她挪走。
+               and not (slot.unit.name in board.sustain and rear_sustain == 1))
+    return max(options, key=lambda slot: (_front_rank(board, slot.unit), slot.unit.stars or 0), default=None)
+
+
+def _front_vacancy_move(board: Board, front: tuple[Slot, ...], rear: tuple[Slot, ...],
+                        overflow=False) -> tuple[Move, ...]:
+    """前台有空位、备战席也补不上时，把后台里可站前台的角色挪上去：前台少一人，出战就少一人。"""
+    if overflow or board.lineup is None:
+        return ()
+    target = next((slot for slot in front if not slot.occupied and not slot.blocked), None)
+    source = _front_vacancy_source(board, rear) if target is not None else None
+    return ((source, target),) if source is not None and can_move(board, source, target) else ()
+
+
+def _front_yielders(board: Board, front: tuple[Slot, ...], seat: Slot) -> tuple[Slot, ...]:
+    """前台坐满时可以退到后台 seat 的角色：核心以外、卡面推荐也能站后台的角色。"""
+    if board.lineup is None:
+        return ()
+    return tuple(slot for slot in front if slot.unit and not slot.blocked and slot.unit.name != board.core
+                 and slot.unit.name not in SPECIAL and _can_deploy_to(board, slot.unit, "back")
+                 and can_move(board, slot, seat))
 
 
 def _bench_candidates(board: Board) -> tuple[Slot, ...]:
@@ -291,7 +359,7 @@ def can_move(board: Board, source: Slot, target: Slot, *, replacing_same_name=Fa
         return False
     if target.zone == "bench":
         return source.zone != "bench" and (not unit.has_halo or replacing_same_name)
-    if not _can_use_zone(unit, target.zone, board.core):
+    if not _zone_allowed(board, unit, target.zone):
         return False
     if source.zone == "bench":
         return board.used < board.capacity and all(
@@ -443,6 +511,10 @@ def _back_lead_moves(board: Board, rear: tuple[Slot, ...], spare: Slot | None,
     first = rear[0]
     if lead is None or lead == first or not can_move(board, lead, _empty(first)):
         return ()
+    if _lead_holds_front(board) and (lead.zone == "front" or any(
+            slot.zone == "front" and not slot.occupied and not slot.blocked for slot in board.slots)):
+        # 攻略让她前期站前台：已在前台就留着；前台有空位时由 _front_vacancy_move 把她挪上去。
+        return ()
     if lead.zone == "bench" and board.front_count == 0 and board.used == board.capacity - 1:
         return ()
     if not first.occupied:
@@ -484,16 +556,11 @@ def deployment(board: Board, *, overflow=False) -> tuple[Move, ...]:
     field_names = {slot.unit.name for slot in board.field if slot.unit}
     combo_members = {*COMBO_SUPPORT, "镜流", "阿格莱雅", CORE}
     combo_count = len(field_names & combo_members)
-    prevent_competition = not overflow and _guards_front(board)
-
     def is_competitor(unit):
-        return (prevent_competition and unit.is_output and unit.name != board.core
-                and unit.name not in board.lineup.compatible_front and unit.name not in board.sustain | SPECIAL)
+        return not overflow and _front_competitor(board, unit)
     competitors = tuple(s for s in front if s.unit and (
         is_competitor(s.unit) or not overflow and _prefers_back(board, s.unit.name)
     ))
-    sustain_count = sum(s.unit is not None and s.unit.name in board.sustain for s in board.field)
-    heal_count = sum(s.unit is not None and s.unit.name in board.healers for s in board.field)
     has_rear_sustain = any(s.unit and s.unit.name in board.sustain for s in rear)
 
     if not overflow and spare is not None:
@@ -533,43 +600,59 @@ def deployment(board: Board, *, overflow=False) -> tuple[Move, ...]:
     positioning = () if overflow else _back_lead_moves(board, rear, spare, candidates)
     if positioning and not need_output:
         return positioning
+    # 前台有空位时，部署最后会把后台里最该上前台的角色挪上去（_front_vacancy_move）。新上场的角色排得比它靠前，
+    # 就直接放前台，省一次拖动。
+    front_open = not overflow and board.lineup is not None and any(
+        not slot.occupied and not slot.blocked for slot in front)
+    vacancy_pick = _front_vacancy_source(board, rear) if front_open else None
+
+    def straight_to_front(unit):
+        return front_open and _front_fill_candidate(board, unit) and (
+            vacancy_pick is None or _front_rank(board, unit) > _front_rank(board, vacancy_pick.unit))
+
+    def shift_value(shifted):
+        return slot_priority(board, shifted.unit, "back") - slot_priority(board, shifted.unit, "front")
+
     fillings = []
     if board.used < board.capacity:
+        empty_rear = next((s for s in rear if not s.occupied and not s.blocked), None)
         for source in candidates:
             for zone, row in rows:
                 target = next((s for s in row if not s.occupied and not s.blocked), None)
-                if (target is None or not _can_deploy_to(board, source.unit, zone)
+                if (not _can_deploy_to(board, source.unit, zone)
                         or zone == "front" and is_competitor(source.unit) and not overflow):
                     continue
-                if zone == "back" and not board.front_count and board.used == board.capacity - 1:
+                if zone == "back" and (not board.front_count and board.used == board.capacity - 1
+                                       or straight_to_front(source.unit)):
                     continue
                 score = slot_priority(board, source.unit, zone)
                 if zone == "front":
                     score += 100 if board.front_count == 0 else 18 if board.front_count == 1 and board.capacity >= 4 else 0
                     if need_output and source in bench_outputs:
                         score += 120
-                if not sustain_count and source.unit.name in board.sustain:
-                    score += 30 if board.hp is not None and board.hp <= 35 else 15
-                if board.lineup and zone == "back" and source.unit.name in board.sustain:
-                    score += 0 if has_rear_sustain else 20
-                fillings.append((score, source.unit.stars or 0, source, target))
+                if target is not None:
+                    fillings.append((score, source.unit.stars or 0, ((source, target),)))
+                elif zone == "front" and not overflow and empty_rear is not None:
+                    # 前台坐满时，让前台里更适合后台的角色退到后台空位，新角色补上它的前台位。
+                    fillings.extend((score + shift_value(shifted), source.unit.stars or 0,
+                                     ((shifted, empty_rear), (source, _empty(shifted))))
+                                    for shifted in _front_yielders(board, front, empty_rear))
     if fillings:
-        _, _, source, target = max(fillings, key=lambda option: option[:2])
-        return ((source, target),)
+        return max(fillings, key=lambda option: option[:2])[2]
     if overflow or spare is None:
-        return positioning
+        return positioning or _front_vacancy_move(board, front, rear, overflow)
 
-    danger = 60 if board.lineup else 35
-    minimum_sustain = 2 if board.hp is not None and board.hp <= danger and board.capacity >= 6 else 1
+    # 小队掉血来自限定行动内没打完怪物，看的是阵容战斗力，治疗多一个影响不大：不再为凑生存角色换人，
+    # 也不护着场上最后一名治疗或生存角色。
     preferred = board.lineup.preferences if board.lineup else ()
     replacements = []
     for source in candidates:
         fills_output = need_output and source in bench_outputs
-        if not fills_output and source.unit.name not in preferred and (
-                source.unit.name not in board.sustain or sustain_count >= minimum_sustain):
+        if not fills_output and source.unit.name not in preferred:
             continue
         for zone, row in rows:
-            if not _can_deploy_to(board, source.unit, zone) or zone == "front" and is_competitor(source.unit):
+            if (not _can_deploy_to(board, source.unit, zone) or zone == "front" and is_competitor(source.unit)
+                    or zone == "back" and straight_to_front(source.unit)):
                 continue
             adds_output = zone == "front" and front_damage(source.unit)
             incoming = slot_priority(board, source.unit, zone) + (120 if need_output and adds_output else 0)
@@ -579,21 +662,16 @@ def deployment(board: Board, *, overflow=False) -> tuple[Move, ...]:
                 if (unit is None or unit.name in (board.core, BACK_LEAD)
                         or not can_move(board, victim, spare)):
                     continue
+                shifts = (None,)
                 if empty is None and victim.zone != zone:
-                    continue
+                    # 前台坐满时也可以换下后台角色：前台里更适合后台的角色退到那一格，新角色补上它的前台位。
+                    if zone != "front" or victim.zone != "back":
+                        continue
+                    shifts = _front_yielders(board, front, _empty(victim))
                 if board.front_count - (victim.zone == "front") + (zone == "front") == 0:
                     continue
                 if victim.zone == "front" and front_damage(unit) and front_output == 1 and not adds_output:
                     continue
-                if unit.name in board.sustain and source.unit.name not in board.sustain and sustain_count <= minimum_sustain:
-                    continue
-                if unit.name in board.healers and source.unit.name not in board.healers and heal_count <= 1:
-                    continue
-                if board.lineup and victim.zone == "back" and zone == "front" and unit.name in board.sustain:
-                    # 主输出进场前保留不会挨打的后台保护。成型后允许更强辅助替换冗余生存位。
-                    minimum_rear = 2 if board.hp is not None and board.hp <= 48 else 1
-                    if not board.core_ready or sustain_count <= minimum_rear:
-                        continue
                 combo_delta = 0
                 if board.lineup:
                     if unit.name in board.lineup.dot and source.unit.name not in board.lineup.dot:
@@ -603,20 +681,26 @@ def deployment(board: Board, *, overflow=False) -> tuple[Move, ...]:
                     if after_combo // 2 < combo_count // 2:
                         continue
                     combo_delta = 42 * (after_combo // 2 > combo_count // 2)
-                    if unit.name in combo_members and source.unit.name not in combo_members:
+                    # 换下后连击人数仍够阵容要求，就不护着多出来的连击角色：攻略在寒鸦、风堇到场后让白露退场，
+                    # 给昔涟等关键辅助让位。
+                    spare_member = board.lineup.combo_goal and after_combo >= board.lineup.combo_goal
+                    if unit.name in combo_members and source.unit.name not in combo_members and not spare_member:
                         combo_delta -= 30
                     if source.unit.name == "寒鸦" and unit.name not in combo_members:
                         combo_delta += 12
-                survival_gain = 28 if board.lineup and source.unit.name in board.sustain and sustain_count < minimum_sustain else 0
                 equipped_loss = 16 * (unit.equipment or 0) if board.lineup else 0
-                gain = (incoming - slot_priority(board, unit, victim.zone) + survival_gain + combo_delta
+                gain = (incoming - slot_priority(board, unit, victim.zone) + combo_delta
                         + 35 * (victim in competitors) - equipped_loss)
-                if gain > 0:
-                    replacements.append((incoming, gain, victim, source, empty or _empty(victim)))
+                for shifted in shifts:
+                    if shifted is None:
+                        moves = ((victim, spare), (source, empty or _empty(victim)))
+                    else:
+                        moves = ((victim, spare), (shifted, _empty(victim)), (source, _empty(shifted)))
+                    if gain + (shift_value(shifted) if shifted else 0) > 0:
+                        replacements.append((incoming, gain + (shift_value(shifted) if shifted else 0), moves))
     if replacements:
-        _, _, victim, source, target = max(replacements, key=lambda option: option[:2])
-        return ((victim, spare), (source, target))
-    return positioning
+        return max(replacements, key=lambda option: option[:2])[2]
+    return positioning or _front_vacancy_move(board, front, rear, overflow)
 
 
 def shop_purchase(board: Board, offers: tuple[Offer, ...], *, experience_price: int | None = None,
@@ -751,8 +835,6 @@ def _quality_pressure(board: Board) -> int:
         if (board.hp is not None and board.hp <= 65) or any(slot.unit.stars == 2 and slot.zone == "bench"
                                                            for slot in copies):
             return 3
-    if not field.keys() & board.healers:
-        return 3
     if any(unit.name in {"白露", BACK_LEAD, "寒鸦", "星期日"}
            and unit.stars == 1 and _merge_ready(_owned(board, unit.name)) for unit in field.values()):
         return 2
@@ -785,7 +867,6 @@ def _high_purchase(board: Board, offers: tuple[Offer, ...], experience_price: in
     lineup = board.lineup
     plane, _, final = _progress(board)
     field = {slot.unit.name for slot in board.field if slot.unit}
-    sustain = len(field & board.sustain)
     deployed_healer = bool(field & board.healers)
     urgent = board.hp is not None and board.hp <= 55
     open_bench = len(board.empty_bench)
@@ -853,7 +934,6 @@ def _high_purchase(board: Board, offers: tuple[Offer, ...], experience_price: in
             # 最优先核对能立即到账的升星。高费辅助的对子和单张仍留出人口预算。
             if merging:
                 value = 118 if core_two or name == board.core else 100 if name in field else 83
-                value += 12 if name in board.healers and urgent else 0
             else:
                 value = 94 if core_two else 80 if name == board.core else 58 if name in field else 43
         else:
@@ -866,10 +946,6 @@ def _high_purchase(board: Board, offers: tuple[Offer, ...], experience_price: in
                 value = 145 if name == board.core else 111
                 if name == "希露瓦" and plane == 1 and deployed_healer and board.front_output_count:
                     value = 89
-            elif name in board.healers and not deployed_healer:
-                value = 109
-            elif name in board.sustain and sustain <= int(urgent):
-                value = 97
             elif preferred:
                 key = name in lineup.key_supports
                 if holds >= 5 and board.used == board.capacity and name not in targets and not key:
@@ -895,7 +971,7 @@ def _high_purchase(board: Board, offers: tuple[Offer, ...], experience_price: in
                            for slot in board.slots if slot.zone != "bench"):
                     skip(offer, "过渡角色没有可部署的空位")
                     continue
-                value = 52 if name in board.sustain else 34
+                value = 34
             else:
                 skip(offer, "本轮无需该角色补阵")
                 continue
@@ -1034,10 +1110,7 @@ def disposable_bench(board: Board, *, kept: dict[Slot, str] | None = None) -> tu
         return ()
     preferred = set(board.lineup.preferences)
     special = SPECIAL | {"昔涟", "砂金·戏浪"}
-    field = {slot.unit.name for slot in board.field if slot.unit}
-    # 两名场上保护都在时，备战席里未装备、非目标阵容的一星过渡治疗可用于腾位。
-    redundant_sustain = len(field & board.sustain) >= 2 and bool(field & board.healers)
-    reserve, redundant = [], []
+    reserve = []
     for slot in board.slots:
         if slot.zone != "bench":
             continue
@@ -1052,11 +1125,6 @@ def disposable_bench(board: Board, *, kept: dict[Slot, str] | None = None) -> tu
             reason = "星级未确认" if unit.stars is None else "常规清理仅考虑一星卡"
         elif unit.name in preferred:
             reason = "阵容偏好保护"
-        elif unit.name in board.sustain:
-            if redundant_sustain and unit.equipment == 0:
-                redundant.append(slot)
-                continue
-            reason = "装备未确认为空" if redundant_sustain else "保留生存候补"
         elif unit.name in special:
             reason = "特殊角色保护"
         else:
@@ -1064,7 +1132,7 @@ def disposable_bench(board: Board, *, kept: dict[Slot, str] | None = None) -> tu
             continue
         if kept is not None:
             kept[slot] = reason
-    return (*reserve, *sorted(redundant, key=lambda slot: slot_priority(board, slot.unit, "back")))
+    return tuple(reserve)
 
 
 def should_make_shop_space(board: Board, *, kept: dict[Slot, str] | None = None) -> bool:
@@ -1105,7 +1173,6 @@ def overflow_reserves(board: Board) -> tuple[Slot, ...]:
         slot for slot in board.slots
         if (slot.zone == "bench" and not slot.blocked and slot.unit
             and slot.unit.stars in (1, 2) and slot.unit.name not in protected)
-        and (slot.unit.name not in board.sustain or slot.unit.name in deployed or deployed & board.sustain)
     ]
     return tuple(sorted(choices, key=lambda slot: (
         slot.unit.name not in deployed, slot_priority(board, slot.unit, "back"), slot.unit.stars, slot.index

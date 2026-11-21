@@ -68,6 +68,8 @@ CLICK_HOLD = 0.075
 BOX_HOLD = 0.20
 # 晶矿刚扫出的武装箱有落位动画。等连续两帧的开启按钮和箱面一致，再作为开启基准。
 BOX_SETTLE_SECONDS = 4
+# 本节点刚拖入一格的卡可能还在落位动画中。再拖动它之前，等卡面连续两帧一致再取作拖动基准。
+LANDING_SETTLE_SECONDS = 3
 # 奇遇「菇菇兔」在第三位面首领节点前的奖励节点触发一次：每 4 秒强制刷新商店、共 7 次，约 28 秒刷完。
 SHOP_FORCED_REFRESH_SECONDS = 36
 RANK_CLICK_BATCH = 80
@@ -472,19 +474,21 @@ class CurrencyWars:
             delivered = auto.drag_mouse(src, dst, duration=0.5, end_pause=0.10, take_screenshot=False)
             if delivered is not False:
                 # 指针停在卡片上会让卡面抬起，移开后再读棋盘。
-                auto.move_mouse(rest)
+                auto.park_mouse(rest)
             return delivered
 
         return self._dispatch_input(drag, mark_sent=mark_sent, before_input=before_drag)
 
     def _park_pointer(self, stage):
         """每个节点第一次备战前把指针移到左上角。节点结算、节点说明等按钮落在备战席卡片上，
-        指针停留会让卡面抬起，影响读卡和配装判断。只移动不点击，移不开时照常备战。"""
+        指针停留会让卡面抬起，影响读卡和配装判断。只移动不点击，移不开时照常备战。后台模式会在每次操作后归还
+        用户光标；光标原本落在游戏画面范围内时（即使游戏被其他窗口盖住）留在左上角，否则商店卡、棋盘卡会一直按
+        用户光标的位置悬停。"""
         self.pointer_parked_stage = stage
         rest = POINTER_REST[0] / 1920, POINTER_REST[1] / 1080
         try:
             with self._recovery_input_wait():
-                moved = self._dispatch_input(auto.move_mouse, rest)
+                moved = self._dispatch_input(auto.park_mouse, rest)
         except CurrencyWarsTerminalError:
             raise
         except Exception as error:
@@ -1432,6 +1436,26 @@ class CurrencyWars:
                               lambda f: f.page in (Page.BOARD, Page.BENCH_FULL) or f.page in PREP_OVERLAYS,
                               "未退出角色详情", seconds=7)
 
+    def _landed_card(self, frame, slot):
+        """本节点刚拖到这一格的卡可能还在落位动画中。读盘那帧取作拖动基准时，之后每帧都对不上而一直不拖，
+        到时限才暂缓部署。等这张卡的卡面连续两帧一致后再取基准，仍对不上缓存时沿用拖动时确认的姓名并更新卡面。"""
+        page, stage, capacity = frame.page, frame.stage, frame.capacity
+        previous = frame.slot_mark(slot.point)
+
+        def landed(f):
+            nonlocal previous
+            if f.page != page or f.stage != stage or f.capacity != capacity:
+                return True
+            current = f.slot_mark(slot.point)
+            steady = cv2.absdiff(current, previous).mean() <= IDENTITY_STABLE_DIFF
+            previous = current
+            return steady
+
+        settled = self._wait(landed, LANDING_SETTLE_SECONDS) or self.frame or frame
+        if settled.page == page and settled.stage == stage and settled.capacity == capacity:
+            self._refresh_moved_identities(settled, (slot,), {slot.point})
+        return settled
+
     def _move(self, frame, board, source, destination, *, restore=False, replacement=None, named=True):
         sends_to_bench = destination.zone == "bench"
         held = self.held_deployment
@@ -1450,6 +1474,9 @@ class CurrencyWars:
                     and (destination.zone != "bench"
                          or destination.point not in f.black_hole_slots | f.locked_bench_slots))
 
+        landed = self.moved_identities.get((source.zone, source.index))
+        if named and not self.default_strategy and landed is not None and landed[0] == board.stage:
+            frame = self._landed_card(frame, source)
         upgrade = strategy.stronger_bench_copy(board, source) if sends_to_bench and not self.default_strategy else None
         next_move = self.deployment_moves[1:2]
         replacing_same_name = bool(upgrade and next_move and next_move[0][0] == upgrade
@@ -1575,6 +1602,10 @@ class CurrencyWars:
     def _box_button(self, frame):
         return next((label for label in frame.texts(ui.BENCH_BOX) if label.text == "开启"), None)
 
+    @staticmethod
+    def _box_count(frame):
+        return sum(label.text == "开启" for label in frame.texts(ui.BENCH_BOX))
+
     def _settled_box(self, frame, box):
         """晶矿刚扫出的武装箱还在落位。开启按钮的位置和箱面连续两帧一致后再作为开启基准，
         否则基准停在动画中的一帧，之后每帧都对不上而一直不点击。"""
@@ -1677,8 +1708,7 @@ class CurrencyWars:
         usual = strategy.disposable_bench(board, kept=kept)
         if board.lineup and board.stage == board.final_node and board.front_count > 0:
             # 终局已满编时，不能上阵的无装候补可以释放格子给强制安放。
-            names = {slot.unit.name for slot in board.field if slot.unit}
-            if board.used == board.capacity and names & board.healers:
+            if board.used == board.capacity:
                 leftovers = tuple(slot for slot in board.slots if slot.zone == "bench" and not slot.blocked
                                   and slot.unit and slot.unit.stars == 1 and slot.unit.equipment == 0
                                   and slot.unit.name not in strategy.SPECIAL | {board.core, "昔涟", "砂金·戏浪"})
@@ -1785,6 +1815,7 @@ class CurrencyWars:
             gold = frame.gold
             items = len(frame.inventory_items())
             bench = sum(slot.occupied for slot in frame.bench_slots()) if self.default_strategy else 0
+            boxes = self._box_count(frame)
             swept = None
 
             def sweep(f):
@@ -1804,6 +1835,8 @@ class CurrencyWars:
                     or gold is not None and f.gold is not None and f.gold > gold
                     or len(f.inventory_items()) > items
                     or self.default_strategy and sum(slot.occupied for slot in f.bench_slots()) > bench
+                    # 晶矿也会扫出武装箱：箱子落在备战席，金币、物品和角色都还没变。
+                    or self._box_count(f) > boxes
                 )
 
             frame = self._drag_to(frame, sweep, collected, "拖动后未确认收集节点奖励",
@@ -2305,15 +2338,16 @@ class CurrencyWars:
         return frame
 
     def _equipment_waiting(self, frame, board, slot):
-        """那刻夏策略先给核心和后台主力配装。核心穿满三件后，其余上阵角色留到最终节点或小队生命值偏低时再配。"""
+        """那刻夏策略先给核心和后台主力配装，其余上阵角色留到最终节点或小队生命值偏低时再配。"""
         if self.equipment_focus is None or slot.unit.name in self.equipment_focus:
+            return None
+        threshold = strategy.EQUIPMENT_SPREAD_HP
+        if board.stage == board.final_node or board.hp is not None and board.hp < threshold:
+            # 不再等核心穿满：她的推荐页可能整局配不上第三件，物品栏里的装备会一直闲置。
             return None
         core = next((s for s in board.field if s.unit and s.unit.name == board.core), None)
         if core is None or frame.card_equipment(core) != 3:
             return f"{board.core}未配满"
-        threshold = strategy.EQUIPMENT_SPREAD_HP
-        if board.stage == board.final_node or board.hp is not None and board.hp < threshold:
-            return None
         return f"留到最终节点或生命值低于 {threshold} 再配"
 
     def _equipment_ahead(self, frame, board, rest):

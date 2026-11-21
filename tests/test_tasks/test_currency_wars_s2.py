@@ -469,11 +469,12 @@ def test_full_ten_person_team_makes_room_for_priority_assist():
     sparkle = policy.Unit("花火", True, False)
     full = ten_employee_board(fronts, backs, (sparkle, None), lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     plan = policy.deployment(full)
-    assert [move[0].unit.name for move in plan] == [FILLER.name, sparkle.name]
-    assert plan[0][1].zone == "bench" and plan[1][1].zone == "front"
+    # 星期日卡面推荐前后台都能站，高人口时攻略让她在后台：她退到后台，换下后台的过渡角色，花火补上她的前台位。
+    assert [(source.unit.name, target.zone) for source, target in plan] == [
+        ("后台角色0", "bench"), ("星期日", "back"), (sparkle.name, "front")]
     for move in plan:
         full = apply_deployment(full, move)
-    assert full.used == 10 and full.slots[1].unit == sparkle
+    assert full.used == 10 and full.slots[2].unit == sparkle and full.slots[6].unit == fronts[2]
     assert policy.deployment(full) == ()
 
 
@@ -531,30 +532,21 @@ def test_empty_front_slot_can_restore_output_from_the_back_row():
     assert policy.deployment(before) == ((source, target),)
 
 
-@pytest.mark.parametrize(("other_healer", "hp", "can_move_shielder"), (
-    (True, 100, True), (False, 100, False), (True, 30, False),
+@pytest.mark.parametrize(("first", "other_rear", "hp"), (
+    (policy.Unit("符玄", True, False), BAILU, 100),
+    (policy.Unit("符玄", True, False), policy.Unit("后台过渡", False, True), 100),
+    (policy.Unit("符玄", True, False), BAILU, 30),
+    (policy.Unit("灵砂", True, True), policy.Unit("杰帕德", True, True), 100),
 ))
-def test_core_can_replace_surplus_sustain_but_preserves_the_needed_healing(other_healer, hp, can_move_shielder):
-    shielder = policy.Unit("符玄", True, False)
-    front = (shielder, policy.Unit("花火", True, False), policy.Unit("星期日", True, True),
+def test_core_replaces_a_front_unit_even_if_it_is_the_last_healer_or_shield(first, other_rear, hp):
+    """小队掉血来自限定行动内没打完怪物，看的是阵容战斗力，治疗和护盾多一个影响不大。部署不再护着场上最后一名
+    治疗或生存角色，生命值低时也不多留：核心照常换下前台第一位上场。"""
+    front = (first, policy.Unit("花火", True, False), policy.Unit("星期日", True, True),
              policy.Unit("知更鸟", True, False))
-    rear = (CER, BAILU if other_healer else policy.Unit("后台过渡", False, True),
-            *(policy.Unit(f"后台角色{i}", False, True) for i in range(4)))
+    rear = (CER, other_rear, *(policy.Unit(f"后台角色{i}", False, True) for i in range(4)))
     full = ten_employee_board(front, rear, (CORE, None), hp=hp)
     moves = policy.deployment(full)
-    assert moves[1][0].unit == CORE
-    assert (moves[0][0].unit == shielder) is can_move_shielder
-
-
-def test_shields_do_not_replace_the_only_healing_employee():
-    healer = policy.Unit("灵砂", True, True)
-    front = (healer, policy.Unit("花火", True, False), policy.Unit("星期日", True, True),
-             policy.Unit("知更鸟", True, False))
-    rear = (CER, policy.Unit("杰帕德", True, True),
-            *(policy.Unit(f"后台角色{i}", False, True) for i in range(4)))
-    full = ten_employee_board(front, rear, (CORE, None))
-    moves = policy.deployment(full)
-    assert moves[0][0].unit != healer and moves[1][0].unit == CORE
+    assert moves[0][0].unit == first and moves[1][0].unit == CORE
 
 
 def test_full_rear_rotation_redeploys_the_same_employee_from_the_buffer():
@@ -7326,7 +7318,9 @@ def test_high_moves_other_damage_away_from_auto_support_target(high_lineup):
     b = board(*front, *rear, slot("bench", 0), lineup=high_lineup, stage="2-4", used=4, capacity=5,
               final_node="3-7")
     assert policy.deployment(b) == ((front[1], rear[2]),)
-    assert policy.deployment(apply_deployment(b, policy.deployment(b)[0])) == ()
+    # 前台空出的位置由攻略要求前期站前台的刻律德菈补上。
+    assert policy.deployment(apply_deployment(b, policy.deployment(b)[0])) == (
+        (rear[0], replace(front[1], occupied=False, unit=None)),)
 
 
 @pytest.mark.parametrize("selected", (policy.HIGH_ANAXA,))
@@ -7340,8 +7334,10 @@ def test_anaxa_uses_evernight_to_fill_the_back_but_not_the_fourth_front_slot(sel
     used = 4 + int(not rear_open)
     b = board(*front, slot("back", 0, CER), rear, bench, slot("bench", 1),
               lineup=policy.LINEUPS.get(selected), used=used, capacity=used + 1, stage="1-5")
-    expected = ((bench, rear),) if rear_open else ()
-    assert policy.deployment(b) == policy.deployment(b, overflow=True) == expected
+    # 前台第四格由攻略要求前期站前台的刻律德菈补上；后台有空位时先让长夜月上场。
+    expected = ((bench, rear),) if rear_open else ((b.slots[4], front[3]),)
+    assert policy.deployment(b) == expected
+    assert policy.deployment(b, overflow=True) == (((bench, rear),) if rear_open else ())
     assert policy.should_buy_exp(replace(b, capacity=used), 4) is rear_open
 
 
@@ -7792,6 +7788,144 @@ GUIDE_FIELD = (slot("front", 0, CORE), slot("front", 1, SPARKLE), slot("front", 
                slot("back", 0, CER), slot("back", 1, SUNDAY), slot("back", 2, BAILU))
 
 
+@pytest.mark.parametrize(("fifth_rear", "victim"), (
+    (policy.Unit("寒鸦", False, True, 2), "白露"),
+    # 没有寒鸦时白露是四连击的第四人，换下她会熄灭四连击，昔涟改换下不在连击里的缇宝。
+    (policy.Unit("缇宝", False, True, 1), "缇宝"),
+))
+def test_key_support_takes_the_seat_of_a_spare_combo_member(fifth_rear, victim):
+    """复现 2026-11-21 难度 89 的 3-5、3-6：八人口满编，3-5 买到的昔涟在备战席坐了两场。换下白露要扣连击分，
+    可那刻夏、刻律德菈、星期日、寒鸦仍点亮四连击。攻略在寒鸦、风堇到场后让白露退场，九人口前台有昔涟。"""
+    field = (slot("front", 0, replace(CORE, equipment=2)), slot("front", 1, replace(SPARKLE, stars=2)),
+             slot("front", 2, replace(ROBIN, stars=2)), slot("front", 3),
+             slot("back", 0, replace(CER, stars=2)), slot("back", 1, BAILU), slot("back", 2, replace(SUNDAY, stars=2)),
+             slot("back", 3, policy.Unit("风堇", False, True, 1)), slot("back", 4, fifth_rear), slot("back", 5))
+    full = board(*field, slot("bench", 0, policy.Unit("昔涟", True, False, 1)), slot("bench", 1),
+                 lineup=policy.LINEUPS[policy.HIGH_ANAXA], stage="3-6", used=8, capacity=8, level=8, hp=25)
+
+    moves = policy.deployment(full)
+    assert [(source.unit.name, target.zone, target.index) for source, target in moves] == [
+        (victim, "bench", 1), ("昔涟", "front", 3)]
+    for move in moves:
+        full = apply_deployment(full, move)
+    assert policy.deployment(full) == ()
+
+
+@pytest.mark.parametrize(("second", "lead", "mover"), (
+    (replace(SUNDAY, stars=2), CER, "星期日"),
+    # 没有星期日时，攻略要求前期站前台的刻律德菈补上：排在她前面的前台角色还坐不满前台。
+    (policy.Unit("缇宝", False, True, 1), CER, "刻律德菈"),
+    # 后台只剩卡面推荐后台的角色时照推荐站位，前台空着。
+    (policy.Unit("缇宝", False, True, 1), policy.Unit("不死途", False, True, 1), None),
+))
+def test_anaxa_fills_an_empty_front_seat_from_the_back(second, lead, mover):
+    """复现 2026-11-21 难度 89 第七轮 3-7：九人口满编，没有昔涟，前台只坐了那刻夏、花火、知更鸟，第四格整局空着，
+    前台少一人，出战就少一人。卡面标记是游戏推荐：后台有推荐也能站前台的星期日时把她挪上去。"""
+    rear = (slot("back", 0, lead), slot("back", 1, second), slot("back", 2, BAILU),
+            slot("back", 3, policy.Unit("千冶·刃", False, True, 1)), slot("back", 4, policy.Unit("风堇", False, True, 1)),
+            slot("back", 5, policy.Unit("寒鸦", False, True, 1)))
+    field = (slot("front", 0, replace(CORE, equipment=3)), slot("front", 1, SPARKLE), slot("front", 2, ROBIN),
+             slot("front", 3), *rear)
+    full = board(*field, slot("bench", 0), slot("bench", 1), lineup=policy.LINEUPS[policy.HIGH_ANAXA],
+                 stage="3-7", used=9, capacity=9, level=9, hp=34)
+    moves = policy.deployment(full)
+    assert [(source.unit.name, target) for source, target in moves] == ([(mover, field[3])] if mover else [])
+    for move in moves:
+        full = apply_deployment(full, move)
+    assert policy.deployment(full) == ()
+
+
+def settle_deployment(current):
+    """按部署方案逐步执行，直到不再有移动。"""
+    for _ in range(6):
+        moves = policy.deployment(current)
+        if not moves:
+            return current
+        for move in moves:
+            current = apply_deployment(current, move)
+    raise AssertionError("部署没有收敛")
+
+
+def zone_names(current, zone):
+    return [s.unit.name for s in sorted(current.slots, key=lambda s: s.index) if s.zone == zone and s.unit]
+
+
+def test_anaxa_front_follows_the_guide_from_four_to_six_members():
+    """复现 2026-11-21 难度 89 第七轮 1-3～1-7：二星星期日顶掉知更鸟后进了后台，1-3 前台只剩那刻夏；之后前台一直缺一两人。
+    攻略让刻律德菈前期和星期日一起站前台、开局给那刻夏挂军功，白露留后台；花火到场按五人口过渡换下知更鸟；
+    六人口知更鸟回来时刻律德菈让出前台，回后台一号位。"""
+    lineup = policy.LINEUPS[policy.HIGH_ANAXA]
+    b = board(slot("front", 0, CORE), slot("front", 1, ROBIN), slot("front", 2), slot("front", 3),
+              slot("back", 0, CER), slot("back", 1, BAILU), slot("back", 2), slot("back", 3),
+              slot("bench", 0, replace(SUNDAY, stars=2)), slot("bench", 1),
+              lineup=lineup, stage="1-3", used=4, capacity=4, level=4)
+
+    # 星期日直接上前台，不先进后台再挪。
+    assert [(source.unit.name, target.zone) for source, target in policy.deployment(b)] == [
+        ("知更鸟", "bench"), ("星期日", "front")]
+    b = settle_deployment(b)
+    assert zone_names(b, "front") == ["那刻夏", "刻律德菈", "星期日"] and zone_names(b, "back") == ["白露"]
+    b = settle_deployment(replace(b, capacity=5, level=5))
+    assert zone_names(b, "front") == ["那刻夏", "刻律德菈", "星期日", "知更鸟"] and zone_names(b, "back") == ["白露"]
+    empty_bench = next(s for s in b.slots if s.zone == "bench" and not s.occupied)
+    b = settle_deployment(replace(b, slots=tuple(replace(s, occupied=True, unit=SPARKLE) if s == empty_bench else s
+                                                 for s in b.slots)))
+    assert zone_names(b, "front") == ["那刻夏", "刻律德菈", "星期日", "花火"] and zone_names(b, "back") == ["白露"]
+    b = settle_deployment(replace(b, capacity=6, level=6))
+    assert zone_names(b, "front") == ["那刻夏", "知更鸟", "星期日", "花火"]
+    assert zone_names(b, "back") == ["刻律德菈", "白露"]
+    assert next(s for s in b.slots if s.zone == "back" and s.index == 0).unit == CER
+
+
+@pytest.mark.parametrize("stage", ("2-2", "2-4"))
+def test_cerydra_yields_the_front_by_guide_order_regardless_of_stars_and_gear(stage):
+    """复现 2026-11-22 难度 89 的 2-2～2-6：刻律德菈二星、穿了三件装备，按星级和装备加分算，前台优先级高过一星的知更鸟、
+    星期日，一直守在前台第 4 格，星期日在后台；2-4 买到的昔涟在备战席坐到 2-6。攻略前台顺序是那刻夏、花火、知更鸟、
+    昔涟、星期日，最后才是刻律德菈：排在她前面的角色坐得满前台时，她回后台一号位，不看星级和装备。"""
+    front = (slot("front", 0, replace(CORE, equipment=3)), slot("front", 1, replace(SPARKLE, stars=2)),
+             slot("front", 2, ROBIN), slot("front", 3, replace(CER, stars=2, equipment=3)))
+    rear = [slot("back", 0, BAILU), slot("back", 1, SUNDAY), *(slot("back", index) for index in range(2, 6))]
+    bench = [slot("bench", index) for index in range(9)]
+    used = 6
+    if stage == "2-4":
+        # 2-2 升到七人口后放进后台的云璃、2-4 买到的昔涟，备战席另有等合成的星期日和花火。
+        rear[2] = slot("back", 2, policy.Unit("云璃", True, True, 1, output=True))
+        bench[:3] = (slot("bench", 0, SUNDAY), slot("bench", 1, SPARKLE),
+                     slot("bench", 2, policy.Unit("昔涟", True, False, 1)))
+        used = 7
+    b = board(*front, *rear, *bench, lineup=policy.LINEUPS[policy.HIGH_ANAXA], stage=stage,
+              used=used, capacity=used, level=used, hp=100)
+
+    b = settle_deployment(b)
+    if stage == "2-2":
+        assert zone_names(b, "front") == ["那刻夏", "花火", "知更鸟", "星期日"]
+        assert zone_names(b, "back") == ["刻律德菈", "白露"]
+    else:
+        assert zone_names(b, "front") == ["那刻夏", "花火", "知更鸟", "昔涟"]
+        assert zone_names(b, "back") == ["刻律德菈", "星期日", "白露"]
+        assert "云璃" in zone_names(b, "bench")
+    assert next(s for s in b.slots if s.zone == "back" and s.index == 0).unit.name == "刻律德菈"
+
+
+def test_front_only_key_support_moves_a_flexible_filler_back():
+    """九人口满编时补位的星期日坐着前台，买到只能站前台的昔涟：星期日退到后台，换下多出来的连击角色白露，
+    昔涟补上前台，阵容与攻略九人口一致。"""
+    front = (slot("front", 0, replace(CORE, equipment=3)), slot("front", 1, SPARKLE), slot("front", 2, ROBIN),
+             slot("front", 3, replace(SUNDAY, stars=2)))
+    rear = (slot("back", 0, CER), slot("back", 1, policy.Unit("寒鸦", False, True, 1)),
+            slot("back", 2, policy.Unit("风堇", False, True, 1)), slot("back", 3, policy.Unit("千冶·刃", False, True, 1)),
+            slot("back", 4, BAILU), slot("back", 5))
+    bench = (slot("bench", 0, policy.Unit("昔涟", True, False, 1)), slot("bench", 1))
+    full = board(*front, *rear, *bench, lineup=policy.LINEUPS[policy.HIGH_ANAXA], stage="3-5",
+                 used=9, capacity=9, level=9, hp=55)
+    moves = policy.deployment(full)
+    assert [(source.unit.name, target.zone, target.index) for source, target in moves] == [
+        ("白露", "bench", 1), ("星期日", "back", 4), ("昔涟", "front", 3)]
+    for move in moves:
+        full = apply_deployment(full, move)
+    assert policy.deployment(full) == ()
+
+
 def test_anaxa_stops_searching_once_the_core_sparkle_and_combo_are_in_place():
     """攻略：那刻夏二星、花火、四连击都到位就停搜升级。之后只在新开人口位时为还没有的关键辅助刷新，九级起再追星；
     缺花火时照常搜，小队扛不住时照常追星补强。"""
@@ -7906,6 +8040,43 @@ def test_off_roster_bench_keeps_one_filler_only_in_the_first_plane():
     assert policy.off_roster_bench(team) == (filler,)
     assert policy.off_roster_bench(replace(team, stage="2-1")) == (filler, stronger)
     assert policy.off_roster_bench(replace(team, lineup=None)) == ()
+
+
+def test_shop_no_longer_buys_off_roster_healers_just_for_healing():
+    """复现 2026-11-21 难度 89 第 10 局 1-7：5/5 满编、生命值不到 55 时，商店按「补一名生存角色」买下阵容外的治疗，
+    部署不让它上场，随即卖掉，卖了再买（这个节点 7 次）。小队掉血来自限定行动内没打完怪物，治疗多一个影响不大：
+    商店不再为凑治疗或生存位买阵容外角色，场上没有治疗时也不买；有空位时只当普通过渡卡补人数。"""
+    healers = (policy.Offer("灵砂", 1, (473, 194), 0, front=True, back=True),
+               policy.Offer("娜塔莎", 2, (742, 194), 1, back=True),
+               policy.Offer("罗刹", 3, (1011, 194), 2, back=True))
+    bench = tuple(slot("bench", index) for index in range(3))
+    five = (slot("front", 0, CORE), slot("front", 1, SPARKLE), slot("back", 0, CER), slot("back", 1, SUNDAY),
+            slot("back", 2, BAILU))
+    full = board(*five, *bench, lineup=policy.LINEUPS[policy.HIGH_ANAXA], stage="2-4",
+                 used=5, capacity=5, level=5, exp=(0, 20), gold=17, hp=48)
+    skipped = {}
+    assert policy.shop_purchase(full, healers, experience_price=4, skipped=skipped) is None
+    assert skipped == dict.fromkeys(healers, "本轮无需该角色补阵")
+    no_healer = replace(full, slots=(*five[:4], slot("back", 2, FILLER), *bench))
+    assert policy.shop_purchase(no_healer, healers, experience_price=4) is None
+
+    open_rear = replace(full, used=4, slots=(*five[:4], slot("back", 2), *bench))
+    assert policy.shop_purchase(open_rear, healers, experience_price=4) == healers[0]
+
+
+def test_two_sustain_cards_do_not_keep_swapping_places():
+    """复现 2026-11-21 难度 89 第 3 局 1-9：满编、生命值 48 时部署为凑两名生存角色，把场上的长夜月换成备战席的
+    灵砂，下一轮又换回来，两次拖动都等到时限才暂缓部署。部署不再为凑生存角色换人，两张卡都留在原位。"""
+    evernight = policy.Unit("长夜月", True, True, 1, equipment=0)
+    lingsha = policy.Unit("灵砂", True, True, 1, equipment=0)
+    hanya = policy.Unit("寒鸦", False, True, 1)
+    field = (slot("front", 0, CORE), slot("front", 1, SPARKLE), slot("back", 0, CER), slot("back", 1, SUNDAY),
+             slot("back", 2, hanya))
+    team = board(*field, slot("back", 3, evernight), slot("bench", 0, lingsha), slot("bench", 1),
+                 lineup=policy.LINEUPS[policy.HIGH_ANAXA], stage="1-9", used=6, capacity=6, level=6, gold=5, hp=48)
+    assert policy.deployment(team) == ()
+    swapped = replace(team, slots=(*field, slot("back", 3, lingsha), slot("bench", 0, evernight), slot("bench", 1)))
+    assert policy.deployment(swapped) == ()
 
 
 def test_preparation_sells_an_off_roster_bench_card_right_away(monkeypatch, world):
@@ -8065,17 +8236,17 @@ def test_halo_reads_high_rank_refresh_quota(caption, expected):
     assert frame.halo_refresh_status() == expected
 
 
-def test_high_reward_space_preserves_equipment_and_a_spare_healer_when_needed(high_lineup):
+def test_high_reward_space_treats_off_roster_healers_as_ordinary_reserves(high_lineup):
     b = board(slot("front", 0, CORE), slot("back", 0, BAILU),
               slot("back", 1, policy.Unit("真珠", False, True, 1, equipment=1)),
               slot("bench", 0, policy.Unit("娜塔莎", False, True, 1, equipment=0)),
               slot("bench", 1, policy.Unit("风堇", False, True, 1, equipment=1)),
               slot("bench", 2, policy.Unit("藿藿", False, True, 1, equipment=0)),
               lineup=high_lineup, stage="3-1", used=3, capacity=3)
-    # 藿藿不在攻略阵容里，和娜塔莎一样可作为冗余治疗腾位；带装备的风堇是阵容角色。
+    # 治疗多一个影响不大：阵容外的娜塔莎、藿藿不再留作生存候补，场上有几名治疗都可以腾位；风堇是阵容角色。
     assert policy.disposable_bench(b) == (b.slots[3], b.slots[5])
     without_pearl = replace(b, slots=(*b.slots[:2], *b.slots[3:]), used=2)
-    assert policy.disposable_bench(without_pearl) == ()
+    assert policy.disposable_bench(without_pearl) == (without_pearl.slots[2], without_pearl.slots[4])
 
 
 def test_two_star_shop_offer_uses_displayed_quote_and_considers_existing_core(monkeypatch, high_lineup):
@@ -9907,7 +10078,7 @@ def test_move_keeps_a_known_card_whose_portrait_only_brightened(monkeypatch, wor
 
     assert world.war._move(lifted, team, source, destination) is moved
     assert world.auto.drag_mouse.call_count == 1
-    world.auto.move_mouse.assert_called_once_with((12 / 1920, 12 / 1080))
+    world.auto.park_mouse.assert_called_once_with((12 / 1920, 12 / 1080))
     assert world.war.slot_cache[("bench", 1)].name == "桂乃芬" and ("front", 1) not in world.war.slot_cache
 
 
@@ -9967,6 +10138,33 @@ def test_confirmed_move_is_marked_for_a_settled_portrait_refresh(monkeypatch, wo
     assert not world.war.moved_identities
 
 
+def test_card_dragged_again_in_the_same_node_waits_for_its_landing_to_finish(monkeypatch, world):
+    """复现 2026-11-21 五次「部署暂缓：角色移动未确认（……已尝试 0 次）」：刚拖入一格的卡接着又要挪，读盘那帧卡面
+    还在落位动画中，取作拖动基准后每帧都对不上，等满时限也没拖。先等这张卡的卡面稳定再取基准，照常拖动。"""
+    stage = "1-3"
+    source, destination = slot("front", 1, GUINAIFEN), slot("bench", 1)
+    team = board(slot("front", 0, CORE), source, slot("bench", 0, CER), destination, stage=stage, used=2, capacity=2)
+    cards = ((("front", 0), "那刻夏"), (("bench", 0), "刻律德菈"))
+    landing = swap_screen((*cards, (("front", 1), "桂乃芬", 60)), capacity=(2, 2), stage=stage)
+    rested = swap_screen((*cards, (("front", 1), "桂乃芬")), capacity=(2, 2), stage=stage)
+    moved = swap_screen((*cards, (("bench", 1), "桂乃芬")), capacity=(1, 2), stage=stage)
+    mark = landing.slot_mark(source.point)
+    entry = task.SlotIdentity(task.cv2.resize(mark, (12, 12)).astype(np.int16), "桂乃芬", False, mark.copy())
+    world.war.slot_cache[("front", 1)] = entry
+    world.war.moved_identities[("front", 1)] = stage, entry
+
+    def settle(state):
+        if state.frame is landing:
+            state.frame = rested
+
+    state = drive(monkeypatch, world, landing, after_capture=settle)
+    world.auto.drag_mouse.side_effect = lambda *_, **__: setattr(state, "frame", moved) or True
+
+    assert world.war._move(landing, team, source, destination) is moved
+    assert world.auto.drag_mouse.call_count == 1
+    assert world.war.slot_cache[("bench", 1)].name == "桂乃芬"
+
+
 @pytest.mark.parametrize("delivered", (True, False))
 def test_drag_parks_the_pointer_only_after_a_delivered_drag(monkeypatch, world, delivered):
     frame = page(Page.BOARD, stage="1-1")
@@ -9975,7 +10173,7 @@ def test_drag_parks_the_pointer_only_after_a_delivered_drag(monkeypatch, world, 
     assert world.war._drag(frame, (735, 910), (735, 405)) is delivered
     world.auto.drag_mouse.assert_called_once_with((735 / 1920, 910 / 1080), (735 / 1920, 405 / 1080),
                                                   duration=0.5, end_pause=0.10, take_screenshot=False)
-    assert world.auto.move_mouse.call_count == int(delivered)
+    assert world.auto.park_mouse.call_count == int(delivered)
 
 
 def test_preparation_parks_the_pointer_once_per_node_before_reading_the_board(monkeypatch, world):
@@ -9983,7 +10181,7 @@ def test_preparation_parks_the_pointer_once_per_node_before_reading_the_board(mo
     rest = (12 / 1920, 12 / 1080)
     events = []
     drive(monkeypatch, world, page(Page.BOARD, stage="1-5"))
-    world.auto.move_mouse.side_effect = lambda point: events.append(("移开指针", point, world.now[0])) or True
+    world.auto.park_mouse.side_effect = lambda point: events.append(("移开指针", point, world.now[0])) or True
 
     def settle(frame):
         events.append(("读棋盘", frame.stage, world.now[0]))
@@ -10006,7 +10204,7 @@ def test_preparation_parks_the_pointer_once_per_node_before_reading_the_board(mo
 def test_pointer_parking_failure_keeps_preparing_but_a_stop_request_ends_it(monkeypatch, world, failure):
     frame, settled = page(Page.BOARD, stage="2-1"), page(Page.SHOP, stage="2-1")
     drive(monkeypatch, world, frame)
-    world.auto.move_mouse.side_effect = (RuntimeError("无法获取游戏窗口尺寸") if failure == "window"
+    world.auto.park_mouse.side_effect = (RuntimeError("无法获取游戏窗口尺寸") if failure == "window"
                                          else RunStopRequested())
     monkeypatch.setattr(world.war, "_settle_board", lambda f: settled)
     if failure == "stopped":
@@ -10085,14 +10283,20 @@ def test_level_up_replans_a_deferred_deployment(monkeypatch, world):
 
 @pytest.mark.parametrize(("core_worn", "hp", "final_node", "expected", "reason"), (
     (2, 100, None, ["刻律德菈", "那刻夏"], "那刻夏未配满"),
-    (3, 100, None, ["刻律德菈"], "留到最终节点或生命值低于 90 再配"),
-    (3, 89, None, ["刻律德菈", "瓦尔特"], None),
+    (3, 100, None, ["刻律德菈"], "留到最终节点或生命值低于 80 再配"),
+    # 难度 89 开局生命值就是 80，掉到 80 以下才给其余角色配装。
+    (3, 80, None, ["刻律德菈"], "留到最终节点或生命值低于 80 再配"),
+    (3, 79, None, ["刻律德菈", "瓦尔特"], None),
     (3, 100, "2-5", ["刻律德菈", "瓦尔特"], None),
+    # 那刻夏的推荐页可能整局配不上第三件，生命值偏低或到了最终节点就不再等她穿满。
+    (2, 79, None, ["刻律德菈", "瓦尔特", "那刻夏"], None),
+    (2, 100, "2-5", ["刻律德菈", "瓦尔特", "那刻夏"], None),
 ))
-def test_anaxa_equipment_waits_for_a_full_core_before_other_units(monkeypatch, world, core_worn, hp, final_node,
-                                                                   expected, reason):
-    """那刻夏穿满三件前只给攻略的配装优先角色（那刻夏、昔涟、刻律德菈）配装。穿满后其余上阵角色留到最终节点，
-    或小队生命值低于 90 时再配：物品栏每变一次就要重开全队推荐页，多数一无所获。"""
+def test_anaxa_equipment_holds_other_units_until_the_final_node_or_low_hp(monkeypatch, world, core_worn, hp,
+                                                                          final_node, expected, reason):
+    """平时只给攻略的配装优先角色（那刻夏、昔涟、刻律德菈）配装，其余上阵角色留到最终节点或小队生命值低于 80 时再配：
+    物品栏每变一次就要重开全队推荐页，多数一无所获。复现 2026-11-21 难度 89：那刻夏从 1-9 起停在两件，其余角色整局
+    写「那刻夏未配满」，生命值从 1-5 起就低于 80，最终节点只剩 3 时物品栏还有十一件没用。"""
     stage = "2-5"
     core, support, other = slot("front", 0, CORE), slot("back", 0, CER), slot("front", 1, FILLER)
     team = board(core, support, other, stage=stage, used=3, capacity=3, hp=hp, final_node=final_node)
@@ -10117,10 +10321,10 @@ def test_anaxa_equipment_waits_for_a_full_core_before_other_units(monkeypatch, w
 
 
 def test_anaxa_equipment_moves_on_to_other_units_once_the_core_fills_up(monkeypatch, world):
-    """小队生命值低于 90 时，同一遍配装中那刻夏刚穿满，后面的角色接着配，不必等下一节点。"""
+    """小队生命值低于 80 时，同一遍配装里先配那刻夏，后面的角色接着配，不必等下一节点。"""
     stage = "2-5"
     core, other = slot("front", 0, CORE), slot("front", 1, FILLER)
-    team = board(core, other, stage=stage, used=2, capacity=2, hp=80, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
+    team = board(core, other, stage=stage, used=2, capacity=2, hp=79, lineup=policy.LINEUPS[policy.HIGH_ANAXA])
     before = stock(page(Page.BOARD, stage=stage, capacity=(2, 2)), "轮滑鞋", "生命之花", worn={core.point: 2})
     filled = stock(page(Page.BOARD, stage=stage, capacity=(2, 2)), "生命之花", worn={core.point: 3})
     opened = []
@@ -10257,6 +10461,30 @@ def test_orb_blocked_by_a_full_bench_waits_for_a_free_slot_instead_of_another_sw
     assert world.war.blocked_orbs[stage] == []
 
 
+def test_orb_hit_that_drops_a_box_is_confirmed_without_waiting(monkeypatch, world):
+    """复现 2026-11-21 第 11 局 1-9：这一下扫出武装箱，奖励区的晶矿还在，金币、物品和角色都没变，等满时限后
+    本节点的晶矿记为暂缓。备战席新出现的「开启」也算收集回执，接着再扫，扫空后交回开箱。"""
+    stage, orb = "1-9", (1315, 286)
+
+    def screen(orbs, *boxes):
+        frame = page(Page.BOARD, *(("开启", x, 952) for x in boxes), stage=stage, gold=16, capacity=(5, 5))
+        frame.reward_orbs = lambda: orbs
+        frame.opening_orbs = frame.inventory_items = lambda: ()
+        return frame
+
+    full, dropped, emptied = screen((orb,)), screen((orb,), 813), screen((), 813, 1063)
+    state = drive(monkeypatch, world, full)
+
+    def drag(*_, **__):
+        state.frame = dropped if state.frame is full else emptied
+        return True
+
+    world.auto.drag_mouse.side_effect = drag
+    assert world.war._gather(full) is emptied
+    assert world.auto.drag_mouse.call_count == 2
+    assert (stage, "晶矿") not in world.war.deferred_operations
+
+
 def test_spare_inventory_column_is_read_with_the_same_item_frames():
     """物品超过六件时向左扩列。扩列物品与右列一样有贯穿整格的上下边框，空格只有底纹。"""
     def board_with(spare):
@@ -10277,6 +10505,50 @@ def test_shop_reads_a_price_whose_coin_icon_is_read_as_a_question_mark():
     x = 367 + 269 * 3
     frame = page(Page.SHOP, ("飞霄", x + 90, 306), ("?3", x + 225, 306), stage="3-1")
     assert [(offer.name, offer.cost, offer.column) for offer in frame.offers] == [("飞霄", 3, 3)]
+
+
+@pytest.mark.parametrize(("labels", "expected"), (
+    ((("昔涟", 90), ("h", 180), ("4", 225)), ("昔涟", 4)),
+    ((("姬子·启行", 90), ("12", 225)), ("姬子·启行", 2)),
+    ((("千冶·刃1", 90), ("2", 225)), ("千冶·刃", 2)),
+    ((("飞霄Y3", 120),), ("飞霄", 3)),
+    ((("刃1", 90), ("3", 225)), ("刃", 3)),
+    ((("银狼LV.999", 90), ("3", 225)), ("银狼LV.999", 3)),
+))
+def test_shop_drops_a_coin_icon_read_as_a_letter_or_digit_after_the_name(labels, expected):
+    """复现 2026-11-21 难度 89 第七轮 3-5：报价前的金币图标读成 h 粘在名字后，「昔涟h」对不上阵容，
+    这个节点没买关键辅助昔涟，还把她刷掉了。之前几局也有「寒鸦1」「刻律德菈2」「昔涟1」。"""
+    x = 367 + 269 * 2
+    frame = page(Page.SHOP, *((text, x + dx, 306) for text, dx in labels), stage="3-5")
+    assert [(offer.name, offer.cost) for offer in frame.offers] == [expected]
+
+
+def test_shop_reads_the_zone_squares_at_the_top_right_of_each_card():
+    """复现 2026-11-21 第 1 局 2-2：卡面右上角上下两枚方块，实心表示能上前台、后台。旧取样框压在方块右缘和下方的
+    「试用」角标上，只能上前台的椒丘读成站位不明，按后台补位买下后随即卖掉；能上前后台的卡也只读出前台。"""
+    image = CANVAS.copy()
+    draw = ImageDraw.Draw(image)
+    cards = (("飞霄", 3, True, False, True), ("赛飞儿", 3, False, True, True), ("景元", 1, True, True, False),
+             ("黑天鹅", 1, True, False, False), ("火花", 1, True, True, False))
+    entries = []
+    for index, (name, cost, front, back, trial) in enumerate(cards):
+        x = 367 + 269 * index
+        for filled, top in ((front, 76), (back, 94)):
+            square = (x + 209, top, x + 222, top + 13)
+            if filled:
+                draw.rectangle(square, fill=(242, 242, 242))
+            else:
+                draw.rectangle(square, fill=(18, 18, 22), outline=(168, 168, 168), width=2)
+        if trial:
+            # 「试用」角标：红底白字，在两枚方块下方。
+            draw.rectangle((x + 195, 117, x + 240, 140), fill=(214, 48, 52))
+            for left in (x + 200, x + 218):
+                draw.rectangle((left, 121, left + 14, 135), outline=(255, 255, 255), width=2)
+        entries += [(name, x + 90, 306), (f"?{cost}", x + 225, 306)]
+    frame = Frame(image, labels(*entries))
+    assert [(offer.name, offer.front, offer.back) for offer in frame.offers] == [
+        ("飞霄", True, False), ("赛飞儿", False, True), ("景元", True, True), ("黑天鹅", True, False),
+        ("火花", True, True)]
 
 
 def test_auto_opened_shop_is_remembered_before_closing(monkeypatch, world):
@@ -10305,7 +10577,8 @@ def test_anaxa_swap_survives_a_lifted_card_through_the_task_entry(monkeypatch, w
     lifted = swap_screen((*start[:1], (("front", 1), "桂乃芬", 30), *start[2:]))
     benched = swap_screen(((("front", 0), "那刻夏"), (("back", 1), "长夜月"), (("bench", 0), "刻律德菈"),
                            (("bench", 1), "桂乃芬")), capacity=(2, 3))
-    deployed = swap_screen(((("front", 0), "那刻夏"), (("back", 0), "刻律德菈"), (("back", 1), "长夜月"),
+    # 攻略要求刻律德菈前期站前台：换下桂乃芬后她补前台空位。
+    deployed = swap_screen(((("front", 0), "那刻夏"), (("front", 2), "刻律德菈"), (("back", 1), "长夜月"),
                             (("bench", 1), "桂乃芬")))
     details = {SWAP_SEEDS[name]: employee(name, role, stage)
                for name, role in (("那刻夏", "前台"), ("桂乃芬", "前后台"), ("长夜月", "前后台"), ("刻律德菈", "后台"))}
@@ -10380,7 +10653,7 @@ def test_anaxa_swap_survives_a_lifted_card_through_the_task_entry(monkeypatch, w
     assert reads == first_reads
     assert world.auto.drag_mouse.call_count == 2 and boards[-1] is deployed
     # 节点开始备战前移开一次指针，两次拖动后各移开一次。
-    assert world.auto.move_mouse.call_count == 3
+    assert world.auto.park_mouse.call_count == 3
     assert fights == [stage] and failures == ([Page.BOARD] if fault == "step_failure" else [])
     assert not any("部署暂缓" in str(call.args[0]) for call in warnings.call_args_list)
     assert state.frame is lobby and world.war.result is True
@@ -10413,6 +10686,40 @@ def test_card_equipment_counts_centered_icons_by_their_gold_frames(point, count,
     draw_card_items(image, (x + 142, y), 3)
     draw_card_items(image, point, count, badge=badge)
     assert Frame(image, ()).card_equipment(policy.Slot("back", 0, point, True)) == count
+
+
+def draw_role_squares(image, point, front, back):
+    """按 2026-11-22 实机画面在卡面右上角画两个站位方块，上前台、下后台，整组随透视向画面中间偏。推荐的站位是实心方块：
+    卡站在推荐区时白色，站到另一区时红色；不推荐的站位是空心框。"""
+    x, y = point
+    left = x + 38 - round((x - 888) * 0.015)
+    tops = (y - 58, y - 47) if y == ui.BACK_Y else (y - 55, y - 43)
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((left - 8, y - 62, left + 18, y - 26), fill=(7, 7, 7))
+    for top, style in zip(tops, (front, back)):
+        box = (left, top, left + 10, top + 8)
+        if style == "hollow":
+            draw.rectangle(box, outline=(96, 96, 96))
+        else:
+            draw.rectangle(box, fill={"white": (236, 236, 236), "red": (255, 98, 98)}[style])
+    return image
+
+
+@pytest.mark.parametrize(("point", "front", "back", "expected"), (
+    # 刻律德菈站在前台第 4 格：推荐的后台方块变红，前台是空心框。
+    ((1173, ui.FRONT_Y), "hollow", "red", (False, True)),
+    # 只能站前台的角色放在后台：推荐的前台方块变红。
+    ((747, ui.BACK_Y), "red", "hollow", (True, False)),
+    # 站在推荐区的卡照旧是白色实心方块。
+    ((888, ui.FRONT_Y), "white", "hollow", (True, False)),
+    ((889, ui.BACK_Y), "white", "white", (True, True)),
+))
+def test_card_role_reads_the_red_square_of_a_card_outside_its_recommended_zone(point, front, back, expected):
+    """复现 2026-11-22 难度 89 的 2-4～2-6：站在前台的刻律德菈卡面上，推荐后台的方块是红色的。原来只认白色方块，把她读成
+    前后台都不能站：退不回后台，也不能给买到的昔涟让位，昔涟一直坐在备战席。"""
+    image = draw_role_squares(CANVAS.copy(), point, front, back)
+    zone = "back" if point[1] == ui.BACK_Y else "front"
+    assert Frame(image, ()).card_role(policy.Slot(zone, 0, point, True)) == expected
 
 
 @pytest.mark.parametrize("outcome", ("topped_up", "late_receipt", "lost_again"))

@@ -818,11 +818,16 @@ class Frame:
                     cost = self.number((x + 208, 286, x + 240, 327), 5, local=True)
             else:
                 continue
+            # 报价前的金币图标还会读成 1、h、Y 等字符粘在名字末尾，例如「昔涟h」「千冶·刃1」，名字对不上就会漏买。
+            # 角色名没有以汉字加单个字母或数字结尾的（银狼LV.999 末尾的数字前面也是数字）。
+            name = re.sub(r"(?<=[\u3400-\u9fff])[0-9A-Za-z]$", "", name)
             if cost is not None and 1 <= cost <= ceiling:
-                front_square = self.crop((x + 218, 78, x + 238, 104))
-                is_front = bool((front_square.min(axis=2) > 205).sum() >= 90)
-                back_square = self.crop((x + 218, 105, x + 238, 130))
-                is_back = bool((back_square.min(axis=2) > 205).sum() >= 90)
+                # 卡面右上角上下两枚方块，实心表示能上前台、后台，空心表示不能。只取方块内部，
+                # 避开空心方块的边框和下方的「试用」角标。
+                front_square = self.crop((x + 212, 79, x + 220, 87))
+                is_front = bool((front_square.min(axis=2) > 205).sum() >= 48)
+                back_square = self.crop((x + 212, 97, x + 220, 105))
+                is_back = bool((back_square.min(axis=2) > 205).sum() >= 48)
                 offers.append(Offer(name, cost, (x + 106, 194), index, is_front,
                                     is_back if is_front or is_back else None, stars))
         return tuple(offers)
@@ -1006,8 +1011,11 @@ class Frame:
 
     def _card_role(self, point: Point, shift: int) -> tuple[bool, bool]:
         x, y = point
-        icon = self.crop((x + shift - 6, y - 57, x + shift + 7, y - 31))
-        light = (icon.min(axis=2) > 183).sum(axis=1)
+        icon = self.crop((x + shift - 6, y - 57, x + shift + 7, y - 31)).astype(np.int16)
+        # 推荐的站位是实心方块：卡在推荐区或备战席时是白色；站到另一区时，推荐区的方块变成红色（实机为 255, 98, 98），
+        # 例如刻律德菈站前台时她的后台方块是红的。不推荐的站位是空心框。
+        red = (icon[..., 0] > 200) & (icon[..., 0] - icon[..., 1:].max(axis=2) > 100)
+        light = ((icon.min(axis=2) > 183) | red).sum(axis=1)
         return bool(light[3:10].sum() >= 22), bool(light[13:22].sum() >= 22)
 
     def card_stars(self, slot: Slot, *, separate_glow=False) -> int | None:
