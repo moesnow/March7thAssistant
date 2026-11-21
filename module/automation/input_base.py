@@ -89,6 +89,10 @@ class InputBase(ABC):
         '''将鼠标光标移动到屏幕上的（x，y）位置'''
         pass
 
+    def mouse_park(self, x, y):
+        '''把光标停到屏幕上的（x，y）位置并留在那里，避免悬停改变游戏画面；光标本来就留在原处的后端与移动相同'''
+        return self.mouse_move(x, y)
+
     @abstractmethod
     def mouse_drag(self, start_x, start_y, end_x, end_y, duration=0.5, end_pause=0.0, repeats=1):
         '''连续执行相同拖动，仅最后一次在松手前停留 end_pause 秒'''

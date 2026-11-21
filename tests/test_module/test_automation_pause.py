@@ -49,7 +49,7 @@ def automation(monkeypatch, blocking_controller):
     handler = SimpleNamespace(**{
         name: record(name)
         for name in (
-            "mouse_click", "mouse_down", "mouse_up", "mouse_move", "mouse_drag",
+            "mouse_click", "mouse_down", "mouse_up", "mouse_move", "mouse_park", "mouse_drag",
             "mouse_scroll", "press_key", "press_key_down", "press_key_up",
             "secretly_press_key", "press_mouse", "secretly_write",
         )

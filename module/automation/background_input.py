@@ -151,6 +151,7 @@ class BackgroundInput(InputBase):
         self._pointer_active = False
         self._committed = False
         self._settle_until = 0
+        self._parked_at = None  # 本次会话最后一次写入光标是停放指针时，记下停放点
         self._mouse_notice = False
         self._mouse_failures = 0
         self._mouse_interrupted = False
@@ -306,6 +307,7 @@ class BackgroundInput(InputBase):
         self._target_identity = target
 
     def _end(self):
+        parked_at, self._parked_at = self._parked_at, None
         if self._session is None:
             self._release_protection()
             return
@@ -352,7 +354,11 @@ class BackgroundInput(InputBase):
             if (self._written_cursor is not None and self.api.foreground() == foreground
                     and self._foreground_identity is not None
                     and self.api.identity(foreground) == self._foreground_identity):
-                carried = _carried_cursor(self._user_cursor or cursor, self._written_cursor, self.api.cursor())
+                user, current = self._user_cursor or cursor, self.api.cursor()
+                # 停放指针时用户光标原本落在游戏画面范围内：归还会让游戏重新显示那里的悬停，光标留在停放点。
+                kept = (parked_at is not None and parked_at == self._written_cursor and _near(current, parked_at)
+                        and self._cursor_in_game(target, user))
+                carried = None if kept else _carried_cursor(user, self._written_cursor, current)
                 if carried is not None:
                     self.api.move(carried)
         except Exception as error:
@@ -620,6 +626,16 @@ class BackgroundInput(InputBase):
     def _move_screen(self, x, y):
         self._move_client(self.api.screen_to_client(self._session[0], (round(x), round(y))))
 
+    def _cursor_in_game(self, target, point):
+        """光标是否落在游戏客户区内。游戏被其他窗口盖住时，归还到这里的光标仍可能被游戏读到并显示悬停，
+        所以不看上面盖着什么。读不到时按不在处理。"""
+        try:
+            x, y = self.api.screen_to_client(target, point)
+            width, height = self.api.size(target)
+            return 0 <= x < width and 0 <= y < height
+        except Exception:
+            return False
+
     def mouse_move(self, x, y):
         def move():
             if not self._mouse_down:
@@ -638,6 +654,14 @@ class BackgroundInput(InputBase):
                 self._move_client(tuple(round(a+(b-a)*step/steps) for a,b in zip(start,end)))
                 self._wait(max(0, started + .1*step/steps - time.monotonic()))
         return self._perform(move, pointer=True)
+
+    def mouse_park(self, x, y):
+        """把指针停到（x，y），移开会让游戏显示悬停的指针。用户光标原本落在游戏画面范围内时（即使游戏被其他窗口
+        盖住）留在停放点，因为归还到原处会让游戏重新显示那里的悬停（例如卡面抬起）；在游戏画面外时照常归还。"""
+        def park():
+            self._move_screen(x, y)
+            self._parked_at = None if self._mouse_down else self._written_cursor
+        return self._perform(park, pointer=True)
 
     def _dispatch_time(self):
         self._pause.check_stop()

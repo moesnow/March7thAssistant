@@ -1683,3 +1683,37 @@ def test_carried_cursor_rules():
     assert near_click == (1500, 900)  # 容差内视为未移动：归还原位置
     assert module._carried_cursor((1500, 900), (300, 400), (380, 360)) == (1580, 860)
     assert module._carried_cursor((1500, 900), (300, 400), (1490, 905)) is None
+
+
+def test_park_keeps_the_cursor_that_rested_inside_the_game_area(backend):
+    """用户光标落在游戏画面范围内时（即使游戏被浏览器等窗口盖住），归还会让游戏重新按那里显示悬停（卡面抬起）。
+    停放后光标留在停放点，之后的操作也归还到这里。"""
+    b = backend
+    b.api.point = (900, 600)
+    assert b.input.mouse_park(112, 212) is not False
+    assert b.api.cursor() == (112, 212)
+    assert [event[4] for event in posts(b.api, 0x200)] == [12 | (12 << 16)]
+    assert [event[3] for event in posts(b.api, 0x6)] == [1, 0]
+    assert b.input._session is None
+    assert b.input.mouse_click(350, 450) is True
+    assert b.api.cursor() == (112, 212)
+
+
+@pytest.mark.parametrize('case', ['outside', 'moved', 'clicked'])
+def test_park_returns_the_cursor_in_other_cases(backend, case):
+    """光标在游戏画面外（例如另一块屏幕）、停放途中用户移动了鼠标，或同一会话停放后又点了别处时，照常归还。"""
+    b = backend
+    b.api.point = (7, 9) if case == 'outside' else (900, 600)
+    if case == 'moved':
+        def moved(_point):
+            b.api.on_move = None
+            nudge(b.api, 40, 25)
+        b.api.on_move = moved
+    if case == 'clicked':
+        b.input.press_key_down('alt')
+    assert b.input.mouse_park(112, 212) is not False
+    if case == 'clicked':
+        assert b.input.mouse_click(350, 450) is True
+        b.input.press_key_up('alt')
+    expected = {'outside': (7, 9), 'moved': (940, 625), 'clicked': (900, 600)}[case]
+    assert b.api.cursor() == expected and b.input._session is None

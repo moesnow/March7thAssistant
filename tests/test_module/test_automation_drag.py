@@ -57,6 +57,30 @@ def test_move_mouse_converts_relative_coordinates_without_pressing():
     assert len(events) == 2
 
 
+def test_park_mouse_converts_relative_coordinates_and_uses_the_park_input():
+    """停放指针与移动一样按窗口换算坐标，交给后端的停放输入（后台模式据此决定是否归还用户光标）。"""
+    events = []
+    automation = create_automation(events)
+    automation.mouse_park = lambda *args: events.append(("park", *args))
+    automation.take_screenshot = Mock()
+
+    assert automation.park_mouse((0.1, 0.2)) is True
+    assert events == [("park", 292, 266)]
+    automation.take_screenshot.assert_not_called()
+    with pytest.raises(ValueError):
+        automation.park_mouse((1.2, 0.5))
+    assert len(events) == 1
+
+
+def test_input_park_defaults_to_a_plain_move():
+    """前台、云游戏和安卓后端的光标本来就留在移动后的位置，停放与移动相同。"""
+    from module.automation.input_base import InputBase
+
+    handler = Mock()
+    assert InputBase.mouse_park(handler, 3, 4) is handler.mouse_move.return_value
+    handler.mouse_move.assert_called_once_with(3, 4)
+
+
 def test_drag_group_captures_geometry_once_and_propagates_interruption():
     automation = create_automation([])
     automation.take_screenshot = Mock()

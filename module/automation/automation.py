@@ -27,7 +27,8 @@ _screenshot_retry_timeout = ContextVar("screenshot_retry_timeout", default=60.0)
 _TOUCH_UNSUPPORTED_INPUTS = (
     "press_key", "press_key_down", "press_key_up", "secretly_press_key", "press_mouse", "mouse_scroll",
 )
-_INPUT_METHODS = ("mouse_click", "mouse_down", "mouse_up", "mouse_move", "mouse_drag", "secretly_write") + _TOUCH_UNSUPPORTED_INPUTS
+_INPUT_METHODS = ("mouse_click", "mouse_down", "mouse_up", "mouse_move", "mouse_park", "mouse_drag",
+                  "secretly_write") + _TOUCH_UNSUPPORTED_INPUTS
 
 
 def _reject_touch_input(name):
@@ -997,6 +998,14 @@ class Automation(metaclass=SingletonMeta):
             pause_ctl.checkpoint()
         (x, y), = self._window_points(point)
         return self.mouse_move(x, y) is not False
+
+    def park_mouse(self, point):
+        """把指针停到归一化坐标处并留在那里，避免指针悬停改变画面。后台模式只在用户光标原本落在游戏画面范围内时不归还光标。"""
+        if any(not 0 <= value <= 1 for value in point):
+            raise ValueError("坐标必须在 0 到 1 之间")
+        pause_ctl.checkpoint()
+        (x, y), = self._window_points(point)
+        return self.mouse_park(x, y) is not False
 
     def _window_points(self, *points):
         """把归一化坐标换算成游戏窗口内的屏幕坐标。截图可能被缩放，按窗口实际宽高换算，端点保持在窗口内。"""

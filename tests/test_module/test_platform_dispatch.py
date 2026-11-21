@@ -246,7 +246,7 @@ def test_input_methods_match_profile(monkeypatch, profile):
     auto = object.__new__(automation.Automation)
     auto._init_input()
 
-    allowed = {"mouse_click": (1, 2), "mouse_down": (1, 2), "mouse_up": (), "mouse_move": (1, 2),
+    allowed = {"mouse_click": (1, 2), "mouse_down": (1, 2), "mouse_up": (), "mouse_move": (1, 2), "mouse_park": (1, 2),
                "mouse_drag": (1, 2, 3, 4), "secretly_write": ("text",)}
     guarded = {"press_key": ("esc",), "press_key_down": ("w",), "press_key_up": ("w",),
                "secretly_press_key": ("x",), "press_mouse": (), "mouse_scroll": (1,)}
