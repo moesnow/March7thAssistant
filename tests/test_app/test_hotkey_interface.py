@@ -28,6 +28,8 @@ def isolated_hotkey_config(tmp_path, monkeypatch):
 
     monkeypatch.setattr(cfg, "config", cfg.config.copy())
     monkeypatch.setattr(cfg, "config_path", str(tmp_path / "config.yaml"))
+    monkeypatch.setattr(type(cfg), "_readonly", False)
+    monkeypatch.setitem(cfg.config, "game_path", "")
     monkeypatch.setitem(cfg.config, "hotkey_message", "p")
     cfg.save_config()
     return cfg
@@ -100,6 +102,54 @@ class TestHotkeyInterfaceLayout:
             "hotkey_auto_battle", "hotkey_stop_task", "hotkey_pause_task",
             "hotkey_toggle_autoplot",
         }
+
+
+@pytest.mark.parametrize("confirm", [True, False])
+def test_detected_keys_preview_and_toggle_confirm_or_cancel(
+    qapp, qtbot, isolated_hotkey_config, monkeypatch, confirm,
+):
+    from unittest.mock import Mock
+
+    from PySide6.QtCore import Qt
+    from PySide6.QtWidgets import QWidget
+    from app.sub_interfaces import hotkey_interface as module
+
+    cfg = isolated_hotkey_config
+    flag = module.AUTO_DETECT_GAME_HOTKEYS
+    cfg.config.pop(flag, None)
+    cfg.set_value("hotkey_map", "n")
+    detect = Mock(return_value={"hotkey_map": "space"})
+    monkeypatch.setattr(module, "detect_game_hotkeys", detect)
+    parent = QWidget()
+    parent.resize(952, 635)
+    qtbot.addWidget(parent)
+    parent.show()
+    dialog = module.HotkeyInterface(parent)
+    qtbot.addWidget(dialog)
+    dialog.show()
+    qapp.processEvents()
+
+    switch = dialog.auto_detect_switch
+    map_card = dialog.pushButton_dict["hotkey_map"]
+    assert dialog._scroll.widget().layout().itemAt(0).widget() is switch.parentWidget()
+    assert switch.isChecked()
+    assert map_card.contentLabel.text() == "Space"
+    assert map_card.button.isHidden()
+    for name in ("hotkey_message", "hotkey_stop_task"):
+        assert not dialog.pushButton_dict[name].button.isHidden()
+    detect.assert_called_once_with(cfg)
+
+    qtbot.mouseClick(switch.indicator, Qt.MouseButton.LeftButton)
+    assert not switch.isChecked()
+    assert map_card.contentLabel.text() == "N"
+    assert not map_card.button.isHidden()
+    assert cfg.get_value(flag, True)
+
+    qtbot.mouseClick(dialog.yesButton if confirm else dialog.cancelButton, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(dialog.isHidden, timeout=2000)
+    cfg._load_config(save=False)
+    assert cfg.get_value(flag, True) is (not confirm)
+    assert cfg.get_value("hotkey_map") == "n"
 
 
 class TestMessageHotkey:

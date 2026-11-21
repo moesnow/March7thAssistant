@@ -217,7 +217,7 @@ def test_message_navigation_uses_configured_key(monkeypatch, values, expected):
     """真实界面图与导航读取短信按键；旧配置缺键时仍使用 P。"""
     screen, game = _build_screen(monkeypatch, ["main"])
     namespace = type(screen).__init__.__globals__
-    namespace["cfg"] = SimpleNamespace(get_value=values.get)
+    namespace["cfg"] = SimpleNamespace(get_game_hotkey=values.get)
 
     def press_key(key):
         assert key == expected
@@ -228,6 +228,30 @@ def test_message_navigation_uses_configured_key(monkeypatch, values, expected):
 
     namespace["auto"].press_key.assert_called_once_with(expected)
     assert screen.current_screen == game.state == "incoming_message"
+
+
+@pytest.mark.parametrize(("target", "config_key"), [
+    ("map", "hotkey_map"),
+    ("stellar_warp", "hotkey_warp"),
+    ("incoming_message", "hotkey_message"),
+])
+def test_navigation_dispatches_detected_game_hotkey(monkeypatch, target, config_key):
+    from module.config import game_hotkeys
+    from module.config.config import Config
+
+    screen, game = _build_screen(monkeypatch, ["main"])
+    namespace = type(screen).__init__.__globals__
+    config = Config.__new__(Config)
+    config.config = {config_key: "k"}
+    monkeypatch.setattr(game_hotkeys, "detect_game_hotkeys", MagicMock(return_value={config_key: "space"}))
+    namespace["cfg"] = config
+    namespace["auto"].press_key = MagicMock(side_effect=lambda _key: game.stack.append(target))
+
+    screen.change_to(target)
+
+    namespace["auto"].press_key.assert_called_once_with("space")
+    assert screen.current_screen == game.state == target
+    assert config.get_value(config_key) == "k"
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="本地输入仅限 Windows")
@@ -254,7 +278,7 @@ def test_message_key_reaches_selected_local_input_backend(monkeypatch, mode):
     try:
         screen, _ = _build_screen(monkeypatch, ["main"])
         namespace = type(screen).__init__.__globals__
-        namespace["cfg"] = SimpleNamespace(get_value={"hotkey_message": "k"}.get)
+        namespace["cfg"] = SimpleNamespace(get_game_hotkey={"hotkey_message": "k"}.get)
         namespace["auto"] = auto
         screen.perform_operations(screen.get_operations("main", "incoming_message"))
         handler.press_key.assert_called_once_with("k")

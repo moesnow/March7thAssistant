@@ -9,9 +9,10 @@ class HimekoTry:
     def technique():
         if cfg.daily_himeko_try_enable:
             screen.change_to("himeko_prepare")
-            auto.press_key(cfg.get_value("hotkey_technique"))
+            technique_key = cfg.get_game_hotkey("hotkey_technique", "e")
+            auto.press_key(technique_key)
             time.sleep(2)
-            auto.press_key(cfg.get_value("hotkey_technique"))
+            auto.press_key(technique_key)
             time.sleep(2)
             screen.change_to("himeko_try")
             return True

@@ -376,7 +376,7 @@ class Instance:
                     deadline = now + BATTLE_TIMEOUT
                 if controls_due:
                     if disabled_auto:
-                        auto.press_key(cfg.get_value("hotkey_auto_battle", "v"))
+                        auto.press_key(cfg.get_game_hotkey("hotkey_auto_battle", "v"))
                     if not speed_visible:
                         try:
                             ensure_double_speed(auto)

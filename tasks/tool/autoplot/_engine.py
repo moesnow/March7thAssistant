@@ -359,7 +359,7 @@ class AutoPlot(QObject):
             now = time.monotonic()
             if now - self._last_auto_battle_check >= Threshold.AUTO_BATTLE_COOLDOWN:
                 log.info("尝试开启自动战斗")
-                auto.press_key(cfg.get_value("hotkey_auto_battle", "v"))
+                auto.press_key(cfg.get_game_hotkey("hotkey_auto_battle", "v"))
                 self._last_auto_battle_check = now
 
         # 2. 手机对话页面（可通过开关控制）

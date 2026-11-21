@@ -8156,3 +8156,7 @@ msgstr "长夜"
 #: module/game/adb_ready.py:118
 msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
 msgstr "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
+
+#: app/sub_interfaces/hotkey_interface.py:58
+msgid "自动识别游戏按键"
+msgstr "自动识别游戏按键"

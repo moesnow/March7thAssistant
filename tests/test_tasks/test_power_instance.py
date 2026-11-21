@@ -236,7 +236,7 @@ def test_pc_battle_hud_confirms_battle_when_pause_is_missing(monkeypatch, repeat
         return not auto_disabled
 
     monkeypatch.setattr(instance, "auto", Mock(find_element=Mock(side_effect=find), press_key=enable))
-    monkeypatch.setattr(instance, "cfg", SimpleNamespace(get_value=lambda _key, default: default))
+    monkeypatch.setattr(instance, "cfg", SimpleNamespace(get_game_hotkey=lambda _key, default: default))
     monkeypatch.setattr(instance, "ENTRY_TIMEOUT", 2)
     monkeypatch.setattr(instance, "time", SimpleNamespace(monotonic=lambda: now, sleep=sleep))
     monkeypatch.setattr(instance, "ensure_double_speed", Mock())

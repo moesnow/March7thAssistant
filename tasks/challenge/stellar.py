@@ -329,7 +329,7 @@ class StellarChallenge:
             if self.challenge.auto_battle_detect_enable and auto.find_element(
                     "./assets/images/share/base/not_auto.png", "image", 0.9,
                     crop=(0, 903 / 1080, 144 / 1920, 120 / 1080)):
-                auto.press_key(cfg.get_value("hotkey_auto_battle", "v"))
+                auto.press_key(cfg.get_game_hotkey("hotkey_auto_battle", "v"))
             time.sleep(2)
         raise RuntimeError(f"星启节点{number}战斗超时，已保留画面")
 

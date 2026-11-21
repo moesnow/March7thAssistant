@@ -24,6 +24,45 @@ def registry(monkeypatch):
     return module, winreg
 
 
+@pytest.mark.parametrize(("company", "product", "region"), [
+    ("miHoYo", "崩坏：星穹铁道", "cn"),
+    ("Cognosphere", "Star Rail", "oversea"),
+])
+def test_read_game_hotkeys_uses_selected_client_and_decodes_all_five(registry, tmp_path, company, product, region):
+    module, reg = registry
+    data = tmp_path / "StarRail_Data"
+    data.mkdir()
+    (data / "app.info").write_text(f"{company}\n{product}\n", encoding="utf-8")
+    values = {
+        "HotkeysSettings_Menu_MazeSkill_Keyboard_h1042695892": 76,
+        "HotkeysSettings_Maze_Map_Keyboard_h1833719210": 46,
+        "HotkeysSettings_Maze_Gacha_Keyboard_h3861591226": 25,
+        "HotkeysSettings_Menu_PhoneMessage_Keyboard_h3569468801": 31,
+        "HotkeysSettings_Menu_BattleAuto_Keyboard_h3719200595": 70,
+    }
+    reg.QueryValueEx.side_effect = lambda _key, name: (values[name], reg.REG_DWORD)
+
+    assert module.read_game_hotkeys(str(tmp_path / "StarRail.exe")) == {
+        "hotkey_technique": "space", "hotkey_map": "k", "hotkey_warp": "f12",
+        "hotkey_message": "5", "hotkey_auto_battle": ";",
+    }
+    reg.OpenKey.assert_called_once_with(reg.HKEY_CURRENT_USER, getattr(module, f"registry_key_path_{region}"))
+    reg.SetValueEx.assert_not_called()
+
+
+def test_missing_invalid_and_unknown_values_leave_other_game_hotkeys_available(registry):
+    module, reg = registry
+    module.registry_path_for_game = MagicMock(return_value=module.registry_key_path_cn)
+    reg.QueryValueEx.side_effect = [
+        FileNotFoundError(), (76, 3), (2**32 - 1, reg.REG_DWORD),
+        PermissionError(), (57, reg.REG_DWORD),
+    ]
+    assert module.read_game_hotkeys("StarRail.exe") == {"hotkey_auto_battle": "v"}
+
+    reg.OpenKey.side_effect = PermissionError()
+    assert module.read_game_hotkeys("StarRail.exe") == {}
+
+
 def test_registry_created_after_module_import_is_detected(registry):
     module, reg = registry
     module.registry_path_for_game = MagicMock(return_value=module.registry_key_path_cn)

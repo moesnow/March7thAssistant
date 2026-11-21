@@ -6,6 +6,16 @@ from unittest.mock import patch, MagicMock
 pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="Windows-only")
 
 
+def test_detected_game_key_names_work_in_both_local_inputs():
+    from pyautogui import isValidKey
+    from module.automation.background_input import _vk
+    from utils.registry.star_rail_setting import _KEY_NAMES_BY_CODE
+
+    for key in _KEY_NAMES_BY_CODE.values():
+        assert isValidKey(key), key
+        assert _vk(key) > 0, key
+
+
 class TestStarRailSettingReadRegistryValue:
     def test_none_sub_key_raises(self):
         from utils.registry.star_rail_setting import read_registry_value

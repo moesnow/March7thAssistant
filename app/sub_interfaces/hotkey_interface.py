@@ -2,13 +2,14 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import MessageBox
+from qfluentwidgets import IndicatorPosition, MessageBox, SettingCard, SwitchButton
 
 from app.card.pushsettingcard1 import PushSettingCardKey
 from app.common.icon import UiIcon
 from app.common.scroll_dialog import (SplitFadeDialogMixin, available_host_size,
                                       build_scroll_area)
 from module.config import cfg
+from module.config.game_hotkeys import AUTO_DETECT_GAME_HOTKEYS, detect_game_hotkeys
 from module.localization import tr
 
 
@@ -54,6 +55,17 @@ class HotkeyInterface(SplitFadeDialogMixin, MessageBox):
         list_layout.setContentsMargins(0, 0, 0, 0)
         list_layout.setSpacing(4)
 
+        detect_title = tr("自动识别游戏按键")
+        detect_card = SettingCard(FIF.SYNC, detect_title, parent=list_container)
+        self.auto_detect_switch = SwitchButton("", detect_card, IndicatorPosition.RIGHT)
+        self.auto_detect_switch.label.hide()
+        self.auto_detect_switch.indicator.setAccessibleName(detect_title)
+        self._initial_auto_detect = bool(cfg.get_value(AUTO_DETECT_GAME_HOTKEYS, True))
+        self.auto_detect_switch.setChecked(self._initial_auto_detect)
+        detect_card.hBoxLayout.addWidget(self.auto_detect_switch, 0, Qt.AlignmentFlag.AlignRight)
+        detect_card.hBoxLayout.addSpacing(16)
+        list_layout.addWidget(detect_card)
+
         self.pushButton_dict = {}
         for name, config in self.configlist.items():
             if config == "hotkey_technique":
@@ -86,6 +98,9 @@ class HotkeyInterface(SplitFadeDialogMixin, MessageBox):
             list_layout.addWidget(pushButton, 0, Qt.AlignmentFlag.AlignTop)
             self.pushButton_dict[config] = pushButton
 
+        self._show_detected_keys(self._initial_auto_detect)
+        self.auto_detect_switch.checkedChanged.connect(self._show_detected_keys)
+
         # 添加提示标签：交互 F / 角色详细 C 不允许修改
         hint_label = QLabel(tr("注意：交互（F）和角色详细（C）按键不允许修改，请保持游戏内默认设置。"))
         hint_font = QFont()
@@ -114,8 +129,16 @@ class HotkeyInterface(SplitFadeDialogMixin, MessageBox):
         self.yesButton.clicked.connect(self._onConfirmClicked)
         self.cancelButton.clicked.connect(self._onCancelClicked)
 
+    def _show_detected_keys(self, enabled):
+        detected = detect_game_hotkeys(cfg) if enabled else {}
+        for config, card in self.pushButton_dict.items():
+            card.set_detected_key(detected.get(config))
+
     def _onConfirmClicked(self):
         """ 确认按钮点击处理 - 保存配置 """
+        enabled = self.auto_detect_switch.isChecked()
+        if enabled != self._initial_auto_detect:
+            cfg.set_value(AUTO_DETECT_GAME_HOTKEYS, enabled)
         self.accept()
 
     def _onCancelClicked(self):

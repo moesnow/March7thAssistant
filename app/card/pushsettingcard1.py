@@ -569,6 +569,11 @@ class PushSettingCardKey(CustomPushSettingCard):
         self.button.pressed.connect(self.__onpressed)
         self.button.released.connect(self.__onreleased)
 
+    def set_detected_key(self, key: str | None):
+        self.configvalue = str(cfg.get_value(self.configname))
+        self.contentLabel.setText(self._format_key_display(key if key is not None else self.configvalue))
+        self.button.setVisible(key is None)
+
     def __onpressed(self):
         self.button.setText(tr("按下要绑定的按键"))
 
@@ -588,14 +593,22 @@ class PushSettingCardKey(CustomPushSettingCard):
         """将存储的小写键名格式化为显示用的大写/首字母大写形式。"""
         if not key_name:
             return key_name
-        # f1-f12 → F1-F12
-        if len(key_name) >= 2 and key_name[0] == 'f' and key_name[1:].isdigit():
-            return 'F' + key_name[1:]
-        # 单个字母 → 大写
-        if len(key_name) == 1 and key_name.isalpha():
-            return key_name.upper()
-        # 其他特殊键 → 首字母大写
-        return key_name[0].upper() + key_name[1:]
+        special_names = {
+            "capslock": "Caps Lock",
+            "shiftleft": "Left Shift",
+            "shiftright": "Right Shift",
+            "ctrlleft": "Left Ctrl",
+            "ctrlright": "Right Ctrl",
+            "altright": "Right Alt",
+            "divide": "Num /",
+            "multiply": "Num *",
+            "subtract": "Num -",
+            "add": "Num +",
+            "decimal": "Num .",
+        }
+        if len(key_name) == 4 and key_name.startswith("num") and key_name[3].isdigit():
+            return f"Num {key_name[3]}"
+        return special_names.get(key_name, key_name[0].upper() + key_name[1:])
 
     def _get_key_name(self, event):
         function_keys = {

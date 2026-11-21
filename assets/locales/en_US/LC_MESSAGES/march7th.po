@@ -8572,3 +8572,7 @@ msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中�
 msgstr ""
 "Timed out waiting for the Express Supply pop-up to close and the main "
 "screen to return. Check in-game whether you received the reward."
+
+#: app/sub_interfaces/hotkey_interface.py:58
+msgid "自动识别游戏按键"
+msgstr "Detect game keybinds automatically"

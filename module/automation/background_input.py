@@ -46,6 +46,10 @@ _KEYS = {'esc': 27, 'escape': 27, 'enter': 13, 'return': 13, 'space': 32, 'tab':
          'shift': 16, 'ctrl': 17, 'control': 17, 'alt': 18,
          'shiftleft': 160, 'shiftright': 161, 'ctrlleft': 162, 'ctrlright': 163,
          'altleft': 164, 'altright': 165, 'capslock': 20, 'numlock': 144,
+         ';': 0xba, '=': 0xbb, ',': 0xbc, '-': 0xbd, '.': 0xbe, '/': 0xbf, '`': 0xc0,
+         '[': 0xdb, '\\': 0xdc, ']': 0xdd, "'": 0xde,
+         **{f'num{i}': 0x60 + i for i in range(10)},
+         'multiply': 0x6a, 'add': 0x6b, 'subtract': 0x6d, 'decimal': 0x6e, 'divide': 0x6f,
          **{f'f{i}': 111 + i for i in range(1, 25)}}
 
 
@@ -755,7 +759,7 @@ class BackgroundInput(InputBase):
         if not cleanup:
             self._check()
         flags = (self.api.scan_code(vk) << 16) | 1
-        if vk in (33,34,35,36,37,38,39,40,45,46,163,165):
+        if vk in (33,34,35,36,37,38,39,40,45,46,111,163,165):
             flags |= 1 << 24
         alt = vk in (18,164,165) or any(key in self._keys for key in (18,164,165))
         if alt:

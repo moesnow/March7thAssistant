@@ -8238,3 +8238,7 @@ msgstr "長夜"
 #: module/game/adb_ready.py:118
 msgid "等待列车补给弹窗关闭并返回主界面超时，请在游戏中检查领取状态"
 msgstr "「列車補給」のポップアップから制限時間内にメイン画面に戻れませんでした。ゲーム内で報酬を受け取れたか確認してください。"
+
+#: app/sub_interfaces/hotkey_interface.py:58
+msgid "自动识别游戏按键"
+msgstr "ゲームのキー設定を自動検出"
