@@ -6,6 +6,7 @@ from qfluentwidgets import SettingCard, FluentIconBase, InfoBar, InfoBarPosition
 from .messagebox_custom import MessageBoxEdit, MessageBoxEditCode, MessageBoxDate, MessageBoxInstance, MessageBoxInstanceChallengeCount, MessageBoxNotifyTemplate, MessageBoxTeam, MessageBoxFriends, MessageBoxPowerPlan, MessageBoxInstanceTeam
 from tasks.base.tasks import start_task
 from module.config import cfg
+from module.config.game_hotkeys import manual_game_hotkey
 from typing import Callable, Union
 import datetime
 import json
@@ -14,6 +15,7 @@ import sys
 from ..tools.check_update import checkUpdate
 from module.update.version_check import validate_mirrorchyan_cdk
 from module.localization import tr, tn, get_character_names, instance_display_to_raw
+from utils.game_key_templates import key_prompt_path
 
 
 def get_key_from_value(val, map):
@@ -563,14 +565,16 @@ class PushSettingCardDate(CustomPushSettingCard):
 
 
 class PushSettingCardKey(CustomPushSettingCard):
-    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None):
-        self.configvalue = str(cfg.get_value(configname))
+    def __init__(self, text, icon: Union[str, QIcon, FluentIconBase], title, configname, parent=None,
+                 *, requires_key_template=False):
+        self.configvalue = str(manual_game_hotkey(cfg, configname))
+        self.requires_key_template = requires_key_template
         super().__init__(text, icon, title, configname, self._format_key_display(self.configvalue), parent)
         self.button.pressed.connect(self.__onpressed)
         self.button.released.connect(self.__onreleased)
 
     def set_detected_key(self, key: str | None):
-        self.configvalue = str(cfg.get_value(self.configname))
+        self.configvalue = str(manual_game_hotkey(cfg, self.configname))
         self.contentLabel.setText(self._format_key_display(key if key is not None else self.configvalue))
         self.button.setVisible(key is None)
 
@@ -583,6 +587,11 @@ class PushSettingCardKey(CustomPushSettingCard):
     def keyPressEvent(self, e: QKeyEvent):
         if self.button.isDown():
             key_name = self._get_key_name(e)
+            if self.requires_key_template and (
+                e.modifiers() & Qt.KeyboardModifier.KeypadModifier or not key_prompt_path(key_name)
+            ):
+                self.button.setText(tr("该按键暂无识别模板"))
+                return
             if key_name:
                 cfg.set_value(self.configname, key_name)
                 self.contentLabel.setText(self._format_key_display(key_name))

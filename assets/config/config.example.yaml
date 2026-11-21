@@ -432,6 +432,8 @@ script_path: C:\Path\to\your\Script.bat
 
 # 游戏内按键设置
 auto_detect_game_hotkeys_enable: true # 自动识别 Windows 本地客户端的按键，缺失时使用以下设置。
+hotkey_interact: f # 战斗外交互键。支持字母、主键盘数字、空格和 F1–F12。
+hotkey_character_details: c # 战斗内角色详情键。支持字母、主键盘数字、空格和 F1–F12。
 hotkey_technique: e # 设置游戏内使用秘技的按键。
 hotkey_map: m # 设置打开地图的按键。
 hotkey_warp: f3 # 设置打开跃迁的按键。

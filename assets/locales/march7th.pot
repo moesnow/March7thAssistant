@@ -3759,10 +3759,6 @@ msgstr ""
 msgid "按键设置"
 msgstr ""
 
-#: app/sub_interfaces/hotkey_interface.py:87
-msgid "注意：交互（F）和角色详细（C）按键不允许修改，请保持游戏内默认设置。"
-msgstr ""
-
 #: app/tools/agent_prompt.py:16
 msgid ""
 "我在这台电脑上安装了「三月七小助手」（崩坏：星穹铁道自动化工具），版本 {version}，安装目录：{install_dir}\n"
@@ -7909,4 +7905,16 @@ msgstr ""
 
 #: app/sub_interfaces/hotkey_interface.py:58
 msgid "自动识别游戏按键"
+msgstr ""
+
+#: app/sub_interfaces/hotkey_interface.py:22
+msgid "交互"
+msgstr ""
+
+#: app/sub_interfaces/hotkey_interface.py:23
+msgid "战斗内角色详情"
+msgstr ""
+
+#: app/card/pushsettingcard1.py:593
+msgid "该按键暂无识别模板"
 msgstr ""

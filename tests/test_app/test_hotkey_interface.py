@@ -98,6 +98,7 @@ class TestHotkeyInterfaceLayout:
 
     def test_all_hotkeys_listed_including_message_and_pause(self, dlg):
         assert set(dlg.pushButton_dict) == {
+            "hotkey_interact", "hotkey_character_details",
             "hotkey_technique", "hotkey_map", "hotkey_warp", "hotkey_message",
             "hotkey_auto_battle", "hotkey_stop_task", "hotkey_pause_task",
             "hotkey_toggle_autoplot",
@@ -150,6 +151,32 @@ def test_detected_keys_preview_and_toggle_confirm_or_cancel(
     cfg._load_config(save=False)
     assert cfg.get_value(flag, True) is (not confirm)
     assert cfg.get_value("hotkey_map") == "n"
+
+
+@pytest.mark.parametrize("name, original", [
+    ("hotkey_interact", "f"),
+    ("hotkey_character_details", "c"),
+])
+def test_prompt_hotkey_rejects_keys_without_templates(dlg, isolated_hotkey_config, qtbot, name, original):
+    from PySide6.QtCore import Qt
+
+    card = dlg.pushButton_dict[name]
+    cfg = isolated_hotkey_config
+    qtbot.mousePress(card.button, Qt.MouseButton.LeftButton)
+    qtbot.keyClick(card, Qt.Key.Key_Left)
+    assert cfg.get_value(name) == original
+    assert card.button.text() == "该按键暂无识别模板"
+    qtbot.keyClick(card, Qt.Key.Key_1, Qt.KeyboardModifier.KeypadModifier)
+    assert cfg.get_value(name) == original
+    qtbot.keyClick(card, Qt.Key.Key_F1)
+    assert cfg.get_value(name) == "f1"
+    qtbot.keyClick(card, Qt.Key.Key_F12)
+    assert cfg.get_value(name) == "f12"
+    assert card.contentLabel.text() == "F12"
+    qtbot.keyClick(card, Qt.Key.Key_Space)
+    assert cfg.get_value(name) == "space"
+    assert card.contentLabel.text() == "Space"
+    qtbot.mouseRelease(card.button, Qt.MouseButton.LeftButton)
 
 
 class TestMessageHotkey:

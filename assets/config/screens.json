@@ -503,7 +503,7 @@
                     "auto.click_element('前往参与', 'text', None, 10, crop=(684.0 / 1920, 278.0 / 1080, 981.0 / 1920, 656.0 / 1080))"
                 ],
                 "actions_list_on_timeout": [
-                    "auto.press_key('f')"
+                    "auto.press_key(cfg.get_game_hotkey('hotkey_interact', 'f'))"
                 ]
             },
             {
@@ -514,7 +514,7 @@
                     "auto.click_element('前往参与', 'text', None, 10, crop=(684.0 / 1920, 278.0 / 1080, 981.0 / 1920, 656.0 / 1080))"
                 ],
                 "actions_list_on_timeout": [
-                    "auto.press_key('f')"
+                    "auto.press_key(cfg.get_game_hotkey('hotkey_interact', 'f'))"
                 ]
             },
             {

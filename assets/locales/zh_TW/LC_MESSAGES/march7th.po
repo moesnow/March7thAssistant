@@ -1593,10 +1593,6 @@ msgstr "躍遷"
 msgid "自动战斗"
 msgstr "自動戰鬥"
 
-#: app/sub_interfaces/hotkey_interface.py:87
-msgid "注意：交互（F）和角色详细（C）按键不允许修改，请保持游戏内默认设置。"
-msgstr "注意：互動（F）和角色詳細（C）按鍵不允許修改，請保持遊戲內預設設定。"
-
 #: app/sub_interfaces/hotkey_interface.py:24
 msgid "停止任务（全局热键，支持后台）"
 msgstr "停止任務（全域熱鍵，支援背景）"
@@ -8161,3 +8157,15 @@ msgstr "未能在時限內從「列車補給」視窗返回主畫面。請在遊
 #: app/sub_interfaces/hotkey_interface.py:58
 msgid "自动识别游戏按键"
 msgstr "自動偵測遊戲按鍵"
+
+#: app/sub_interfaces/hotkey_interface.py:22
+msgid "交互"
+msgstr "互動"
+
+#: app/sub_interfaces/hotkey_interface.py:23
+msgid "战斗内角色详情"
+msgstr "戰鬥內角色詳情"
+
+#: app/card/pushsettingcard1.py:593
+msgid "该按键暂无识别模板"
+msgstr "此按鍵目前沒有辨識範本"

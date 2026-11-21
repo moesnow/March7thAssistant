@@ -1,8 +1,10 @@
+from functools import lru_cache
 from typing import Tuple, Optional
 import winreg
 import json
 import os
 from pathlib import Path
+from utils.game_key_templates import PROMPT_KEY_DEFAULTS, key_prompt_path
 
 # Registry key paths for different server regions
 registry_key_path_cn = r"SOFTWARE\miHoYo\崩坏：星穹铁道"
@@ -14,6 +16,8 @@ resolution_value_name = "GraphicsSettings_PCResolution_h431323223"
 graphics_value_name = "GraphicsSettings_Model_h2986158309"
 
 _HOTKEY_VALUE_NAMES = {
+    "hotkey_interact": "HotkeysSettings_Menu_MazeInteract_Keyboard_h2537131863",
+    "hotkey_character_details": "HotkeysSettings_Menu_BattleAvatarDetail_Keyboard_h1744695036",
     "hotkey_technique": "HotkeysSettings_Menu_MazeSkill_Keyboard_h1042695892",
     "hotkey_map": "HotkeysSettings_Maze_Map_Keyboard_h1833719210",
     "hotkey_warp": "HotkeysSettings_Maze_Gacha_Keyboard_h3861591226",
@@ -94,11 +98,25 @@ def read_game_hotkeys(game_path: str, names: tuple[str, ...] | None = None) -> d
                     code, value_type = winreg.QueryValueEx(registry, value_name)
                 except OSError:
                     continue
-                if value_type == winreg.REG_DWORD and (key := _KEY_NAMES_BY_CODE.get(code)):
+                if value_type != winreg.REG_DWORD:
+                    continue
+                key = _KEY_NAMES_BY_CODE.get(code)
+                if name in PROMPT_KEY_DEFAULTS and key_prompt_path(key) is None:
+                    _warn_missing_key_prompt(name, code, key)
+                elif key is not None:
                     detected[name] = key
     except (OSError, ValueError):
         return {}
     return detected
+
+
+@lru_cache(maxsize=64)
+def _warn_missing_key_prompt(name: str, code: int, key: str | None):
+    from module.logger import log
+
+    label = "交互" if name == "hotkey_interact" else "角色详情"
+    key_text = f"{key.upper()}（键码 {code}）" if key else f"键码 {code}"
+    log.warning(f"游戏内{label}键 {key_text} 缺少识别模板，使用小助手设置。")
 
 
 def get_registry_key_path() -> Optional[str]:

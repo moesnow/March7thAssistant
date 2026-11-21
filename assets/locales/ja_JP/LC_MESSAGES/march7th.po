@@ -1603,10 +1603,6 @@ msgstr "ワープ"
 msgid "自动战斗"
 msgstr "オート戦闘"
 
-#: app/sub_interfaces/hotkey_interface.py:87
-msgid "注意：交互（F）和角色详细（C）按键不允许修改，请保持游戏内默认设置。"
-msgstr "注意：インタラクト（F）とキャラ詳細（C）のキーは変更できません。ゲームのデフォルト設定のままにしてください。"
-
 #: app/sub_interfaces/hotkey_interface.py:24
 msgid "停止任务（全局热键，支持后台）"
 msgstr "タスク停止（グローバルホットキー、バックグラウンド対応）"
@@ -8242,3 +8238,15 @@ msgstr "「列車補給」のポップアップから制限時間内にメイン
 #: app/sub_interfaces/hotkey_interface.py:58
 msgid "自动识别游戏按键"
 msgstr "ゲームのキー設定を自動検出"
+
+#: app/sub_interfaces/hotkey_interface.py:22
+msgid "交互"
+msgstr "インタラクト"
+
+#: app/sub_interfaces/hotkey_interface.py:23
+msgid "战斗内角色详情"
+msgstr "戦闘中のキャラクター詳細"
+
+#: app/card/pushsettingcard1.py:593
+msgid "该按键暂无识别模板"
+msgstr "このキーの認識用テンプレートがありません"

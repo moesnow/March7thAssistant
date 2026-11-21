@@ -529,13 +529,13 @@ class Config(metaclass=SingletonMeta):
 
     def get_game_hotkey(self, key, default=None):
         """获取游戏内有效键位，保留配置文件里的手动值供回退。"""
-        from .game_hotkeys import AUTO_DETECT_GAME_HOTKEYS, detect_game_hotkeys
+        from .game_hotkeys import AUTO_DETECT_GAME_HOTKEYS, detect_game_hotkeys, manual_game_hotkey
 
         if self.get_value(AUTO_DETECT_GAME_HOTKEYS, True):
             detected = detect_game_hotkeys(self, (key,))
             if key in detected:
                 return detected[key]
-        return self.get_value(key, default)
+        return manual_game_hotkey(self, key, default)
 
     def set_value(self, key, value):
         """设置配置项的值并保存"""

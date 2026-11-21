@@ -9,6 +9,7 @@ from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
 from tasks.base.pythonchecker import PythonChecker
 from utils.command import subprocess_with_timeout
+from utils.game_key_templates import find_interact_prompt
 import subprocess
 import time
 import sys
@@ -180,8 +181,9 @@ class Universe:
         :param save: 是否保存时间戳
         :return: 如果模拟宇宙成功，返回 True；否则返回 False
         """
-        if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)):
-            auto.press_key("f")
+        interact_key = cfg.get_game_hotkey("hotkey_interact", "f")
+        if find_interact_prompt(auto, interact_key):
+            auto.press_key(interact_key)
             if category == "divergent":
                 screen.wait_for_screen_change('divergent_main')
             else:
@@ -245,8 +247,9 @@ class Universe:
         claimed = False
         with optional_reward("模拟宇宙周期奖励"):
             lobby = "divergent_main" if category == "divergent" else "universe_main"
-            if auto.find_element("./assets/images/share/base/F.png", "image", 0.9, crop=(998.0 / 1920, 473.0 / 1080, 392.0 / 1920, 296.0 / 1080)):
-                auto.press_key("f")
+            interact_key = cfg.get_game_hotkey("hotkey_interact", "f")
+            if find_interact_prompt(auto, interact_key):
+                auto.press_key(interact_key)
                 screen.wait_for_screen_change(lobby)
             else:
                 screen.change_to(lobby)

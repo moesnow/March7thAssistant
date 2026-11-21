@@ -28,12 +28,20 @@ def registry(monkeypatch):
     ("miHoYo", "崩坏：星穹铁道", "cn"),
     ("Cognosphere", "Star Rail", "oversea"),
 ])
-def test_read_game_hotkeys_uses_selected_client_and_decodes_all_five(registry, tmp_path, company, product, region):
+@pytest.mark.parametrize(("prompt_codes", "prompt_names"), [
+    ((76, 43), ("space", "h")),
+    ((14, 25), ("f1", "f12")),
+])
+def test_read_game_hotkeys_uses_selected_client_and_decodes_supported_bindings(
+    registry, tmp_path, company, product, region, prompt_codes, prompt_names,
+):
     module, reg = registry
     data = tmp_path / "StarRail_Data"
     data.mkdir()
     (data / "app.info").write_text(f"{company}\n{product}\n", encoding="utf-8")
     values = {
+        "HotkeysSettings_Menu_MazeInteract_Keyboard_h2537131863": prompt_codes[0],
+        "HotkeysSettings_Menu_BattleAvatarDetail_Keyboard_h1744695036": prompt_codes[1],
         "HotkeysSettings_Menu_MazeSkill_Keyboard_h1042695892": 76,
         "HotkeysSettings_Maze_Map_Keyboard_h1833719210": 46,
         "HotkeysSettings_Maze_Gacha_Keyboard_h3861591226": 25,
@@ -43,6 +51,7 @@ def test_read_game_hotkeys_uses_selected_client_and_decodes_all_five(registry, t
     reg.QueryValueEx.side_effect = lambda _key, name: (values[name], reg.REG_DWORD)
 
     assert module.read_game_hotkeys(str(tmp_path / "StarRail.exe")) == {
+        "hotkey_interact": prompt_names[0], "hotkey_character_details": prompt_names[1],
         "hotkey_technique": "space", "hotkey_map": "k", "hotkey_warp": "f12",
         "hotkey_message": "5", "hotkey_auto_battle": ";",
     }
@@ -57,10 +66,30 @@ def test_missing_invalid_and_unknown_values_leave_other_game_hotkeys_available(r
         FileNotFoundError(), (76, 3), (2**32 - 1, reg.REG_DWORD),
         PermissionError(), (57, reg.REG_DWORD),
     ]
-    assert module.read_game_hotkeys("StarRail.exe") == {"hotkey_auto_battle": "v"}
+    names = ("hotkey_technique", "hotkey_map", "hotkey_warp", "hotkey_message", "hotkey_auto_battle")
+    assert module.read_game_hotkeys("StarRail.exe", names) == {"hotkey_auto_battle": "v"}
 
     reg.OpenKey.side_effect = PermissionError()
     assert module.read_game_hotkeys("StarRail.exe") == {}
+
+
+def test_unsupported_prompt_keys_log_once_per_binding(registry, monkeypatch):
+    module, reg = registry
+    module.registry_path_for_game = MagicMock(return_value=module.registry_key_path_cn)
+    log = MagicMock()
+    monkeypatch.setitem(sys.modules, "module.logger", types.SimpleNamespace(log=log))
+    values = {
+        "HotkeysSettings_Menu_MazeInteract_Keyboard_h2537131863": 110,
+        "HotkeysSettings_Menu_BattleAvatarDetail_Keyboard_h1744695036": 65535,
+    }
+    reg.QueryValueEx.side_effect = lambda _key, name: (values[name], reg.REG_DWORD)
+    names = ("hotkey_interact", "hotkey_character_details")
+
+    assert module.read_game_hotkeys("StarRail.exe", names) == {}
+    assert module.read_game_hotkeys("StarRail.exe", names) == {}
+    assert log.warning.call_count == 2
+    assert "交互键 CAPSLOCK" in log.warning.call_args_list[0].args[0]
+    assert "角色详情键 键码 65535" in log.warning.call_args_list[1].args[0]
 
 
 def test_registry_created_after_module_import_is_detected(registry):

@@ -1599,10 +1599,6 @@ msgstr "워프"
 msgid "自动战斗"
 msgstr "자동 전투"
 
-#: app/sub_interfaces/hotkey_interface.py:87
-msgid "注意：交互（F）和角色详细（C）按键不允许修改，请保持游戏内默认设置。"
-msgstr "참고: 상호작용(F) 및 캐릭터 상세(C) 키는 변경할 수 없습니다. 게임 기본 설정을 유지하세요."
-
 #: app/sub_interfaces/hotkey_interface.py:24
 msgid "停止任务（全局热键，支持后台）"
 msgstr "임무 중지 (전역 단축키, 백그라운드 지원)"
@@ -8241,3 +8237,15 @@ msgstr "열차 보급 팝업에서 제한 시간 안에 메인 화면으로 돌�
 #: app/sub_interfaces/hotkey_interface.py:58
 msgid "自动识别游戏按键"
 msgstr "게임 키 설정 자동 감지"
+
+#: app/sub_interfaces/hotkey_interface.py:22
+msgid "交互"
+msgstr "상호작용"
+
+#: app/sub_interfaces/hotkey_interface.py:23
+msgid "战斗内角色详情"
+msgstr "전투 중 캐릭터 상세 정보"
+
+#: app/card/pushsettingcard1.py:593
+msgid "该按键暂无识别模板"
+msgstr "이 키의 인식 템플릿이 없습니다"

@@ -679,6 +679,7 @@ def test_universe_bonus_delegates_to_immersifier_only_power_task(monkeypatch, en
     config = SimpleNamespace(
         weekly_divergent_timestamp=1, refresh_hour=4, weekly_divergent_bonus_enable=True,
         universe_bonus_enable=True, instance_names={ORNAMENT: "浴火钢心"}, build_target_enable=False,
+        get_game_hotkey=lambda _name, default: default,
         notify_template={"SimulatedUniverseRewardClaimed": "已领取积分奖励", "SimulatedUniverseCompleted": "已完成"},
     )
     monkeypatch.setattr(power, "cfg", config)

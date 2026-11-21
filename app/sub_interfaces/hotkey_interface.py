@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QVBoxLayout, QWidget
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import IndicatorPosition, MessageBox, SettingCard, SwitchButton
 
@@ -11,6 +11,7 @@ from app.common.scroll_dialog import (SplitFadeDialogMixin, available_host_size,
 from module.config import cfg
 from module.config.game_hotkeys import AUTO_DETECT_GAME_HOTKEYS, detect_game_hotkeys
 from module.localization import tr
+from utils.game_key_templates import PROMPT_KEY_DEFAULTS
 
 
 class HotkeyInterface(SplitFadeDialogMixin, MessageBox):
@@ -18,6 +19,8 @@ class HotkeyInterface(SplitFadeDialogMixin, MessageBox):
 
     def __init__(self, parent=None):
         configlist = {
+            tr("交互"): "hotkey_interact",
+            tr("战斗内角色详情"): "hotkey_character_details",
             tr("秘技（只对清体力和逐光捡金场景生效）"): "hotkey_technique",
             tr("地图"): "hotkey_map",
             tr("跃迁"): "hotkey_warp",
@@ -68,7 +71,11 @@ class HotkeyInterface(SplitFadeDialogMixin, MessageBox):
 
         self.pushButton_dict = {}
         for name, config in self.configlist.items():
-            if config == "hotkey_technique":
+            if config == "hotkey_interact":
+                icon = FIF.GAME
+            elif config == "hotkey_character_details":
+                icon = FIF.PEOPLE
+            elif config == "hotkey_technique":
                 icon = UiIcon.WAND
             elif config == "hotkey_map":
                 icon = UiIcon.MAP
@@ -92,6 +99,7 @@ class HotkeyInterface(SplitFadeDialogMixin, MessageBox):
                 icon,
                 name,
                 config,
+                requires_key_template=config in PROMPT_KEY_DEFAULTS,
             )
             pushButton.setFont(font)
 
@@ -101,14 +109,6 @@ class HotkeyInterface(SplitFadeDialogMixin, MessageBox):
         self._show_detected_keys(self._initial_auto_detect)
         self.auto_detect_switch.checkedChanged.connect(self._show_detected_keys)
 
-        # 添加提示标签：交互 F / 角色详细 C 不允许修改
-        hint_label = QLabel(tr("注意：交互（F）和角色详细（C）按键不允许修改，请保持游戏内默认设置。"))
-        hint_font = QFont()
-        hint_font.setPointSize(9)
-        hint_label.setFont(hint_font)
-        hint_label.setStyleSheet("color: gray;")
-        hint_label.setWordWrap(True)
-        list_layout.addWidget(hint_label, 0, Qt.AlignmentFlag.AlignTop)
         list_layout.addStretch(1)
 
         # 按键列表装进限高滚动区：弹窗必须装进父窗口（遮罩尺寸跟随父窗口而非屏幕），

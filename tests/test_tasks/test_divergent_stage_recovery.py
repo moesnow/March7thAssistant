@@ -22,7 +22,8 @@ def task(monkeypatch):
         "module.screen": {"screen": Mock()},
         "module.automation": {"auto": auto},
         "module.config": {"cfg": SimpleNamespace(
-            cloud_game_enable=False, weekly_divergent_stable_mode=False, game_title_name="test")},
+            cloud_game_enable=False, weekly_divergent_stable_mode=False, game_title_name="test",
+            get_game_hotkey=lambda _name, default: default)},
         "module.logger": {"log": Mock()},
         "module.automation.screenshot": {"Screenshot": Mock()},
         "module.notification.notification": {"NotificationLevel": Mock()},
@@ -44,6 +45,19 @@ def task(monkeypatch):
     obj = module.DivergentUniverse()
     obj.current_stage = OLD_STAGE
     return obj, auto, module
+
+
+def test_re_enter_uses_the_same_custom_key_for_matching_and_input(task):
+    obj, auto, module = task
+    module.cfg.get_game_hotkey = Mock(return_value="space")
+    obj.wait_stage_after_continue = Mock(return_value=True)
+    obj.has_stage_changed = Mock(return_value=False)
+    auto.find_element.side_effect = lambda target, *_args, **_kwargs: target.endswith("/key_prompts/space.png")
+
+    assert obj.process_re_enter() is False
+
+    module.cfg.get_game_hotkey.assert_called_once_with("hotkey_interact", "f")
+    assert [call.args[0] for call in auto.press_key.call_args_list] == ["esc", "space"]
 
 
 @pytest.mark.parametrize("texts,changed", [

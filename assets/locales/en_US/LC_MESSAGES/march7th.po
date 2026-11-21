@@ -1650,12 +1650,6 @@ msgstr "Warp"
 msgid "自动战斗"
 msgstr "Auto-Battle"
 
-#: app/sub_interfaces/hotkey_interface.py:87
-msgid "注意：交互（F）和角色详细（C）按键不允许修改，请保持游戏内默认设置。"
-msgstr ""
-"Note: Interact (F) and Character Details (C) keys cannot be changed. Please "
-"keep them at their game defaults."
-
 #: app/sub_interfaces/hotkey_interface.py:24
 msgid "停止任务（全局热键，支持后台）"
 msgstr "Stop Task (Global Hotkey, Background)"
@@ -8576,3 +8570,15 @@ msgstr ""
 #: app/sub_interfaces/hotkey_interface.py:58
 msgid "自动识别游戏按键"
 msgstr "Detect game keybinds automatically"
+
+#: app/sub_interfaces/hotkey_interface.py:22
+msgid "交互"
+msgstr "Interact"
+
+#: app/sub_interfaces/hotkey_interface.py:23
+msgid "战斗内角色详情"
+msgstr "In-battle character details"
+
+#: app/card/pushsettingcard1.py:593
+msgid "该按键暂无识别模板"
+msgstr "No template for this key"
