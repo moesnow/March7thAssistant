@@ -95,12 +95,20 @@ class StarRailController(LocalGameController):
                 raise RuntimeError("游戏分辨率获取失败")
             window_width, window_height = resolution
 
-            if window_width == target_width and window_height == target_height:
-                self.log_debug(f"游戏分辨率: {window_width}x{window_height}")
+            # 模板素材以目标分辨率为基准绘制，匹配对尺度零容忍，因此只要窗口不小于目标、
+            # 且宽高比一致，就能用同一个因子等比缩放到目标坐标系，无需强制用户改分辨率。
+            # 用整数乘法判比例：1366x768 这类近似 16:9 的尺寸在浮点下会与 16/9 产生歧义。
+            if (window_width * target_height == window_height * target_width
+                    and window_width >= target_width and window_height >= target_height):
+                if (window_width, window_height) == (target_width, target_height):
+                    self.log_debug(f"游戏分辨率: {window_width}x{window_height}")
+                else:
+                    self.log_debug(f"游戏分辨率: {window_width}x{window_height}（将等比缩放到 {target_width}x{target_height}）")
                 return
 
             self.log_error(
-                f"游戏分辨率: {window_width}x{window_height}，请在游戏设置内手动切换为 {target_width}x{target_height} 窗口（没有窗口再选择全屏幕）运行"
+                f"游戏分辨率: {window_width}x{window_height}，请在游戏设置内手动切换为 {target_width}x{target_height} 窗口"
+                f"（没有窗口再选择全屏幕）运行；{target_width}x{target_height} 及以上的 16:9 分辨率同样可用"
             )
             if screen_width < target_width or screen_height < target_height:
                 self.log_error(f"桌面分辨率: {screen_width}x{screen_height}，你可能需要更大的显示器或使用 HDMI/VGA 显卡欺骗器（或尝试将显示器缩放修改为 100%）")
