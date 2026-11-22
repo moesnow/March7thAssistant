@@ -6,7 +6,7 @@ from module.config import cfg
 from module.localization import get_raw_instance_names
 from module.logger import log
 from module.screen import screen
-from tasks.base.list_drag import drag_list
+from tasks.base.list_drag import changed_ratio, drag_list
 from tasks.base.task_steps import FATAL_GAME_ERRORS
 from tasks.base.team import Team
 from tasks.power.battle import battle_speed_visible, ensure_double_speed
@@ -59,9 +59,24 @@ class Instance:
     @staticmethod
     def prepare_instance(instance_type, instance_name):
         Instance.select_category(instance_type)
+        names = get_raw_instance_names()[instance_type]
+        names = tuple(name for name in (names.values() if instance_type == CRIMSON_CALYX else names)
+                      if name not in ("无", "跳过"))
+
+        def list_ready():
+            if not auto.find_element(names, "text", crop=ENTRY_ROWS, include=True):
+                return False
+            return (auto.find_element(("传送", "进入", "追踪"), "text", take_screenshot=False, need_ocr=False)
+                    and not auto.find_element(("角色培养", "培养设置"), "text", include=True,
+                                              take_screenshot=False, need_ocr=False))
+
+        wait_until(list_ready, 5, 0.5)
         auto.click_element("./assets/images/screen/guide/power.png", "image", max_retries=2)
         is_ornament = instance_type == ORNAMENT
-        for _ in range(12):
+        start = (1125 / 1920, 810 / 1080)
+        end = (1125 / 1920, (490 if is_ornament else 410) / 1080)
+        reversed_search = False
+        for attempt in range(24):
             entry = auto.find_element(
                 ("传送", "进入", "追踪"), "min_distance_text", crop=ENTRY_ROWS, include=True,
                 source=instance_name, source_type="text",
@@ -73,9 +88,15 @@ class Instance:
                 if not auto.click_element_with_pos(entry):
                     raise PowerError(f"无法点击副本入口：{instance_name}")
                 break
-            if not drag_list(auto, (1125 / 1920, 810 / 1080), (1125 / 1920, (490 if is_ornament else 410) / 1080),
-                             crop=ENTRY_ROWS, end_pause=0.2, settle=0.45):
+            if attempt == 12 and not reversed_search:
+                start, end = end, start
+                reversed_search = True
+            before = auto.screenshot.copy()
+            if not drag_list(auto, start, end, crop=ENTRY_ROWS, end_pause=0.2, settle=0.45):
                 raise PowerError("生存索引列表未稳定")
+            if not reversed_search and changed_ratio(before, auto.screenshot) <= 0.01:
+                start, end = end, start
+                reversed_search = True
         else:
             raise PowerError(f"未找到指定副本：{instance_name}")
 
