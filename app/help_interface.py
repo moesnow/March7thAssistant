@@ -47,6 +47,7 @@ class HelpInterface(ScrollArea):
         self.__initLayout()
         for attr in DOC_OF_TAB:
             widget = getattr(self, attr)
+            widget.setOpenLinks(False)
             widget.anchorClicked.connect(self.open_url)
             widget.installEventFilter(self)
         qconfig.themeChanged.connect(self.__themeChanged)
@@ -104,8 +105,6 @@ th, td {
             sys.exit(1)
         self.tutorial_content = tutorial_style + markdown.markdown(self.content, extensions=['tables']).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
 
-        self.tutorialLabel.setOpenExternalLinks(True)
-
         workflow_file = self._get_localized_doc_path("Workflow")
         try:
             with open(workflow_file, 'r', encoding='utf-8') as file:
@@ -114,8 +113,6 @@ th, td {
         except FileNotFoundError:
             sys.exit(1)
         self.workflow_content = tutorial_style + markdown.markdown(self.content, extensions=['tables']).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
-
-        self.workflowLabel.setOpenExternalLinks(True)
 
         faq_style = """
 <style>
@@ -133,7 +130,6 @@ a {
         except FileNotFoundError:
             sys.exit(1)
         self.faq_content = faq_style + markdown.markdown(self.content).replace('<h3>', '<br><h3>').replace('</h3>', '</h3><hr>').replace('<br>', '', 1) + '<br>'
-        self.faqLabel.setOpenExternalLinks(True)
 
         background_file = self._get_localized_doc_path("Background")
         try:
@@ -143,8 +139,6 @@ a {
         except FileNotFoundError:
             sys.exit(1)
         self.background_content = tutorial_style + markdown.markdown(self.content, extensions=['tables', 'fenced_code']).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
-
-        self.backgroundLabel.setOpenExternalLinks(True)
 
         tasks_style = """
 <style>
@@ -187,7 +181,6 @@ a {
         except FileNotFoundError:
             sys.exit(1)
         self.changelog_content = changelog_style + markdown.markdown(self.content).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
-        self.changelogLabel.setOpenExternalLinks(True)
         self.__themeChanged()
 
     def retranslateUi(self):
@@ -296,8 +289,36 @@ a {
 
         self.verticalScrollBar().setValue(0)
 
+    def showDocument(self, attr, anchor):
+        browser = getattr(self, attr)
+        self.stackedWidget.setCurrentWidget(browser)
+        if not anchor:
+            browser.verticalScrollBar().setValue(0)
+            return
+
+        browser.scrollToAnchor(anchor)
+        # Markdown headings currently have no HTML id. Match their Qt blocks too,
+        # including the short form of titles such as “Windows 后台模式（推荐）”.
+        document = browser.document()
+        block = document.begin()
+        while block.isValid():
+            if block.blockFormat().headingLevel():
+                title = block.text().strip()
+                names = (title, re.sub(r'\s*[（(][^）)]*[）)]$', '', title))
+                if any(re.sub(r'[^\w\s-]', '', n.casefold()).replace(' ', '-') == anchor.casefold()
+                       for n in names):
+                    top = document.documentLayout().blockBoundingRect(block).top()
+                    browser.verticalScrollBar().setValue(round(top))
+                    return
+            block = block.next()
+
     def open_url(self, url):
-        QDesktopServices.openUrl(QUrl(url))
+        url = QUrl(url)
+        if url.scheme() in ('setting', 'task', 'doc'):
+            from app.navigation import navigate
+            navigate(self.window(), url.toString())
+        else:
+            QDesktopServices.openUrl(url)
 
     def openWebsite(self):
         doc = os.path.splitext(os.path.basename(

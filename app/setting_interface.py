@@ -3055,8 +3055,9 @@ class SettingInterface(ScrollArea):
         connect_expand_state(self.afterFinishCard)
         connect_expand_state(self.localControlModeCard)
         if sys.platform == 'win32':
+            from app.navigation import navigate
             self.localControlModeMovedCard.clicked.connect(
-                lambda: self.stackedWidget.setCurrentWidget(self.GameConnectionGroup)
+                lambda: navigate(self.window(), 'setting:local_control_mode')
             )
 
         self.githubCard.clicked.connect(self.__openUrl("https://github.com/moesnow/March7thAssistant"))

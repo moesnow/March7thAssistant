@@ -656,6 +656,10 @@ class MainWindow(MSFluentWindow):
             self.tray_icon.activated.connect(self.onTrayIconActivated)
         self.tray_icon.show()
 
+    def navigate(self, link: str) -> bool:
+        from app.navigation import navigate
+        return navigate(self, link)
+
     def is_minimized_to_tray(self) -> bool:
         """是否处于最小化到托盘状态（主窗口隐藏且托盘图标可见）"""
         try:
