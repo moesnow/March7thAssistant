@@ -10,6 +10,7 @@ from module.automation import auto
 from module.config import cfg
 from module.logger import log
 from tasks.base.list_drag import changed_ratio, drag_list
+from tasks.power.policy import SupportNameSearch
 from tasks.touch.power import PowerError, START_CHALLENGE, _click_text, _tap
 from utils.image_utils import ImageUtils
 
@@ -52,35 +53,36 @@ def _portrait_rows(pixels, template):
     return rows
 
 
-def _find_on_page(pixels, targets, top):
+def _find_on_page(pixels, targets, top, name_search):
     for name, owner, template in targets:
         for offset in _portrait_rows(pixels, template):
             y = top + offset
             owner_area = (134 / 1280, max(top, y - 53) / 720, 245 / 1280, 46 / 720)
-            if not owner or auto.find_element(owner, "text", include=True, crop=owner_area):
+            if not owner or name_search.find_owner(auto, name, owner, owner_area):
                 return name, y
     return None
 
 
-def _choose_target(targets, crop):
+def _choose_target(targets, crop, name_search):
     pages = max(1, cfg.borrow_scroll_times)
     top = round(crop[1] * 720)
     for page in range(pages):
         frame, _, _ = auto.take_screenshot(crop=crop)
         pixels = cv2.cvtColor(np.asarray(frame), cv2.COLOR_RGB2BGR)
-        if target := _find_on_page(pixels, targets, top):
+        if target := _find_on_page(pixels, targets, top, name_search):
             return target
         if page + 1 == pages:
             break
         if not drag_list(auto, (455 / 1920, 824 / 1080), (455 / 1920, 376 / 1080),
                          crop=crop, end_pause=0.2, settle=0.4):
-            break
+            return None
         if changed_ratio(frame, auto.screenshot) <= 0.01:
             break
+    name_search.warn_if_unmatched()
     return None
 
 
-def _preview_target(target, targets, crop, last_slot):
+def _preview_target(target, targets, crop, last_slot, name_search):
     name, y = target
     _tap(124, y * 1.5)
     if auto.find_element("队伍角色已满", "text", crop=TEAM_FULL, max_retries=2, retry_delay=0.2):
@@ -90,7 +92,7 @@ def _preview_target(target, targets, crop, last_slot):
         frame, _, _ = auto.take_screenshot(crop=crop)
         pixels = cv2.cvtColor(np.asarray(frame), cv2.COLOR_RGB2BGR)
         same_name = [item for item in targets if item[0] == name]
-        target = _find_on_page(pixels, same_name, round(crop[1] * 720))
+        target = _find_on_page(pixels, same_name, round(crop[1] * 720), name_search)
         if not target:
             raise PowerError("让出编队末位后未能重新定位支援角色")
         _tap(124, target[1] * 1.5)
@@ -127,8 +129,9 @@ def borrow(*, ornament=False):
     label, header = ("支援列表", ORNAMENT_HEADER) if ornament else ("支援角色", HEADER)
     if not auto.find_element(label, "text", crop=header, max_retries=8, retry_delay=0.25):
         raise PowerError("未进入触屏支援列表")
-    if target := _choose_target(targets, portraits):
-        _preview_target(target, targets, portraits, (1166, 775) if ornament else (1712, 570))
+    name_search = SupportNameSearch()
+    if target := _choose_target(targets, portraits, name_search):
+        _preview_target(target, targets, portraits, (1166, 775) if ornament else (1712, 570), name_search)
         if ornament:
             _tap(1848, 55)
         else:
@@ -141,5 +144,5 @@ def borrow(*, ornament=False):
     _tap(1848, 55)
     if not auto.find_element("开始挑战", "text", crop=START_CHALLENGE, max_retries=6, retry_delay=0.25):
         raise PowerError("关闭支援列表后未回到编队")
-    log.info("当前支援列表未找到已配置的角色，跳过借用")
+    log.info("本次没有找到符合设置的支援角色，跳过借用")
     return False

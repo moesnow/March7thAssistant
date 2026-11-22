@@ -931,3 +931,51 @@ def test_support_portrait_match_keeps_rows_separate():
 
     assert len(rows) == 2
     assert abs((rows[1] - rows[0]) - 180) <= 2
+
+
+@pytest.mark.parametrize("later_match", [False, True])
+def test_touch_support_logs_read_names_before_finishing_the_search(monkeypatch, later_match):
+    from tasks.power import policy
+    from tasks.touch import support
+
+    frame = Image.new("RGB", (96, 500))
+    auto = Mock(take_screenshot=Mock(return_value=(frame, None, 1)))
+    readings = iter(["持明上网", "小三月", "持明上網" if later_match else "小三月"])
+    confirm = Mock()
+
+    def find(target, kind, **_kwargs):
+        assert kind == "text"
+        if target == "解除支援":
+            return confirm.called
+        if target == "持明上網":
+            read_name = next(readings)
+            auto.ocr_result = [_line(read_name, 0, 0)]
+            return target in read_name
+        return target == "支援角色" or target == "开始挑战"
+
+    auto.find_element.side_effect = find
+    log = Mock()
+    tap = Mock()
+    monkeypatch.setattr(support, "auto", auto)
+    monkeypatch.setattr(policy, "log", log)
+    monkeypatch.setattr(support, "cfg", SimpleNamespace(borrow_friends=[("Cyrene", "持明上網")], borrow_scroll_times=2))
+    monkeypatch.setattr(support, "_click_text", Mock(return_value=True))
+    monkeypatch.setattr(support, "_portrait_rows", Mock(side_effect=[[70, 180], [70]]))
+    monkeypatch.setattr(support, "drag_list", Mock(return_value=True))
+    monkeypatch.setattr(support, "changed_ratio", Mock(return_value=0.5))
+    monkeypatch.setattr(support, "_tap", tap)
+    monkeypatch.setattr(support, "_confirm_standard_team", confirm)
+
+    assert support.borrow() is later_match
+    assert next(readings, None) is None
+    assert log.info.call_args_list == [
+        call("找到支援角色「昔涟」，你填的好友名字是「持明上網」，小助手读到的是「持明上网」。"),
+        call("找到支援角色「昔涟」，你填的好友名字是「持明上網」，小助手读到的是「小三月」。"),
+    ]
+    assert log.warning.call_count == int(not later_match)
+    if later_match:
+        tap.assert_called_once_with(124, (round(support.PORTRAITS[1] * 720) + 70) * 1.5)
+        confirm.assert_called_once_with("昔涟")
+    else:
+        tap.assert_called_once_with(1848, 55)
+        confirm.assert_not_called()
