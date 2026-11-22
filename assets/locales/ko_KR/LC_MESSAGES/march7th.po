@@ -6000,6 +6000,16 @@ msgstr "에바네시아「꽃 피길 기다리는 달」"
 msgid "风堇·云边拾暖"
 msgstr "히아신「구름 곁의 따스함」"
 
+#: app/setting_interface.py:303
+msgid "优先使用助燃券（实验）"
+msgstr "연소 촉진 티켓 우선 사용 (실험 기능)"
+
+#: app/setting_interface.py:304
+msgid "PC 花萼、凝滞虚影优先快速刷取，保留支援实训，券不足时普通挑战"
+msgstr ""
+"PC에서는 고치와 정체된 허영의 빠른 획득을 우선하고 지원 캐릭터를 사용하는 일일 훈련은 유지합니다. 티켓이 부족하면 일반 도전으로 "
+"전환합니다."
+
 #: app/setting_interface.py:287
 msgid "每周清理遗器"
 msgstr "매주 유물 정리"

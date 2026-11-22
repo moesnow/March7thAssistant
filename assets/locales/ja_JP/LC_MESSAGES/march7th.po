@@ -6008,6 +6008,15 @@ msgstr "緋英: 月待つ花時"
 msgid "风堇·云边拾暖"
 msgstr "ヒアンシー: 雲間からこぼれる陽光"
 
+#: app/setting_interface.py:303
+msgid "优先使用助燃券（实验）"
+msgstr "点火チケットを優先使用（試験機能）"
+
+#: app/setting_interface.py:304
+msgid "PC 花萼、凝滞虚影优先快速刷取，保留支援实训，券不足时普通挑战"
+msgstr ""
+"PC版では疑似花萼と凝結虚影でクイック獲得を優先し、サポートキャラを使うデイリー訓練は維持します。チケットが不足する場合は通常の挑戦に切り替えます。"
+
 #: app/setting_interface.py:287
 msgid "每周清理遗器"
 msgstr "遺物を毎週整理"

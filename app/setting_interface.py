@@ -297,6 +297,12 @@ class SettingInterface(ScrollArea):
             tr("同时启用后备开拓力时，后备库存用完才使用燃料"),
             "use_fuel"
         )
+        self.preferFuelTicketsCard = SwitchSettingCard1(
+            UiIcon.DROP,
+            tr("优先使用助燃券（实验）"),
+            tr("PC 花萼、凝滞虚影优先快速刷取，保留支援实训，券不足时普通挑战"),
+            "prefer_fuel_tickets"
+        )
         self.weeklyRelicCleanupEnableCard = ExpandableWeeklyRelicSettingCard(
             "break_down_level_four_relicset",
             "weekly_relic_cleanup_day_of_week",
@@ -2717,6 +2723,7 @@ class SettingInterface(ScrollArea):
             self.tpBeforeInstanceEnableCard,
             self.useReservedTrailblazePowerEnableCard,
             self.useFuelEnableCard,
+            self.preferFuelTicketsCard,
             self.weeklyRelicCleanupEnableCard,
             self.relicBagCleanupCard,
             self.instanceNameChallengeCountCard

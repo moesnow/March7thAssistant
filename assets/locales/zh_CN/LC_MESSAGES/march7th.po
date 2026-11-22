@@ -5973,6 +5973,14 @@ msgstr "绯英·月待花时"
 msgid "风堇·云边拾暖"
 msgstr "风堇·云边拾暖"
 
+#: app/setting_interface.py:303
+msgid "优先使用助燃券（实验）"
+msgstr "优先使用助燃券（实验）"
+
+#: app/setting_interface.py:304
+msgid "PC 花萼、凝滞虚影优先快速刷取，保留支援实训，券不足时普通挑战"
+msgstr "PC 花萼、凝滞虚影优先快速刷取，保留支援实训，券不足时普通挑战"
+
 #: app/setting_interface.py:287
 msgid "每周清理遗器"
 msgstr "每周清理遗器"
