@@ -6,10 +6,12 @@ from PIL import Image
 import pytest
 
 from module.automation import automation
+from module.automation.input_base import limit_input_deadline
 from module.localization import tr
 from tasks.touch import ornament, power, rewards
 from tasks.power import readout, supplement
 from tasks.power.policy import plan_paid_batch
+from utils.pause import RunStopRequested
 
 
 @pytest.mark.parametrize(("text", "expected"), [
@@ -65,6 +67,92 @@ def test_echo_entry_uses_button_below_title():
     entry = _line("进入", 640, 137)
 
     assert power.find_instance_entry([unrelated, title, entry], "毁灭的开端", power.ECHO) == (entry[0], "进入")
+
+
+@pytest.mark.parametrize(
+    "start_page, target_page, panel_delay, missed, deadline, stop, expected_drags, expected_error",
+    [
+        (0, 0, 1.2, (), None, False, [], None),
+        (1, 0, 0, (), None, False, [True, True, True, False, False], None),
+        (0, 1, 0, (1,), None, False, [True, True], None),
+        (0, 0, 300, (), None, False, [], "未能确认侵蚀隧洞列表"),
+        (0, 1, 0, (), 1, False, [True], "生存索引查找副本超时"),
+        (0, 1, 0, (), None, True, [True], None),
+    ],
+    ids=["late-panel", "target-above-viewport", "missed-drag", "panel-never-switched",
+         "deadline-during-drag", "stop-during-drag"],
+)
+def test_touch_power_reentry_search(monkeypatch, start_page, target_page, panel_delay, missed, deadline, stop,
+                                    expected_drags, expected_error):
+    name = "密伶之径"
+    page = start_page
+    now = 0.0
+    drags = []
+    visible = []
+    auto = Mock()
+    nav = Mock()
+
+    def sleep(seconds):
+        nonlocal now
+        now += seconds
+
+    def capture(*, crop):
+        nonlocal visible
+        assert crop == power.INDEX_ROWS
+        if now < panel_delay:
+            visible = [_line("角色培养", 130, 45), _line("进入", 640, 59), _line("隧洞遗器推荐", 130, 245)]
+            hue = 0
+        else:
+            title = name if page == target_page else "霜风之径"
+            visible = [_line(title, 130, 45), _line("进入", 640, 59)]
+            hue = 60 + page * 60
+        auto.screenshot = Image.new("RGB", (60, 40), (hue,) * 3)
+        return auto.screenshot, (438, 170, 730, 453), 1
+
+    def read():
+        auto.ocr_result = visible
+
+    def drag(start, end, *_):
+        nonlocal page
+        down = end[1] < start[1]
+        drags.append(down)
+        if len(drags) not in missed:
+            page = min(2, max(0, page + (1 if down else -1)))
+        return True
+
+    auto.take_screenshot = capture
+    auto.perform_ocr = read
+    auto.drag_mouse = drag
+    auto.calculate_text_position.return_value = (1098, 238)
+    clock = SimpleNamespace(monotonic=lambda: now, sleep=sleep)
+    monkeypatch.setattr(power, "auto", auto)
+    monkeypatch.setattr(power, "screen", nav)
+    monkeypatch.setattr(power, "time", clock)
+    monkeypatch.setattr("tasks.base.list_drag.time", clock)
+    monkeypatch.setattr("utils.wait.time", clock)
+
+    def check_stop():
+        if stop and drags:
+            raise RunStopRequested()
+
+    monkeypatch.setattr(power.pause_ctl, "check_stop", check_stop)
+    with limit_input_deadline(deadline):
+        if stop:
+            with pytest.raises(RunStopRequested):
+                power._reenter_instance(power.CAVERN, name)
+        elif expected_error:
+            with pytest.raises(power.PowerError, match=expected_error):
+                power._reenter_instance(power.CAVERN, name)
+        else:
+            power._reenter_instance(power.CAVERN, name)
+
+    if stop or expected_error:
+        auto.click_element_with_pos.assert_not_called()
+    else:
+        auto.calculate_text_position.assert_called_once_with(_line("进入", 640, 59)[0], False)
+        auto.click_element_with_pos.assert_called_once_with((1098, 238))
+    nav.change_to.assert_called_once_with("guide3", max_recursion=1)
+    assert drags == expected_drags
 
 
 @pytest.mark.parametrize(("requested", "available", "stock", "batch"), [

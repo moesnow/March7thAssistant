@@ -9,6 +9,7 @@ from PIL import Image
 
 from module.automation import auto
 from module.automation.automation import screenshot_retry_timeout
+from module.automation.input_base import input_deadline, input_deadline_reached, limit_input_deadline
 from module.config import cfg
 from module.game.adb_transport import AdbError
 from module.localization import get_raw_instance_names, tr
@@ -27,6 +28,7 @@ from tasks.power.readout import read_number
 from tasks.power.supplement import supplement
 from utils.game_options import game_option_enabled
 from utils.image_utils import ImageUtils
+from utils.pause import pause_ctl
 from utils.wait import wait_until
 
 
@@ -38,6 +40,9 @@ INSTANCES = {kind: (_INSTANCE_SCREENS[kind], *limits) for kind, limits in INSTAN
 IMAGES = "./assets/touch_720/images/power"
 INDEX_CATEGORY = (177 / 1920, 255 / 1080, 449 / 1920, 680 / 1080)
 INDEX_ROWS = (658 / 1920, 256 / 1080, 1095 / 1920, 679 / 1080)
+INSTANCE_ENTRY_LABELS = frozenset(("进入", "追踪", "传送"))
+INSTANCE_LIST_READY_TIMEOUT = 15
+INSTANCE_SEARCH_TIMEOUT = 180
 ECHO_REWARDS = (884 / 1920, 327 / 1080, 101 / 1920, 60 / 1080)
 ECHO_PRACTICE_NOTICE = (410 / 1920, 493 / 1080, 1100 / 1920, 69 / 1080)
 DIALOG_CONFIRM = (990 / 1920, 665 / 1080, 460 / 1920, 80 / 1080)
@@ -100,7 +105,7 @@ def find_instance_entry(lines, name, instance_type=None):
         x, y = np.mean(box, axis=0)
         if x < 330 and _normalize(text) == name:
             names.append(y)
-        elif text in ("进入", "追踪", "传送") and x > 560:
+        elif text in INSTANCE_ENTRY_LABELS and x > 560:
             buttons.append((y, box, text))
     # 历战余响的进入按钮在掉落物一行，其余副本和标题同一行。
     button_offset = 73 if instance_type == ECHO else 0
@@ -111,25 +116,74 @@ def find_instance_entry(lines, name, instance_type=None):
     return None
 
 
-def _click_instance_entry(instance_type, name):
-    # 历战余响和饰品提取列表顶部有固定横幅，缩短手势以保留相邻页面的重叠。
-    drag_end = 490 if instance_type in (ECHO, ORNAMENT) else 405
-    for _ in range(12):
-        before, _, _ = auto.take_screenshot(crop=INDEX_ROWS)
+def _check_instance_search_deadline():
+    pause_ctl.check_stop()
+    if input_deadline_reached(time.monotonic()):
+        raise PowerError("生存索引查找副本超时")
+
+
+def _find_instance_entry_in_list(instance_type, name):
+    catalog = get_raw_instance_names()[instance_type]
+    titles = tuple({_normalize(title) for title in (catalog.values() if instance_type == CRIMSON_CALYX else catalog)}
+                   - {"无", "跳过"})
+
+    def list_ready():
+        auto.take_screenshot(crop=INDEX_ROWS)
         auto.perform_ocr()
-        if entry := find_instance_entry(auto.ocr_result, name, instance_type):
-            box, label = entry
-            if label == "追踪":
-                raise PowerError(f"指定副本未解锁：{name}")
-            if not auto.click_element_with_pos(auto.calculate_text_position(box, False)):
-                raise PowerError(f"无法点击 {name} 的进入按钮")
-            return
-        if not drag_list(auto, (1100 / 1920, 814 / 1080), (1100 / 1920, drag_end / 1080),
-                         crop=INDEX_ROWS, end_pause=0.2, settle=0.4):
-            raise PowerError("生存索引列表未稳定")
-        if changed_ratio(before, auto.screenshot) <= 0.01:
-            break
-    raise PowerError(f"生存索引未找到 {name} 的进入按钮")
+        texts = {_normalize(text) for _, (text, _) in auto.ocr_result}
+        return (
+            bool(texts & INSTANCE_ENTRY_LABELS)
+            and not any("角色培养" in text or "培养设置" in text or "隧洞遗器推荐" in text for text in texts)
+            and any(title in text for text in texts for title in titles)
+        )
+
+    # 低帧率设备点完分类后可能还在显示培养目标，等右栏出现当前分类的副本再翻页。
+    _check_instance_search_deadline()
+    wait_time = min(INSTANCE_LIST_READY_TIMEOUT, input_deadline.get() - time.monotonic())
+    ready = wait_until(list_ready, wait_time, 0.5)
+    _check_instance_search_deadline()
+    if not ready:
+        raise PowerError(f"未能确认{instance_type}列表")
+
+    if entry := find_instance_entry(auto.ocr_result, name, instance_type):
+        return entry
+
+    # 历战余响和饰品提取有固定横幅，缩短手势以保留相邻页面的重叠。
+    upper_y = 490 if instance_type in (ECHO, ORNAMENT) else 405
+    bottom = (1100 / 1920, 814 / 1080)
+    top = (1100 / 1920, upper_y / 1080)
+    for start, end in ((bottom, top), (top, bottom)):
+        unchanged = 0
+        for _ in range(12):
+            _check_instance_search_deadline()
+            before = auto.screenshot
+            stable = drag_list(auto, start, end, crop=INDEX_ROWS, end_pause=0.2, settle=0.4)
+            _check_instance_search_deadline()
+            if not stable:
+                raise PowerError("生存索引列表未稳定")
+
+            auto.perform_ocr()
+            if entry := find_instance_entry(auto.ocr_result, name, instance_type):
+                return entry
+            # 手势可能漏收，连续两次无位移才结束本方向查找。
+            unchanged = unchanged + 1 if changed_ratio(before, auto.screenshot) <= 0.01 else 0
+            if unchanged >= 2:
+                break
+    return None
+
+
+def _click_instance_entry(instance_type, name):
+    with limit_input_deadline(time.monotonic() + INSTANCE_SEARCH_TIMEOUT):
+        entry = _find_instance_entry_in_list(instance_type, name)
+        _check_instance_search_deadline()
+        if not entry:
+            raise PowerError(f"生存索引未找到 {name} 的进入按钮")
+        box, label = entry
+        if label == "追踪":
+            raise PowerError(f"指定副本未解锁：{name}")
+        if not auto.click_element_with_pos(auto.calculate_text_position(box, False)):
+            _check_instance_search_deadline()
+            raise PowerError(f"无法点击 {name} 的进入按钮")
 
 
 def _enter_instance(instance_type, name):
