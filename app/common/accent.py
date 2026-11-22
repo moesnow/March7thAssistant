@@ -3,9 +3,7 @@ from PySide6.QtGui import QColor
 from qfluentwidgets import qconfig, themeColor
 from qfluentwidgets.common.style_sheet import getStyleSheet, styleSheetManager
 
-
-MARCH7TH_PINK = '#f18cb9'
-EVERNIGHT_RED = "#ba3032"
+from .design_tokens import EVERNIGHT_RED, MARCH7TH_PINK
 
 
 def set_accent_color(color):
