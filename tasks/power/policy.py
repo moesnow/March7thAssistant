@@ -32,6 +32,10 @@ class InstanceUnavailable(PowerError):
     """已确认指定副本无法进入。"""
 
 
+class InstanceTeamUnavailable(PowerError):
+    """切队后没有可确认的出战编队，本项尚未开打。"""
+
+
 class BattleDefeat(PowerError):
     """确认战败且已离开结算页。"""
 
@@ -139,6 +143,7 @@ def run_plan(config, plan, run_instance):
     names = get_raw_instance_names()
     remaining = list(plan)
     complete = True
+    skipped = None
     for index, item in enumerate(plan):
         if not isinstance(item, (list, tuple)) or len(item) != 3:
             log.warning(f"体力计划第 {index + 1} 项格式无效，已保留")
@@ -153,16 +158,24 @@ def run_plan(config, plan, run_instance):
             continue
 
         log.info(f"体力计划 [{index + 1}/{len(plan)}] {instance_type} · {name}，剩余 {count} 次")
-        for completed in run_instance(instance_type, name, count):
-            if not 0 < completed <= count:
-                raise PowerError(f"确认的结算次数 {completed} 超出计划剩余次数 {count}")
-            count -= completed
-            if not config.power_plan_keep:
-                remaining[index] = [instance_type, name, count] if count else None
-                config.set_value("power_plan", [entry for entry in remaining if entry is not None])
+        try:
+            for completed in run_instance(instance_type, name, count):
+                if not 0 < completed <= count:
+                    raise PowerError(f"确认的结算次数 {completed} 超出计划剩余次数 {count}")
+                count -= completed
+                if not config.power_plan_keep:
+                    remaining[index] = [instance_type, name, count] if count else None
+                    config.set_value("power_plan", [entry for entry in remaining if entry is not None])
+        except InstanceTeamUnavailable as error:
+            log.warning(error)
+            skipped = skipped or error
+            continue
         if count:
             log.info(f"资源不足，保留当前计划的 {count} 次及后续计划")
-            return False
+            complete = False
+            break
+    if skipped is not None:
+        raise skipped
     if complete:
         log.info("体力计划已完成")
     return complete

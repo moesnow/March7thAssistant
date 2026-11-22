@@ -591,10 +591,11 @@ def test_repeat_stops_at_plan_count_or_calculated_budget(monkeypatch, planned, a
     assert settlements.call_args_list == [call(1, None)] * 2
     balance.assert_called_once_with()
     assert start.call_args_list == [
-        call(power.GOLDEN_CALYX, "回忆之蕾", 1, borrow_for_daily=False, practice=False),
+        call(power.GOLDEN_CALYX, "回忆之蕾", 1, borrow_for_daily=False, practice=False,
+             world_team=False, team_failure=None),
     ] * (1 + first_defeat)
-    assert wait.call_args_list == [call(repeated=False, instance_screen="calyx")] * (1 + first_defeat) + [
-        call(repeated=True, instance_screen="calyx"),
+    assert wait.call_args_list == [call(repeated=False, instance_screen="calyx", verify_team=False)] * (1 + first_defeat) + [
+        call(repeated=True, instance_screen="calyx", verify_team=False),
     ]
     click.assert_called_once_with("再来一次", power.REPEAT)
     exit_result.assert_called_once_with("calyx")
@@ -623,7 +624,8 @@ def test_echo_without_weekly_rewards_only_fights_for_an_explicit_plan(monkeypatc
     balance.assert_not_called()
     supplement.assert_not_called()
     if planned:
-        start.assert_called_once_with(power.ECHO, "毁灭的开端", 1, borrow_for_daily=False, practice=True)
+        start.assert_called_once_with(power.ECHO, "毁灭的开端", 1, borrow_for_daily=False, practice=True,
+                                      world_team=False, team_failure=None)
         config.save_timestamp.assert_called_once_with("echo_of_war_timestamp")
     else:
         enter.assert_not_called()
@@ -942,7 +944,9 @@ def test_fixed_challenge_reuses_start_button_until_the_team_changes(monkeypatch,
     monkeypatch.setattr(power.time, "sleep", Mock())
     read_ocr = Mock(side_effect=[[_line("挑战次数5", 0, 0)], [_line("来", 0, 0), _line("×50", 40, 0)]])
     monkeypatch.setattr(readout.ocr, "recognize_multi_lines", read_ocr)
-    monkeypatch.setattr(power, "_select_team", Mock())
+    selected_start = ((1710, 970), (1790, 1010))
+    select = Mock(return_value=selected_start)
+    monkeypatch.setattr(power, "_select_team", select)
     click = Mock(return_value=True)
     monkeypatch.setattr(power, "_click_text", click)
 
@@ -952,12 +956,9 @@ def test_fixed_challenge_reuses_start_button_until_the_team_changes(monkeypatch,
     assert sum(args.args[0] == (1821 / 1920, 866 / 1080, 0, 0)
                for args in auto.click_element.call_args_list) == 4
     assert [lookup.args[0] for lookup in auto.find_element.call_args_list] == ["开始挑战"]
-    if select_team:
-        assert click.call_args_list == [call("挑战", power.CHALLENGE), call("开始挑战", power.START_CHALLENGE)]
-        auto.click_element_with_pos.assert_not_called()
-    else:
-        click.assert_called_once_with("挑战", power.CHALLENGE)
-        auto.click_element_with_pos.assert_called_once_with(button)
+    assert select.call_count == int(select_team)
+    click.assert_called_once_with("挑战", power.CHALLENGE)
+    auto.click_element_with_pos.assert_called_once_with(selected_start if select_team else button)
 
 
 def test_sms_pending_thread_accepts_sticker_reply(monkeypatch):

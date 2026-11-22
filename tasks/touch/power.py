@@ -1,6 +1,5 @@
 """触屏 720p 生存索引副本。"""
 from datetime import date
-import re
 import time
 
 import numpy as np
@@ -16,16 +15,18 @@ from module.localization import get_raw_instance_names, tr
 from module.logger import log
 from module.screen import screen
 from tasks.base.list_drag import changed_ratio, drag_list
-from tasks.power.instance import Instance
+from tasks.base.task_steps import GameRecoveryError
+from tasks.power.instance import Instance, TeamPresetUnavailable
 from tasks.power.battle import battle_speed_visible, ensure_double_speed
 from tasks.power.policy import (
     BATTLE_TIMEOUT, ENTRY_TIMEOUT, DEFEAT_RETRIES, CAVERN, CRIMSON_CALYX, ECHO, GOLDEN_CALYX,
-    INSTANCE_LIMITS, ORNAMENT, STAGNANT_SHADOW, BattleDefeat, PowerError, RelicBagFull,
+    INSTANCE_LIMITS, ORNAMENT, STAGNANT_SHADOW, BattleDefeat, InstanceTeamUnavailable, PowerError, RelicBagFull,
     SupportDemand, batch_limit, normalize as _normalize,
     parse_echo_rewards, parse_power, run_plan,
 )
 from tasks.power.readout import read_number
 from tasks.power.supplement import supplement
+from tasks.power.team import TEAM_ACTIONS, find_current_team_start, restore_main, select_preset, warn_team_switch
 from utils.game_options import game_option_enabled
 from utils.image_utils import ImageUtils
 from utils.pause import pause_ctl
@@ -52,7 +53,7 @@ ORNAMENT_TITLE = (755 / 1920, 111 / 1080, 576 / 1920, 59 / 1080)
 WAVE_COUNT = (1455 / 1920, 810 / 1080, 175 / 1920, 50 / 1080)
 CHALLENGE = (1392 / 1920, 950 / 1080, 461 / 1920, 76 / 1080)
 START_CHALLENGE = (1410 / 1920, 946 / 1080, 420 / 1920, 80 / 1080)
-TEAM_TABS = (531 / 1920, 14 / 1080, 861 / 1920, 86 / 1080)
+MENU_TEAM = (1120 / 1920, 389 / 1080, 645 / 1920, 633 / 1080)
 BATTLE_CONTROLS = (1665 / 1920, 30 / 1080, 210 / 1920, 63 / 1080)
 RESULT_TITLE = (754 / 1920, 109 / 1080, 411 / 1920, 253 / 1080)
 REPEAT = (1180 / 1920, 911 / 1080, 290 / 1920, 74 / 1080)
@@ -220,20 +221,49 @@ def _supplement(power, *, plus=(1720, 55), power_crop=POWER_VALUE):
 
 
 def _select_team(instance_type, name):
-    team = str(Instance.get_target_team(instance_type, name)).zfill(2)
-    if not re.fullmatch(r"0[1-9]|1[0-9]", team):
-        raise PowerError(f"队伍编号 {team} 格式错误")
-    start, end = (1220 / 1920, 60 / 1080), (678 / 1920, 60 / 1080)
-    if int(team) <= 6:
-        start, end = end, start
-    for _ in range(5):
-        if _click_text(team, TEAM_TABS, retries=2):
-            time.sleep(0.7)
-            log.info(f"已点选队伍 {team}")
-            return
-        if not drag_list(auto, start, end, crop=TEAM_TABS, settle=0.4):
-            break
-    raise PowerError(f"未找到队伍 {team}")
+    team = Instance.get_target_team(instance_type, name)
+    reason = select_preset(auto, team)
+    if not reason:
+        button = auto.find_element("开始挑战", "text", crop=START_CHALLENGE, max_retries=4, retry_delay=0.35)
+        if not button:
+            reason = "未确认目标队伍可出战"
+    if reason:
+        _check_popup(fatal_disconnect=True)
+        raise TeamPresetUnavailable(f"副本未能使用队伍 {str(team).zfill(2)}（{reason}）")
+    log.info(f"已确认副本选中队伍 {str(team).zfill(2)}")
+    return button
+
+
+def _select_world_team(instance_type, name):
+    team = Instance.get_target_team(instance_type, name)
+    screen.change_to("menu")
+    opened = _click_text("编队", MENU_TEAM, retries=3)
+    if not opened and screen.check_screen("menu"):
+        drag_list(auto, (1690 / 1920, 949 / 1080), (1690 / 1920, 510 / 1080),
+                  crop=MENU_TEAM, settle=0.45)
+        opened = _click_text("编队", MENU_TEAM, retries=3)
+    if (opened
+            and auto.find_element("快速编队", "text", crop=TEAM_ACTIONS, max_retries=7, retry_delay=0.35)):
+        reason = select_preset(auto, team, activate=True)
+        _check_popup(fatal_disconnect=True)
+        if auto.find_element("快速编队", "text", crop=TEAM_ACTIONS, max_retries=3, retry_delay=0.3):
+            _tap(1848, 55)
+            wait_until(lambda: screen.check_screen("main") or screen.check_screen("menu"), 6, 0.35)
+    else:
+        _check_popup(fatal_disconnect=True)
+        reason = "未确认进入队伍页"
+    if reason:
+        warn_team_switch(name, team, "主世界编队", reason)
+    else:
+        log.info(f"已确认主世界启用队伍 {str(team).zfill(2)}")
+    restore_main(screen, name)
+    return reason
+
+
+def _leave_challenge_team(instance_screen):
+    if auto.find_element(("快速编队", "开始挑战"), "text", crop=TEAM_ACTIONS):
+        _tap(1848, 55)
+        wait_until(lambda: screen.check_screen(instance_screen) or screen.check_screen("main"), 6, 0.35)
 
 
 def _set_challenge_waves(waves, *, y=866, allow_no_selector=False):
@@ -259,27 +289,39 @@ def _confirm_echo_practice(*, required):
     log.info("已确认本场历战余响无挑战奖励")
 
 
-def _start_challenge(instance_type, name, waves, *, borrow_for_daily=False, practice=False):
+def _start_challenge(instance_type, name, waves, *, borrow_for_daily=False, practice=False,
+                     world_team=False, team_failure=None):
     if not practice:
         waves = _set_challenge_waves(waves, allow_no_selector=instance_type == ECHO)
     if not _click_text("挑战", CHALLENGE):
+        if team_failure:
+            _check_popup(fatal_disconnect=True)
+            raise InstanceTeamUnavailable(f"{name}：未确认副本挑战按钮，已跳过本项")
         raise PowerError("未找到副本的挑战按钮")
     if practice:
         _confirm_echo_practice(required=True)
     start_button = auto.find_element("开始挑战", "text", crop=START_CHALLENGE, max_retries=18, retry_delay=0.4)
-    if not start_button:
-        _check_popup()
+    if not start_button and not (cfg.instance_team_enable and auto.find_element("快速编队", "text", crop=TEAM_ACTIONS)):
+        _check_popup(fatal_disconnect=bool(team_failure))
+        if team_failure:
+            raise InstanceTeamUnavailable(f"{name}：未确认进入副本编队，已跳过本项")
         raise PowerError("未进入副本编队页")
-    if cfg.instance_team_enable:
-        _select_team(instance_type, name)
-        start_button = None
+    if cfg.instance_team_enable and not world_team and team_failure is None:
+        start_button = _select_team(instance_type, name)
     borrowed = False
     if cfg.borrow_enable and (cfg.borrow_character_enable or borrow_for_daily):
         from tasks.touch import support
 
         borrowed = support.borrow()
         start_button = None
-    time.sleep(0.6)
+    if team_failure:
+        _check_popup(fatal_disconnect=True)
+        start_button = find_current_team_start(auto, START_CHALLENGE)
+        if not start_button:
+            raise InstanceTeamUnavailable(f"{name}：无法确认当前副本有可出战的队伍，已跳过本项")
+        log.info(f"{name}：已确认当前副本编队可出战，继续挑战")
+    else:
+        time.sleep(0.6)
     started = (auto.click_element_with_pos(start_button) if start_button is not None
                else _click_text("开始挑战", START_CHALLENGE))
     if not started:
@@ -287,11 +329,13 @@ def _start_challenge(instance_type, name, waves, *, borrow_for_daily=False, prac
     return waves, borrowed
 
 
-def _check_popup():
+def _check_popup(*, fatal_disconnect=False):
     auto.take_screenshot(crop=DIALOG)
     auto.perform_ocr()
     text = "".join(text for _, (text, _) in auto.ocr_result)
-    if any(message in text for message in ("网络连接", "连接断开", "重新登录", "网络错误", "连接超时")):
+    if any(message in text for message in ("网络连接", "连接断开", "重新登录", "网络错误", "连接超时", "连接中断")):
+        if fatal_disconnect:
+            raise GameRecoveryError("副本开打前检测到游戏连接中断")
         raise PowerError("检测到游戏掉线，停止当前清体力")
     if "开拓力补充" in text:
         if _click_text("取消", SUPPLEMENT_CANCEL):
@@ -411,7 +455,7 @@ def _observe_battle(glyph, *, allow_team, check_popups, awaiting_repeat_transiti
     return None, None
 
 
-def _wait_battle(*, repeated=False, instance_screen="calyx"):
+def _wait_battle(*, repeated=False, instance_screen="calyx", verify_team=False):
     with Image.open(f"{IMAGES}/auto_glyph.png") as image:
         glyph = np.asarray(image.convert("L")) > 0
     deadline = time.monotonic() + ENTRY_TIMEOUT
@@ -489,10 +533,20 @@ def _wait_battle(*, repeated=False, instance_screen="calyx"):
             if state == "team" and time.monotonic() >= next_team_click:
                 if team_retries >= 2:
                     raise PowerError("多次点按开始挑战后仍停在编队页")
-                if not _click_text("开始挑战", START_CHALLENGE):
-                    raise PowerError("编队页开始挑战按钮无法点击")
-                log.info("确认仍在编队页，点按开始挑战")
-                team_retries += 1
+                with limit_input_deadline(deadline):
+                    if verify_team:
+                        _check_popup(fatal_disconnect=True)
+                        button = find_current_team_start(auto, START_CHALLENGE)
+                        if not button or input_deadline_reached(time.monotonic()):
+                            next_team_click = time.monotonic() + 3
+                            continue
+                        clicked = auto.click_element_with_pos(button)
+                    else:
+                        clicked = _click_text("开始挑战", START_CHALLENGE)
+                    if not clicked:
+                        raise PowerError("编队页开始挑战按钮无法点击")
+                    log.info("确认仍在编队页，点按开始挑战")
+                    team_retries += 1
                 next_team_click = time.monotonic() + 3
         time.sleep(0.45)
     if repeated and not left_result:
@@ -529,10 +583,29 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
             if on_settlement is not None:
                 on_settlement(0, power)
             return
+    team_failure = None
+    world_team = False
     if getattr(cfg, "tp_before_instance", False):
+        if cfg.instance_team_enable:
+            team_failure = _select_world_team(instance_type, name)
+            world_team = team_failure is None
         _heal_teams()
         _select_category(instance_type)
-    _enter_instance(instance_type, name)
+
+    def enter(*, reselect=False):
+        try:
+            if reselect:
+                _reenter_instance(instance_type, name)
+            else:
+                _enter_instance(instance_type, name)
+        except PowerError as error:
+            if team_failure:
+                _check_popup(fatal_disconnect=True)
+                restore_main(screen, name)
+                raise InstanceTeamUnavailable(f"{name}：未确认进入原定副本，已跳过本项（{error}）") from error
+            raise
+
+    enter()
     remaining = planned
     previous = 0
     borrowed = False
@@ -561,25 +634,37 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
             if not repeated:
                 if previous:
                     _exit_result(instance_screen)
-                    _reenter_instance(instance_type, name)
+                    enter(reselect=True)
                 waves, borrowed = _start_challenge(
                     instance_type, name, waves, borrow_for_daily=demand.pending, practice=practice,
+                    world_team=world_team, team_failure=team_failure,
                 )
-            _wait_battle(repeated=repeated, instance_screen=instance_screen)
+            _wait_battle(repeated=repeated, instance_screen=instance_screen, verify_team=bool(team_failure))
+        except TeamPresetUnavailable as error:
+            log.info(f"{name}：{error}，改用主世界切队")
+            restore_main(screen, name, leave_team=lambda: _leave_challenge_team(instance_screen))
+            team_failure = _select_world_team(instance_type, name)
+            world_team = team_failure is None
+            previous = 0
+            enter(reselect=True)
+            continue
+        except InstanceTeamUnavailable:
+            restore_main(screen, name, leave_team=lambda: _leave_challenge_team(instance_screen))
+            raise
         except BattleDefeat:
             if retries >= DEFEAT_RETRIES:
                 raise
             retries += 1
             log.warning(f"已确认战败，重试 {retries}/{DEFEAT_RETRIES}")
             previous = 0
-            _reenter_instance(instance_type, name)
+            enter(reselect=True)
             continue
         except RelicBagFull:
             if cleaned or not _clean_full_bag():
                 raise
             cleaned = True
             previous = 0
-            _reenter_instance(instance_type, name)
+            enter(reselect=True)
             continue
 
         demand.won(borrowed)
@@ -601,7 +686,7 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
             if quota == 0 and planned is None:
                 break
             if remaining != 0 and (quota == 0 or power >= cost):
-                _reenter_instance(instance_type, name)
+                enter(reselect=True)
 
     exit_screen = _exit_result(instance_screen) if previous else None
     if exit_screen != "main":

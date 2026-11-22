@@ -7,11 +7,13 @@ from tasks.base.task_steps import FATAL_GAME_ERRORS, run_steps
 from tasks.daily.buildtarget import BuildTarget
 from tasks.power.instance import ChallengePageUnavailable, Instance, TeamPresetUnavailable
 from tasks.power.policy import (
-    ECHO, ORNAMENT, INSTANCE_LIMITS, BattleDefeat, InstanceUnavailable, RelicBagFull, PowerError, SupportDemand,
+    ECHO, ORNAMENT, INSTANCE_LIMITS, BattleDefeat, InstanceTeamUnavailable, InstanceUnavailable, RelicBagFull,
+    PowerError, SupportDemand,
     DEFEAT_RETRIES, batch_limit, parse_pc_power, plan_paid_batch, run_plan,
 )
 from tasks.power.readout import read_immersifier_stock, read_number
 from tasks.power.supplement import supplement
+from tasks.power.team import restore_main
 from tasks.power.weekly_relic_cleanup import WeeklyRelicCleanup
 from utils.date import Date
 
@@ -164,11 +166,12 @@ class Power:
             return
 
         world_team = False
+        team_failure = None
         if cfg.tp_before_instance:
             # 锚点恢复作用于主世界出战队伍，沿用 PC 已有的先切队再恢复顺序。
             if cfg.instance_team_enable and not is_ornament:
-                Instance.select_world_team(instance_type, name)
-                world_team = True
+                team_failure = Instance.select_world_team(instance_type, name)
+                world_team = team_failure is None
             Instance.heal_teams()
 
         def enter():
@@ -181,6 +184,10 @@ class Power:
                     raise
                 except RuntimeError as error:
                     if isinstance(error, InstanceUnavailable) or attempt == 3:
+                        if team_failure and isinstance(error, PowerError):
+                            Instance.check_team_connection()
+                            restore_main(screen, name)
+                            raise InstanceTeamUnavailable(f"{name}：未确认进入原定副本，已跳过本项（{error}）") from error
                         raise
                     log.warning(f"进入副本失败，重试 {attempt}/2：{error}")
 
@@ -225,9 +232,12 @@ class Power:
                                 waves, cost = selected, selected * cost_per_wave
                             borrowed = Instance.start_instance(
                                 instance_type, name, support, practice=practice, world_team=world_team,
+                                team_failure=team_failure,
                             )
                         except ChallengePageUnavailable as error:
                             if attempt == 3:
+                                if team_failure:
+                                    raise InstanceTeamUnavailable(f"{name}：{error}，已跳过本项") from error
                                 raise
                             log.warning(f"开打前准备失败，重新进入副本 {attempt}/2：{error}")
                             # 先退出当前页面，重新进入后从默认一场设置波次。
@@ -238,13 +248,16 @@ class Power:
                 if not Instance.wait_fight(repeated=repeated):
                     Instance.exit_defeat()
                     raise BattleDefeat("副本挑战失败")
-            except TeamPresetUnavailable:
-                log.info("改用主世界切换配置的队伍")
-                screen.change_to("main", max_recursion=1)
-                Instance.select_world_team(instance_type, name)
-                world_team = True
+            except TeamPresetUnavailable as error:
+                log.info(f"{name}：{error}，改用主世界切队")
+                restore_main(screen, name, leave_team=Instance.leave_challenge_team)
+                team_failure = Instance.select_world_team(instance_type, name)
+                world_team = team_failure is None
                 enter()
                 continue
+            except InstanceTeamUnavailable:
+                restore_main(screen, name, leave_team=Instance.leave_challenge_team)
+                raise
             except BattleDefeat:
                 if retries >= DEFEAT_RETRIES:
                     raise
