@@ -6,6 +6,7 @@ import time
 
 from PIL import ImageDraw
 
+from utils import paths
 from module.game.adb_ready import _load_template, _match, wait_for_game
 from module.game.adb_transport import AdbError, resolve_adb_path
 from module.localization import tr
@@ -89,7 +90,7 @@ def run(controller):
         draw = ImageDraw.Draw(image)
         for region in _UID_REGIONS:
             draw.rectangle(region, fill="black")
-        output = Path("logs/screenshots") / f"adb-check-{datetime.now():%Y%m%d-%H%M%S-%f}.png"
+        output = Path(paths.error_screenshots_dir()) / f"adb-check-{datetime.now():%Y%m%d-%H%M%S-%f}.png"
         output.parent.mkdir(parents=True, exist_ok=True)
         image.save(output)
         print(tr("已确认手机菜单，截图：{path}").format(path=output.resolve()), flush=True)

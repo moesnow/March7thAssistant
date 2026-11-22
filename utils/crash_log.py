@@ -11,8 +11,10 @@ import sys
 import time
 import traceback
 
+from utils import paths
 
-CRASH_LOG_PATH = os.path.join("logs", "crash.log")
+
+CRASH_LOG_PATH = paths.crash_log_path()
 CRASH_LOG_MAX_BYTES = 1024 * 1024
 
 # faulthandler 崩溃时才写入，文件对象必须在进程存活期间保持打开

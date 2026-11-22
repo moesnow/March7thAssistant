@@ -1,11 +1,12 @@
 import os
 import sys
+from utils import paths
 from module.config.config import Config
 
 
 VERSION_PATH = "./assets/config/version.txt"
 EXAMPLE_PATH = "./assets/config/config.example.yaml"
-CONFIG_PATH = "./config.yaml"
+CONFIG_PATH = f"./{paths.config_path()}"
 
 # 环境变量优先级说明：
 # 以下配置项支持通过环境变量覆盖（在 Config 类的 get_value/__getattr__ 中处理）：

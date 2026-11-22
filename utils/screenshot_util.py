@@ -1,6 +1,8 @@
 import os
 from datetime import datetime
 
+from utils import paths
+
 
 def save_error_screenshot(logger, *, propagate_errors=()):
     """
@@ -25,7 +27,7 @@ def save_error_screenshot(logger, *, propagate_errors=()):
                 return None
 
         # 确保截图目录存在
-        screenshot_dir = os.path.join("logs", "screenshots")
+        screenshot_dir = paths.error_screenshots_dir()
         if not os.path.exists(screenshot_dir):
             os.makedirs(screenshot_dir)
 

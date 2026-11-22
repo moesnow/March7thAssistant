@@ -1,3 +1,4 @@
+from utils import paths
 from utils.game_options import game_option_enabled
 import atexit
 import os
@@ -68,7 +69,7 @@ class CloudGamePaidTimeExhaustedError(SystemExit):
 
 class CloudGameController(GameControllerBase):
     _exit_cleanup_registered = False
-    COOKIE_PATH = "settings/cookies.enc"          # Cookies 保存地址（仅用于调试）
+    COOKIE_PATH = paths.cookies_path()          # Cookies 保存地址（仅用于调试）
     GAME_URL = "https://sr.mihoyo.com/cloud"            # 游戏地址
     BROWSER_TAG = "--march-7th-assistant-sr-cloud-game"  # 自定义浏览器参数作为标识，用于识别哪些浏览器进程属于三月七小助手
     ENTRY_WAIT_STATES = frozenset(("in_queue", "game_loading"))
@@ -91,7 +92,7 @@ class CloudGameController(GameControllerBase):
             return null;
         };
     """
-    BROWSER_INSTALL_PATH = os.path.join(os.getcwd(), "3rdparty", "WebBrowser")  # 浏览器安装路径
+    BROWSER_INSTALL_PATH = paths.browser_install_dir()  # 浏览器安装路径
     INTEGRATED_BROWSER_VERSION = "140.0.7339.207"      # 浏览器版本
     DISABLE_POINTER_LOCK_SCRIPT = """
         (() => {
@@ -142,7 +143,7 @@ class CloudGameController(GameControllerBase):
     def _get_integrated_browser_path() -> str:
         """获取内置浏览器路径"""
         platform_dir = CloudGameController._get_platform_dir()
-        browser_install_path = CloudGameController.BROWSER_INSTALL_PATH
+        browser_install_path = os.path.abspath(CloudGameController.BROWSER_INSTALL_PATH)
         browser_version = CloudGameController.INTEGRATED_BROWSER_VERSION
 
         if platform.system() == "Darwin":
@@ -156,7 +157,7 @@ class CloudGameController(GameControllerBase):
     def _get_integrated_driver_path() -> str:
         """获取内置驱动路径"""
         platform_dir = CloudGameController._get_platform_dir()
-        browser_install_path = CloudGameController.BROWSER_INSTALL_PATH
+        browser_install_path = os.path.abspath(CloudGameController.BROWSER_INSTALL_PATH)
         browser_version = CloudGameController.INTEGRATED_BROWSER_VERSION
 
         if platform.system() == "Darwin":  # macOS
@@ -252,7 +253,8 @@ class CloudGameController(GameControllerBase):
             self.log_warning(f"无窗口模式禁用 Pointer Lock 失败: {e}")
 
     def _prepare_browser_and_driver(self, browser_type: str, integrated: bool) -> tuple[str, str]:
-        self.user_profile_path = os.path.join(self.BROWSER_INSTALL_PATH, "UserProfile", self.cfg.browser_type.capitalize())
+        browser_root = os.path.abspath(self.BROWSER_INSTALL_PATH)
+        self.user_profile_path = os.path.join(paths.browser_profile_dir(browser_root), self.cfg.browser_type.capitalize())
         # 判断环境变量 MARCH7TH_BROWSER_PATH 和 MARCH7TH_DRIVER_PATH，同时存在时优先使用
         env_browser_path = os.environ.get("MARCH7TH_BROWSER_PATH")
         env_driver_path = os.environ.get("MARCH7TH_DRIVER_PATH")
@@ -271,7 +273,7 @@ class CloudGameController(GameControllerBase):
             driver_path = self._get_integrated_driver_path()
             if not os.path.exists(browser_path) or not os.path.exists(driver_path):
                 args = ["--browser", browser_type,
-                        "--cache-path", self.BROWSER_INSTALL_PATH,
+                        "--cache-path", browser_root,
                         "--browser-version", self.INTEGRATED_BROWSER_VERSION,
                         "--force-browser-download",
                         "--skip-driver-in-path",
@@ -291,7 +293,7 @@ class CloudGameController(GameControllerBase):
         else:
             # 尝试在本地查找浏览器
             args = ["--browser", browser_type,
-                    "--cache-path", self.BROWSER_INSTALL_PATH,
+                    "--cache-path", browser_root,
                     "--avoid-browser-download",
                     "--skip-driver-in-path"]
             if self.cfg.browser_download_use_mirror:
@@ -1123,7 +1125,7 @@ class CloudGameController(GameControllerBase):
 
         return closed
 
-    def try_dump_page(self, dump_dir="logs/webdump") -> None:
+    def try_dump_page(self, dump_dir=paths.webdump_dir()) -> None:
         if self.driver:
             os.makedirs(dump_dir, exist_ok=True)
             from datetime import datetime
@@ -1197,9 +1199,8 @@ class CloudGameController(GameControllerBase):
     def _save_qr_img(self, qr_img) -> str:
         import os
         # 将二维码保存到 logs 目录，方便 Docker 挂载访问
-        logs_dir = "logs"
-        os.makedirs(logs_dir, exist_ok=True)
-        qr_filename = os.path.join(logs_dir, "qrcode_login.png")
+        os.makedirs(paths.logs_dir(), exist_ok=True)
+        qr_filename = paths.qr_login_path()
         self._save_qr_from_src(qr_img, qr_filename)
         self.log_info("=" * 60)
         self.log_info("请使用手机米游社 APP 扫描二维码登录")
@@ -1367,7 +1368,7 @@ class CloudGameController(GameControllerBase):
                 qr_filename = self._save_qr_img(qr_img)
             except Exception as save_err:
                 self.log_warning(f"保存二维码截图失败: {save_err}")
-                qr_filename = os.path.join("logs", "qrcode_login.png")
+                qr_filename = paths.qr_login_path()
 
             # 初次解码
             self._decode_qr_from_element(qr_img, qr_filename)
@@ -2104,7 +2105,7 @@ class CloudGameController(GameControllerBase):
         """退出游戏，关闭浏览器"""
         # 删除可能残留的二维码图片
         try:
-            qr_filename = os.path.join("logs", "qrcode_login.png")
+            qr_filename = paths.qr_login_path()
             if os.path.exists(qr_filename):
                 os.remove(qr_filename)
                 self.log_debug(f"已删除残留的二维码图片: {os.path.abspath(qr_filename)}")

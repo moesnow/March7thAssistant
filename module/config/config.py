@@ -8,6 +8,7 @@ import tempfile
 import threading
 import traceback
 from ruamel.yaml import YAML
+from utils import paths
 from utils.singleton import SingletonMeta
 
 # ── 配置读写诊断日志 ──────────────────────────────────────────────────
@@ -17,7 +18,7 @@ from utils.singleton import SingletonMeta
 # 已初始化则同时转发一份。注意 module.logger 反过来依赖 module.config，
 # 因此这里绝不能主动 import module.logger，只能在它已加载时转发。
 
-_DIAG_FILE = os.path.join("logs", "config_diag.log")
+_DIAG_FILE = paths.config_diag_path()
 _DIAG_FILE_MAX_BYTES = 5 * 1024 * 1024
 _DIAG_FILE_LOCK = threading.Lock()
 
@@ -300,10 +301,10 @@ class Config(metaclass=SingletonMeta):
     def _backup_broken_config(self, path):
         """备份损坏的配置文件（保留原始字节）；无法移走时退化为复制，返回备份路径；失败返回 None"""
         try:
-            backup_path = f"{path}.bak"
+            backup_path = paths.config_backup_path(path)
             if os.path.exists(backup_path):
                 # 保留更早的备份，改用时间戳命名
-                backup_path = f"{path}.bak-{time.strftime('%Y%m%d-%H%M%S')}"
+                backup_path = f"{backup_path}-{time.strftime('%Y%m%d-%H%M%S')}"
             # 移动可能撞上 Windows 并发占用（WinError 32），短暂重试再降级复制；
             # 挂载点 EBUSY 是永久性的，不空转重试，直接降级复制
             move_error = None

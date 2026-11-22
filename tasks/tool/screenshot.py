@@ -1,3 +1,4 @@
+from utils import paths
 from module.ocr import ocr
 from module.workflow import build_crop_expression, generate_capture_path, to_workflow_relative_path
 from module.localization import tr, tn
@@ -489,7 +490,7 @@ class ScreenshotApp(QMainWindow):
         保存截图到本地文件夹，文件名带时间戳。
         """
         import datetime
-        folder_path = "screenshots"
+        folder_path = paths.screenshots_dir()
         os.makedirs(folder_path, exist_ok=True)
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         screenshot_path = os.path.join(os.path.abspath(folder_path), f"screenshot_{timestamp}.png")
@@ -506,7 +507,7 @@ class ScreenshotApp(QMainWindow):
             x, y, width, height = selection_info
             # 使用PIL的crop方法裁剪出选择区域
             cropped_image = self.screenshot.crop((x, y, x + width, y + height))
-            folder_path = "screenshots"
+            folder_path = paths.screenshots_dir()
             if not os.path.exists(folder_path):
                 os.makedirs(folder_path)
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")

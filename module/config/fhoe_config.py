@@ -2,11 +2,13 @@ import os
 import shutil
 
 import json
+from utils import paths
 from module.config import cfg
 
 
 def auto_config():
-    if not os.path.exists(os.path.join(cfg.fight_path, "config.json")):
+    config_path = paths.fight_config_path(cfg.fight_path)
+    if not os.path.exists(config_path):
         config = {
             "version": "2.1.18",
             "real_width": 0,
@@ -36,7 +38,7 @@ def auto_config():
             "allow_memory_token": False
         }
     else:
-        with open(os.path.join(cfg.fight_path, "config.json"), 'r', encoding='utf-8') as f:
+        with open(config_path, 'r', encoding='utf-8') as f:
             config = json.load(f)
             
     # 三项「特殊物品领取」由总开关统一控制（键名即 FightGroup 里「启用「特殊物品领取」」那个卡片）：
@@ -57,5 +59,5 @@ def auto_config():
         updates["map_version"] = cfg.fight_map_version
     if updates:
         config.update(updates)
-        with open(os.path.join(cfg.fight_path, "config.json"), 'w', encoding='utf-8') as f:
+        with open(config_path, 'w', encoding='utf-8') as f:
             json.dump(config, f, ensure_ascii=False, indent=4)

@@ -16,6 +16,7 @@ import sys
 import tempfile
 import time
 
+from utils import paths
 from utils.pause import (COMMAND_PAUSE, COMMAND_RESUME, COMMAND_STOP, STATE_PAUSED, STATE_PAUSING,
                          STATE_RUNNING, STATE_STOPPING, STOP_GRACE_SECONDS, read_state, write_command)
 from utils.runs import (EXIT_ELEVATION_FAILED, EXIT_FAILED, EXIT_OK, LOCK_UNAVAILABLE, STATUS_RUNNING,
@@ -135,7 +136,7 @@ def collect_status() -> dict:
     from utils.install_registry import is_gui_running, registry_path
 
     install_dir = os.path.abspath(os.getcwd())
-    config_path = os.path.abspath("config.yaml")
+    config_path = os.path.abspath(paths.config_path())
     game_path = cfg.get_value("game_path") or ""
     is_admin = is_user_admin()
     uac_free_state = uac_free.state()[0]
@@ -161,7 +162,7 @@ def collect_status() -> dict:
         "gui_running": is_gui_running(install_dir),
         "active_run": read_active_run(),
         "recent_runs": [_brief(record) for record in recent_runs(5)],
-        "logs_dir": os.path.abspath("logs"),
+        "logs_dir": os.path.abspath(paths.logs_dir()),
         "runs_dir": runs_dir(),
         "install_registry": registry_path(),
         "agent_skill": os.path.abspath(_SKILL_PATH) if os.path.exists(_SKILL_PATH) else None,

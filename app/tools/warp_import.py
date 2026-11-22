@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import tempfile
 
+from utils import paths
 from module.localization import tr
 
 
@@ -91,7 +92,7 @@ class ImportPlan:
     existing_unreadable: bool = False
 
 
-def prepare_import(source, target='warp.json', mode='merge'):
+def prepare_import(source, target=paths.gacha_path(), mode='merge'):
     if mode not in ('merge', 'replace'):
         raise ValueError('Unknown import mode')
     target = Path(target).resolve()
@@ -147,7 +148,7 @@ def save_import(plan):
         if restored != plan.data:
             raise WarpImportError(tr('临时文件校验失败，原记录未修改。'))
         if plan.original is not None:
-            with tempfile.NamedTemporaryFile(dir=plan.target.parent, prefix='warp.json.',
+            with tempfile.NamedTemporaryFile(dir=plan.target.parent, prefix=f'{os.path.basename(paths.gacha_path())}.',
                                              suffix='.bak', delete=False) as file:
                 backup = Path(file.name)
                 file.write(plan.original)

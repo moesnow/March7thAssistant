@@ -3,6 +3,8 @@
 import os
 import sys
 
+from utils import paths
+
 
 def open_path(path):
     """用系统默认方式打开文件或目录。
@@ -20,4 +22,4 @@ def open_path(path):
 
 def open_log_folder():
     """打开日志目录（设置的日志等级卡片与任务日志右键菜单共用同一实现）。"""
-    open_path("./logs")
+    open_path(f"./{paths.logs_dir()}")

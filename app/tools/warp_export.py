@@ -13,6 +13,7 @@ import glob
 import json
 import re
 import os
+from utils import paths
 from module.localization import tr
 
 
@@ -458,7 +459,7 @@ class WarpThread(QThread):
 
     def run(self):
         try:
-            with open("./warp.json", 'r', encoding='utf-8') as file:
+            with open(paths.gacha_path(), 'r', encoding='utf-8') as file:
                 config = json.load(file)
                 warp = WarpExport(config, self.parent, self.infoSignal)
         except Exception:
@@ -480,7 +481,7 @@ class WarpThread(QThread):
                 self.parent.warplink = warp.warplink
                 config = warp.export_data()
 
-                with open("./warp.json", 'w', encoding='utf-8') as file:
+                with open(paths.gacha_path(), 'w', encoding='utf-8') as file:
                     json.dump(config, file, ensure_ascii=False, indent=4)
 
                 # content = warp.data_to_html()

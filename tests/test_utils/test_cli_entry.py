@@ -462,6 +462,9 @@ class TestReadOnlyCommands:
                     "recent_runs", "runs_dir", "install_registry", "agent_skill", "elevation", "uac_free"):
             assert key in status
         assert status["install_dir"] == str(REPO)
+        assert status["config_file"] == str(REPO / "config.yaml")
+        assert status["logs_dir"] == str(REPO / "logs")
+        assert status["runs_dir"] == str(REPO / "logs" / "runs")
         # 源码运行不碰开发者自己技能目录里的副本（同步只在打包版执行）
         assert status["agent_skill_copies"] == []
         after = config.read_bytes() if config.exists() else None

@@ -18,6 +18,7 @@ import locale
 import re
 
 import uuid
+from utils import paths
 from .common.style_sheet import StyleSheet
 from .common.accent import accent_html
 from .common.icon import UiIcon
@@ -1796,7 +1797,7 @@ class LogInterface(ScrollArea):
     def _pauseControlPath(self):
         """暂停指令文件路径（CLI 通过环境变量 MARCH7TH_CONTROL_FILE 读取同一路径）。"""
         name = f'pause-{os.getpid()}.json' if in_desktop_twin() else 'pause.json'
-        return os.path.abspath(os.path.join('temp', name))
+        return os.path.abspath(os.path.join(paths.cache_dir(), name))
 
     def _injectPauseControlEnv(self, env):
         """向子进程注入暂停控制文件路径并清理陈旧状态。"""

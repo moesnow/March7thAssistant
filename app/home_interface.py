@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowE
 
 from qfluentwidgets import ScrollArea, FluentIcon, RoundMenu, PushButton, isDarkTheme
 
+from utils import paths
 from .common.style_sheet import StyleSheet
 from .common.evernight_artwork import evernight_artwork
 from .common.theme_assets import portrait_artwork
@@ -364,13 +365,22 @@ class HomeInterface(ScrollArea):
     def _get_extra_task_action(task_id):
         """获取特殊主页操作的 lambda"""
         if task_id == "_reset_universe_config":
-            return lambda: [os.remove(p) for p in map(lambda f: os.path.join(cfg.universe_path, f), ["info.yml", "info_old.yml"]) if os.path.exists(p)]
+            def reset_universe():
+                for legacy in (False, True):
+                    path = paths.universe_config_path(cfg.universe_path, legacy=legacy)
+                    if os.path.exists(path):
+                        os.remove(path)
+            return reset_universe
         elif task_id == "_open_universe_dir":
             return lambda: os.startfile(cfg.universe_path)
         elif task_id == "_open_universe_homepage":
             return lambda: os.startfile("https://github.com/CHNZYX/Auto_Simulated_Universe")
         elif task_id == "_reset_fight_config":
-            return lambda: os.path.exists(os.path.join(cfg.fight_path, "config.json")) and os.remove(os.path.join(cfg.fight_path, "config.json"))
+            def reset_fight():
+                path = paths.fight_config_path(cfg.fight_path)
+                if os.path.exists(path):
+                    os.remove(path)
+            return reset_fight
         elif task_id == "_open_fight_dir":
             return lambda: os.startfile(cfg.fight_path)
         elif task_id == "_open_fight_homepage":

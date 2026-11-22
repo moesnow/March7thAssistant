@@ -18,6 +18,7 @@ from typing import Callable
 
 import psutil
 
+from utils import paths
 from module.localization import tr
 from module.logger import log
 from module.update.downloader import Downloader, DownloadError, format_size
@@ -28,7 +29,7 @@ from module.update.version_check import UpdateInfo, check_for_update
 FILE_COMPARE_CHUNK_SIZE = 64 * 1024
 
 # 更新流程中需要重点盯防的用户数据文件（损坏/丢失即用户可感知的故障）
-USER_DATA_MARKERS = ("config.yaml", "config.yaml.bak", "settings", "config/workflows")
+USER_DATA_MARKERS = (paths.config_path(), paths.config_backup_path(), paths.settings_dir(), paths.workflows_dir())
 
 
 def describe_path(path: str) -> str:
@@ -135,7 +136,7 @@ class UpdateEngine:
         ]
 
         # 路径
-        self.temp_path = os.path.abspath("./temp")
+        self.temp_path = os.path.abspath(paths.cache_dir())
         os.makedirs(self.temp_path, exist_ok=True)
         self.cover_folder_path = os.path.abspath("./")
         self.exe_path = os.path.abspath("./assets/binary/7za.exe")
@@ -530,15 +531,16 @@ class UpdateEngine:
     def _describe_user_data(self) -> str:
         """描述当前用户数据文件（config.yaml 等）的状态，用于更新前后对比"""
         parts = []
-        config_path = os.path.abspath("./config.yaml")
+        config_name = paths.config_path()
+        config_path = os.path.abspath(config_name)
         if os.path.exists(config_path):
-            parts.append(f"config.yaml[{describe_path(config_path)}]")
+            parts.append(f"{config_name}[{describe_path(config_path)}]")
         else:
-            parts.append("config.yaml[不存在]")
+            parts.append(f"{config_name}[不存在]")
         try:
             leftovers = [
                 name for name in os.listdir(os.path.dirname(config_path))
-                if name.startswith("config.yaml.") or name.startswith("config.yaml.bak")
+                if name.startswith(f"{config_name}.")
             ]
             if leftovers:
                 parts.append(f"残留文件={sorted(leftovers)}")
@@ -548,10 +550,11 @@ class UpdateEngine:
 
     def _warn_user_data_in_package(self, files: list[tuple[str, str]]):
         """更新包中若携带用户数据文件（如 config.yaml），覆盖会直接抹掉用户配置，必须告警留痕"""
+        data_prefixes = (paths.settings_dir() + "/", paths.workflows_dir() + "/")
         for _, dest in files:
             rel = os.path.relpath(dest, self.cover_folder_path)
             rel_norm = rel.replace("\\", "/")
-            if rel_norm == "config.yaml" or rel_norm.startswith(("settings/", "config/workflows/")):
+            if rel_norm == paths.config_path() or rel_norm.startswith(data_prefixes):
                 self._log("warning", f"更新包包含用户数据文件，覆盖后会覆盖用户现有数据: {rel}")
 
     def _check_target_files_locked(self, files: list[tuple[str, str]]) -> list[str]:

@@ -1,3 +1,4 @@
+from utils import paths
 from tasks.base.download import download_with_progress
 from module.logger import log
 from utils.console import pause_and_retry
@@ -10,7 +11,7 @@ import os
 class UpdateHandler:
     def __init__(self, download_url, cover_folder_path, extract_file_name, delete_folder_path=None):
         self.exe_path = os.path.abspath("./assets/binary/7za.exe")
-        self.temp_path = os.path.abspath("./temp")
+        self.temp_path = os.path.abspath(paths.cache_dir())
         os.makedirs(self.temp_path, exist_ok=True)
         self.download_url = download_url
         self.download_file_path = os.path.join(self.temp_path, f"{os.path.basename(extract_file_name)}.zip")

@@ -16,6 +16,7 @@ from qfluentwidgets import (BodyLabel, Dialog, HyperlinkButton, IconWidget, Inde
                             isDarkTheme, qconfig)
 from qfluentwidgets import FluentIcon as FIF
 
+from utils import paths
 from app.common.icon import UiIcon
 from app.common.local_instance import notify_existing_instance
 from app.common.style_sheet import StyleSheet
@@ -283,7 +284,7 @@ class DesktopTwinDialog(QDialog):
         self._error = ""
         self._error_doc_section = None
         # 分身的声音由本进程里的 RDP 控件播放，窗口看不见时静音
-        self._audio = ProcessAudioMuter(marker=os.path.abspath(os.path.join("temp", "desktop_twin_muted")))
+        self._audio = ProcessAudioMuter(marker=os.path.abspath(os.path.join(paths.cache_dir(), "desktop_twin_muted")))
         self._audio_check_at = 0.0
         self._audio_error = ""
         self._sizing_from = None  # 拖动边框开始时的窗口矩形

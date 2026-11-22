@@ -4,14 +4,15 @@ import os
 from collections import Counter
 from datetime import datetime
 
+from utils import paths
 from module.logger import log
 from module.screen import screen
 
 from . import parser
 from .reader import CharacterReader, PageError
 
-OUTPUT = "./characters.json"
-PARTIAL = "./characters.partial.json"
+OUTPUT = paths.characters_path()
+PARTIAL = paths.characters_path(partial=True)
 SCHEMA_VERSION = 1
 
 MAX_PAGES = 40

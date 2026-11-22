@@ -3,6 +3,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QScroller, QScrollerProperties
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import qconfig, ScrollArea, PrimaryPushButton, InfoBar, InfoBarPosition, PushButton, MessageBox, ComboBox
+from utils import paths
 from .common.style_sheet import StyleSheet
 from .common.icon import UiIcon
 from .tools.warp_export import warpExport, WarpExport, srgf_to_uigf_hkrpg
@@ -209,7 +210,7 @@ class WarpInterface(ScrollArea):
 
     def __onExportBtnClicked(self):
         try:
-            with open("./warp.json", 'r', encoding='utf-8') as file:
+            with open(paths.gacha_path(), 'r', encoding='utf-8') as file:
                 config = json.load(file)
             warp = WarpExport(config)
             default_name = f"UIGF_{warp.get_uid()}"
@@ -267,7 +268,7 @@ class WarpInterface(ScrollArea):
 
     def __onExportExcelBtnClicked(self):
         try:
-            with open("./warp.json", 'r', encoding='utf-8') as file:
+            with open(paths.gacha_path(), 'r', encoding='utf-8') as file:
                 config = json.load(file)
 
             path, _ = QFileDialog.getSaveFileName(
@@ -402,7 +403,7 @@ class WarpInterface(ScrollArea):
         message_box.cancelButton.setText(tr('取消'))
         if message_box.exec():
             try:
-                os.remove("./warp.json")
+                os.remove(paths.gacha_path())
                 self.setContent()
                 InfoBar.success(
                     title=tr('清空完成(＾∀＾●)'),
@@ -435,7 +436,7 @@ class WarpInterface(ScrollArea):
 
     def setContent(self):
         try:
-            with open("./warp.json", 'r', encoding='utf-8') as file:
+            with open(paths.gacha_path(), 'r', encoding='utf-8') as file:
                 config = json.load(file)
 
             warp = WarpExport(config)

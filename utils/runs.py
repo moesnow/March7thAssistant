@@ -24,6 +24,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from typing import NamedTuple, Optional
 
+from utils import paths
 from utils.pause import CONTROL_FILE_ENV, STATE_FILE_SUFFIX, _atomic_write_json, _read_json, pause_ctl, reset_files
 
 # ---------- 退出码约定（--help、AGENTS.md 与 Agent Skill 同步说明）----------
@@ -69,7 +70,7 @@ _ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
 
 def runs_dir() -> str:
     """运行记录目录（相对程序目录；入口脚本启动时已切换到程序所在目录）。"""
-    return os.path.abspath(os.path.join("logs", "runs"))
+    return os.path.abspath(paths.runs_dir())
 
 
 def new_run_id() -> str:
