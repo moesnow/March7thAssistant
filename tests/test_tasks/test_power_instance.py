@@ -538,6 +538,8 @@ def test_pc_supplement_rechecks_budget_and_stop_after_button_lookup(monkeypatch,
 
     def find(label, kind, *_args, **_kwargs):
         nonlocal now, stop_requested
+        if kind == "image" and label.endswith("/reserved_trailblaze_power.png"):
+            return ((497, 290), (603, 360))
         if kind == "image":
             return "入口"
         if kind == "crop":
@@ -569,7 +571,7 @@ def test_pc_supplement_rechecks_budget_and_stop_after_button_lookup(monkeypatch,
             raise RunStopRequested()
 
     auto = Mock(find_element=Mock(side_effect=find), click_element_with_pos=Mock(side_effect=send),
-                input_handler=SimpleNamespace(reports_dispatch=True))
+                input_handler=SimpleNamespace(reports_dispatch=True), screenshot=SimpleNamespace(width=1280))
     screen = Mock(check_screen=Mock(side_effect=lambda target: target == page))
     cfg = SimpleNamespace(use_reserved_trailblaze_power=True, use_fuel=False,
                           instance_names_challenge_count={}, tp_before_instance=False)
