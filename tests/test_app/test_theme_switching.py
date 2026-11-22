@@ -84,6 +84,29 @@ def test_theme_preferences_follow_system_only_in_auto_without_icon_refresh(windo
     assert window.windowIcon().pixmap(32, 32).toImage() == QIcon('./assets/logo/March7th.ico').pixmap(32, 32).toImage()
 
 
+def test_fixed_themes_stop_qt_following_the_system_color_scheme(window, monkeypatch):
+    """Qt resets Mica and the palette on system theme changes unless a color scheme is pinned."""
+    from app.tools import check_theme_change
+
+    # 记录请求而非读取 colorScheme()：offscreen 等平台插件会忽略配色请求。
+    requested = []
+    hints = Mock(setColorScheme=requested.append)
+    monkeypatch.setattr(check_theme_change, 'QApplication', Mock(instance=lambda: Mock(styleHints=lambda: hints)))
+    monkeypatch.setattr(window._evernight, 'selected', False)
+    for preference, expected in [('light', Qt.ColorScheme.Light), ('dark', Qt.ColorScheme.Dark),
+                                 ('auto', Qt.ColorScheme.Unknown)]:
+        cfg.config['ui_theme'] = preference
+        check_theme_change.applyTheme(window)
+        assert requested[-1] == expected, preference
+    cfg.config['ui_theme'] = 'evernight'
+    window._evernight.selected = True
+    check_theme_change.applyTheme(window)
+    assert requested[-1] == Qt.ColorScheme.Dark
+    # 系统主题事件不改动固定主题请求的配色。
+    check_theme_change.applyTheme(window, Theme.LIGHT)
+    assert requested == [Qt.ColorScheme.Light, Qt.ColorScheme.Dark, Qt.ColorScheme.Unknown, Qt.ColorScheme.Dark]
+
+
 def test_external_config_reload_applies_theme_and_updates_setting(window, monkeypatch):
     from module import notification
     from app.tools import check_theme_change
