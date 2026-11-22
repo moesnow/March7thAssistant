@@ -8593,3 +8593,19 @@ msgstr "In-battle character details"
 #: app/card/pushsettingcard1.py:593
 msgid "该按键暂无识别模板"
 msgstr "No template for this key"
+
+#: app/tools/desktop_twin.py:748
+msgid "取消静音"
+msgstr "Unmute"
+
+#: app/tools/desktop_twin.py:748
+msgid "静音"
+msgstr "Mute"
+
+#: app/tools/desktop_twin.py:746
+msgid "声音关闭"
+msgstr "Sound off"
+
+#: app/tools/desktop_twin.py:746
+msgid "声音开启"
+msgstr "Sound on"

@@ -8259,3 +8259,19 @@ msgstr "戦闘中のキャラクター詳細"
 #: app/card/pushsettingcard1.py:593
 msgid "该按键暂无识别模板"
 msgstr "このキーの認識用テンプレートがありません"
+
+#: app/tools/desktop_twin.py:748
+msgid "取消静音"
+msgstr "ミュート解除"
+
+#: app/tools/desktop_twin.py:748
+msgid "静音"
+msgstr "ミュート"
+
+#: app/tools/desktop_twin.py:746
+msgid "声音关闭"
+msgstr "サウンドオフ"
+
+#: app/tools/desktop_twin.py:746
+msgid "声音开启"
+msgstr "サウンドオン"

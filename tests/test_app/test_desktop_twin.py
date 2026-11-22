@@ -876,6 +876,83 @@ def test_hidden_twin_is_muted_and_restored_when_shown(qtbot):
     dialog.close()
 
 
+def test_manual_mute_survives_hiding_until_unmuted_or_session_ends(qtbot):
+    from PySide6.QtWidgets import QWidget
+    from app.tools import desktop_twin as ui
+    from utils.windows_session import SessionIdentity
+
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    dialog = ui.DesktopTwinDialog(parent, Mock())
+    dialog._timer.stop()
+    dialog.show()
+    button = dialog._mute_button
+    assert not button.isVisible()
+    dialog._session = SessionIdentity(2, 200)
+    dialog._connected = True
+    dialog.retranslateUi()
+    assert button.isVisible() and not button.isChecked() and not dialog._audio.muting
+    assert button.text() == ui.tr("声音开启") and button.toolTip() == ui.tr("静音")
+
+    button.click()
+    assert dialog.isVisible() and dialog._audio.muting
+    assert button.text() == ui.tr("声音关闭") and button.toolTip() == ui.tr("取消静音")
+    dialog.hide()
+    dialog.show()
+    dialog.showMinimized()
+    dialog.showNormal()
+    assert dialog._audio.muting and "restore" not in dialog._audio.calls
+
+    button.click()
+    assert not dialog._audio.muting and button.text() == ui.tr("声音开启")
+    button.click()
+    dialog._session = None
+    dialog._cancel_connection()
+    assert not dialog._audio.muting and not button.isChecked()
+    dialog.close()
+
+
+@pytest.mark.parametrize("failure_at", ["marker", "enumeration"])
+def test_manual_mute_failure_restores_button_and_allows_retry(qtbot, monkeypatch, failure_at):
+    from PySide6.QtWidgets import QWidget
+    from app.tools import desktop_twin as ui
+    from app.tools.process_audio import ProcessAudioMuter
+
+    volume = Mock()
+    volume.muted.return_value = False
+    fail_once = Mock(side_effect=[PermissionError("mute failed"), None])
+
+    def visit_sessions(pid, apply):
+        apply("rdp", volume)
+        if failure_at == "enumeration" and audio.muting:
+            fail_once()  # 一个会话已静音，枚举后续会话时失败。
+
+    audio = ProcessAudioMuter(visit_sessions=visit_sessions)
+    if failure_at == "marker":
+        monkeypatch.setattr(audio, "_write_marker", fail_once)
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    log = Mock()
+    dialog = ui.DesktopTwinDialog(parent, log)
+    dialog._audio = audio
+    dialog._connected = True
+    dialog.retranslateUi()
+    button = dialog._mute_button
+
+    button.click()
+    assert not button.isChecked() and button.text() == ui.tr("声音开启")
+    assert button.toolTip() == ui.tr("静音") and not audio.muting
+    log.appendLog.assert_called_once()
+    if failure_at == "enumeration":
+        volume.set_muted.assert_called_with(False)
+
+    button.click()
+    assert audio.muting and button.isChecked() and button.text() == ui.tr("声音关闭")
+    volume.set_muted.assert_called_with(True)
+    button.click()
+    volume.set_muted.assert_called_with(False)
+
+
 def test_stale_mute_is_cleared_once_twin_is_visible_and_connected(qtbot):
     from PySide6.QtWidgets import QWidget
     from app.tools import desktop_twin as ui

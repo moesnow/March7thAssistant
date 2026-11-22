@@ -8259,3 +8259,19 @@ msgstr "전투 중 캐릭터 상세 정보"
 #: app/card/pushsettingcard1.py:593
 msgid "该按键暂无识别模板"
 msgstr "이 키의 인식 템플릿이 없습니다"
+
+#: app/tools/desktop_twin.py:748
+msgid "取消静音"
+msgstr "음소거 해제"
+
+#: app/tools/desktop_twin.py:748
+msgid "静音"
+msgstr "음소거"
+
+#: app/tools/desktop_twin.py:746
+msgid "声音关闭"
+msgstr "소리 꺼짐"
+
+#: app/tools/desktop_twin.py:746
+msgid "声音开启"
+msgstr "소리 켜짐"

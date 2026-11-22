@@ -8176,3 +8176,19 @@ msgstr "战斗内角色详情"
 #: app/card/pushsettingcard1.py:593
 msgid "该按键暂无识别模板"
 msgstr "该按键暂无识别模板"
+
+#: app/tools/desktop_twin.py:748
+msgid "取消静音"
+msgstr "取消静音"
+
+#: app/tools/desktop_twin.py:748
+msgid "静音"
+msgstr "静音"
+
+#: app/tools/desktop_twin.py:746
+msgid "声音关闭"
+msgstr "声音关闭"
+
+#: app/tools/desktop_twin.py:746
+msgid "声音开启"
+msgstr "声音开启"

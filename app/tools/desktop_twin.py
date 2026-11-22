@@ -314,11 +314,13 @@ class DesktopTwinDialog(QDialog):
         self._docs_button.setIcon(FIF.HELP)
         self._connect_button = PrimaryPushButton(self._footerBar)
         self._assistant_button = PushButton(QIcon("./assets/logo/March7th.ico"), "", self._footerBar)
+        self._mute_button = PushButton(self._footerBar)
+        self._mute_button.setCheckable(True)
         self._hide_button = PushButton(FIF.HIDE, "", self._footerBar)
         self._logoff_button = PushButton(FIF.POWER_BUTTON, "", self._footerBar)
         self._logoff_button.setAutoDefault(False)
         self._bar_buttons = (self._docs_button, self._connect_button, self._assistant_button,
-                             self._hide_button, self._logoff_button)
+                             self._mute_button, self._hide_button, self._logoff_button)
         for button in self._bar_buttons:
             button.installEventFilter(ToolTipFilter(button, 300, ToolTipPosition.TOP))
 
@@ -351,6 +353,7 @@ class DesktopTwinDialog(QDialog):
 
         self._connect_button.clicked.connect(self._toggle_connection)
         self._assistant_button.clicked.connect(self._open_assistant)
+        self._mute_button.clicked.connect(self._toggle_mute)
         self._hide_button.clicked.connect(self.hide)
         self._logoff_button.clicked.connect(self._request_logoff)
         StyleSheet.DESKTOP_TWIN.apply(self)
@@ -634,7 +637,8 @@ class DesktopTwinDialog(QDialog):
         super().showEvent(e)
         self._show_in_taskbar()
         self._applyFrameTheme()
-        self._restore_audio()
+        if not self._mute_button.isChecked():
+            self._restore_audio()
         self._refresh_recovery_session()
 
     def _show_in_taskbar(self):
@@ -656,11 +660,21 @@ class DesktopTwinDialog(QDialog):
         if self._session is not None or self._connect_until:
             self._mute_audio()
 
-    def _mute_audio(self):
+    def _toggle_mute(self, checked):
+        if checked:
+            self._mute_button.setChecked(self._mute_audio())
+        if not self._mute_button.isChecked() and self._audio.muting:
+            # 静音中途失败时，也要恢复已经处理过的音频会话。
+            self._restore_audio()
+        self.retranslateUi()
+
+    def _mute_audio(self) -> bool:
         try:
             self._audio.mute()
+            return True
         except Exception as error:
             self._audio_failed(error)
+            return False
 
     def _restore_audio(self):
         try:
@@ -669,7 +683,7 @@ class DesktopTwinDialog(QDialog):
             self._audio_failed(error)
 
     def _check_audio(self, now):
-        """隐藏期间补静音新出现的会话；显示时解除上次异常退出遗留的静音。"""
+        """静音期间处理新出现的音频会话，并在恢复播放时清理上次异常退出的标记。"""
         if now < self._audio_check_at:
             return
         self._audio_check_at = now + 1
@@ -731,6 +745,12 @@ class DesktopTwinDialog(QDialog):
         self._assistant_button.setToolTip(tr("在分身中打开小助手，已打开时切换到它"))
         self._assistant_button.setVisible(self._connected)
         self._assistant_button.setEnabled(not closing and not opening)
+        muted = self._mute_button.isChecked()
+        self._mute_button.setText(tr("声音关闭") if muted else tr("声音开启"))
+        self._mute_button.setIcon(FIF.MUTE if muted else FIF.VOLUME)
+        self._mute_button.setToolTip(tr("取消静音") if muted else tr("静音"))
+        self._mute_button.setVisible(self._connected)
+        self._mute_button.setEnabled(not closing)
         self._hide_button.setText(tr("隐藏"))
         self._hide_button.setToolTip(tr("隐藏此窗口并静音分身，分身继续在后台运行。可从托盘菜单或工具箱重新打开"))
         self._hide_button.setVisible(self._connected)
@@ -898,7 +918,8 @@ class DesktopTwinDialog(QDialog):
                 self._lease.Close()
                 self._lease = None
                 self.hostingChanged.emit(False)
-            # 分身已经结束，不再有需要静音的声音
+            # 手动静音只属于本次分身会话。
+            self._mute_button.setChecked(False)
             self._restore_audio()
         self._set_screen_visible(False)
         self.retranslateUi()
