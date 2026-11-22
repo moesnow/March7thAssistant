@@ -134,6 +134,7 @@ SUPPLY_FOUR_CENTERS = (428, 783, 1137, 1492)
 RAIL_TITLE = (655, 51, 1450, 108)
 RAIL_DETAILS = (430, 409, 1540, 480)
 RAIL_LAUNCH = (937, 352, 1093, 409)
+RAIL_LAUNCH_CENTER = (1046, 260)
 RAIL_UNLOCK = (1470, 312, 1640, 354)
 RAIL_SPENT = (1480, 380, 1640, 434)
 RAIL_COLUMNS = (556, 806, 1056, 1306)
@@ -1625,20 +1626,20 @@ class Frame:
             cards.append((card, effect))
         return tuple(cards)
 
-    @cached_property
-    def rail_balance(self) -> int | None:
-        return self.number((596, 89, 664, 135), 999, local=True)
-
     def rail_launch(self) -> Label | None:
         label = self.find("星穹列车", area=RAIL_LAUNCH, contains=True)
+        if label is None and self.has("详情", area=(975, 409, 1135, 480)):
+            # 小尺寸画面的整屏 OCR 可能把「穹」读成「弯」，按卡名区单独复核。
+            title = self.read_local(RAIL_LAUNCH)
+            if title and "星穹列车" in title:
+                label = Label(title, (1012, 380))
         if label and self.number((1121, 360, 1156, 402), 99, local=True) == 0:
             return label
         return None
 
     def rail_catalog_ready(self) -> bool:
         if (self.has("星穹列车", area=RAIL_LAUNCH, contains=True)
-                or not self.has("累计消耗解锁", area=RAIL_UNLOCK)
-                or self.ratio(RAIL_SPENT) is None):
+                or not (self.has("累计消耗解锁", area=RAIL_UNLOCK) or self.ratio(RAIL_SPENT) is not None)):
             return False
         # 目录商品会随机变化，只有多列详情按钮和累计消耗栏是共同结构。
         details = self.matching(("详情",), RAIL_DETAILS)

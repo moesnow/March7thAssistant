@@ -4901,22 +4901,146 @@ def test_rail_shop_confirms_free_launch_then_closes_the_paid_catalog(monkeypatch
 @pytest.mark.parametrize("remainder", (RAIL_CATALOG[:2] + RAIL_CATALOG[4:],
                                        RAIL_CATALOG[2:],
                                        RAIL_CATALOG + (("星穹列车，跃迁！", 1011, 380),)))
-def test_rail_catalog_requires_multiple_columns_and_the_unlock_meter(remainder):
+def test_rail_catalog_requires_multiple_columns_and_the_unlock_panel(remainder):
     frame = Frame(CANVAS, labels(*RAIL_HEADER, *remainder))
     assert frame.page == Page.RAIL_SHOP
     assert not frame.rail_catalog_ready()
 
 
-def test_rail_shop_closes_without_repeating_a_free_launch_with_an_unclear_balance(monkeypatch, world):
+@pytest.mark.parametrize("price", (0, 15))
+def test_rail_launch_checks_the_local_title_and_free_price(monkeypatch, price):
+    frame = Frame(CANVAS, labels(*RAIL_HEADER, ("详情", 1056, 442), ("星弯列车，跃迁！", 1012, 382),
+                                 (str(price), 1137, 380)))
+    monkeypatch.setattr(frame, "read_local", lambda area: "星穹列车，跃迁！" if area == ui.RAIL_LAUNCH else None)
+    assert ui.point(frame.rail_launch()) == ((1012, 380) if price == 0 else None)
+
+
+@pytest.mark.parametrize("missed", ("累计消耗解锁", "0/500"))
+def test_rail_shop_uses_the_catalog_receipt_despite_missing_numbers_or_labels(monkeypatch, world, missed):
     initial = Frame(CANVAS, labels(*RAIL_HEADER, ("详情", 1056, 442), ("星穹列车，跃迁！", 1011, 380),
-                                   ("0", 1137, 380), ("1", 637, 109)))
-    catalog = Frame(CANVAS, labels(*RAIL_HEADER, *RAIL_CATALOG, ("0", 637, 109)))
+                                   ("0", 1137, 380)))
+    catalog = Frame(CANVAS, labels(*RAIL_HEADER, *(entry for entry in RAIL_CATALOG if entry[0] != missed)))
     ready = page(Page.BOARD, stage=initial.stage)
     routes = {(initial, (1011, 380)): catalog, (catalog, (12, 12)): ready}
     state = drive(monkeypatch, world, initial, lambda s, point: setattr(s, "frame", routes[s.frame, point]))
     assert world.war._rail_shop(initial) is ready
     assert state.clicks == [(Page.RAIL_SHOP, (1011, 380)), (Page.RAIL_SHOP, (12, 12))]
     assert (initial.stage, "开拓商店") in world.war.deferred_operations
+
+
+@pytest.mark.parametrize(("entry", "fault", "launches", "closes", "keys"), (
+    ("single", "lost_launch", [(1011, 380), (1046, 260)], 1, []),
+    ("loop", "late_catalog", [(1011, 380)], 1, []),
+    ("takeover", "board", [(1011, 380)], 0, []),
+    ("daily", "lost_close", [(1011, 380)], 2, []),
+    ("takeover", "escape", [(1011, 380)], 2, ["esc", "esc"]),
+))
+def test_rail_shop_recovers_through_the_task_entry(monkeypatch, world, entry, fault, launches, closes, keys):
+    free = Frame(CANVAS, labels(*RAIL_HEADER, ("详情", 1056, 442), ("星穹列车，跃迁！", 1011, 380),
+                               ("0", 1137, 380), ("0", 637, 109)))
+    unknown = Frame(CANVAS, labels(("2-4", 283, 106)))
+    loading = Frame(CANVAS, labels(*RAIL_HEADER, ("详情", 1056, 442)))
+    monkeypatch.setattr(loading, "read_local", lambda _area: None)
+    catalog = Frame(CANVAS, labels(*RAIL_HEADER, *RAIL_CATALOG, ("0", 637, 109)))
+    ready = page(Page.BOARD, stage=free.stage)
+    exit_prompt = active_match_exit_dialog()
+    result = page(Page.MATCH_RESULT, ("对局胜利", 960, 233), ("返回货币战争", 960, 899))
+    lobby, modes = home(), mode(("进入超频博弈", 1638, 960))
+    rank_page = page(Page.RANK, ("开始对局", 1680, 965), rank_mode="overclock", enemy_rank=1)
+    routes = {(lobby, (1600, 972)): modes, (modes, (1638, 960)): rank_page, (rank_page, (1680, 965)): free,
+              (result, (960, 899)): lobby}
+    state = SimpleNamespace(frame=free if entry == "takeover" else lobby, after=None, resume_at=None)
+    world.cfg.currencywars_type = "overclock"
+    world.cfg.currencywars_rank_difficulty = "lowest"
+    world.cfg.currencywars_time_limit = 1
+    launch_points, close_points, keys_sent = [], [], []
+
+    def capture():
+        if state.resume_at is not None and world.now[0] >= state.resume_at:
+            state.frame, state.resume_at = state.after, None
+        return state.frame
+
+    def click(point, *, press_duration):
+        if state.frame is free:
+            launch_points.append(point)
+            if fault == "lost_launch" and len(launch_points) == 1:
+                state.frame, state.after, state.resume_at = unknown, free, world.now[0] + 1
+                return False
+            if fault == "late_catalog":
+                state.frame, state.after, state.resume_at = loading, catalog, world.now[0] + 12
+            else:
+                state.frame = ready if fault == "board" else catalog
+        elif state.frame is catalog:
+            close_points.append(point)
+            if fault != "escape" and (fault != "lost_close" or len(close_points) > 1):
+                state.frame = ready
+        else:
+            state.frame = routes[state.frame, point]
+        return True
+
+    def press(key):
+        keys_sent.append(key)
+        assert fault == "escape"
+        assert state.frame in (catalog, exit_prompt)
+        state.frame = exit_prompt if state.frame is catalog else ready
+        return True
+
+    def prepare(frame):
+        assert frame is ready
+        state.frame = result
+        return result
+
+    monkeypatch.setattr(world.war, "_capture", capture)
+    monkeypatch.setattr(world.war, "_prepare", prepare)
+    monkeypatch.setattr(world.war, "_check_weekly_reward",
+                        lambda f: (f, (18000 if world.war.result else 15000, 18000), False))
+    world.auto.click_element_with_pos.side_effect = click
+    world.auto.press_key.side_effect = press
+    if entry == "daily":
+        from tasks.daily import daily
+
+        monkeypatch.setattr(daily, "CurrencyWars", lambda: world.war)
+        assert daily.Daily._run_currency_wars()
+    else:
+        assert world.war.start(resume=entry == "takeover", loop=entry == "loop")
+    assert world.war.result is True and state.frame is lobby
+    assert launch_points == launches and close_points == [(12, 12)] * closes and keys_sent == keys
+
+
+@pytest.mark.parametrize(("fault", "error", "clicks", "keys"), (
+    ("free", task.CurrencyWarsUnavailable, [(1011, 380), (1046, 260)], []),
+    ("priced", task.CurrencyWarsUnavailable, [], []),
+    ("catalog", task.CurrencyWarsUnavailable, [(12, 12), (12, 12)], ["esc"]),
+    ("budget", task.CurrencyWarsBudgetExceeded, [(1011, 380)], []),
+    ("stopped", RunStopRequested, [(1011, 380)], []),
+))
+def test_rail_shop_stops_within_the_operation_budget(monkeypatch, world, fault, error, clicks, keys):
+    price = "15" if fault == "priced" else "0"
+    free = Frame(CANVAS, labels(*RAIL_HEADER, ("详情", 1056, 442), ("星穹列车，跃迁！", 1011, 380),
+                               (price, 1137, 380), ("0", 637, 109)))
+    catalog = Frame(CANVAS, labels(*RAIL_HEADER, *RAIL_CATALOG))
+    initial = catalog if fault == "catalog" else free
+    world.cfg.currencywars_time_limit = 5
+    monkeypatch.setattr(world.war, "_capture", lambda: initial)
+    locate = world.auto.find_element.side_effect
+
+    def locate_then_interrupt(*args, **kwargs):
+        point = locate(*args, **kwargs)
+        if point == (1046, 260):
+            if fault == "budget":
+                world.now[0] = world.war.deadline
+            if fault == "stopped":
+                task.pause_ctl.checkpoint.side_effect = RunStopRequested
+        return point
+
+    world.auto.find_element.side_effect = locate_then_interrupt
+    with pytest.raises(error) as raised:
+        world.war.start(resume=True)
+    if error == task.CurrencyWarsUnavailable:
+        assert "开拓商店" in str(raised.value) and raised.value.preserve_game
+        assert world.now[0] < 45
+    assert [call.args[0] for call in world.auto.click_element_with_pos.call_args_list] == clicks
+    assert [call.args[0] for call in world.auto.press_key.call_args_list] == keys
 
 
 @pytest.mark.parametrize("preselected", (False, True))

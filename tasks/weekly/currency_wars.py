@@ -1909,42 +1909,60 @@ class CurrencyWars:
 
     def _rail_shop(self, frame):
         stage = frame.stage
-        next_pages = PREP_OVERLAYS - {Page.RAIL_SHOP} | {Page.BOARD}
+        next_pages = PREP_OVERLAYS - {Page.RAIL_SHOP} | {Page.BOARD, Page.END_MATCH_CONFIRM}
         key = stage, "开拓商店"
 
         def current_shop(f):
             return f.page == Page.RAIL_SHOP and f.stage == stage
 
+        def advanced(f):
+            return f.page in next_pages
+
+        def catalog(f):
+            return current_shop(f) and f.rail_catalog_ready()
+
+        def launch(f):
+            if current_shop(f) and (card := f.rail_launch()):
+                return ui.RAIL_LAUNCH_CENTER if key in self.deferred_operations else card.point
+            return None
+
+        closes = 0
+
+        def close_target(f):
+            # 实机上免费启动前点击空白不会关店，只有确认目录后才发送退出输入。
+            if catalog(f):
+                return ((12, 12),) if closes < 2 else ()
+            return None
+
+        def close(f, *target, mark_sent):
+            if not target:
+                return self._dispatch_input(auto.press_key, "esc", mark_sent=mark_sent)
+
+            def remember_click():
+                nonlocal closes
+                closes += 1
+
+            return self._tap(f, target[0], mark_sent=mark_sent, before_click=remember_click)
+
         try:
             frame = self._expect(
-                lambda f: f.page in next_pages or current_shop(f) and (
-                    key in self.deferred_operations or f.rail_catalog_ready()
-                    or f.rail_launch() and f.rail_balance is not None
-                ), 10, "未确认开拓商店商品或免费启动项",
+                lambda f: advanced(f) or catalog(f) or key not in self.deferred_operations and launch(f) is not None,
+                10, "未确认开拓商店商品或免费启动项",
             )
-            if frame.page != Page.RAIL_SHOP:
-                return frame
-            if key not in self.deferred_operations and not frame.rail_catalog_ready():
-                balance = frame.rail_balance
-                def launch(f):
-                    return ui.point(f.rail_launch()) if f.rail_balance == balance else None
-
+            if current_shop(frame) and not catalog(frame):
                 frame = self._click_to(
-                    frame, launch,
-                    lambda f: f.page in next_pages or current_shop(f) and f.rail_catalog_ready()
-                    and f.rail_balance is not None and f.rail_balance >= balance,
-                    "未确认免费开拓商店启动项到账", seconds=12, attempts=1,
+                    frame, launch, lambda f: advanced(f) or catalog(f),
+                    "未确认免费开拓商店启动项到账", seconds=10, attempts=2, retry_after=4,
                     before_click=lambda: self.deferred_operations.add(key),
                 )
                 log.info("已确认免费开拓商店启动项或新的备战页面")
+            if not current_shop(frame):
+                return frame
+            return self._action(
+                frame, close_target, close, advanced, "未从开拓商店返回备战", seconds=6, attempts=3,
+            )
         except CurrencyWarsRecoverable as error:
-            frame = self._expect(lambda f: current_shop(f) or f.page in next_pages,
-                                 6, "免费启动后无法确认开拓商店已转场")
-            log.warning(f"开拓商店暂缓免费启动，尝试安全返回：{error}")
-        if not current_shop(frame):
-            return frame
-        return self._click_to(frame, lambda f: (12, 12) if current_shop(f) else None,
-                              lambda f: f.page in next_pages, "未从开拓商店返回备战", seconds=10)
+            raise CurrencyWarsUnavailable(f"{stage} {error}，已保留当前现场") from error
 
     def _refresh_shop(self, before, price, refreshes, stage):
         minimum_gold = before.gold - price
