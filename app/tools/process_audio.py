@@ -160,8 +160,8 @@ def visit_process_sessions(pid, visit):
 class ProcessAudioMuter:
     """静音一个进程的音频会话，并记住每个会话原来的状态。
 
-    重复调用 mute() 只处理新出现的会话，用户在音量合成器里手动取消的静音不会被改回；
-    restore() 只恢复由这里静音过的会话。
+    重复调用 mute() 会处理新出现的会话并重试失败的静音。已成功静音的会话允许用户在音量合成器里手动调整。
+    restore() 按保存的状态恢复会话，恢复失败的会话保留到下次重试。
 
     Windows 会按程序记住会话的静音状态并带到下次启动。静音期间进程被结束时来不及恢复，
     所以静音时写入 marker 文件、恢复后删除；启动时文件还在就标记为 stale，
@@ -173,6 +173,7 @@ class ProcessAudioMuter:
         self._visit = visit_sessions
         self._marker = marker
         self._saved = {}
+        self._muted_sessions = set()
         self.muting = False
         self.stale = bool(marker and os.path.exists(marker))
 
@@ -182,33 +183,37 @@ class ProcessAudioMuter:
         self.muting = True
 
         def apply(instance, volume):
+            if instance in self._muted_sessions:
+                return
             if instance not in self._saved:
                 # 遗留的静音不是用户的选择，恢复时按未静音处理
                 self._saved[instance] = False if self.stale else volume.muted()
-                volume.set_muted(True)
+            volume.set_muted(True)
+            self._muted_sessions.add(instance)
 
-        self._visit(self._pid, apply)
+        self._apply_to_sessions(apply)
 
     def restore(self):
+        # 即使有会话等待重试恢复，轮询也应停止补静音。
         self.muting = False
-        saved, self._saved = self._saved, {}
-        if saved:
+        if self._saved:
             def apply(instance, volume):
-                if instance in saved:
-                    volume.set_muted(saved.pop(instance))
+                if instance in self._saved:
+                    volume.set_muted(self._saved[instance])
+                    del self._saved[instance]
+                    self._muted_sessions.discard(instance)
 
-            try:
-                self._visit(self._pid, apply)
-            except Exception:
-                self._saved = saved
-                raise
+            self._apply_to_sessions(apply)
+            # 完成枚举后可以丢弃已结束会话的记录。
+            self._saved.clear()
+            self._muted_sessions.clear()
             self.stale = False
         if not self.stale:
             self._remove_marker()
 
     def clear_stale(self):
         """解除上次异常退出遗留的静音。会话要等程序开始播放声音才出现，找到会话才算完成。"""
-        if not self.stale or self.muting:
+        if not self.stale or self.muting or self._saved:
             return
         found = []
 
@@ -221,6 +226,21 @@ class ProcessAudioMuter:
         if found:
             self.stale = False
             self._remove_marker()
+
+    def _apply_to_sessions(self, apply):
+        first_error = None
+
+        def attempt(instance, volume):
+            nonlocal first_error
+            try:
+                apply(instance, volume)
+            except Exception as error:
+                if first_error is None:
+                    first_error = error
+
+        self._visit(self._pid, attempt)
+        if first_error is not None:
+            raise first_error
 
     def _write_marker(self):
         if self._marker:

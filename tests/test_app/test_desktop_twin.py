@@ -1,6 +1,6 @@
 import sys
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
 import pytest
 
@@ -951,6 +951,99 @@ def test_manual_mute_failure_restores_button_and_allows_retry(qtbot, monkeypatch
     volume.set_muted.assert_called_with(True)
     button.click()
     volume.set_muted.assert_called_with(False)
+
+
+@pytest.fixture
+def audio_dialog(qtbot, tmp_path):
+    from app.tools import desktop_twin as ui
+    from app.tools.process_audio import ProcessAudioMuter
+
+    sessions = {}
+
+    def visit_sessions(pid, apply):
+        for instance, volume in sessions.items():
+            apply(instance, volume)
+
+    dialog = ui.DesktopTwinDialog(None, Mock())
+    dialog._timer.stop()
+    dialog._audio = ProcessAudioMuter(visit_sessions=visit_sessions, marker=str(tmp_path / "muted"))
+    dialog.show()
+    dialog._connected = True
+    dialog.retranslateUi()
+    yield dialog, sessions
+    dialog._session = None
+    dialog.close()
+
+
+@pytest.mark.parametrize("from_hidden", [False, True], ids=["button", "show-window"])
+def test_unmute_failure_keeps_button_off_and_allows_retry(audio_dialog, from_hidden):
+    from app.tools import desktop_twin as ui
+    from utils.windows_session import SessionIdentity
+
+    dialog, sessions = audio_dialog
+    button = dialog._mute_button
+    volume = sessions["rdp"] = Mock()
+    volume.muted.return_value = False
+
+    def set_muted(muted):
+        if not muted and volume.set_muted.call_count == 2:
+            raise OSError("restore failed")
+        volume.muted.return_value = muted
+
+    volume.set_muted.side_effect = set_muted
+    if from_hidden:
+        dialog._session = SessionIdentity(2, 200)
+        dialog.hide()
+        dialog.show()
+    else:
+        button.click()
+        button.click()
+
+    assert volume.muted.return_value and button.isChecked()
+    assert button.text() == ui.tr("声音关闭") and button.toolTip() == ui.tr("取消静音")
+    dialog._poll()
+    assert volume.set_muted.call_args_list == [call(True), call(False)]
+
+    button.click()
+    assert not volume.muted.return_value and not button.isChecked()
+    assert button.text() == ui.tr("声音开启") and button.toolTip() == ui.tr("静音")
+    assert volume.set_muted.call_args_list == [call(True), call(False), call(False)]
+    dialog._log.appendLog.assert_called_once()
+
+
+def test_mute_poll_retries_new_audio_session_after_first_write_fails(audio_dialog, monkeypatch):
+    from app.tools import desktop_twin as ui
+
+    dialog, sessions = audio_dialog
+    button = dialog._mute_button
+    button.click()  # 播放前静音，还没有音频会话。
+    volume = sessions["rdp"] = Mock()
+    volume.muted.return_value = False
+    other = sessions["other"] = Mock()
+    other.muted.return_value = False
+
+    def set_muted(muted):
+        if volume.set_muted.call_count == 1:
+            raise OSError("mute failed")
+        volume.muted.return_value = muted
+
+    volume.set_muted.side_effect = set_muted
+    monkeypatch.setattr(ui, "time", SimpleNamespace(monotonic=Mock(side_effect=[10, 11])))
+    dialog._poll()
+    assert not volume.muted.return_value
+    assert button.isChecked() and button.text() == ui.tr("声音关闭")
+    other_writes_after_failure = other.set_muted.call_args_list.copy()
+
+    dialog._poll()
+    assert volume.muted.return_value
+    assert other_writes_after_failure == [call(True)]
+    assert other.set_muted.call_args_list == [call(True)]
+    assert volume.set_muted.call_args_list == [call(True), call(True)]
+    volume.muted.assert_called_once_with()
+
+    button.click()
+    assert not volume.muted.return_value and button.text() == ui.tr("声音开启")
+    dialog._log.appendLog.assert_called_once()
 
 
 def test_stale_mute_is_cleared_once_twin_is_visible_and_connected(qtbot):

@@ -1,5 +1,6 @@
 import os
 import sys
+from unittest.mock import DEFAULT, Mock, call
 
 import pytest
 
@@ -42,6 +43,31 @@ def test_mute_keeps_original_state_and_respects_manual_unmute(tmp_path):
     muter.restore()
     assert [sessions[key].muted() for key in "abc"] == [False, True, False]
     assert not muter.muting and not marker.exists()
+
+
+@pytest.mark.parametrize("stale", [False, True], ids=["normal", "stale-marker"])
+def test_restore_keeps_failed_session_and_skips_restored_sessions(tmp_path, monkeypatch, stale):
+    marker = tmp_path / "muted"
+    if stale:
+        marker.write_text("1", encoding="utf-8")
+    sessions = {"a": FakeVolume(), "b": FakeVolume(), "c": FakeVolume()}
+    muter = make_muter(sessions, str(marker))
+    muter.mute()
+    restore_b = Mock(wraps=sessions["b"].set_muted, side_effect=[OSError("restore failed"), DEFAULT])
+    monkeypatch.setattr(sessions["b"], "set_muted", restore_b)
+
+    with pytest.raises(OSError, match="restore failed"):
+        muter.restore()
+    assert marker.exists() and not muter.muting
+    assert [volume.muted() for volume in sessions.values()] == [False, True, False]
+
+    sessions["a"].set_muted(True)  # 已恢复的会话由用户重新静音。
+    muter.clear_stale()
+    assert [volume.muted() for volume in sessions.values()] == [True, True, False]
+    muter.restore()
+    assert [volume.muted() for volume in sessions.values()] == [True, False, False]
+    assert restore_b.call_args_list == [call(False), call(False)]
+    assert not marker.exists()
 
 
 def test_mute_left_by_a_killed_process_is_cleared(tmp_path):
