@@ -47,7 +47,7 @@ scheduled_tasks:
 ## 消息推送
 
 - 总开关 `notification_enable`，各渠道 `notify_<渠道>_enable`（如 `notify_wechatworkbot_enable`、`notify_bark_enable`），渠道参数紧挨在开关下面。
-- 令牌、密钥、Webhook 地址属于敏感信息：不要在对话里显示或复述；需要填写时让用户在图形界面「设置 → 消息推送」中输入。
+- 令牌、密钥、Webhook 地址属于敏感信息：不要在对话里显示或复述；需要填写时让用户在图形界面「设置 → 推送」中输入。
 - 测试推送：`.\m7a.exe notify`。
 
 ## 云游戏
