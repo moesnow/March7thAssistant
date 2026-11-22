@@ -11,7 +11,7 @@ from PySide6.QtCore import QEvent, QRect, QRectF, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QTextLayout
 from PySide6.QtWidgets import (QApplication, QBoxLayout, QDialog, QFrame, QHBoxLayout, QLayout, QPushButton,
                                QSizePolicy, QVBoxLayout, QWidget)
-from qfluentwidgets import (BodyLabel, Dialog, HyperlinkButton, IconWidget, IndeterminateProgressRing, InfoBarIcon,
+from qfluentwidgets import (BodyLabel, Dialog, HyperlinkButton, IconWidget, IndeterminateProgressRing, InfoBar, InfoBarIcon,
                             PrimaryPushButton, PushButton, SubtitleLabel, TextWrap, ToolTipFilter, ToolTipPosition,
                             isDarkTheme, qconfig)
 from qfluentwidgets import FluentIcon as FIF
@@ -312,6 +312,7 @@ class DesktopTwinDialog(QDialog):
         self._status = _StatusLabel(self._footerBar)
         self._docs_button = HyperlinkButton(self._footerBar)
         self._docs_button.setIcon(FIF.HELP)
+        self._credentials_button = PushButton(FIF.FINGERPRINT, "", self._footerBar)
         self._connect_button = PrimaryPushButton(self._footerBar)
         self._assistant_button = PushButton(QIcon("./assets/logo/March7th.ico"), "", self._footerBar)
         self._mute_button = PushButton(self._footerBar)
@@ -319,8 +320,8 @@ class DesktopTwinDialog(QDialog):
         self._hide_button = PushButton(FIF.HIDE, "", self._footerBar)
         self._logoff_button = PushButton(FIF.POWER_BUTTON, "", self._footerBar)
         self._logoff_button.setAutoDefault(False)
-        self._bar_buttons = (self._docs_button, self._connect_button, self._assistant_button,
-                             self._mute_button, self._hide_button, self._logoff_button)
+        self._bar_buttons = (self._docs_button, self._credentials_button, self._connect_button,
+                             self._assistant_button, self._mute_button, self._hide_button, self._logoff_button)
         for button in self._bar_buttons:
             button.installEventFilter(ToolTipFilter(button, 300, ToolTipPosition.TOP))
 
@@ -351,6 +352,7 @@ class DesktopTwinDialog(QDialog):
         self._arranging_bar = False
         self._apply_bar_layout(False)
 
+        self._credentials_button.clicked.connect(self._manage_credentials)
         self._connect_button.clicked.connect(self._toggle_connection)
         self._assistant_button.clicked.connect(self._open_assistant)
         self._mute_button.clicked.connect(self._toggle_mute)
@@ -379,7 +381,7 @@ class DesktopTwinDialog(QDialog):
         pointsLayout.setContentsMargins(16, 14, 16, 14)
         pointsLayout.setSpacing(10)
         self._pointLabels = []
-        for icon in (UiIcon.PERSON, FIF.GAME, UiIcon.PEOPLE_SWAP, FIF.POWER_BUTTON):
+        for icon in (UiIcon.PERSON, FIF.FINGERPRINT, FIF.GAME, UiIcon.PEOPLE_SWAP, FIF.POWER_BUTTON):
             iconWidget = IconWidget(icon, self._pointsCard)
             iconWidget.setFixedSize(16, 16)
             label = BodyLabel(self._pointsCard)
@@ -430,6 +432,22 @@ class DesktopTwinDialog(QDialog):
         layout.addWidget(self._errorHolder)
         layout.addStretch(1)
         return intro
+
+    def _manage_credentials(self):
+        from app.tools.desktop_twin_credentials import saved_account
+        from app.tools.desktop_twin_password_dialog import TwinPasswordDialog
+
+        try:
+            account = saved_account()
+        except RuntimeError as exc:
+            self._log.appendLog(f"桌面分身：{exc}\n")
+            InfoBar.error(tr("自动登录"), str(exc), orient=Qt.Vertical, duration=5000, parent=self)
+            return
+        box = TwinPasswordDialog(account, self)
+        try:
+            box.exec()
+        finally:
+            box.deleteLater()
 
     @property
     def active(self):
@@ -516,6 +534,7 @@ class DesktopTwinDialog(QDialog):
         """在说明页和分身画面之间切换，按内容调整窗口大小并保持窗口中心不动。"""
         center = self.frameGeometry().center() if self.isVisible() else None
         self._intro.setVisible(not visible)
+        self._credentials_button.setVisible(not visible)
         self._screen.setVisible(visible)
         self._rdp.setVisible(visible)
         self._update_bar_layout()
@@ -717,10 +736,12 @@ class DesktopTwinDialog(QDialog):
     def retranslateUi(self):
         self.setWindowTitle(tr("桌面分身（实验）"))
         self._titleLabel.setText(tr("桌面分身"))
+        self._credentials_button.setText(tr("自动登录"))
         self._experimentalPill.setText(tr("实验性"))
         self._descLabel.setText(tr("在独立的 Windows 桌面中运行游戏和小助手，执行任务时不占用你的鼠标和键盘。"))
         points = (
             tr("分身以当前 Windows 账户登录，首次使用需要允许系统开启本地子会话"),
+            tr("通过“自动登录”保存Windows密码至本地凭证，后续启动无需输入密码"),
             tr("游戏同一时间只能在一个桌面运行，连接前请先关闭主桌面中的游戏"),
             tr("运行期间，任务、定时和设置交给分身内的小助手，主界面暂停操作"),
             tr("注销分身会关闭其中的游戏和所有应用"),

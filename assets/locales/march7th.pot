@@ -7942,3 +7942,75 @@ msgstr ""
 #: app/tools/desktop_twin.py:746
 msgid "声音开启"
 msgstr ""
+
+#: app/tools/desktop_twin_password_dialog.py:69
+msgid "已保存分身密码"
+msgstr ""
+
+#: app/tools/desktop_twin.py:725
+msgid "通过“自动登录”保存Windows密码至本地凭证，后续启动无需输入密码"
+msgstr ""
+
+#: app/tools/desktop_twin_credentials.py:24
+msgid "无法读取分身密码，请检查 Windows 凭据服务。"
+msgstr ""
+
+#: app/tools/desktop_twin_credentials.py:63
+msgid "请填写有效的 Windows 账户名。"
+msgstr ""
+
+#: app/tools/desktop_twin_credentials.py:71
+msgid "请输入 Windows 账户密码"
+msgstr ""
+
+#: app/tools/desktop_twin_credentials.py:82
+msgid "无法保存分身密码，请检查账户名和 Windows 凭据服务。"
+msgstr ""
+
+#: app/tools/desktop_twin_credentials.py:90
+msgid "无法删除已保存的分身密码，请检查 Windows 凭据服务。"
+msgstr ""
+
+#: app/tools/desktop_twin_credentials.py:95
+msgid "分身密码仅用于本机连接"
+msgstr ""
+
+#: app/tools/desktop_twin_credentials.py:111
+msgid "已保存的凭据格式有误。请在「自动登录」中删除密码后重新保存。"
+msgstr ""
+
+#: app/tools/desktop_twin_credentials.py:118
+msgid "无法向本机分身提供已保存的凭据"
+msgstr ""
+
+#: app/tools/desktop_twin_password_dialog.py:19
+msgid "MicrosoftAccount\\邮箱 或 计算机名\\用户名"
+msgstr ""
+
+#: app/tools/desktop_twin_password_dialog.py:24
+msgid "Windows 账户"
+msgstr ""
+
+#: app/tools/desktop_twin_password_dialog.py:25
+msgid "账户密码"
+msgstr ""
+
+#: app/tools/desktop_twin_password_dialog.py:47
+msgid "若保存的密码有误，启动分身时仍会要求输入"
+msgstr ""
+
+#: app/tools/desktop_twin_password_dialog.py:56
+msgid "删除密码"
+msgstr ""
+
+#: app/tools/desktop_twin_password_dialog.py:34
+msgid "保存密码"
+msgstr ""
+
+#: app/tools/desktop_twin_credentials.py:100
+msgid "暂时无法更改分身密码，请稍后重试。"
+msgstr ""
+
+#: app/tools/desktop_twin_password_dialog.py:114
+msgid "分身凭据已在其他位置更改，请核对后再操作。"
+msgstr ""

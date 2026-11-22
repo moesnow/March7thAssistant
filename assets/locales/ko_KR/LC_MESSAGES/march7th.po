@@ -8275,3 +8275,75 @@ msgstr "소리 꺼짐"
 #: app/tools/desktop_twin.py:746
 msgid "声音开启"
 msgstr "소리 켜짐"
+
+#: app/tools/desktop_twin_password_dialog.py:69
+msgid "已保存分身密码"
+msgstr "분신 비밀번호를 저장했습니다"
+
+#: app/tools/desktop_twin.py:725
+msgid "通过“自动登录”保存Windows密码至本地凭证，后续启动无需输入密码"
+msgstr "「자동 로그인」에서 Windows 암호를 이 PC의 자격 증명에 저장하면 다음부터는 암호를 입력할 필요가 없습니다"
+
+#: app/tools/desktop_twin_credentials.py:24
+msgid "无法读取分身密码，请检查 Windows 凭据服务。"
+msgstr "데스크톱 분신 암호를 읽을 수 없습니다. Windows 자격 증명 관리자 서비스를 확인하세요."
+
+#: app/tools/desktop_twin_credentials.py:63
+msgid "请填写有效的 Windows 账户名。"
+msgstr "올바른 Windows 계정 이름을 입력하세요."
+
+#: app/tools/desktop_twin_credentials.py:71
+msgid "请输入 Windows 账户密码"
+msgstr "Windows 계정 비밀번호를 입력하세요"
+
+#: app/tools/desktop_twin_credentials.py:82
+msgid "无法保存分身密码，请检查账户名和 Windows 凭据服务。"
+msgstr "분신 비밀번호를 저장할 수 없습니다. 계정 이름과 Windows 자격 증명 서비스를 확인하세요."
+
+#: app/tools/desktop_twin_credentials.py:90
+msgid "无法删除已保存的分身密码，请检查 Windows 凭据服务。"
+msgstr "저장된 분신 비밀번호를 삭제할 수 없습니다. Windows 자격 증명 서비스를 확인하세요."
+
+#: app/tools/desktop_twin_credentials.py:95
+msgid "分身密码仅用于本机连接"
+msgstr "분신 비밀번호는 이 PC에 연결할 때만 사용할 수 있습니다."
+
+#: app/tools/desktop_twin_credentials.py:111
+msgid "已保存的凭据格式有误。请在「自动登录」中删除密码后重新保存。"
+msgstr "저장된 자격 증명의 형식이 올바르지 않습니다. 「자동 로그인」에서 암호를 삭제한 뒤 다시 저장하세요."
+
+#: app/tools/desktop_twin_credentials.py:118
+msgid "无法向本机分身提供已保存的凭据"
+msgstr "저장된 자격 증명을 이 PC의 분신에 전달할 수 없습니다."
+
+#: app/tools/desktop_twin_password_dialog.py:19
+msgid "MicrosoftAccount\\邮箱 或 计算机名\\用户名"
+msgstr "MicrosoftAccount\\이메일 또는 컴퓨터이름\\사용자이름"
+
+#: app/tools/desktop_twin_password_dialog.py:24
+msgid "Windows 账户"
+msgstr "Windows 계정"
+
+#: app/tools/desktop_twin_password_dialog.py:25
+msgid "账户密码"
+msgstr "계정 비밀번호"
+
+#: app/tools/desktop_twin_password_dialog.py:47
+msgid "若保存的密码有误，启动分身时仍会要求输入"
+msgstr "저장된 암호가 틀리면 데스크톱 분신을 시작할 때 암호를 다시 입력해야 합니다"
+
+#: app/tools/desktop_twin_password_dialog.py:56
+msgid "删除密码"
+msgstr "암호 삭제"
+
+#: app/tools/desktop_twin_password_dialog.py:34
+msgid "保存密码"
+msgstr "비밀번호 저장"
+
+#: app/tools/desktop_twin_credentials.py:100
+msgid "暂时无法更改分身密码，请稍后重试。"
+msgstr "지금은 데스크톱 분신 비밀번호를 변경할 수 없습니다. 잠시 후 다시 시도하세요."
+
+#: app/tools/desktop_twin_password_dialog.py:114
+msgid "分身凭据已在其他位置更改，请核对后再操作。"
+msgstr "저장된 자격 증명이 다른 곳에서 변경되었습니다. 계정을 확인한 후 계속하세요."
