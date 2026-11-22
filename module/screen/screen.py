@@ -5,6 +5,9 @@ import json
 import threading
 from collections import deque
 from functools import cached_property
+
+import numpy as np
+
 from utils.color import green
 from utils.singleton import SingletonMeta
 from utils.logger.logger import Logger
@@ -15,6 +18,8 @@ from module.automation.background_input import GameWindowLost, InputInterrupted
 from module.config import cfg
 from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError, get_control_backend, get_ui_profile
 from module.localization import tr
+from module.ocr import ocr
+from utils.pause import pause_ctl
 
 
 class Screen(metaclass=SingletonMeta):
@@ -52,7 +57,12 @@ class Screen(metaclass=SingletonMeta):
             with open(config_path, 'r', encoding='utf-8') as file:
                 configs = json.load(file)
             return {
-                config["id"]: {"name": config["name"], "image_path": config["image_path"], "actions": config["actions"]}
+                config["id"]: {
+                    "name": config["name"],
+                    "image_path": config["image_path"],
+                    "actions": config["actions"],
+                    "text_fallback": config.get("text_fallback"),
+                }
                 for config in configs
             }
         except FileNotFoundError as e:
@@ -216,6 +226,12 @@ class Screen(metaclass=SingletonMeta):
             if self.current_screen:
                 return True
 
+            # 图像匹配可能并发执行，OCR 回退统一在当前线程读取这一帧。
+            for screen_name, definition in screen_map.items():
+                if self._matches_text_fallback(definition):
+                    self.current_screen = screen_name
+                    return True
+
             if autotry:
                 self.recover_current_screen()
             else:
@@ -306,12 +322,38 @@ class Screen(metaclass=SingletonMeta):
         :param take_screenshot: 是否重新截图。
         :return: 如果当前界面是目标界面，则返回True；否则返回False。
         """
-        if self._find_image(self.screen_map[target_screen]['image_path'], "image", self.SCREEN_MATCH_THRESHOLD,
-                            take_screenshot=take_screenshot):
-            # 如果找到了目标界面的图像，则更新当前界面状态为目标界面
+        definition = self.screen_map[target_screen]
+        if take_screenshot and definition.get("text_fallback"):
+            auto.take_screenshot()
+            take_screenshot = False
+        if (self._find_image(definition["image_path"], "image", self.SCREEN_MATCH_THRESHOLD,
+                             take_screenshot=take_screenshot)
+                or self._matches_text_fallback(definition)):
             self.current_screen = target_screen
             return True
         return False
+
+    def _matches_text_fallback(self, definition):
+        regions = definition.get("text_fallback")
+        if not regions:
+            return False
+        frame = auto.screenshot
+        if frame is None or frame.size != get_ui_profile(cfg).resolution:
+            return False
+
+        try:
+            for region in regions:
+                pixels = np.asarray(frame.crop(tuple(region["crop"])))
+                lines = ocr.recognize_multi_lines(pixels) or ()
+                pause_ctl.check_stop()
+                if not any("".join(text.split()) == region["text"] for _, (text, _) in lines):
+                    return False
+        except Exception as error:
+            self.logger.debug(f"识别{definition['name']}的界面文字失败：{error}")
+            return False
+
+        self.logger.debug(f"已通过界面文字识别：{definition['name']}")
+        return True
 
     def _find_image(self, image_path, find_type, threshold=None, **kwargs):
         """
