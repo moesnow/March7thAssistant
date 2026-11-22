@@ -1825,6 +1825,7 @@ def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_gam
     ("disconnect_lobby_loses_login_before_click", False, 0, 2, None),
     ("disconnect_lobby_changes_at_dispatch", False, 0, 2, None),
     ("disconnect_lobby_player_recovers_at_dispatch", True, 0, 1, None),
+    ("disconnect_lobby_loading_at_dispatch_paid", True, 0, 1, None),
     ("disconnect_lobby_queue_during_zero_balance_read", True, 0, 1, None),
     ("disconnect_lobby_loses_login_during_zero_balance_read", False, 0, 2, None),
     ("disconnect_lobby_button_stale_once", True, 1, 2, None),
@@ -1836,6 +1837,12 @@ def test_currency_wars_startup_keeps_the_cloud_session(runner, currency_wars_gam
     ("player_unidentified", False, 0, 1, None),
     ("queue_timeout", False, 0, 1, None),
     ("queue_timeout_after_probe_failure", False, 0, 2, None),
+    ("queue_loading", True, 0, 1, None),
+    ("queue_loading_timeout", False, 0, 1, None),
+    ("queue_loading_late_player", False, 0, 1, None),
+    ("queue_loading_stopped", False, 0, 1, None),
+    ("already_loading", True, 0, 1, None),
+    ("already_loading_after_probe_failure_paid", True, 0, 2, None),
 ))
 def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
         runner, currency_wars_game, monkeypatch, scenario, started, entries, attachments, queue_choice):
@@ -1857,6 +1864,7 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
         "disconnect_lobby_loses_login_before_click": "signed_in_lobby",
         "disconnect_lobby_changes_at_dispatch": "signed_in_lobby",
         "disconnect_lobby_player_recovers_at_dispatch": "signed_in_lobby",
+        "disconnect_lobby_loading_at_dispatch_paid": "signed_in_lobby",
         "disconnect_lobby_queue_during_zero_balance_read": "signed_in_lobby",
         "disconnect_lobby_loses_login_during_zero_balance_read": "signed_in_lobby",
         "disconnect_lobby_button_stale_once": "signed_in_lobby",
@@ -1865,15 +1873,46 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
         "player_unidentified": None,
         "queue_timeout": "in_queue",
         "queue_timeout_after_probe_failure": "in_queue",
+        "already_loading": "game_loading",
+        "already_loading_after_probe_failure_paid": "game_loading",
     }
     if scenario.startswith("disconnect_then_signed_in_lobby"):
         initial[scenario] = "signed_in_lobby"
+    queued_loading = scenario.startswith("queue_loading")
+    loading_at_dispatch = scenario == "disconnect_lobby_loading_at_dispatch_paid"
+    loading_probe_failed = scenario == "already_loading_after_probe_failure_paid"
+    if queued_loading:
+        initial[scenario] = "in_queue"
     state = SimpleNamespace(time=0, entry=initial.get(scenario, "lobby"), entries=0, failed=False, choice=None)
-    clock = SimpleNamespace(monotonic=lambda: state.time, sleep=lambda seconds: setattr(state, "time", state.time + seconds))
+
+    def sleep(seconds):
+        state.time += seconds
+        assert state.time <= 180, "云游戏排队模拟超出时间上限"
+
+    clock = SimpleNamespace(monotonic=lambda: state.time, sleep=sleep)
     for module in (game, cloud, wait, selenium_wait):
         monkeypatch.setattr(module, "time", clock)
+    if scenario == "queue_loading_stopped":
+        def checkpoint():
+            if state.time >= 15:
+                raise RunStopRequested
+
+        stop_control = SimpleNamespace(checkpoint=checkpoint, check_stop=checkpoint)
+        monkeypatch.setattr(game, "pause_ctl", stop_control)
+        monkeypatch.setattr(cloud, "pause_ctl", stop_control)
 
     def current_state():
+        if queued_loading:
+            if (scenario == "queue_loading" and state.time >= 70
+                    or scenario == "queue_loading_late_player" and state.time >= 60.5):
+                return "game_running"
+            if scenario == "queue_loading" and 20 <= state.time < 25:
+                return None
+            return "game_loading" if state.time >= 5 else "in_queue"
+        if (loading_at_dispatch and state.time >= 21) or (scenario == "already_loading" and state.time >= 25):
+            return "game_running"
+        if loading_probe_failed and state.time >= 8:
+            return "game_running"
         if scenario.startswith("queue_timeout"):
             return state.entry
         if (scenario == "player_loading" and state.time >= 1
@@ -1884,6 +1923,8 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
     driver = MagicMock()
     driver.command_executor._client_config.timeout = 120
     visible = SimpleNamespace(is_displayed=lambda: True)
+    canvas_checks = []
+    success_times = []
 
     def find_elements(_by, selector):
         current = current_state()
@@ -1907,6 +1948,14 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
     def execute(script, *args):
         current = current_state()
         if script.endswith("return entryState();"):
+            if scenario == "queue_loading_late_player" and state.time in (50, 58):
+                sleep(3 if state.time == 50 else 2.5)
+                current = current_state()
+            if loading_probe_failed and current == "game_loading" and state.time >= 5:
+                state.entry = "select_queue"
+                raise TimeoutException("加载页探测暂时超时")
+            if current == "game_loading" and "hasVisible('.game-loading')" not in script:
+                return None
             injected_fault = (scenario == "probe_failed_after_enter" and state.entry == "in_queue"
                               or scenario == "disconnect_then_signed_in_lobby_probe_failed"
                               and state.entry == "select_queue"
@@ -1928,6 +1977,11 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
                 assert "entryState()" in script
                 state.entry = "game_running"
                 return state.entry
+            if loading_at_dispatch:
+                assert "entryState()" in script
+                # 点击脚本读到加载页，下一次状态读取看到的是迟到的选队页。
+                state.entry = "select_queue"
+                return "game_loading" if 'state === "game_loading"' in script else False
             assert current in controller.LOBBY_STATES
             if scenario == "disconnect_lobby_button_stale_once" and not state.failed:
                 state.failed = True
@@ -1945,6 +1999,7 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
                 raise WebDriverException("队列选择回执暂不可用")
             state.entry = "in_queue"
         elif "game-player__video" in script:
+            canvas_checks.append((state.time, controller._queue_deadline))
             return current == "game_running"
 
     driver.find_elements.side_effect = find_elements
@@ -1955,9 +2010,15 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
     controller = object.__new__(CloudGameController)
     controller.driver = None
     controller.logger = MagicMock()
+
+    def log_info(message):
+        if message == "进入云游戏成功":
+            success_times.append(state.time)
+
+    controller.logger.info.side_effect = log_info
     controller.cfg = SimpleNamespace(
         browser_headless_enable=True, browser_headless_restart_on_not_logged_in=True, browser_dump_cookies_enable=False,
-        cloud_game_max_queue_time=1,
+        cloud_game_max_queue_time=2 if scenario == "queue_loading" else 1,
         cloud_game_use_paid_time=scenario.endswith(("_paid", "_unknown_balance")),
     )
     def remaining_playtime():
@@ -1981,6 +2042,8 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
     controller._connect_or_create_browser = MagicMock(side_effect=connect_browser)
     monkeypatch.setattr(game, "cloud_game", controller)
     monkeypatch.setattr(game, "cfg", SimpleNamespace(control_backend="cloud", start_game_timeout=1))
+    monkeypatch.setattr(game, "log", MagicMock())
+    monkeypatch.setattr(currency_wars, "log", MagicMock())
     monkeypatch.setattr(game, "task_power_request", MagicMock())
     click = MagicMock(return_value=True)
     monkeypatch.setattr(game, "auto", SimpleNamespace(click_element=click))
@@ -1990,11 +2053,38 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
     runner.telemetry.track_task_complete.side_effect = lambda *_: setattr(currency_wars_game, "stop", True)
 
     record = run_currency_wars_cli(runner, "currencywarsloop")
+    assert state.entries == entries
+    assert state.choice == queue_choice
+    if scenario == "queue_loading":
+        assert success_times == [70]
+        assert canvas_checks == [(70, 120)]
+    elif loading_at_dispatch:
+        assert controller._entry_request is None
+        assert canvas_checks == [(21, 61)]
+        assert success_times == [21]
+    elif scenario == "already_loading":
+        assert len(canvas_checks) == 1
+        checked_at, deadline = canvas_checks[0]
+        assert 25 <= checked_at <= 30
+        assert deadline == 60
+        assert success_times == [checked_at]
+    elif queued_loading:
+        assert not canvas_checks
+        assert not success_times
+
+    queue_timed_out = scenario.startswith("queue_timeout") or scenario in (
+        "queue_loading_timeout", "queue_loading_late_player",
+    )
     if started:
         assert record["status"] == STATUS_STOPPED
         assert currency_wars_game.completed == 1
+    elif scenario == "queue_loading_stopped":
+        assert record["status"] == STATUS_STOPPED
+        assert record["exit_code"] == EXIT_STOPPED
+        assert state.time == 15
+        currency_wars_game.factory.assert_not_called()
     else:
-        if scenario.startswith("queue_timeout"):
+        if queue_timed_out:
             message = "排队已达到等待时限"
         elif scenario.startswith("disconnect"):
             message = "云游戏断开后暂未确认播放器或原排队状态"
@@ -2003,16 +2093,14 @@ def test_cloud_startup_keeps_existing_queue_and_checks_page_before_input(
         assert record["reason"] == "game_startup_unavailable"
         assert message in record["error"]
         currency_wars_game.factory.assert_not_called()
-        if scenario.startswith("queue_timeout"):
-            assert state.time == 60
+        if queue_timed_out:
+            assert state.time == (60.5 if scenario == "queue_loading_late_player" else 60)
 
     assert controller._connect_or_create_browser.call_count == attachments
     assert all(call.kwargs == {"headless": True, "preserve_existing": True}
                for call in controller._connect_or_create_browser.call_args_list)
-    assert state.entries == entries
-    assert state.choice == queue_choice
     assert click.call_count == (1 if started and scenario not in (
-        "player_loading", "disconnect_lobby_player_recovers_at_dispatch",
+        "player_loading", "disconnect_lobby_player_recovers_at_dispatch", "already_loading_after_probe_failure_paid",
     ) else 0)
     controller.stop_game.assert_not_called()
     controller._restart_browser.assert_not_called()
