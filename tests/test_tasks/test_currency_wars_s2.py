@@ -6093,6 +6093,187 @@ def test_dragon_cleanse_never_confirms_an_unselected_affix(monkeypatch, world, c
     assert state.frame is initial and not state.keys
 
 
+DRAGON_BOND_CHOICES = (("召唤", 688, 352), ("治疗", 927, 352), ("连击", 1167, 352), ("反击", 1408, 352))
+
+
+def dragon_bond_dialog(*, selected=None, outline=False, enabled=False):
+    image = CANVAS.copy()
+    draw = ImageDraw.Draw(image)
+    if outline:
+        draw.rectangle((1056, 173, 1277, 375), outline=(245, 245, 222), width=3)
+    if selected is not None:
+        x = next(x for name, x, _ in DRAGON_BOND_CHOICES if name == selected)
+        draw.rectangle((x - 100, 182, x + 100, 326), fill=(211, 185, 113))
+    if enabled:
+        draw.rounded_rectangle((1304, 571, 1680, 623), radius=26, fill=(229, 231, 245))
+    return Frame(image, labels(
+        ("备战阶段", 323, 71), ("3-1", 323, 109), ("双龙吟", 1046, 78), ("请选择一个羁绊加入", 1046, 135),
+        *DRAGON_BOND_CHOICES, ("确认选择", 1492, 598), ("出战", 1818, 750),
+    ))
+
+
+def test_dragon_bond_outline_and_background_fight_do_not_count_as_selection():
+    overlay = dragon_bond_dialog(outline=True)
+    assert overlay.page == Page.DRAGON_BOND
+    assert not overlay.dragon_bond_selected(overlay.dragon_bond_card("连击"))
+    assert overlay.dragon_bond_confirm() is None
+    confirmed = dragon_bond_dialog(selected="连击", enabled=True)
+    assert confirmed.dragon_bond_selected(confirmed.dragon_bond_card("连击"))
+    assert not confirmed.dragon_bond_selected(confirmed.dragon_bond_card("治疗"))
+    assert confirmed.dragon_bond_confirm().point == (1492, 598)
+
+    board_with_bond = Frame(CANVAS, labels(
+        ("备战阶段", 323, 71), ("3-1", 323, 109), ("双龙吟", 142, 250), ("前台区域", 960, 315),
+        ("后台区域", 960, 575), ("商店", 1624, 982), ("出战", 1818, 750),
+    ))
+    assert board_with_bond.page == Page.BOARD
+
+
+@pytest.mark.parametrize(("entry", "fault", "target", "clicks"), (
+    ("single", "late_confirmation", "连击", [(1167, 352), (1167, 352), (1492, 598)]),
+    ("loop", "closed_on_choice", "连击", [(1167, 352)]),
+    ("takeover", "preselected", "连击", [(1492, 598)]),
+    ("daily", "partial_wrong_selection", "治疗", [(927, 352), (1492, 598)]),
+))
+def test_dragon_bond_recovers_to_preparation_through_the_task_entry(monkeypatch, world, entry, fault, target, clicks):
+    stage = "3-1"
+    overlay = dragon_bond_dialog(outline=fault == "late_confirmation",
+                                 selected="连击" if fault == "partial_wrong_selection" else None,
+                                 enabled=fault == "partial_wrong_selection")
+    partial = Frame(overlay.image, tuple(label for label in overlay.labels if label.text != "双龙吟"))
+    assert partial.page == Page.DRAGON_BOND
+    selected = dragon_bond_dialog(selected=target, enabled=True)
+    awaiting_button = dragon_bond_dialog(selected=target)
+    ready = Frame(CANVAS, labels(
+        ("备战阶段", 323, 71), (stage, 323, 109), ("前台区域", 960, 315), ("后台区域", 960, 575),
+        ("连击", 132, 418), ("1/2", 132, 449), ("商店", 1624, 982), ("出战", 1818, 750),
+    ))
+    source = slot("bench", 0, policy.Unit("备战第1格", True, True))
+    destination = slot("front", 0)
+    team = board(source, destination, stage=stage, used=0)
+    before_move = page(Page.BOARD, stage=stage, capacity=(0, 3))
+    monkeypatch.setattr(before_move, "slot_occupied", lambda point: point == source.point)
+    won = page(Page.MATCH_RESULT, ("对局胜利", 960, 233), ("返回货币战争", 960, 899))
+    lobby, modes = home(), mode(("进入超频博弈", 1638, 960))
+    rank_page = page(Page.RANK, ("开始对局", 1680, 965), rank_mode="overclock", enemy_rank=1)
+    entered = {"single": before_move, "loop": overlay, "takeover": selected, "daily": partial}[entry]
+    routes = {(lobby, (1600, 972)): modes, (modes, (1638, 960)): rank_page, (rank_page, (1680, 965)): entered,
+              (ready, (1818, 750)): won, (won, (960, 899)): lobby}
+    initial = entered if entry == "takeover" else lobby
+    state = SimpleNamespace(frame=initial, clicks=[], after=None, resume_at=None)
+    world.cfg.currencywars_time_limit = 1
+    world.cfg.currencywars_type = "overclock"
+    world.cfg.currencywars_rank_difficulty = "lowest"
+    if target != "连击":
+        lineup = replace(policy.LINEUPS[policy.HIGH_ANAXA], dragon_bond=target)
+        monkeypatch.setitem(policy.LINEUPS, policy.HIGH_ANAXA, lineup)
+
+    def capture():
+        if state.resume_at is not None and world.now[0] >= state.resume_at:
+            state.frame, state.resume_at = state.after, None
+        return state.frame
+
+    def click(point, *, press_duration):
+        if state.frame is overlay:
+            state.clicks.append(point)
+            if fault == "late_confirmation" and len(state.clicks) == 1:
+                return False
+            if fault == "closed_on_choice":
+                state.frame = ready
+            else:
+                state.frame, state.after, state.resume_at = awaiting_button, selected, world.now[0] + 1
+        elif state.frame is selected:
+            state.clicks.append(point)
+            state.after, state.resume_at = ready, world.now[0] + 9
+        else:
+            state.frame = routes[state.frame, point]
+            if state.frame is partial:
+                state.after, state.resume_at = overlay, world.now[0] + 1
+        return True
+
+    def prepare(frame):
+        if frame is before_move:
+            return world.war._move(frame, team, source, destination)
+        assert frame is ready
+        return world.war._advance_board(frame, frame.board_advance)
+
+    monkeypatch.setattr(world.war, "_capture", capture)
+    monkeypatch.setattr(world.war, "_prepare", prepare)
+    monkeypatch.setattr(world.war, "_check_weekly_reward",
+                        lambda f: (f, (18000 if world.war.result else 15000, 18000), False))
+    world.auto.click_element_with_pos.side_effect = click
+    world.auto.drag_mouse.side_effect = lambda *_args, **_kwargs: setattr(state, "frame", overlay) or True
+    if entry == "daily":
+        from tasks.daily import daily
+
+        monkeypatch.setattr(daily, "CurrencyWars", lambda: world.war)
+        assert daily.Daily._run_currency_wars()
+    else:
+        assert world.war.start(resume=entry == "takeover", loop=entry == "loop")
+    assert state.clicks == clicks and state.frame is lobby and world.war.result is True
+    assert world.auto.drag_mouse.call_count == int(entry == "single")
+    world.auto.press_key.assert_not_called()
+
+
+@pytest.mark.parametrize(("fault", "error", "clicks"), (
+    ("no_target", task.CurrencyWarsUnavailable, []),
+    ("double_label", task.CurrencyWarsUnavailable, []),
+    ("low_confidence", task.CurrencyWarsUnavailable, []),
+    ("missing_heading", task.CurrencyWarsUnavailable, []),
+    ("no_receipt", task.CurrencyWarsUnavailable, [(1492, 598)]),
+    ("wrong_node", task.CurrencyWarsUnavailable, [(1492, 598)]),
+    ("lost_page", task.CurrencyWarsUnavailable, [(1492, 598)]),
+    ("stopped", RunStopRequested, [(1167, 352)]),
+    ("deadline", task.CurrencyWarsBudgetExceeded, [(1167, 352)]),
+))
+def test_dragon_bond_keeps_the_scene_when_an_operation_cannot_continue(monkeypatch, world, fault, error, clicks):
+    confirmed = fault in ("no_receipt", "wrong_node", "lost_page")
+    frame = dragon_bond_dialog(selected="连击" if confirmed else None, enabled=confirmed)
+    if fault == "no_target":
+        world.cfg.currencywars_strategy = policy.DEFAULT_STRATEGY
+    if fault == "double_label":
+        frame = Frame(frame.image, (*frame.labels, Label("连击", (685, 352))))
+    if fault == "low_confidence":
+        frame = Frame(frame.image, tuple(replace(label, confidence=0.6) if label.text == "连击" else label
+                                         for label in frame.labels))
+    if fault == "missing_heading":
+        frame = Frame(frame.image, tuple(label for label in frame.labels if label.text not in (
+            "双龙吟", "请选择一个羁绊加入",
+        )))
+    state = SimpleNamespace(frame=frame)
+    world.cfg.currencywars_time_limit = 1
+    monkeypatch.setattr(world.war, "_capture", lambda: state.frame)
+    monkeypatch.setattr(task, "MATCH_UNIDENTIFIED_SECONDS", 1)
+
+    def click(point, *, press_duration):
+        if fault == "wrong_node":
+            state.frame = page(Page.BOARD, stage="3-2")
+        if fault == "lost_page":
+            state.frame = Frame(CANVAS, ())
+        return True
+
+    locate = world.auto.find_element.side_effect
+
+    def locate_then_interrupt(*args, **kwargs):
+        point = locate(*args, **kwargs)
+        if world.auto.click_element_with_pos.called:
+            if fault == "stopped":
+                task.pause_ctl.checkpoint.side_effect = RunStopRequested
+            if fault == "deadline":
+                world.now[0] = world.war.deadline
+        return point
+
+    world.auto.find_element.side_effect = locate_then_interrupt
+    world.auto.click_element_with_pos.side_effect = click
+    with pytest.raises(error) as raised:
+        world.war.start(resume=True)
+    if error == task.CurrencyWarsUnavailable:
+        assert raised.value.preserve_game and world.now[0] < 30
+    assert [call.args[0] for call in world.auto.click_element_with_pos.call_args_list] == clicks
+    world.auto.press_key.assert_not_called()
+    world.auto.drag_mouse.assert_not_called()
+
+
 def test_tea_meal_continues_when_ocr_misses_the_card_name_and_health(monkeypatch, world):
     label = ("美餐时间", 1200, 411)
     effect = ("回复20小队生命值", 1240, 480)

@@ -55,6 +55,8 @@ class Lineup:
     dancers: tuple[str, ...] = ()
     # 卡面的前后台标记是游戏推荐，多数角色照推荐站位；这里列出攻略要求不按推荐、也能站前台的角色。
     guide_front: frozenset[str] = frozenset()
+    # 丹恒·饮月上阵时，「双龙吟」要加入的羁绊。
+    dragon_bond: str | None = None
 
     @property
     def preferences(self) -> tuple[str, ...]:
@@ -81,7 +83,7 @@ LINEUPS = {
                       halos=("逐日",), level_from=(1, 4), three_star_level=9, emblems=("梦境交织星徽",),
                       dancers=(CORE, "花火"), settle_with=("花火",), combo=frozenset((CORE, *COMBO_SUPPORT)),
                       combo_goal=4, key_supports=("昔涟", "知更鸟", "寒鸦", "风堇", "千冶·刃"),
-                      guide_front=frozenset((BACK_LEAD,))),
+                      guide_front=frozenset((BACK_LEAD,)), dragon_bond="连击"),
     HIGH_FIREFLY: Lineup("流萤", ("流萤", *FRONT_SUPPORT, "雪衣", "忘归人"), (*REAR_SUPPORT, "大丽花"),
                         (("流萤", 3), ("寒鸦", 2), ("白露", 2), ("刻律德菈", 2), ("星期日", 2), ("花火", 2)),
                         frozenset(FRONT_SUPPORT)),

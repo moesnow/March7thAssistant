@@ -76,7 +76,7 @@ RANK_CLICK_BATCH = 80
 RANK_CLICK_HOLD = 0.03
 PROMOTION_CAP_ENEMY_RANK = 28  # 入画奇航超频博弈 A4 冰钛 6
 PREP_OVERLAYS = frozenset((Page.SHOP, Page.TIMED_SHOP, Page.RAIL_SHOP, Page.BLACK_MARKET, Page.REVEAL, Page.CHOICE,
-                           Page.DANCE, Page.RANGER, Page.SVAROG_MODIFICATION, Page.DRAGON_CLEANSE,
+                           Page.DANCE, Page.RANGER, Page.SVAROG_MODIFICATION, Page.DRAGON_CLEANSE, Page.DRAGON_BOND,
                            Page.GARDEN, Page.HACK, Page.TREASURY,
                            Page.BENCH_FULL, Page.HALO_TIP, Page.HALO_INFO, Page.HALO_MENTOR, Page.EMPTY_FRONT))
 PLAY_PAGES = PREP_OVERLAYS | {Page.BOARD, Page.BATTLE, Page.NODE_RESULT, Page.MATCH_RESULT,
@@ -84,7 +84,8 @@ PLAY_PAGES = PREP_OVERLAYS | {Page.BOARD, Page.BATTLE, Page.NODE_RESULT, Page.MA
 ACTIVE_PAGES = PLAY_PAGES | {Page.DETAIL, Page.PARTNER_DETAIL, Page.EQUIPMENT, Page.CONFIRM_FIGHT}
 BATTLE_RESULT_PAGES = {Page.BATTLE, Page.NODE_RESULT, Page.MATCH_RESULT}
 ESC_RECOVERY_PAGES = (ACTIVE_PAGES - BATTLE_RESULT_PAGES
-                      - {Page.BLACK_MARKET, Page.HALO_REPLACE, Page.HALO_MENTOR, Page.DRAGON_CLEANSE, Page.TREASURY}
+                      - {Page.BLACK_MARKET, Page.HALO_REPLACE, Page.HALO_MENTOR, Page.DRAGON_CLEANSE, Page.DRAGON_BOND,
+                         Page.TREASURY}
                       | {Page.UNKNOWN, Page.CONFLICT})
 HALO_EXIT_PAGES = (ACTIVE_PAGES | {Page.HOME, Page.WEEKLY}) - {Page.HALO}
 REWARD_PAGES = {Page.HOME, Page.WEEKLY, Page.REWARD_RECEIPT, Page.REWARD_LIMIT}
@@ -4693,6 +4694,51 @@ class CurrencyWars:
                 raise CurrencyWarsPageBlocked(current, f"{message}，已保留当前现场") from error
             raise
 
+    def _choose_dragon_bond(self, frame):
+        target = self.lineup.dragon_bond if self.lineup else None
+        if target not in ui.DRAGON_BOND_NAMES:
+            raise CurrencyWarsUnavailable("双龙吟：当前阵容没有指定目标羁绊，已保留当前现场")
+
+        stage = frame.stage or self.last_result_stage
+
+        def advanced(f):
+            return f.page == Page.BOARD and f.stage == stage
+
+        def same_dialog(f):
+            return f.page == Page.DRAGON_BOND and f.stage in (None, stage)
+
+        def target_card(f):
+            if same_dialog(f) and all(f.dragon_bond_heading):
+                return f.dragon_bond_card(target)
+            return None
+
+        def option(f):
+            card = target_card(f)
+            return card.point if card and not f.dragon_bond_selected(card) else None
+
+        def confirm(f):
+            card = target_card(f)
+            return ui.point(f.dragon_bond_confirm()) if card and f.dragon_bond_selected(card) else None
+
+        try:
+            if stage is None:
+                frame = self._expect(lambda f: f.page == Page.DRAGON_BOND and f.stage is not None,
+                                     5, "双龙吟未确认当前备战节点")
+                stage = frame.stage
+            frame = self._click_to(
+                frame, option, lambda f: advanced(f) or confirm(f) is not None,
+                f"双龙吟未确认「{target}」及可用的确认按钮", seconds=7, attempts=2, same_view=same_dialog,
+            )
+            if not advanced(frame):
+                frame = self._click_to(
+                    frame, confirm, advanced, "双龙吟确认后未返回原节点备战",
+                    seconds=8, attempts=1, same_view=same_dialog,
+                )
+        except (CurrencyWarsRecoverable, CurrencyWarsPageBlocked) as error:
+            raise CurrencyWarsUnavailable(f"{error}，已保留当前现场") from error
+        log.info(f"双龙吟弹窗已关闭，回到节点 {stage} 备战")
+        return frame
+
     def _choose_board_effect(self, frame):
         event = frame.page
         stage = frame.stage
@@ -5407,6 +5453,8 @@ class CurrencyWars:
             return self._choose_special_event(frame)
         if page == Page.DRAGON_CLEANSE:
             return self._choose_dragon_cleanse(frame)
+        if page == Page.DRAGON_BOND:
+            return self._choose_dragon_bond(frame)
         if page in (Page.GARDEN, Page.HACK):
             return self._choose_board_effect(frame)
         if page == Page.HALO_TIP:

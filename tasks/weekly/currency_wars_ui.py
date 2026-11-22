@@ -129,6 +129,11 @@ DRAGON_TITLE = (900, 30, 1190, 90)
 DRAGON_SUBTITLE = (790, 76, 1330, 135)
 DRAGON_PROMPT = (1280, 423, 1725, 584)
 DRAGON_CONFIRM = (1280, 451, 1725, 655)
+DRAGON_BOND_TITLE = (900, 45, 1200, 132)
+DRAGON_BOND_PROMPT = (845, 112, 1260, 200)
+DRAGON_BOND_CARDS = (575, 325, 1525, 448)
+DRAGON_BOND_CONFIRM = (1300, 550, 1690, 725)
+DRAGON_BOND_NAMES = ("召唤", "治疗", "连击", "反击")
 SUPPLY_CENTERS = (250, 605, 960, 1315, 1670)
 SUPPLY_FOUR_CENTERS = (428, 783, 1137, 1492)
 RAIL_TITLE = (655, 51, 1450, 108)
@@ -235,6 +240,7 @@ class Page(Enum):
     RANGER = "巡海游侠任命"
     SVAROG_MODIFICATION = "机心巧匠改装"
     DRAGON_CLEANSE = "苍龙濯世"
+    DRAGON_BOND = "双龙吟"
     GARDEN = "奇兽花园"
     HACK = "骇入效果"
     HALO = "主角光环"
@@ -662,6 +668,12 @@ class Frame:
             return Page.SVAROG_MODIFICATION
         if self.dragon_cleanse:
             return Page.DRAGON_CLEANSE
+        if all(self.dragon_bond_heading) or (self.has("确认选择", area=DRAGON_BOND_CONFIRM) and (
+                any(self.dragon_bond_heading)
+                or {label.text for label in self.matching(DRAGON_BOND_NAMES, DRAGON_BOND_CARDS)}
+                == set(DRAGON_BOND_NAMES))):
+            # 识别不全时仍把操作留在弹层，等标题和提示都恢复后再选。
+            return Page.DRAGON_BOND
 
         if self.has("主角光环与奇遇详情", area=(420, 27, 1065, 104), contains=True) and (
                 self.has("前往重选", area=(640, 164, 1360, 260), contains=True)
@@ -1613,6 +1625,32 @@ class Frame:
     def dragon_confirm(self) -> Label | None:
         button = self.find("确认选择", area=DRAGON_CONFIRM)
         return self._wide_confirm(button, DRAGON_CONFIRM, 1492)
+
+    @cached_property
+    def dragon_bond_heading(self) -> tuple[bool, bool]:
+        return (
+            self.has("双龙吟", area=DRAGON_BOND_TITLE),
+            self.has("请选择一个羁绊加入", "请选择1个羁绊加入", area=DRAGON_BOND_PROMPT),
+        )
+
+    def dragon_bond_card(self, name: str) -> Label | None:
+        card = self.find(name, area=DRAGON_BOND_CARDS)
+        return card if card is not None and card.confidence >= 0.75 else None
+
+    def dragon_bond_selected(self, card: Label) -> bool:
+        x, y = card.point
+        # 悬停只改变边框。读卡面两侧的填充色，避开边框和中央羁绊图标。
+        for left, right in ((x - 87, x - 63), (x + 63, x + 87)):
+            red, green, blue = self.crop((left, y - 108, right, y - 48)).astype(np.int16).transpose(2, 0, 1)
+            gold = (red >= 158) & (green >= 130) & (green - blue >= 26) & (red - blue >= 48)
+            if gold.mean() < 0.6:
+                return False
+        return True
+
+    def dragon_bond_confirm(self) -> Label | None:
+        if button := self.find("确认选择", area=DRAGON_BOND_CONFIRM):
+            return self._wide_confirm(button, DRAGON_BOND_CONFIRM, button.point[0])
+        return None
 
     @cached_property
     def board_effect_cards(self) -> tuple[tuple[Label, str], ...]:
