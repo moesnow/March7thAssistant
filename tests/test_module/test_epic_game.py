@@ -321,11 +321,13 @@ def test_missing_manifest_directory(tmp_path, monkeypatch):
 
 
 def test_local_default_and_reload(monkeypatch):
+    from module.automation.windows_input import WindowsInputApi
     from module.config.config import Config
     config = Config.__new__(Config)
     config.config = dict(script_path="", game_path=GAME_PATH, game_process_name="StarRail", game_title_name="Star Rail")
     controller = local.LocalGameController(config, Mock())
     monkeypatch.setattr(controller, "get_window_handle", lambda: 0)
+    monkeypatch.setattr(WindowsInputApi, "process_running", Mock(return_value=False))
     monkeypatch.setattr(local.os.path, "exists", lambda _: True)
     monkeypatch.setattr(local.os, "system", Mock(return_value=0))
     monkeypatch.setattr(epic.os, "startfile", Mock())

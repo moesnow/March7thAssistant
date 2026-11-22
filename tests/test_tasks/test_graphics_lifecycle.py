@@ -438,6 +438,75 @@ def test_local_startup_preserves_a_window_that_appears_at_launch(startup, monkey
     controller.stop_game.assert_not_called()
 
 
+@pytest.mark.parametrize(("outcome", "startup_seconds", "elapsed"), [
+    ("late_window", 90, 3),
+    ("window_missing", 90, 60),
+    ("window_missing", 3, 3),
+    ("stopped", 90, 1),
+])
+def test_direct_start_waits_for_the_reused_process_window(startup, monkeypatch, tmp_path, outcome,
+                                                         startup_seconds, elapsed):
+    from module.automation import windows_input
+    from module.game import local
+    from utils import wait, windows_session
+    from utils.pause import RunStopRequested
+
+    game, controller, cfg = startup
+    cfg.start_game_timeout = startup_seconds / 60
+    game_path = tmp_path / "StarRail.exe"
+    game_path.touch()
+    controller.game_path = str(game_path)
+    controller.logger = None
+    controller.start_game_process = Mock(wraps=MethodType(local.LocalGameController.start_game_process, controller))
+    controller.stop_game.side_effect = AssertionError("复用的游戏进程被关闭")
+    launch = Mock(side_effect=AssertionError("已有游戏进程时重复直启"))
+    monkeypatch.setattr(local, "os", SimpleNamespace(path=local.os.path, system=launch))
+    monkeypatch.setattr(local, "in_desktop_twin", lambda: False)
+    api = game.WindowsInputApi.return_value
+    # 首次探测时进程尚不存在，直到直启前的复核才看到进程。
+    api.process_running.side_effect = lambda *_args, **_kwargs: api.process_running.call_count > 1
+    monkeypatch.setattr(windows_input, "WindowsInputApi", game.WindowsInputApi)
+    monkeypatch.setattr(windows_session, "process_session_id", game.process_session_id)
+
+    state = SimpleNamespace(now=0)
+    clock = SimpleNamespace(monotonic=lambda: state.now,
+                            sleep=lambda seconds: setattr(state, "now", state.now + seconds))
+    monkeypatch.setattr(game, "time", clock)
+    monkeypatch.setattr(wait, "time", clock)
+    monkeypatch.setattr(game, "wait_until", wait.wait_until)
+    controller.switch_to_game.side_effect = lambda: outcome == "late_window" and state.now >= 2
+
+    def checkpoint():
+        if outcome == "stopped" and state.now >= 1:
+            raise RunStopRequested
+
+    monkeypatch.setattr(game, "pause_ctl", SimpleNamespace(checkpoint=checkpoint, check_stop=checkpoint))
+    monkeypatch.setattr(game, "log", Mock())
+    monkeypatch.setattr(game, "screen", Mock(get_current_screen=Mock(return_value=True), current_screen="main"))
+    game.auto.click_element = Mock()
+
+    if outcome == "late_window":
+        game.start_game()
+        game.screen.get_current_screen.assert_called_once_with(autotry=False, max_retries=1)
+    elif outcome == "stopped":
+        with pytest.raises(RunStopRequested):
+            game.start_game()
+        game.screen.get_current_screen.assert_not_called()
+    else:
+        with pytest.raises(game.GameStartupUnavailable, match="无法将本地游戏窗口切到前台，已保留游戏现场"):
+            game.start_game()
+        game.screen.get_current_screen.assert_not_called()
+
+    assert state.now == elapsed
+    assert controller.launched_new_process is False
+    controller.start_game_process.assert_called_once_with()
+    api.process_running.assert_called_with(controller.process_name, session_id=1)
+    launch.assert_not_called()
+    controller.stop_game.assert_not_called()
+    game.auto.click_element.assert_not_called()
+    game.auto.press_mouse.assert_not_called()
+
+
 @pytest.mark.parametrize("background", [False, True])
 def test_touch_local_start_uses_clicks_and_native_resolution(startup, monkeypatch, background):
     game, controller, cfg = startup

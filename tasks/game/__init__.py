@@ -414,7 +414,8 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None, pres
                 if not switched:
                     time.sleep(10)
 
-                if background:
+                # 直启前刚发现的已有进程也走有界的接管等待，超时保留游戏现场。
+                if switched or background:
                     _wait_for_local_window(starrail, remaining_startup_time())
                 elif not wait_until(switch_to_window, remaining_startup_time()):
                     pause_ctl.checkpoint()
