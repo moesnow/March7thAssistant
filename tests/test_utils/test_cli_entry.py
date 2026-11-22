@@ -1,5 +1,6 @@
 # coding:utf-8
 """utils/cli_entry.py 非提权入口测试：提权运行（用假启动器代替 UAC）、跟随输出、控制指令、状态查询。"""
+import gettext
 import io
 import json
 import os
@@ -16,6 +17,7 @@ import utils.schedule as schedule
 from utils import cli_entry, runs, uac_free
 from utils.admin import ERROR_CANCELLED, is_user_admin
 from utils.pause import CONTROL_FILE_ENV, PauseController, read_state
+from utils.tasks import AVAILABLE_TASKS
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -415,21 +417,25 @@ class TestReadOnlyCommands:
         assert {"id": "daily"}.items() <= next(t for t in tasks if t["id"] == "daily").items()
 
     @pytest.mark.parametrize("lang", ["zh_CN", "zh_TW", "en_US", "ja_JP", "ko_KR"])
-    def test_list_json_with_explicit_language_and_missing_translation(self, lang):
+    def test_list_json_with_explicit_language_and_missing_translation(self, lang, compiled_locales):
         # 在独立进程中指定语言，并强制增加一个缺译任务，覆盖目录完整后的缺译路径。
         code = (
             "import runpy, sys; import module.localization as loc; import utils.tasks as tasks; "
-            "load = loc.load_language; loc.load_language = lambda: load(sys.argv[1]); "
+            "lang, loc._locale_dir = sys.argv[1:]; "
+            "load = loc.load_language; loc.load_language = lambda: load(lang); "
             "tasks.AVAILABLE_TASKS['missing'] = '测试缺失译文'; "
             "sys.argv = ['main.py', '--list', '--json']; runpy.run_path('main.py', run_name='__main__')"
         )
-        result = subprocess.run([sys.executable, "-c", code, lang], cwd=REPO,
+        result = subprocess.run([sys.executable, "-c", code, lang, str(compiled_locales)], cwd=REPO,
                                 capture_output=True, timeout=120,
                                 env=dict(os.environ, MARCH7TH_CONFIG_READONLY="1"))
         assert result.returncode == 0, result.stderr.decode("utf-8", "replace")
         tasks = json.loads(result.stdout)
         assert all(set(task) == {"id", "name"} for task in tasks)
         assert {"daily", "character_export", "missing"} <= {task["id"] for task in tasks}
+        catalog = gettext.translation("march7th", compiled_locales, languages=[lang])
+        daily = next(task for task in tasks if task["id"] == "daily")
+        assert daily["name"] == catalog.gettext(AVAILABLE_TASKS["daily"])
 
     def test_missing_translation_does_not_initialize_logger(self):
         code = ("import sys; import module.localization as loc; "

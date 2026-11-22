@@ -72,6 +72,7 @@ Windows でターミナルから起動する場合は、管理者権限で Power
 git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
 cd March7thAssistant
 pip install -r requirements.txt
+python -m tools.i18n compile
 
 # GUI を起動
 python app.py
@@ -82,6 +83,8 @@ python main.py
 # 更新
 git pull
 git submodule update --init --recursive
+pip install -r requirements.txt
+python -m tools.i18n compile
 ```
 
 `uv` を使う場合は、プロジェクト付属の `pyproject.toml` ワークフローをそのまま使うのがおすすめです。
@@ -91,6 +94,7 @@ git submodule update --init --recursive
 git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
 cd March7thAssistant
 uv sync
+uv run python -m tools.i18n compile
 
 # GUI を起動
 uv run python app.py

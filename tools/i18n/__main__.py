@@ -2,8 +2,9 @@
 """i18n 工具命令行入口：python -m tools.i18n {extract,check,compile,prune,docs-tw}"""
 import argparse
 import sys
+from pathlib import Path
 
-from . import ensure_utf8_output, extract, prune_dead_keys, run_checks
+from . import LOCALES, ensure_utf8_output, extract, prune_dead_keys, run_checks
 
 
 def main(argv=None) -> int:
@@ -11,8 +12,9 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="python -m tools.i18n", description="多语言翻译目录工具")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("extract", help="扫描源码/常量表/数据源，把新文案并入 .pot/.po")
-    sub.add_parser("check", help="校验翻译目录（CI / pytest 使用同一套规则）")
-    sub.add_parser("compile", help="编译 .po -> .mo（.mo 需随 .po 一起提交）")
+    sub.add_parser("check", help="校验翻译源，并在临时目录编译、读取译文")
+    compile_cmd = sub.add_parser("compile", help="从 .po 生成各语言的 .mo 运行文件")
+    compile_cmd.add_argument("--output-dir", type=Path, help="gettext 输出根目录（默认 assets/locales）")
     prune = sub.add_parser("prune", help="删除未登记进 .pot 的死条目（模板外历史遗留）")
     prune.add_argument("--dry-run", action="store_true", help="只统计不写入")
     docs = sub.add_parser("docs-tw", help="由简体基准经 OpenCC 重新生成 zh_TW 多语言文档")
@@ -47,14 +49,17 @@ def main(argv=None) -> int:
         detail = ", ".join(f"{lang}={n}" for lang, n in removed.items())
         print(f"{'将删除' if args.dry_run else '已删除'}死条目 {total} 条（{detail}）")
         if total and not args.dry_run:
-            print("请运行 python -m tools.i18n compile 同步 .mo")
+            print("本地运行前可用 python -m tools.i18n compile 更新译文")
         return 0
 
     if args.command == "compile":
         from .po import compile_po
-        from . import LOCALES as PO_LOCALES
-        for lang in PO_LOCALES:
-            size = compile_po(lang)
+        for lang in LOCALES:
+            try:
+                size = compile_po(lang, args.output_dir)
+            except Exception as exc:
+                print(f"[{lang}] march7th.po 编译失败（{exc}）", file=sys.stderr)
+                return 1
             print(f"[{lang}] march7th.mo 编译完成（{size} 字节）")
         return 0
 

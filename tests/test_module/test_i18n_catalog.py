@@ -5,6 +5,11 @@
 与 CI 中运行的 `python -m tools.i18n check` 使用同一套规则。
 """
 import ast
+import gettext
+from pathlib import Path
+
+import polib
+import pytest
 
 from tools.i18n import (
     LOCALES,
@@ -14,7 +19,7 @@ from tools.i18n import (
     placeholders,
     run_checks,
 )
-from tools.i18n.po import mo_path, po_path, pot_path
+from tools.i18n.po import po_path, pot_path
 
 
 class TestPlaceholders:
@@ -281,6 +286,8 @@ class TestStrictRules:
         pot.metadata = po_mod.base_metadata("", is_pot=True)
         for msgid, meta in source.items():
             pot.append(po_mod._make_entry(msgid, meta, None))
+            for context in meta.get("contexts", ()):
+                pot.append(po_mod._make_entry(msgid, meta, None, msgctxt=context))
         pot.save(str(po_mod.pot_path()))
 
         for lang, entries in entries_by_lang.items():
@@ -290,6 +297,135 @@ class TestStrictRules:
                 po.append(e)
             po.save(str(po_mod.po_path(lang)))
         return po_mod
+
+    @pytest.fixture
+    def catalogs(self, tmp_path, monkeypatch):
+        entries = {}
+        for lang in ("en_US", "ja_JP"):
+            forms = {0: f"one {lang}"}
+            if lang == "en_US":
+                forms[1] = "many en_US"
+            entries[lang] = [
+                polib.POEntry(msgid="运行", msgstr=f"run {lang}"),
+                polib.POEntry(msgctxt="button", msgid="运行", msgstr=f"button {lang}"),
+                polib.POEntry(msgctxt="counter", msgid="次", msgid_plural="次|plural", msgstr_plural=forms),
+                polib.POEntry(msgid="次", msgid_plural="次|plural", msgstr_plural=forms),
+            ]
+        return self._locale_fixture(tmp_path, monkeypatch, entries, entries, {
+            "运行": {"contexts": ("button",)}, "次": {"plural": True, "contexts": ("counter",)},
+        })
+
+    def test_check_is_read_only_with_missing_and_stale_mo(self, catalogs, tmp_path, monkeypatch):
+        temp_root = tmp_path / "scratch"
+        temp_root.mkdir()
+        monkeypatch.setattr(catalogs.tempfile, "tempdir", str(temp_root))
+        stale = catalogs.mo_path("ja_JP")
+        for has_stale in (False, True):
+            if has_stale:
+                stale.write_bytes(b"obsolete")
+            before = {p: (p.stat().st_mtime_ns, p.read_bytes())
+                      for p in catalogs.LOCALE_DIR.rglob("*") if p.is_file()}
+            errors, _ = catalogs.check_po(set())
+            assert errors == []
+            assert set(p for p in catalogs.LOCALE_DIR.rglob("*") if p.is_file()) == before.keys()
+            for path, (mtime, data) in before.items():
+                assert (path.stat().st_mtime_ns, path.read_bytes()) == (mtime, data)
+            assert list(temp_root.iterdir()) == []
+
+    def test_compile_separates_locales_and_is_reproducible(self, catalogs, tmp_path):
+        builds = [tmp_path / "first", tmp_path / "second"]
+        for root in builds:
+            for lang in catalogs.LOCALES:
+                catalogs.compile_po(lang, root)
+            for lang in catalogs.LOCALES:
+                compiled = gettext.translation(catalogs.PO_DOMAIN, root, languages=[lang])
+                assert compiled.gettext("运行") == f"run {lang}"
+                assert compiled.pgettext("button", "运行") == f"button {lang}"
+                assert compiled.ngettext("次", "次|plural", 1) == f"one {lang}"
+                expected = "many en_US" if lang == "en_US" else "one ja_JP"
+                assert compiled.npgettext("counter", "次", "次|plural", 5) == expected
+        for lang in catalogs.LOCALES:
+            first, second = (catalogs.mo_path(lang, root) for root in builds)
+            assert first.read_bytes() == second.read_bytes()
+
+    def test_compile_cli_reports_write_failure_and_preserves_previous_file(self, catalogs, tmp_path, monkeypatch, capsys):
+        from tools.i18n import __main__ as cli
+
+        monkeypatch.setattr(cli, "LOCALES", catalogs.LOCALES)
+        output = tmp_path / "build"
+        args = ["compile", "--output-dir", str(output)]
+        assert cli.main(args) == 0
+        path = catalogs.mo_path("en_US", output)
+        previous = path.read_bytes()
+
+        def fail_after_write(po, filename):
+            Path(filename).write_bytes(b"partial catalog")
+            raise OSError("disk full")
+
+        monkeypatch.setattr(polib.POFile, "save_as_mofile", fail_after_write)
+        assert cli.main(args) == 1
+        assert "[en_US] march7th.po 编译失败（disk full）" in capsys.readouterr().err
+        assert path.read_bytes() == previous
+
+    @pytest.mark.parametrize("fault", ["missing", "syntax", "write", "unreadable", "wrong_translation", "tempdir"])
+    def test_cli_check_reports_catalog_failure(self, catalogs, monkeypatch, capsys, fault):
+        from tools.i18n.__main__ import main
+
+        source = catalogs.po_path("en_US")
+        if fault == "missing":
+            source.unlink()
+        elif fault == "syntax":
+            source.write_text("invalid PO syntax", encoding="utf-8")
+        elif fault == "tempdir":
+            def denied(*args, **kwargs):
+                raise PermissionError("cannot create tempdir")
+            monkeypatch.setattr(catalogs.tempfile, "TemporaryDirectory", denied)
+        else:
+            save = polib.POFile.save_as_mofile
+
+            def broken_save(po, path):
+                if po.metadata["Language"] == "en_US":
+                    if fault == "write":
+                        raise OSError("cannot write catalog")
+                    if fault == "unreadable":
+                        Path(path).write_bytes(b"invalid MO")
+                        return
+                    # 生成有效的 gettext 文件，里面却是另一种语言的译文。
+                    po = polib.pofile(str(catalogs.po_path("ja_JP")))
+                    po.metadata = catalogs.base_metadata("en_US")
+                save(po, path)
+
+            monkeypatch.setattr(polib.POFile, "save_as_mofile", broken_save)
+
+        assert main(["check"]) == 1
+        message = capsys.readouterr().err
+        assert "[en_US]" in message
+        if fault != "tempdir":
+            assert "[ja_JP]" not in message
+        if fault in {"missing", "syntax"}:
+            assert "march7th.po 缺失或不可解析" in message
+        elif fault == "wrong_translation":
+            assert "gettext 读取的条目或译文与 .po 不一致" in message
+        else:
+            assert ".mo 编译或读取校验失败" in message
+
+    @pytest.mark.parametrize("fault", ["empty", "fuzzy", "plural_index", "plural_rule", "plural_msgid"])
+    def test_check_rejects_unfinished_and_incorrect_plurals(self, catalogs, fault):
+        path = catalogs.po_path("en_US")
+        po = polib.pofile(str(path))
+        if fault == "empty":
+            po[0].msgstr = ""
+        elif fault == "fuzzy":
+            po[0].flags.append("fuzzy")
+        elif fault == "plural_index":
+            po[-1].msgstr_plural[2] = po[-1].msgstr_plural.pop(1)
+        elif fault == "plural_msgid":
+            po[-1].msgid_plural = "different plural msgid"
+        else:
+            po.metadata["Plural-Forms"] = "nplurals=2; plural=0;"
+        po.save(str(path))
+        errors, _ = catalogs.check_po(set())
+        assert any("[en_US]" in error for error in errors)
 
     def test_plural_empty_form_is_error(self, tmp_path, monkeypatch):
         """en_US 两形式语言缺一个形式 → error（polib 编译时会整条丢弃）。"""
@@ -418,7 +554,6 @@ class TestCatalogs:
         assert pot_path().is_file()
         for lang in LOCALES:
             assert po_path(lang).is_file(), f"{lang} 缺 .po"
-            assert mo_path(lang).is_file(), f"{lang} 缺 .mo"
 
     def test_check_no_error(self):
         """翻译目录 + 源码字面量整体校验：不得有错误（警告不限）。"""

@@ -226,6 +226,7 @@ pipx ensurepath
 git clone https://github.com/moesnow/March7thAssistant --depth 1
 cd March7thAssistant
 uv sync --only-group docker
+uv run --only-group docker python -m tools.i18n compile
 ```
 
 > **注意**：克隆仓库需要访问 GitHub，如果遇到网络问题，可以尝试通过代理下载，或使用 GitHub 镜像站。
@@ -278,6 +279,7 @@ uv run --only-group docker main.py
 cd ~/March7thAssistant
 git pull
 uv sync --only-group docker
+uv run --only-group docker python -m tools.i18n compile
 ```
 
 ### 启动非完整运行任务

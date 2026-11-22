@@ -1,10 +1,24 @@
 import sys
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pytest
 
 # 确保项目根目录在 Python 路径中
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+
+@pytest.fixture(scope="session")
+def compiled_locales():
+    """供运行时测试读取的五种语言，从当前 .po 编译一次。"""
+    from tools.i18n import LOCALES
+    from tools.i18n.po import compile_po
+
+    with TemporaryDirectory() as directory:
+        root = Path(directory)
+        for lang in LOCALES:
+            compile_po(lang, root)
+        yield root
 
 
 def pytest_addoption(parser):

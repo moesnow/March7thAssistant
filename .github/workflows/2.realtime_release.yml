@@ -8,6 +8,7 @@ on:
       - main
     paths:
       - "**/*.py"
+      - "assets/locales/**"
       - "requirements.txt"
       - "pyproject.toml"
       - "uv.lock"
@@ -68,9 +69,15 @@ jobs:
       # 安装依赖
       - name: Install dependencies
         if: steps.check_version.outputs.should_build == 'true'
-        run: |
-          uv sync --group build
-          uv run python build.py --task ocr
+        run: uv sync --group build
+
+      - name: Compile translation catalogs
+        if: steps.check_version.outputs.should_build == 'true'
+        run: uv run --no-sync python -m tools.i18n compile
+
+      - name: Prepare OCR resources
+        if: steps.check_version.outputs.should_build == 'true'
+        run: uv run python build.py --task ocr
 
       # 并行生成程序
       - name: Generate program

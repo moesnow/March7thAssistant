@@ -72,6 +72,7 @@ Windows에서 터미널로 실행할 경우 PowerShell, Windows Terminal, CMD를
 git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
 cd March7thAssistant
 pip install -r requirements.txt
+python -m tools.i18n compile
 
 # GUI 실행
 python app.py
@@ -82,6 +83,8 @@ python main.py
 # 업데이트
 git pull
 git submodule update --init --recursive
+pip install -r requirements.txt
+python -m tools.i18n compile
 ```
 
 `uv`를 사용한다면 프로젝트에 포함된 `pyproject.toml` 워크플로를 그대로 쓰는 것을 권장합니다.
@@ -91,6 +94,7 @@ git submodule update --init --recursive
 git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
 cd March7thAssistant
 uv sync
+uv run python -m tools.i18n compile
 
 # GUI 실행
 uv run python app.py

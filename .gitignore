@@ -56,8 +56,7 @@ coverage.xml
 cover/
 
 # Translations
-# *.mo
-# *.pot
+/assets/locales/**/LC_MESSAGES/march7th.mo
 
 # Django stuff:
 *.log

@@ -4,16 +4,19 @@
 约定：
 - msgid = 中文原文（key 即 msgid），源语言 zh_CN
 - 复数条目：msgid_plural = 文案 + PLURAL_SUFFIX（仅元数据后缀；GNU gettext 运行期按 msgid 查表）
-- .mo 随 .po 一起提交（打包流程整目录拷贝 assets，零改动），check 校验两者同步
+- .po 是译文来源，compile 生成运行文件，check 在临时目录验证编译结果
 - 本模块只做机械读写，调用方输出统计时不得打印译文内容
 """
 from __future__ import annotations
 
-import os
+import gettext
 import re
 import tempfile
+from pathlib import Path
 
 import polib
+
+from module.localization.languages import get_lang_meta
 
 from . import (
     BASE_LOCALE,
@@ -37,8 +40,8 @@ def po_path(lang: str):
     return LOCALE_DIR / lang / "LC_MESSAGES" / f"{PO_DOMAIN}.po"
 
 
-def mo_path(lang: str):
-    return LOCALE_DIR / lang / "LC_MESSAGES" / f"{PO_DOMAIN}.mo"
+def mo_path(lang: str, output_dir: Path | None = None) -> Path:
+    return (output_dir or LOCALE_DIR) / lang / "LC_MESSAGES" / f"{PO_DOMAIN}.mo"
 
 
 def pot_path():
@@ -46,8 +49,6 @@ def pot_path():
 
 
 def nplurals_of(lang: str) -> int:
-    from module.localization.languages import get_lang_meta
-
     for part in get_lang_meta(lang)["plural_forms"].split(";"):
         part = part.strip()
         if part.startswith("nplurals="):
@@ -59,8 +60,6 @@ def nplurals_of(lang: str) -> int:
 
 
 def base_metadata(lang: str, is_pot: bool = False) -> dict:
-    from module.localization.languages import get_lang_meta
-
     meta = {
         "Project-Id-Version": "march7th",
         "Report-Msgid-Bugs-To": "",
@@ -248,23 +247,40 @@ def update_po() -> dict:
     return added
 
 
-def compile_po(lang: str) -> int:
-    """编译 .po -> .mo，返回字节数。"""
-    po = polib.pofile(str(po_path(lang)))
-    path = mo_path(lang)
-    os.makedirs(str(path.parent), exist_ok=True)
+def _read_po(path: Path) -> polib.POFile:
+    # polib 也接受 PO 文本，必须先确认传入的是存在的文件。
+    if not path.is_file():
+        raise FileNotFoundError(path)
+    return polib.pofile(str(path))
+
+
+def _compile_to(po: polib.POFile, lang: str, path: Path) -> int:
+    path.parent.mkdir(parents=True, exist_ok=True)
     po.save_as_mofile(str(path))
-    return os.path.getsize(str(path))
+    with path.open("rb") as stream:
+        compiled = gettext.GNUTranslations(stream)
+    _validate_compiled(po, lang, compiled)
+    return path.stat().st_size
+
+
+def compile_po(lang: str, output_dir: Path | None = None) -> int:
+    """从 .po 生成运行文件，验证后替换旧文件，返回字节数。"""
+    po = _read_po(po_path(lang))
+    path = mo_path(lang, output_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=path.parent) as staging:
+        tmp = Path(staging) / path.name
+        size = _compile_to(po, lang, tmp)
+        tmp.replace(path)
+    return size
 
 
 # ---------------------------------------------------------------------------
 # 校验
 # ---------------------------------------------------------------------------
 
-def _is_untranslated(entry) -> bool:
-    if entry.msgid_plural:
-        return not all(entry.msgstr_plural.values())
-    return not entry.msgstr
+def _is_untranslated(entry: polib.POEntry) -> bool:
+    return not entry.translated()
 
 
 _ABS_REF_RE = re.compile(r"^([A-Za-z]:)?[\\/]")
@@ -291,11 +307,12 @@ def check_po(strict: set[str]) -> tuple[list[str], list[str]]:
 
     entries = source_entries()
     try:
-        pot = polib.pofile(str(pot_path()))
-    except Exception:
-        errors.append("march7th.pot 缺失或不可解析（运行 python -m tools.i18n extract）")
+        pot = _read_po(pot_path())
+    except Exception as exc:
+        errors.append(f"march7th.pot 缺失或不可解析（{exc}）")
         return errors, warnings
     pot_keys = po_keyset(pot)
+    template = _index(pot)
     unregistered = set(entries) - pot_keys
     if unregistered:
         errors.append(f"{len(unregistered)} 条源文案未登记进 .pot（运行 python -m tools.i18n extract）")
@@ -312,21 +329,15 @@ def check_po(strict: set[str]) -> tuple[list[str], list[str]]:
         errors.append(f".pot 有 {n_abs} 条绝对路径引用（运行 python -m tools.i18n extract 刷新）")
 
     # en_US 译文：用于识别"目标语言直接沿用了英文"的占位译文
-    en_values: dict[str, str] = {}
-    try:
-        for e in polib.pofile(str(po_path("en_US"))):
-            if not e.msgid_plural:
-                en_values[entry_key(e)] = e.msgstr
-    except Exception:
-        pass
-
+    catalogs = {}
     for lang in LOCALES:
         try:
-            po = polib.pofile(str(po_path(lang)))
-        except Exception:
-            errors.append(f"[{lang}] po 目录缺失或不可解析（运行 python -m tools.i18n extract）")
-            continue
+            catalogs[lang] = _read_po(po_path(lang))
+        except Exception as exc:
+            errors.append(f"[{lang}] {po_path(lang).name} 缺失或不可解析（{exc}）")
+    en_values = {entry_key(e): e.msgstr for e in catalogs.get("en_US", ()) if not e.msgid_plural}
 
+    for lang, po in catalogs.items():
         # 1) 源条目集与 .pot 一致（模板之外的条目为历史遗留，保留并警告）
         keys = po_keyset(po)
         missing = pot_keys - keys
@@ -359,20 +370,27 @@ def check_po(strict: set[str]) -> tuple[list[str], list[str]]:
 
         # 3) 复数条目：形式个数符合 Plural-Forms，且多形式语言不得留空
         n = nplurals_of(lang)
+        form_indices = set(range(n))
         for e in po:
+            source = template.get(entry_key(e))
+            if source is not None and source.msgid_plural != e.msgid_plural:
+                errors.append(f"[{lang}] msgid_plural 与模板不一致（msgid 长度 {len(e.msgid)}）")
             if not e.msgid_plural:
                 continue
-            if len(e.msgstr_plural) != n:
+            if set(e.msgstr_plural) != form_indices:
                 errors.append(
-                    f"[{lang}] 复数条目 msgstr_plural 个数应为 {n}（msgid 长度 {len(e.msgid)}）"
+                    f"[{lang}] 复数条目应包含 msgstr[0] 至 msgstr[{n - 1}]（msgid 长度 {len(e.msgid)}）"
                 )
             elif n >= 2 and not all(e.msgstr_plural.values()):
                 # polib 编译时会整条丢弃该条目，运行期直接回退到中文原文，必须挡住
                 errors.append(f"[{lang}] 复数条目缺少复数形式（msgid 长度 {len(e.msgid)}）")
 
-        # 4) .mo 与 .po 同步
-        if not _mo_in_sync(po, lang):
-            errors.append(f"[{lang}] .mo 与 .po 不同步（运行 python -m tools.i18n compile）")
+        # 4) 从当前 .po 验证编译和 gettext 读取
+        try:
+            with tempfile.TemporaryDirectory() as directory:
+                _compile_to(po, lang, mo_path(lang, Path(directory)))
+        except Exception as exc:
+            errors.append(f"[{lang}] .mo 编译或读取校验失败（{exc}）")
 
         # 5) 位置占位符禁令同样适用于 po 条目
         for e in po:
@@ -391,22 +409,35 @@ def check_po(strict: set[str]) -> tuple[list[str], list[str]]:
                 if en and e.msgstr == en:
                     warnings.append(f"[{lang}] 译文与 en_US 完全相同（疑似英文占位，msgid 长度 {len(e.msgid)}）")
 
-        # 7) 待翻译统计 —— 仅警告
-        untranslated = sum(1 for e in po if _is_untranslated(e))
-        if untranslated:
-            warnings.append(f"[{lang}] 有 {untranslated} 条待翻译")
+        # 7) 模板内的条目必须已翻译，历史条目沿用告警。
+        unfinished = [entry_key(e) for e in po if _is_untranslated(e)]
+        registered = sum(key in pot_keys for key in unfinished)
+        if registered:
+            errors.append(f"[{lang}] 有 {registered} 条模板译文未完成（含 fuzzy）")
+        if len(unfinished) > registered:
+            warnings.append(f"[{lang}] 有 {len(unfinished) - registered} 条历史条目待翻译")
 
     return errors, warnings
 
 
-def _mo_in_sync(po, lang: str) -> bool:
-    path = mo_path(lang)
-    if not path.is_file():
-        return False
-    with tempfile.TemporaryDirectory() as td:
-        tmp = os.path.join(td, f"{PO_DOMAIN}.mo")
-        po.save_as_mofile(tmp)
-        with open(tmp, "rb") as f:
-            fresh = f.read()
-    with open(str(path), "rb") as f:
-        return f.read() == fresh
+def _validate_compiled(po: polib.POFile, lang: str, compiled: gettext.GNUTranslations) -> None:
+    header = compiled.info().get("plural-forms", "")
+    count = re.match(r"nplurals\s*=\s*(\d+)\s*;", header)
+    rule = get_lang_meta(lang)["plural_forms"].split("plural=")[1].rstrip(";")
+    expected_plural = gettext.c2py(rule)
+    if (not count or int(count[1]) != nplurals_of(lang)
+            or any(compiled.plural(n) != expected_plural(n) for n in (0, 1, 2, 5))):
+        raise ValueError(f"Plural-Forms 与 {lang} 的复数规则不符")
+
+    # 即使译文和原文相同，也须有实际目录条目；gettext() 对缺失键会返回原文。
+    expected = {}
+    for entry in po.translated_entries():
+        key = entry_key(entry)
+        if entry.msgid_plural:
+            for index, value in entry.msgstr_plural.items():
+                expected[key, index] = value
+        else:
+            expected[key] = entry.msgstr
+    actual = {key: value for key, value in compiled._catalog.items() if key != ""}
+    if actual != expected:
+        raise ValueError("gettext 读取的条目或译文与 .po 不一致")

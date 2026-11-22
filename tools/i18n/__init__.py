@@ -4,8 +4,8 @@
 提供以下子命令（见 ``python -m tools.i18n -h``）：
 
 - ``extract``    扫描源码/数据源中的 tr()/tn()/trc() 字面量，把新文案并入 .pot/.po
-- ``check``      校验 .pot/.po/.mo 与多语言文档，CI 与 pytest 均调用同一套规则
-- ``compile``    编译 .po -> .mo（.mo 需随 .po 一起提交）
+- ``check``      校验 .pot/.po 与多语言文档，并在临时目录验证 gettext 编译结果
+- ``compile``    从 .po 生成各平台运行时读取的 .mo
 
 设计约定：
 - msgid 即中文原文（zh_CN 为源语言），.po/.mo 位于 assets/locales/{lang}/LC_MESSAGES/；
@@ -422,7 +422,7 @@ def prune_dead_keys(dry_run: bool = False) -> dict:
 
     判定：条目键不在 .pot 且不在 legacy_keys.txt 白名单里即为死键。
     TABLE_SOURCES / DATA_SOURCES 的取值经 extract 已进 .pot，不会被误删。
-    只改 .po，删完需运行 compile 同步 .mo。
+    只改 .po，本地运行前可用 compile 更新译文。
     """
     import polib
 
@@ -460,7 +460,7 @@ def run_checks() -> tuple[list[str], list[str]]:
     # 2) 多语言文档：表格行数一致、语言后缀命名合法、译文缺失 —— 仅警告
     warnings.extend(check_docs())
 
-    # 3) gettext 目录（.pot/.po/.mo）
+    # 3) gettext 翻译源和临时编译结果
     try:
         from .po import check_po
         po_errors, po_warnings = check_po(strict)

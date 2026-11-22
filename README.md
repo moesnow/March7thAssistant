@@ -82,6 +82,7 @@ Windows 下如果通过终端启动，建议使用管理员模式打开 PowerShe
 git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
 cd March7thAssistant
 pip install -r requirements.txt
+python -m tools.i18n compile
 
 # 启动图形界面
 python app.py
@@ -92,6 +93,8 @@ python main.py
 # 更新
 git pull
 git submodule update --init --recursive
+pip install -r requirements.txt
+python -m tools.i18n compile
 ```
 
 如果使用 `uv`，推荐直接使用项目自带的 `pyproject.toml` 工作流：
@@ -101,6 +104,7 @@ git submodule update --init --recursive
 git clone --recurse-submodules https://github.com/moesnow/March7thAssistant
 cd March7thAssistant
 uv sync
+uv run python -m tools.i18n compile
 
 # 启动图形界面
 uv run python app.py

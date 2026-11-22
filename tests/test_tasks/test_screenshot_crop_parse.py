@@ -55,12 +55,14 @@ class TestParseCropValue:
         with pytest.raises(ValueError):
             parse("1900, 200, 300, 120")
 
-    def test_error_message_follows_language(self):
+    def test_error_message_follows_language(self, compiled_locales, monkeypatch):
         """报错文案会按当前语言显示（D5 起这些 raise 都套了 tr()）。"""
+        monkeypatch.setattr("module.localization._locale_dir", compiled_locales)
         load_language("en_US")
         with pytest.raises(ValueError) as exc:
             parse("1,2,3")
         assert "4" in str(exc.value)
+        assert "部分" not in str(exc.value)
         load_language("zh_CN")
         with pytest.raises(ValueError) as exc:
             parse("1,2,3")

@@ -8,17 +8,19 @@ import pytest
 
 from module.localization.languages import LANGS
 from tools.i18n import placeholders
-from tools.i18n.po import mo_path, po_path, pot_path
+from tools.i18n.po import PO_DOMAIN, po_path, pot_path
 
 
 @pytest.mark.parametrize("lang", LANGS)
-def test_registered_messages_are_translated_and_compiled(lang):
+def test_registered_messages_are_translated_and_compiled(lang, compiled_locales):
     """新 UI 文案必须同步翻译；fuzzy 条目也不能冒充已完成译文。"""
     template = polib.pofile(str(pot_path()))
     catalog = polib.pofile(str(po_path(lang)))
-    with mo_path(lang).open("rb") as stream:
-        compiled = gettext.GNUTranslations(stream)
+    compiled = gettext.translation(PO_DOMAIN, compiled_locales, languages=[lang])
+    _assert_complete(lang, template, catalog, compiled)
 
+
+def _assert_complete(lang, template, catalog, compiled):
     failures = []
     for source in template:
         entry = catalog.find(source.msgid, msgctxt=source.msgctxt)
@@ -54,9 +56,8 @@ def test_registered_messages_are_translated_and_compiled(lang):
 
 
 @pytest.mark.parametrize("plural", [False, True])
-def test_fuzzy_entry_is_rejected_even_with_stale_compiled_translation(tmp_path, monkeypatch, plural):
+def test_fuzzy_entry_is_rejected_even_with_stale_compiled_translation(tmp_path, plural):
     """polib 1.2 excludes fuzzy entries in translated(); stale .mo cannot mask them."""
-    import sys
     from tools.i18n.po import base_metadata
 
     template = polib.POFile()
@@ -70,14 +71,11 @@ def test_fuzzy_entry_is_rejected_even_with_stale_compiled_translation(tmp_path, 
     catalog = polib.POFile()
     catalog.metadata = base_metadata("en_US")
     catalog.append(entry)
-    template.save(str(tmp_path / "test.pot"))
     catalog.save_as_mofile(str(tmp_path / "test.mo"))
     entry.flags.append("fuzzy")
-    catalog.save(str(tmp_path / "test.po"))
-
-    module = sys.modules[__name__]
-    monkeypatch.setattr(module, "pot_path", lambda: tmp_path / "test.pot")
-    monkeypatch.setattr(module, "po_path", lambda lang: tmp_path / "test.po")
-    monkeypatch.setattr(module, "mo_path", lambda lang: tmp_path / "test.mo")
+    source_path = tmp_path / "test.po"
+    catalog.save(str(source_path))
+    with (tmp_path / "test.mo").open("rb") as stream:
+        stale = gettext.GNUTranslations(stream)
     with pytest.raises(AssertionError, match="未完成翻译"):
-        test_registered_messages_are_translated_and_compiled("en_US")
+        _assert_complete("en_US", template, polib.pofile(str(source_path)), stale)

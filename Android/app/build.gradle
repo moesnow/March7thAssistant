@@ -94,11 +94,29 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
 }
 
+def compiledLocales = layout.buildDirectory.dir('generated/locales')
+def compileLocalization = tasks.register('compileLocalization', Exec) {
+    workingDir repo
+    inputs.files(fileTree(repo) {
+        include 'assets/locales/*/LC_MESSAGES/march7th.po', 'tools/i18n/*.py'
+        include 'module/localization/*.py', 'utils/console.py', 'pyproject.toml', 'uv.lock'
+    })
+    outputs.dir(compiledLocales)
+    commandLine 'uv', 'run', '--locked', '--isolated', '--only-group', 'i18n',
+        '--python', hostPython.getOrElse('3.14'), 'python', '-m', 'tools.i18n', 'compile',
+        '--output-dir', compiledLocales.get().asFile.absolutePath
+}
+
 def stage = tasks.register('stageProjectAssets', Zip) {
+    dependsOn compileLocalization
     archiveFileName = 'project.zip'
     destinationDirectory = generatedAssets
     reproducibleFileOrder = true
     preserveFileTimestamps = false
+    from(compiledLocales) {
+        into 'assets/locales'
+        include '*/LC_MESSAGES/march7th.mo'
+    }
     from(repo) {
         include 'LICENSE', 'README.md'
         include 'module/config/__init__.py', 'module/config/config.py', 'module/config/platform.py'
@@ -118,7 +136,7 @@ def stage = tasks.register('stageProjectAssets', Zip) {
         include 'assets/config/config.example.yaml', 'assets/config/version.txt'
         include 'assets/config/ocr_replacements.json', 'assets/config/task_mappings.json'
         include 'assets/config/instance_names.json', 'assets/config/character_names.json'
-        include 'assets/locales/**/march7th.mo', 'assets/touch_720/**', 'assets/images/share/character/*.png'
+        include 'assets/touch_720/**', 'assets/images/share/character/*.png'
         include 'assets/images/share/menu/mail.png', 'assets/images/purefiction/battle_speed.png'
         include 'assets/images/share/power/space_anchor/*.png'
     }

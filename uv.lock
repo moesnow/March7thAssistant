@@ -906,6 +906,7 @@ dependencies = [
 
 [package.dev-dependencies]
 build = [
+    { name = "polib" },
     { name = "pyinstaller" },
 ]
 dev = [
@@ -923,6 +924,7 @@ docker = [
     { name = "openvino" },
     { name = "pillow" },
     { name = "playsound3" },
+    { name = "polib" },
     { name = "psutil" },
     { name = "pypac" },
     { name = "pysocks" },
@@ -932,6 +934,9 @@ docker = [
     { name = "ruamel-yaml" },
     { name = "selenium" },
     { name = "websocket-client" },
+]
+i18n = [
+    { name = "polib" },
 ]
 
 [package.metadata]
@@ -972,7 +977,10 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-build = [{ name = "pyinstaller", specifier = "==6.22.3" }]
+build = [
+    { name = "polib", specifier = "==1.2.0" },
+    { name = "pyinstaller", specifier = "==6.22.3" },
+]
 dev = [
     { name = "polib", specifier = "==1.2.0" },
     { name = "pytest", specifier = ">=8.0" },
@@ -988,6 +996,7 @@ docker = [
     { name = "openvino", specifier = "==2026.2.0" },
     { name = "pillow", specifier = "==13.0.0" },
     { name = "playsound3", specifier = "==3.3.1" },
+    { name = "polib", specifier = "==1.2.0" },
     { name = "psutil", specifier = "==7.2.2" },
     { name = "pypac", specifier = "==0.18.3" },
     { name = "pysocks", specifier = "==1.7.1" },
@@ -998,6 +1007,7 @@ docker = [
     { name = "selenium", specifier = "==4.44.0" },
     { name = "websocket-client", specifier = "==1.9.0" },
 ]
+i18n = [{ name = "polib", specifier = "==1.2.0" }]
 
 [[package]]
 name = "markdown"

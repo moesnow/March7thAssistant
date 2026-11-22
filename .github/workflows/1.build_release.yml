@@ -66,9 +66,13 @@ jobs:
 
       # 安装依赖
       - name: Install dependencies
-        run: |
-          uv sync --group build
-          uv run python build.py --task ocr
+        run: uv sync --group build
+
+      - name: Compile translation catalogs
+        run: uv run --no-sync python -m tools.i18n compile
+
+      - name: Prepare OCR resources
+        run: uv run python build.py --task ocr
 
       # 并行生成程序
       - name: Generate program

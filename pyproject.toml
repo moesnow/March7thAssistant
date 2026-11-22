@@ -43,8 +43,11 @@ dependencies = [
 ]
 
 [dependency-groups]
+i18n = ["polib==1.2.0"]
+
 # Docker 专用依赖：排除 GUI 和 Windows 专属包，其余与 main 保持同步
 docker = [
+    { include-group = "i18n" },
     "ruamel.yaml==0.19.1",
     "playsound3==3.3.1",
     "psutil==7.2.2",
@@ -65,14 +68,15 @@ docker = [
 ]
 
 build = [
+    { include-group = "i18n" },
     "pyinstaller==6.22.3",
 ]
 
 dev = [
+    { include-group = "i18n" },
     "pytest>=8.0",
     "pytest-cov>=6.0",
     "pytest-qt>=4.4",
-    "polib==1.2.0",
 ]
 
 [tool.uv]
