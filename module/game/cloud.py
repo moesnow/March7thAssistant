@@ -42,6 +42,10 @@ class CloudGameLoginTimeoutError(RuntimeError):
     """云游戏登录等待超时，不应按启动失败重试。"""
 
 
+class CloudGamePageNotReadyError(RuntimeError):
+    """浏览器已连接，等待页面登录标志超时。"""
+
+
 class CloudGameZeroDurationError(RuntimeError):
     """云游戏剩余时长为 0。"""
 
@@ -69,7 +73,7 @@ class CloudGameController(GameControllerBase):
     BROWSER_TAG = "--march-7th-assistant-sr-cloud-game"  # 自定义浏览器参数作为标识，用于识别哪些浏览器进程属于三月七小助手
     QUEUE_STATES = frozenset(("game_running", "in_queue", "select_queue"))
     LOBBY_STATES = frozenset(("lobby", "signed_in_lobby"))
-    LOGIN_STATE_PROBE_ATTEMPTS = 3  # 登录状态连续无法确认的检测次数上限（每次检测等待 5 秒）
+    LOGIN_PAGE_READY_TIMEOUT = 30
     _ENTRY_STATE_SCRIPT = """
         const visible = el => el && el.getClientRects().length && getComputedStyle(el).visibility === 'visible';
         const hasVisible = selector => Array.from(document.querySelectorAll(selector)).some(visible);
@@ -654,29 +658,35 @@ class CloudGameController(GameControllerBase):
 
     def _check_login(self, timeout=5) -> bool | None:
         """检查是否已经登录；无法确认登录状态时返回 None"""
-        if not self.driver:
-            return None
+        driver = self.driver
+        if driver is None:
+            raise ConnectionError("云游戏浏览器未连接")
 
-        logged_in_selector = "div.user-aid.wel-card__aid, .game-player, [class*='waiting-in-queue']"
-        not_logged_in_id = "mihoyo-login-platform-iframe"
-
+        markers = (
+            (True, By.CSS_SELECTOR, "div.user-aid.wel-card__aid, .game-player, [class*='waiting-in-queue']"),
+            (False, By.ID, "mihoyo-login-platform-iframe"),
+        )
+        deadline = time.monotonic() + timeout
+        client_config = driver.command_executor._client_config
+        previous_timeout = client_config.timeout
+        probe_timeout = min(previous_timeout, 3) if previous_timeout is not None else 3
         try:
-            state = WebDriverWait(self.driver, timeout).until(
-                lambda d: (
-                    "logged_in"
-                    if d.find_elements(By.CSS_SELECTOR, logged_in_selector)
-                    else (
-                        "not_logged_in"
-                        if d.find_elements(By.ID, not_logged_in_id)
-                        else None
-                    )
-                )
-            )
-
-            return state == "logged_in"
-        except TimeoutException:
-            self.log_warning("检测登录状态超时：未出现登录或未登录标志元素")
-            return None
+            while True:
+                for logged_in, by, selector in markers:
+                    pause_ctl.checkpoint()
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        return None
+                    client_config.timeout = min(probe_timeout, remaining)
+                    try:
+                        elements = driver.find_elements(by, selector)
+                    except (TimeoutException, TransportTimeoutError):
+                        break
+                    if elements and time.monotonic() < deadline:
+                        return logged_in
+                time.sleep(max(0, min(0.5, deadline - time.monotonic())))
+        finally:
+            client_config.timeout = previous_timeout
 
     def _get_login_timeout_seconds(self) -> int:
         try:
@@ -1479,24 +1489,17 @@ class CloudGameController(GameControllerBase):
             if entry in self.QUEUE_STATES:
                 return self._finish_cloud_entry()
             # 检测登录状态
-            unconfirmed_probes = 0
             while not signed_in_lobby_only:
                 pause_ctl.checkpoint()
-                logged_in = self._check_login()
+                probe_timeout = 5 if self._preserve_browser_on_exit else self.LOGIN_PAGE_READY_TIMEOUT
+                logged_in = self._check_login(timeout=probe_timeout)
                 pause_ctl.checkpoint()
                 if logged_in:
                     break
                 if logged_in is None:
                     if self._preserve_browser_on_exit:
                         raise CloudGameProbeUnready("未确认云游戏登录状态，等待重新读取")
-                    # 未确认不等于未登录：当作未登录会误触发扫码或重启浏览器，
-                    # 页面始终未就绪时还会一直等到登录超时。
-                    unconfirmed_probes += 1
-                    if unconfirmed_probes >= self.LOGIN_STATE_PROBE_ATTEMPTS:
-                        raise CloudGameProbeUnready("多次未能确认云游戏登录状态")
-                    continue
-                # 登录流程可能重启浏览器，新页面重新计数
-                unconfirmed_probes = 0
+                    raise CloudGamePageNotReadyError("云游戏页面未就绪，未能确认登录状态")
                 login_timeout_seconds = self._get_login_timeout_seconds()
                 login_deadline = time.monotonic() + login_timeout_seconds
                 self.log_info("未登录")
@@ -1568,7 +1571,8 @@ class CloudGameController(GameControllerBase):
             if entered == "game_running":
                 return entered
             return self._finish_cloud_entry(resume_queue=signed_in_lobby_only and not entered)
-        except (CloudGameLoginTimeoutError, CloudGameQueueTimeoutError, CloudGameZeroDurationError):
+        except (CloudGameLoginTimeoutError, CloudGamePageNotReadyError, CloudGameQueueTimeoutError,
+                CloudGameZeroDurationError):
             raise
         except Exception as e:
             self.try_dump_page()

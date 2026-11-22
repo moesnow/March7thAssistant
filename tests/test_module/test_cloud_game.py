@@ -2,9 +2,11 @@ import unittest
 import base64
 import os
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 from urllib3.exceptions import ReadTimeoutError
-from selenium.common.exceptions import TimeoutException, WebDriverException
+from selenium.common.exceptions import InvalidSessionIdException, TimeoutException, WebDriverException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import wait as selenium_wait
 import pytest
 
 from module.game.cloud import CloudGameController, CloudGameZeroDurationError
@@ -19,6 +21,7 @@ def test_enter_cloud_game_stops_before_the_next_browser_click(monkeypatch, stop_
     control._enabled = True
     monkeypatch.setattr(cloud_module, "pause_ctl", control)
     controller = object.__new__(CloudGameController)
+    controller._preserve_browser_on_exit = False
     controller.logger = MagicMock()
     controller.cfg = SimpleNamespace(browser_dump_cookies_enable=False, cloud_game_max_queue_time=10,
                                      cloud_game_use_paid_time=True)
@@ -559,33 +562,15 @@ class TestCloudGameUnconfirmedLogin(unittest.TestCase):
         self.assertTrue(controller.start_game_process())
         return controller
 
-    def test_unconfirmed_then_logged_in_skips_login_flow(self):
-        for restart in (False, True):
-            with self.subTest(browser_headless_restart_on_not_logged_in=restart):
-                controller = self.create_controller(restart_on_not_logged_in=restart)
-                controller._check_login = MagicMock(side_effect=[None, True, True])
-
-                self.assertTrue(controller.enter_cloud_game())
-
-                controller._run_qr_login_flow.assert_not_called()
-                controller._restart_browser.assert_not_called()
-
-    def test_unconfirmed_then_not_logged_in_still_logs_in(self):
-        controller = self.create_controller()
-        controller._check_login = MagicMock(side_effect=[None, False, True, True])
-
-        self.assertTrue(controller.enter_cloud_game())
-
-        controller._run_qr_login_flow.assert_called_once()
-
-    def test_unconfirmed_count_restarts_after_login_flow(self):
-        # 登录后重启回无窗口，新页面的未确认不应沿用重启前的计数
+    def test_headless_restart_starts_a_new_page_readiness_wait(self):
         controller = self.create_controller(restart_on_not_logged_in=True)
-        controller._check_login = MagicMock(side_effect=[None, None, False, True, None, True])
+        controller._check_login = MagicMock(side_effect=[False, True, True])
 
         self.assertTrue(controller.enter_cloud_game())
 
-        self.assertEqual(controller._restart_browser.call_count, 2)
+        self.assertEqual(controller._restart_browser.call_args_list, [call(headless=False), call(headless=True)])
+        wait_for_page = call(timeout=CloudGameController.LOGIN_PAGE_READY_TIMEOUT)
+        self.assertEqual(controller._check_login.call_args_list, [wait_for_page, call(), wait_for_page])
 
     def test_preserved_browser_still_fails_on_first_unconfirmed_state(self):
         controller = self.create_controller()
@@ -597,16 +582,154 @@ class TestCloudGameUnconfirmedLogin(unittest.TestCase):
         controller._check_login.assert_called_once()
         controller._run_qr_login_flow.assert_not_called()
 
-    def test_persistently_unconfirmed_fails_entry_instead_of_waiting_for_login(self):
-        controller = self.create_controller()
-        controller._check_login = MagicMock(side_effect=[None] * 10)
 
-        self.assertFalse(controller.enter_cloud_game())
+@pytest.mark.parametrize("fault", (
+    "slow_lobby", "slow_login", "renderer_timeout", "transport_timeout", "not_ready", "stop", "session_lost",
+))
+def test_normal_cloud_startup_login_wait(monkeypatch, fault):
+    from module.game import cloud
+    from tasks import game
 
-        controller._run_qr_login_flow.assert_not_called()
+    elapsed = page_opened_at = 0.0
+    logged_in = playing = False
+    lobby_clicks = []
+    login_probes = []
+    qr_requests = []
+    probe_failure = {
+        "renderer_timeout": TimeoutException("测试渲染器短暂超时"),
+        "transport_timeout": ReadTimeoutError(None, None, "测试驱动读取短暂超时"),
+    }.get(fault)
+
+    def sleep(seconds):
+        nonlocal elapsed
+        elapsed += seconds
+        if elapsed > 180:
+            pytest.fail("云游戏登录模拟超过时间上限")
+
+    clock = SimpleNamespace(monotonic=lambda: elapsed, sleep=sleep)
+    for module in (cloud, game, selenium_wait):
+        monkeypatch.setattr(module, "time", clock)
+    control = PauseController()
+    control._enabled = True
+    monkeypatch.setattr(control, "_arm_stop_timer", MagicMock())
+    monkeypatch.setattr("utils.pause.log", MagicMock())
+    for module in (cloud, game):
+        monkeypatch.setattr(module, "pause_ctl", control)
+
+    cfg = SimpleNamespace(
+        script_path=None, control_backend="cloud", start_game_timeout=1, browser_headless_enable=True,
+        browser_headless_restart_on_not_logged_in=False,
+        browser_dump_cookies_enable=False, cloud_game_max_queue_time=10,
+    )
+    controller = CloudGameController(cfg=cfg, logger=MagicMock())
+    driver = MagicMock()
+    client_config = driver.command_executor._client_config
+    client_config.timeout = 120
+    element = SimpleNamespace(is_displayed=lambda: True)
+    driver.find_element.return_value = element
+    marker_after = 30 if fault == "not_ready" else 16
+
+    def entry_state():
+        if playing:
+            return "game_running"
+        if logged_in:
+            return "signed_in_lobby"
+        if elapsed - page_opened_at < marker_after:
+            return None
+        return "login" if fault == "slow_login" else "signed_in_lobby"
+
+    def find_elements(by, selector):
+        nonlocal probe_failure
+        # 计入驱动请求耗时，避免模拟时钟总是恰好落在 Selenium 的轮询截止点。
+        if by == By.ID and selector == "mihoyo-login-platform-iframe":
+            login_probes.append((elapsed, client_config.timeout))
+            sleep(0.01)
+            return [element] if entry_state() == "login" else []
+        if not selector.startswith("div.user-aid.wel-card__aid"):
+            return []
+        login_probes.append((elapsed, client_config.timeout))
+        age = elapsed - page_opened_at
+        if fault == "session_lost" and controller._connect_or_create_browser.call_count == 1:
+            raise InvalidSessionIdException("测试会话已断开")
+        if fault == "stop" and age >= 8:
+            control.request_stop()
+            return []
+        if probe_failure is not None and age >= 1:
+            error, probe_failure = probe_failure, None
+            sleep(0.01)
+            raise error
+        sleep(30 - age if fault == "not_ready" and 29.5 <= age < 30 else 0.01)
+        return [element] if entry_state() == "signed_in_lobby" else []
+
+    def execute(script, *_):
+        nonlocal playing
+        if script == "arguments[0].click();":
+            lobby_clicks.append(elapsed)
+            playing = True
+        if "return entryState();" in script:
+            return entry_state()
+        return playing
+
+    def open_browser(**_):
+        nonlocal page_opened_at
+        page_opened_at = elapsed
+        controller.driver = driver
+
+    def complete_qr_login(*_):
+        nonlocal logged_in
+        qr_requests.append((elapsed, entry_state()))
+        if entry_state() == "login":
+            logged_in = True
+        else:
+            sleep(10)
+
+    driver.find_elements.side_effect = find_elements
+    driver.execute_script.side_effect = execute
+    controller._connect_or_create_browser = MagicMock(side_effect=open_browser)
+    controller._run_qr_login_flow = MagicMock(side_effect=complete_qr_login)
+    controller._get_login_timeout_seconds = MagicMock(return_value=60)
+    controller._get_remaining_playtime = MagicMock(return_value=(60, 0))
+    controller.try_dump_page = MagicMock()
+    controller.stop_game = MagicMock()
+    monkeypatch.setattr(game, "cfg", cfg)
+    monkeypatch.setattr(game, "cloud_game", controller)
+    monkeypatch.setattr(game, "log", MagicMock())
+    auto = MagicMock(**{"click_element.return_value": True})
+    monkeypatch.setattr(game, "auto", auto)
+    monkeypatch.setattr(game, "screen", MagicMock(**{"get_current_screen.return_value": True}))
+
+    if fault == "not_ready":
+        with pytest.raises(game.GameStartupUnavailable, match="云游戏页面未就绪"):
+            game.start_game()
+        assert elapsed == pytest.approx(30)
+        last_probe_at, last_probe_timeout = login_probes[-1]
+        assert 29.5 <= last_probe_at < 30
+        assert last_probe_timeout == pytest.approx(30 - last_probe_at)
+    elif fault == "stop":
+        with pytest.raises(RunStopRequested):
+            game.start_game()
+        assert login_probes[-1][0] == elapsed
+        assert 8 <= elapsed < 8.6
+    else:
+        game.start_game()
+
+    assert controller._connect_or_create_browser.call_count == (2 if fault == "session_lost" else 1)
+    assert controller.stop_game.call_count == (1 if fault == "session_lost" else 0)
+    if fault == "slow_login":
+        [(qr_at, marker)] = qr_requests
+        assert marker == "login" and 16 <= qr_at < 17
+    else:
+        assert not qr_requests
+    assert client_config.timeout == 120
+    if fault in {"not_ready", "stop"}:
+        assert controller._preserve_browser_on_exit
         controller._get_login_timeout_seconds.assert_not_called()
-        self.assertEqual(controller._check_login.call_count,
-                         CloudGameController.LOGIN_STATE_PROBE_ATTEMPTS)
+        assert not lobby_clicks
+        auto.click_element.assert_not_called()
+    else:
+        [clicked_at] = lobby_clicks
+        assert 16 <= clicked_at - page_opened_at < 17
+        auto.click_element.assert_called_once()
 
 
 class TestCloudGameDebugPort(unittest.TestCase):
@@ -690,6 +813,7 @@ class TestCloudGameZeroDuration(unittest.TestCase):
     def test_enter_cloud_game_raises_zero_duration_error(self):
         controller = object.__new__(CloudGameController)
         controller.driver = MagicMock()
+        controller._preserve_browser_on_exit = False
         controller.driver.command_executor._client_config.timeout = 120
         controller.cfg = MagicMock()
         controller.cfg.browser_headless_enable = False
