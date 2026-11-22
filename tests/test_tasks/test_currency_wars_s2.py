@@ -2351,8 +2351,38 @@ def test_item_box_chooses_a_reward_and_continues_after_returning_to_board(monkey
     assert state.clicks == [(Page.CHOICE, (1465, 336) if read_card_name else (1474, 230))]
 
 
-def test_equipment_reward_title_alone_is_not_a_choice():
-    assert Frame(CANVAS, labels(("选择装备", 1028, 40))).choice is None
+@pytest.mark.parametrize(("title", "y"), (("选择装备", 40), ("为阿哈选择1件简易装备", 61)))
+def test_equipment_reward_title_alone_is_not_a_choice(title, y):
+    assert Frame(CANVAS, labels((title, 1028, y))).choice is None
+
+
+@pytest.mark.parametrize(("reading", "targets"), (
+    ("names", ((1174, 336),)),
+    ("details", ((1474, 230),)),
+    ("prompt", ((593, 230), (883, 230))),
+))
+def test_aha_equipment_reward_chooses_from_four_cards(monkeypatch, world, reading, targets):
+    title = ui.normalized("为「阿哈」选择1件简易装备")
+    words = labels((title, 1029, 61), ("备战阶段", 307, 70), ("1-2", 307, 108))
+    if reading != "details":
+        words += labels(("请选择1个", 1029, 100))
+    if reading == "names":
+        words += labels(("幸运星", 592, 336), ("折叠小刀", 882, 336), ("轮滑鞋", 1174, 336),
+                        ("和平手枪", 1464, 336))
+    if reading == "details":
+        words += labels(("查看详情", 1474, 392))
+    reward = Frame(CANVAS, words)
+    ready = page(Page.BOARD, stage="1-2")
+
+    def select(state, point):
+        if point == targets[-1]:
+            state.frame = ready
+
+    state = drive(monkeypatch, world, reward, select)
+    assert reward.page == Page.CHOICE
+    assert world.war._play_step(reward) is ready
+    assert state.clicks == [(Page.CHOICE, point) for point in targets]
+    assert not state.keys
 
 
 @pytest.mark.parametrize(("reward_ocr", "needs_confirm", "equipment_point"), (

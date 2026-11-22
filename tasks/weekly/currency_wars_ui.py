@@ -94,6 +94,7 @@ INVESTMENT_CONFIRM = (850, 945, 1310, 1024)
 INVESTMENT_CONFIRM_POINT = (960, 984)
 EQUIPMENT_REWARD_TITLE = (835, 16, 1230, 65)
 EQUIPMENT_REWARD_CENTERS = (1028, 738, 1319)
+AHA_EQUIPMENT_CENTERS = (593, 883, 1174, 1464)
 ITEM_SELECTION = (835, 65, 1230, 125)
 ITEM_CARD_NAMES = (450, 279, 1590, 354)
 ITEM_CARD_DETAILS = (450, 354, 1590, 410)
@@ -179,7 +180,9 @@ CONTINUE_MATCH = ("继续进度", "继续对局", "继续博弈")
 END_MATCH = ("结束并结算", "放弃并结算")
 WEAPON_BOXES = ("武装箱", "简易武装箱", "完整武装箱", "进阶武装箱", "特权武装箱")
 EQUIPMENT_REWARD = "选择装备"
-ITEM_CHOICES = (*WEAPON_BOXES, *(f"阿哈·{box}" for box in WEAPON_BOXES), "星徽秘典", "阿哈", EQUIPMENT_REWARD)
+AHA_EQUIPMENT_REWARD = "为阿哈选择1件简易装备"
+ITEM_CHOICES = (*WEAPON_BOXES, *(f"阿哈·{box}" for box in WEAPON_BOXES),
+                "星徽秘典", "阿哈", EQUIPMENT_REWARD, AHA_EQUIPMENT_REWARD)
 RECRUIT_CHOICES = ("员工招募书", "员工聘用书", "专家邀请函")
 INVESTMENT_CHOICES = ("请选择投资策略", "投资策略")
 CHOICES = (
@@ -510,7 +513,8 @@ class Frame:
     @cached_property
     def choice(self) -> str | None:
         label = self.find(EQUIPMENT_REWARD, area=EQUIPMENT_REWARD_TITLE) or self.find(*CHOICES, area=CHOICE_TITLE)
-        if (label and (label.text in ("武装箱", "阿哈", EQUIPMENT_REWARD) or label.text.startswith("阿哈·"))
+        if (label and (label.text in ("武装箱", "阿哈", EQUIPMENT_REWARD, AHA_EQUIPMENT_REWARD)
+                       or label.text.startswith("阿哈·"))
                 and not self.has("请选择1个", "请选择一个", area=ITEM_SELECTION)
                 and not self.has("查看详情", area=ITEM_CARD_DETAILS)):
             return None

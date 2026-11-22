@@ -3703,7 +3703,7 @@ class CurrencyWars:
                 return min(emblems, key=lambda label: (
                     order.index(label.text) if label.text in order else len(order), label.point[0]
                 ), default=None)
-            area = ui.ITEM_CARD_NAMES if title == ui.EQUIPMENT_REWARD else (230, 220, 1750, 839)
+            area = ui.ITEM_CARD_NAMES if title in (ui.EQUIPMENT_REWARD, ui.AHA_EQUIPMENT_REWARD) else (230, 220, 1750, 839)
             for name in (*priorities, *SUPPLY_ITEMS):
                 if label := frame.find(name, area=area):
                     return label
@@ -4044,7 +4044,10 @@ class CurrencyWars:
             if title == "遭遇节点":
                 return ui.Label("左侧遭遇", (666, 390))
             if reward_choice:
-                centers = ui.EQUIPMENT_REWARD_CENTERS if equipment_reward else (960, 1174, 746)
+                centers = {
+                    ui.EQUIPMENT_REWARD: ui.EQUIPMENT_REWARD_CENTERS,
+                    ui.AHA_EQUIPMENT_REWARD: ui.AHA_EQUIPMENT_CENTERS,
+                }.get(title, (960, 1174, 746))
                 return ui.Label("奖励卡片", (centers[attempt], 230))
             # 其它明确标明单选的弹窗，可用正文中的可见卡片位置。
             if (f.has("请选择1个", "请选择一个", area=ui.ITEM_SELECTION)
