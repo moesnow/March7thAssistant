@@ -1,86 +1,57 @@
 import sys
-import time
 
 import pytest
 
-pytestmark = pytest.mark.skipif(
-    sys.platform != "win32" or not hasattr(sys, 'getwindowsversion'),
-    reason="GUI 测试仅在 Windows 平台运行"
-)
+pytestmark = [
+    pytest.mark.skipif(sys.platform != "win32", reason="GUI 测试仅在 Windows 平台运行"),
+    pytest.mark.usefixtures("qapp"),
+]
+
+LIGHT_BACKGROUND = (243, 243, 243)
 
 
-@pytest.fixture(scope="session")
-def qapp():
-    try:
-        from PySide6.QtWidgets import QApplication
-        app = QApplication.instance()
-        if app is None:
-            app = QApplication(sys.argv)
-        return app
-    except ImportError:
-        pytest.skip("PySide6 未安装")
+def _colors(dialog):
+    from PySide6.QtCore import QPoint, Qt
+    from PySide6.QtGui import QImage
 
+    # 先完成布局，再把隐藏窗口同步绘制到按逻辑像素计的画布上。
+    dialog.ensurePolished()
+    dialog.layout().activate()
+    image = QImage(dialog.size(), QImage.Format.Format_ARGB32_Premultiplied)
+    image.fill(Qt.GlobalColor.transparent)
+    dialog.render(image)
 
-def _pixel(image, point):
-    """取某个控件坐标处的颜色：控件坐标是逻辑像素，截图是物理像素。"""
-    from PySide6.QtCore import QPoint
-    ratio = image.devicePixelRatio()
-    return image.pixelColor(
-        QPoint(round(point.x() * ratio), round(point.y() * ratio))).getRgb()[:3]
-
-
-def _colors(dialog, card):
-    from PySide6.QtCore import QPoint
-    image = dialog.grab().toImage()
-    return {
+    card = dialog.card_editors[0]
+    points = {
         # x=3 落在卡片 10px 内边距内，避开图标与按钮
-        "card": _pixel(image, card.mapTo(dialog, QPoint(3, card.height() // 2))),
+        "card": card.mapTo(dialog, QPoint(3, card.height() // 2)),
         # 两张卡片之间的 8px 间隙
-        "gap": _pixel(image, card.mapTo(dialog, QPoint(card.width() // 2, card.height() + 4))),
+        "gap": card.mapTo(dialog, QPoint(card.width() // 2, card.height() + 4)),
         # 滚动区之外的弹窗空白处
-        "dialog": _pixel(image, QPoint(dialog.width() - 8, 8)),
+        "dialog": QPoint(dialog.width() - 8, 8),
     }
+    return {name: image.pixelColor(point).getRgb()[:3] for name, point in points.items()}
 
 
-def _sample(qapp, theme, check, timeout=10.0):
-    """渲染编辑主页卡片弹窗，取卡片、卡片间隙、弹窗空白处的像素
-
-    间隙露出的是滚动内容的背景：QScrollArea.setWidget 会强制
-    autoFillBackground，若 qss 没有按主题覆盖，深色模式下这里会是
-    系统 palette 的浅灰，卡片也会因半透明叠加而偏色。
-
-    窗口 show 之后必须等布局和首帧绘制完成再采样：刚 show 的窗口几何与
-    样式还没生效，此时 grab() 拿到的是未上色的底色，采样值会随机器负载抖动
-    （CI 上深色模式曾因此读到 255,255,255）。轮询直到颜色满足断言，
-    超时后报告最后一次采样和断言错误。
-    """
-    from qfluentwidgets import setTheme
+def _sample(theme):
+    from PySide6.QtGui import QColor, QPalette
+    from qfluentwidgets import qconfig, setTheme
     from app.card.card_edit_dialog import CardEditDialog, DEFAULT_CARDS
 
-    setTheme(theme)
-    dialog = CardEditDialog(DEFAULT_CARDS)
-    dialog.resize(750, 600)
-    dialog.show()
+    previous_theme = qconfig.get(qconfig.themeMode)
+    dialog = None
     try:
-        card = dialog.card_editors[0]
-        deadline = time.monotonic() + timeout
-        colors = None
-        error = None
-        while time.monotonic() < deadline:
-            qapp.processEvents()
-            if card.isVisible() and card.width() > 50 and card.height() > 50:
-                colors = _colors(dialog, card)
-                try:
-                    check(colors)
-                    return colors
-                except AssertionError as exc:
-                    error = exc
-            time.sleep(0.02)
-        raise AssertionError(
-            f"{theme} 主题下弹窗未在 {timeout:.0f}s 内完成布局与绘制，"
-            f"最后一次采样 {colors}，断言错误：{error}")
+        setTheme(theme)
+        dialog = CardEditDialog(DEFAULT_CARDS)
+        # 固定浅色底，确保深色用例能发现滚动区露出系统调色板的回归。
+        palette = dialog.palette()
+        palette.setColor(QPalette.ColorRole.Window, QColor(*LIGHT_BACKGROUND))
+        dialog.setPalette(palette)
+        return _colors(dialog)
     finally:
-        dialog.close()
+        if dialog is not None:
+            dialog.deleteLater()
+        setTheme(previous_theme)
 
 
 def _assert_color(actual, expected, tolerance=2):
@@ -89,20 +60,18 @@ def _assert_color(actual, expected, tolerance=2):
 
 
 class TestCardEditDialogStyle:
-    def test_dark_mode(self, qapp):
-        """深色模式：卡片拿到 rgba(39,39,39,0.96) 叠加后的深色底，
-        间隙与弹窗同色（不残留系统 palette 的浅灰）"""
+    def test_dark_mode(self):
         from qfluentwidgets import Theme
-        def check(p):
-            _assert_color(p["card"], (39, 39, 39))
-            _assert_color(p["gap"], (43, 43, 43))
-            _assert_color(p["dialog"], (43, 43, 43))
-        _sample(qapp, Theme.DARK, check)
 
-    def test_light_mode(self, qapp):
-        """浅色模式无回归。弹窗底色来自系统 palette，故只做相对断言"""
+        colors = _sample(Theme.DARK)
+        _assert_color(colors["card"], (39, 39, 39))
+        _assert_color(colors["gap"], (43, 43, 43))
+        _assert_color(colors["dialog"], (43, 43, 43))
+
+    def test_light_mode(self):
         from qfluentwidgets import Theme
-        def check(p):
-            assert p["gap"] == p["dialog"]
-            assert p["card"] != p["gap"], "卡片应能与容器区分开"
-        _sample(qapp, Theme.LIGHT, check)
+
+        colors = _sample(Theme.LIGHT)
+        _assert_color(colors["dialog"], LIGHT_BACKGROUND)
+        assert colors["gap"] == colors["dialog"]
+        assert colors["card"] != colors["gap"], "卡片应能与容器区分开"
