@@ -1,4 +1,4 @@
-"""Windows 与触屏副本共用的计划和结算规则。"""
+"""Windows 与触屏副本共用的计划、支援和结算规则。"""
 import re
 import unicodedata
 
@@ -50,6 +50,37 @@ class SupportDemand:
     def won(self, borrowed):
         if borrowed:
             self.pending = False
+
+
+class SupportNameSearch:
+    """记录一次支援查找中读到的好友名字。"""
+
+    def __init__(self):
+        self._mismatches = set()
+        self._matched = False
+
+    def find_owner(self, auto, character_name, owner, crop):
+        if match := auto.find_element(owner, "text", crop=crop, include=True):
+            self._matched = True
+            return match
+
+        # 保留本次查找读到的原文，方便用户按日志填写。
+        readings = tuple(text for _, (text, _) in auto.ocr_result if text)
+        mismatch = character_name, owner, readings
+        if mismatch in self._mismatches:
+            return None
+        self._mismatches.add(mismatch)
+        names = "、".join(f"「{text}」" for text in readings)
+        result = f"小助手读到的是{names}" if names else "小助手没读出这一位的名字"
+        log.info(f"找到支援角色「{character_name}」，你填的好友名字是「{owner}」，{result}。")
+        return None
+
+    def warn_if_unmatched(self):
+        if self._mismatches and not self._matched:
+            log.warning(
+                "本次没找到名字对得上的好友。请对照上面的日志和游戏里的好友名字。"
+                "如果确认小助手读错了，可以把小助手「支援列表」里填的好友名字改成日志里读到的写法，再试一次。"
+            )
 
 
 def normalize(text):
