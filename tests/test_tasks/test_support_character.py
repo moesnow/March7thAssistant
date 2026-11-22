@@ -3,6 +3,7 @@
 from types import SimpleNamespace
 from unittest.mock import Mock
 
+from PIL import Image, ImageDraw
 import pytest
 
 from tasks.power import character, instance
@@ -182,6 +183,34 @@ def test_support_avatar_still_skips_when_both_matches_fail(monkeypatch):
     assert not character.Character.find_character_and_click("Cyrene", "", 0, 0, 1920, 1080)
     assert find_element.call_count == 2
     click.assert_not_called()
+
+
+@pytest.mark.parametrize("scrollbar", [True, False])
+def test_support_list_waits_for_scroll_to_settle_with_animated_banners(monkeypatch, scrollbar):
+    thumb_frames = [(100, 230), (130, 260), (130, 225), None, (130, 225), (130, 225), (130, 225)]
+    avatar_frames = [80, 100, 130, 130, 130]
+    frames = []
+    positions = thumb_frames if scrollbar else avatar_frames
+    for i, position in enumerate(positions):
+        frame = Image.new("L", (544, 770), 30)
+        draw = ImageDraw.Draw(frame)
+        draw.rectangle((115, 0, 500, 769), fill=50 if i % 2 else 200)
+        avatar_y = 130 if scrollbar else position
+        draw.rectangle((5, avatar_y, 100, avatar_y + 95), fill=170)
+        if scrollbar and position is not None:
+            top, bottom = position
+            draw.rectangle((534, top, 537, bottom), fill=170)
+        frames.append((frame, None, 1))
+
+    auto = Mock()
+    auto.drag_mouse.return_value = True
+    auto.take_screenshot.side_effect = frames
+    monkeypatch.setattr(character, "auto", auto)
+    monkeypatch.setattr(character.time, "sleep", Mock())
+
+    assert character.Character.scroll_support_list()
+    auto.drag_mouse.assert_called_once()
+    assert auto.take_screenshot.call_count == len(frames)
 
 
 @pytest.mark.parametrize("still_in_list", [False, True])
