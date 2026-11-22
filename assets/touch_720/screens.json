@@ -183,6 +183,10 @@
         "name": "凝滞虚影",
         "id": "stagnant_shadow",
         "image_path": "./assets/touch_720/images/screen/stagnant_shadow.png",
+        "text_fallback": [
+            {"text": "凝滞虚影", "crop": [77, 18, 184, 56]},
+            {"text": "挑战", "crop": [984, 632, 1165, 683]}
+        ],
         "actions": [
             {
                 "target_screen": "main",

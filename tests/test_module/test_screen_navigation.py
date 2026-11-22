@@ -209,6 +209,102 @@ def test_background_window_errors_are_not_swallowed_as_unmatched(monkeypatch):
         screen.perform_operations(["auto.find_element('x', 'image')"])
 
 
+@pytest.mark.parametrize(("header", "button", "expected"), [
+    ("凝滞虚影", "挑战", True),
+    ("凝滞虚影", "开始挑战", False),
+    ("拟造花萼", "挑战", False),
+])
+def test_touch_shadow_checks_category_and_challenge_on_one_frame(monkeypatch, header, button, expected):
+    from PIL import Image, ImageDraw
+    from module.ocr import ocr
+
+    auto = MagicMock()
+    module = _load_screen_module(auto)
+    monkeypatch.setattr(module, "cfg", SimpleNamespace(ui_profile="touch_720", control_backend="adb"))
+    screen = module.Screen.__new__(module.Screen)
+    screen.__init__(ROOT / "assets/touch_720/screens.json", MagicMock())
+
+    frame = Image.new("RGB", (1280, 720))
+    draw = ImageDraw.Draw(frame)
+    draw.rectangle((0, 0, 200, 64), fill="gold")
+    draw.rectangle((920, 632, 1240, 685), fill="white")
+
+    def capture():
+        auto.screenshot = frame
+        return frame, (0, 0, 1280, 720), 1
+
+    def find_element(*args, take_screenshot=True, **kwargs):
+        if take_screenshot:
+            auto.take_screenshot()
+        return None
+
+    def read_text(pixels):
+        color = tuple(pixels[len(pixels) // 2, len(pixels[0]) // 2])
+        assert color in ((255, 215, 0), (255, 255, 255))
+        text = header if color == (255, 215, 0) else button
+        return [(None, (text, 1.0))]
+
+    auto.take_screenshot.side_effect = capture
+    auto.find_element.side_effect = find_element
+    monkeypatch.setattr(ocr, "recognize_multi_lines", read_text)
+
+    assert screen.check_screen("stagnant_shadow") is expected
+    assert screen.current_screen == ("stagnant_shadow" if expected else None)
+    auto.take_screenshot.assert_called_once()
+
+
+def test_touch_shadow_recovers_from_missing_icon_after_failed_task(monkeypatch):
+    from PIL import Image, ImageDraw
+    from module.ocr import ocr
+    from tasks.base import task_steps
+
+    auto = MagicMock()
+    module = _load_screen_module(auto)
+    monkeypatch.setattr(module, "cfg", SimpleNamespace(ui_profile="touch_720", control_backend="adb"))
+    screen = module.Screen.__new__(module.Screen)
+    screen.__init__(ROOT / "assets/touch_720/screens.json", MagicMock())
+    monkeypatch.setattr(task_steps, "screen", screen)
+    monkeypatch.setattr(time, "sleep", lambda *_: None)
+
+    frame = Image.new("RGB", (1280, 720))
+    draw = ImageDraw.Draw(frame)
+    draw.rectangle((0, 0, 200, 64), fill="gold")
+    draw.rectangle((920, 632, 1240, 685), fill="white")
+
+    def read_text(pixels):
+        gold = tuple(pixels[len(pixels) // 2, len(pixels[0]) // 2]) == (255, 215, 0)
+        return [(None, ("凝滞虚影" if gold else "挑战", 1.0))]
+
+    state = "stagnant_shadow"
+    closes = []
+
+    def find_element(path, kind, *args, **kwargs):
+        if state == "main" and path.endswith("/main.png"):
+            return 1.0 if kind == "image_threshold" else True
+        if state == "guide3" and path.endswith("/guide3.png"):
+            return 1.0 if kind == "image_threshold" else True
+        return None
+
+    def click_close(target, kind):
+        nonlocal state
+        assert kind == "crop"
+        assert target == (1848 / 1920, 55 / 1080, 0, 0)
+        closes.append(state)
+        state = {"stagnant_shadow": "guide3", "guide3": "main"}[state]
+        return True
+
+    auto.screenshot = frame
+    auto.find_element.side_effect = find_element
+    auto.click_element.side_effect = click_close
+    monkeypatch.setattr(ocr, "recognize_multi_lines", read_text)
+    next_task = MagicMock(return_value=True)
+
+    assert not task_steps.run_steps([("清体力", lambda: False), ("下一项", next_task)])
+    next_task.assert_called_once_with()
+    assert screen.current_screen == state == "main"
+    assert closes == ["stagnant_shadow", "guide3"]
+
+
 @pytest.mark.parametrize("values, expected", [
     ({}, "p"), ({"hotkey_message": "p"}, "p"),
     ({"hotkey_message": "k"}, "k"), ({"hotkey_message": "f6"}, "f6"),
