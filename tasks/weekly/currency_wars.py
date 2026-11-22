@@ -66,6 +66,10 @@ POINTER_SETTLE_SECONDS = 0.3
 ACTION_POLL = 0.22
 CLICK_HOLD = 0.075
 BOX_HOLD = 0.20
+# 慢 OCR 下也要为卡位稳定、输入和回执各留出观察时间。整次共舞共用一个上限。
+DANCE_CARD_SECONDS = 10
+DANCE_CONFIRM_SECONDS = 12
+DANCE_SECONDS = 36
 # 晶矿刚扫出的武装箱有落位动画。等连续两帧的开启按钮和箱面一致，再作为开启基准。
 BOX_SETTLE_SECONDS = 4
 # 本节点刚拖入一格的卡可能还在落位动画中。再拖动它之前，等卡面连续两帧一致再取作拖动基准。
@@ -84,7 +88,7 @@ PLAY_PAGES = PREP_OVERLAYS | {Page.BOARD, Page.BATTLE, Page.NODE_RESULT, Page.MA
 ACTIVE_PAGES = PLAY_PAGES | {Page.DETAIL, Page.PARTNER_DETAIL, Page.EQUIPMENT, Page.CONFIRM_FIGHT}
 BATTLE_RESULT_PAGES = {Page.BATTLE, Page.NODE_RESULT, Page.MATCH_RESULT}
 ESC_RECOVERY_PAGES = (ACTIVE_PAGES - BATTLE_RESULT_PAGES
-                      - {Page.BLACK_MARKET, Page.HALO_REPLACE, Page.HALO_MENTOR, Page.DRAGON_CLEANSE, Page.DRAGON_BOND,
+                      - {Page.BLACK_MARKET, Page.HALO_REPLACE, Page.HALO_MENTOR, Page.DANCE, Page.DRAGON_CLEANSE, Page.DRAGON_BOND,
                          Page.TREASURY}
                       | {Page.UNKNOWN, Page.CONFLICT})
 HALO_EXIT_PAGES = (ACTIVE_PAGES | {Page.HOME, Page.WEEKLY}) - {Page.HALO}
@@ -330,42 +334,58 @@ class CurrencyWars:
 
     @staticmethod
     def _capture():
+        started = perf_counter()
         if not auto.take_screenshot():
             raise CurrencyWarsError("无法获取货币战争的新画面")
+        captured = perf_counter()
         try:
             auto.perform_ocr(raise_on_error=True)
         except Exception as error:
             raise CurrencyWarsReadTimeout(f"OCR 识别失败：{error}") from error
-        return ui.Frame.from_ocr(auto.screenshot, auto.ocr_result)
+        recognized = perf_counter()
+        frame = ui.Frame.from_ocr(auto.screenshot, auto.ocr_result)
+        if frame.dance_overlay:
+            frame.dance_observation = f"截图 {captured - started:.2f} 秒，OCR {recognized - captured:.2f} 秒"
+            log.debug(f"梦境交织共舞{frame.dance_observation}")
+        return frame
 
     @classmethod
     def game_screen_ready(cls):
         # 云游戏中断由任务复核并记录结束原因。
         return cls()._observe(startup=True).page not in (Page.UNKNOWN, Page.CONFLICT)
 
-    def _observe(self, *, startup=False):
+    def _observe(self, *, startup=False, until=None):
+        def check_time():
+            self._check_budget()
+            now = time.monotonic()
+            if until is not None and now >= until:
+                raise CurrencyWarsReadTimeout("已到达当前操作的观察时限")
+            return now
+
         first_frame = self.frame is None
         confirming_disconnect = False
         attempts = 0
         while attempts < MAX_CAPTURE_ATTEMPTS:
-            self._check_budget()
+            now = check_time()
             attempts += 1
-            remaining = CAPTURE_SECONDS if self.deadline is None else self.deadline - time.monotonic()
+            remaining = CAPTURE_SECONDS if self.deadline is None else min(CAPTURE_SECONDS, self.deadline - now)
+            if until is not None:
+                remaining = min(remaining, until - now)
             try:
-                with screenshot_retry_timeout(min(CAPTURE_SECONDS, remaining)):
+                with screenshot_retry_timeout(remaining):
                     frame = self._capture()
                 page = frame.page
             except CurrencyWarsTerminalError:
                 raise
             except Exception as error:
-                self._check_budget()
+                check_time()
                 if startup and isinstance(error, GameWindowLost):
                     raise
                 if attempts == MAX_CAPTURE_ATTEMPTS:
                     raise CurrencyWarsUnavailable(f"连续无法获取或识别游戏画面：{error}") from error
                 log.warning(f"货币战争截图或识别暂时失败，重新获取：{error}")
             else:
-                self._check_budget()
+                check_time()
                 if page == Page.DISCONNECTED and not startup:
                     if not confirming_disconnect:
                         confirming_disconnect = True
@@ -398,13 +418,21 @@ class CurrencyWars:
                 else:
                     log.debug(f"货币战争暂未确认页面（{page.value}），重新获取")
             if attempts < MAX_CAPTURE_ATTEMPTS:
-                time.sleep(0.5)
+                time.sleep(0.5 if until is None else max(0, min(0.5, until - time.monotonic())))
         raise CurrencyWarsUnavailable("多次复核后仍未确认云游戏连接恢复，请检查连接后继续对局")
 
-    def _wait(self, predicate, seconds):
+    def _wait(self, predicate, seconds, *, until=None):
         end = time.monotonic() + seconds
+        if until is not None:
+            end = min(end, until)
         while time.monotonic() < end:
-            frame = self._observe()
+            if until is None:
+                frame = self._observe()
+            else:
+                try:
+                    frame = self._observe(until=end)
+                except CurrencyWarsReadTimeout:
+                    return None
             try:
                 if predicate(frame):
                     return frame
@@ -502,14 +530,17 @@ class CurrencyWars:
         time.sleep(POINTER_SETTLE_SECONDS)
 
     def _action(self, frame, locate, send, after, message, *, seconds, attempts, retry_after=2.2,
-                track_control=True, same_view=None):
+                track_control=True, same_view=None, until=None):
         """用新画面确认控件稳定，按实际回执推进；只有原操作仍可确认时才重发。"""
         context = frame.action_context
         started = time.monotonic()
         # 整次操作为稳定控件、各次输入后的复核和迟到回执预留一个有上限的预算。
         receipt_grace = 4
-        action_end = started + seconds * (attempts + 1) + receipt_grace
-        deadline = started + seconds
+        retry_end = started + seconds * (attempts + 1)
+        action_end = retry_end + receipt_grace
+        if until is not None:
+            action_end = min(action_end, until)
+        deadline = min(started + seconds, action_end)
         stable_since = None
         sent = 0
         left_context = False
@@ -520,7 +551,13 @@ class CurrencyWars:
             log.debug(f"货币战争暂未读到操作目标：{error}")
             previous_target = None
         while time.monotonic() < deadline:
-            frame = self._observe()
+            if until is None:
+                frame = self._observe()
+            else:
+                try:
+                    frame = self._observe(until=action_end)
+                except CurrencyWarsReadTimeout:
+                    break
             now = time.monotonic()
             try:
                 if after(frame):
@@ -541,7 +578,7 @@ class CurrencyWars:
                 stable_since = None
             elif stable_since is None:
                 stable_since = now
-            if (stable and sent < attempts
+            if (stable and sent < attempts and (until is None or now < deadline)
                     and (not sent or now - stable_since >= retry_after)):
                 dispatched = False
 
@@ -567,21 +604,23 @@ class CurrencyWars:
                     state = "输入回执待核对" if dispatched else "暂未发送输入"
                     log.warning(f"货币战争{state}：{error}")
                 if dispatched:
-                    deadline = min(action_end - receipt_grace, time.monotonic() + seconds)
+                    deadline = min(retry_end, action_end, time.monotonic() + seconds)
                 stable_since = None
             previous, previous_target = frame, target
             time.sleep(ACTION_POLL)
         self._check_budget()
         remaining = min(receipt_grace, action_end - time.monotonic())
-        if sent and (recovered := self._wait(after, remaining)) is not None:
-            return recovered
+        if sent and remaining > 0:
+            recovered = self._wait(after, remaining) if until is None else self._wait(after, remaining, until=action_end)
+            if recovered is not None:
+                return recovered
         self._check_budget()
         last = self.frame or frame
         error = CurrencyWarsReceiptTimeout if sent else CurrencyWarsActionUnready
         raise error(f"{message}（最后识别为{last.page.value}，已尝试 {sent} 次）")
 
     def _click_to(self, frame, button, after, message, seconds=12, attempts=3, *,
-                  retry_after=2.2, hold=CLICK_HOLD, track_control=True, before_click=None, same_view=None):
+                  retry_after=2.2, hold=CLICK_HOLD, track_control=True, before_click=None, same_view=None, until=None):
         def locate(f):
             return (target,) if (target := button(f)) is not None else None
 
@@ -590,7 +629,7 @@ class CurrencyWars:
 
         return self._action(frame, locate, send, after, message,
                             seconds=seconds, attempts=attempts, retry_after=retry_after,
-                            track_control=track_control, same_view=same_view)
+                            track_control=track_control, same_view=same_view, until=until)
 
     def _drag_to(self, frame, positions, after, message, *, seconds=8, attempts=3, track_control=True):
         page = frame.page
@@ -4544,12 +4583,8 @@ class CurrencyWars:
         frame = self._expect(settled_target, 8, "未确认返回光环页后的主角肖像")
         return frame, matches
 
-    def _employee_event(self, frame):
-        event = frame.page
+    def _appoint_ranger(self, frame):
         preferences = () if self.default_strategy or self.lineup is None else self.lineup.preferences
-        if event == Page.DANCE and preferences:
-            # 攻略指定那刻夏与花火共舞，先于阵容的一般顺序。
-            preferences = tuple(dict.fromkeys((*self.lineup.dancers, *preferences)))
 
         def priority(label):
             return preferences.index(label.text) if label.text in preferences else len(preferences), label.point[0]
@@ -4557,67 +4592,175 @@ class CurrencyWars:
         stage = frame.stage
 
         def advanced(f):
-            return (f.page in PLAY_PAGES - {event}
+            return (f.page in PLAY_PAGES - {Page.RANGER}
                     or f.page in (Page.DETAIL, Page.PARTNER_DETAIL) and f.stage == stage)
 
-        if event == Page.RANGER:
-            def option(f, attempt):
-                if f.employee_event_candidates:
-                    return min(f.employee_event_candidates, key=priority)
-                details = f.matching(("详情",), (440, 385, 1650, 436))
-                positions = sorted(label.point[0] for label in details) or [973, 1045, 927]
-                x = positions[attempt % len(positions)]
-                return ui.Label("候选角色", (x, 355))
+        def option(f, attempt):
+            if f.employee_event_candidates:
+                return min(f.employee_event_candidates, key=priority)
+            positions = sorted(label.point[0] for label in f.employee_event_details) or [973, 1045, 927]
+            return ui.Label("候选角色", (positions[attempt % len(positions)], 355))
 
-            def confirm(f):
-                return ui.point(f.find("确认选择", area=ui.EMPLOYEE_EVENT_CONFIRM)) or (1492, 598)
+        def confirm(f):
+            return ui.point(f.find("确认选择", area=ui.EMPLOYEE_EVENT_CONFIRM)) or (1492, 598)
 
-            return self._choose_single(frame, option, confirm, advanced, "巡海游侠任命后未转场")
+        return self._choose_single(frame, option, confirm, advanced, "巡海游侠任命后未转场")
 
-        if not frame.employee_event_confirm() and len(frame.dance_cards) < 2:
-            fresh = self._wait(
-                lambda f: advanced(f) or f.page == event and (
-                    f.stage != stage or f.employee_event_confirm() or len(f.dance_cards) >= 2), 8,
+    def _dance(self, frame):
+        started = time.monotonic()
+        end = started + DANCE_SECONDS
+        stage = frame.stage
+        preferences = () if self.default_strategy or self.lineup is None else self.lineup.preferences
+        if preferences:
+            preferences = tuple(dict.fromkeys((*self.lineup.dancers, *preferences)))
+
+        # 记录已派发或已识别为选中的卡列。回执被漏读时仍预留名额。
+        selections: dict[int, bool] = {}
+        card_dispatches = 0
+        confirm_dispatches = 0
+        successor = None
+
+        def failure(message):
+            self._check_budget()
+            observation = getattr(self.frame, "dance_observation", None)
+            timing = f"，最近一帧{observation}" if observation else ""
+            return CurrencyWarsUnavailable(
+                f"{stage or '节点待核对'} 梦境交织共舞{message}"
+                f"（选卡派发 {card_dispatches} 次，确认派发 {confirm_dispatches} 次，"
+                f"耗时 {time.monotonic() - started:.1f} 秒{timing}），已保留当前现场"
             )
-            if fresh is None:
-                if self.frame.page == event and self.frame.stage == stage:
-                    raise CurrencyWarsPageBlocked(self.frame, "多次复核后仍未确认两个共舞候选卡位，保留当前现场")
-                raise CurrencyWarsReadTimeout(f"未确认{event.value}的候选角色")
-            frame = fresh
-        if frame.page != event or frame.stage != stage:
-            return frame
-        for card, x in sorted(frame.dance_cards, key=lambda entry: priority(entry[0])):
-            if frame.employee_event_confirm() or frame.unlabeled_dance_confirm:
-                break
-            if frame.employee_event_card_selected(x):
-                continue
+
+        def step_end(seconds):
+            return min(end, time.monotonic() + seconds)
+
+        def same_popup(f):
+            return f.page == Page.DANCE and f.stage is not None and (stage is None or f.stage == stage)
+
+        def advanced(f):
+            nonlocal successor
+            # 弹窗淡出时，底下的棋盘可能先被 OCR 读到，等同一后续界面连续可辨认。
+            if not f.dance_overlay and (f.page in PLAY_PAGES - {Page.DANCE}
+                    or f.page in (Page.DETAIL, Page.PARTNER_DETAIL) and f.stage == stage):
+                context = f.action_context
+                matched = successor == context
+                successor = context
+                return matched
+            successor = None
+            return False
+
+        def ready(f):
+            return same_popup(f) and (len(f.dance_cards) >= 2 or f.employee_event_confirm())
+
+        if not ready(frame):
             try:
-                frame = self._click_to(
-                    frame, lambda f: card.point
-                    if not f.unlabeled_dance_confirm and not f.employee_event_card_selected(x) else None,
-                    lambda f: advanced(f) or f.page == event and (
-                        f.employee_event_confirm() or f.unlabeled_dance_confirm or f.employee_event_card_selected(x)),
-                    f"未确认{card.text}进入{event.value}选择", seconds=2, attempts=1,
-                )
-            except CurrencyWarsRecoverable:
-                # 选中徽标可能漏读。继续点另一张卡，最终由游戏的确认按钮验证人数。
-                frame = self.frame
-            if frame.page != event or frame.stage != stage:
+                frame = self._wait(lambda f: advanced(f) or ready(f), DANCE_CARD_SECONDS, until=end)
+            except CurrencyWarsUnavailable as error:
+                raise failure(f"读取候选时画面持续不可用：{error}") from error
+            if frame is None:
+                message = "未确认当前备战节点" if stage is None else "未确认两个共舞候选卡位"
+                raise failure(f"在时限内{message}")
+            if not same_popup(frame):
                 return frame
+            stage = frame.stage
+
+        def column_key(x):
+            return next((column for column in selections if abs(x - column) <= ui.DANCE_MIN_CARD_GAP // 2), x)
+
+        def remember_selection(f):
+            for _, x in f.dance_cards:
+                if f.employee_event_card_selected(x):
+                    selections[column_key(x)] = True
+
+        def wait_for_confirm(f):
+            return len(selections) >= 2 or f.employee_event_confirm() or f.unlabeled_dance_confirm
+
+        def priority(entry):
+            card, _ = entry
+            return preferences.index(card.text) if card.text in preferences else len(preferences), card.point[0]
+
+        def target(f):
+            if len(f.dance_cards) >= 2 and not wait_for_confirm(f):
+                choice = min((entry for entry in f.dance_cards if column_key(entry[1]) not in selections),
+                             key=priority, default=None)
+                if choice is not None:
+                    return (choice[0].point,)
+
+        for _ in range(2):
+            remember_selection(frame)
+            if wait_for_confirm(frame):
+                break
+            sent_column = None
+
+            def select(f, point, *, mark_sent):
+                x = next(x for card, x in f.dance_cards if card.point == point)
+
+                def record():
+                    nonlocal card_dispatches, sent_column
+                    card_dispatches += 1
+                    sent_column = x
+                    selections[x] = False
+
+                return self._tap(f, point, mark_sent=mark_sent, before_click=record)
+
+            def receipt(f):
+                if advanced(f):
+                    return True
+                if same_popup(f):
+                    remember_selection(f)
+                    return (f.employee_event_confirm() or f.unlabeled_dance_confirm
+                            or sum(selections.values()) >= 2 or selections.get(sent_column))
+
+            try:
+                frame = self._action(
+                    frame, target, select, receipt, "共舞点选未收到选中回执",
+                    seconds=DANCE_CARD_SECONDS, attempts=1, same_view=same_popup, until=step_end(DANCE_CARD_SECONDS),
+                )
+            except CurrencyWarsReceiptTimeout:
+                # 徽标漏读时，只能补选另一张。已发过的卡仍占一个名额，避免取消或超选。
+                log.warning(f"{stage} 梦境交织共舞点选已派发但暂未确认选中，已派发 {card_dispatches} 次")
+                frame = self.frame
+                if not same_popup(frame) or time.monotonic() >= end:
+                    break
+            except CurrencyWarsActionUnready as error:
+                raise failure("选卡未派发，已到单次操作或弹窗处理时限") from error
+            except CurrencyWarsUnavailable as error:
+                raise failure(f"点选期间画面持续不可用：{error}") from error
+            if not same_popup(frame):
+                return frame
+
+        confirm_seen = False
+
+        def confirm(f):
+            nonlocal confirm_seen
+            if same_popup(f):
+                remember_selection(f)
+                if button := f.employee_event_confirm():
+                    confirm_seen = True
+                    return button.point
+
+        def record_confirm():
+            nonlocal confirm_dispatches
+            confirm_dispatches += 1
+
         try:
-            return self._click_to(
-                frame, lambda f: ui.point(f.employee_event_confirm()), advanced,
-                f"{event.value}确认后未转场", attempts=1,
+            frame = self._click_to(
+                frame, confirm, advanced, "梦境交织共舞确认后未转场",
+                seconds=DANCE_CONFIRM_SECONDS, attempts=1, same_view=same_popup,
+                before_click=record_confirm, until=step_end(DANCE_CONFIRM_SECONDS),
             )
-        except CurrencyWarsActionUnready as error:
-            current = self.frame
-            if (current.action_context == frame.action_context
-                    and not current.has("确认选择", area=ui.EMPLOYEE_EVENT_CONFIRM)
-                    and (current.unlabeled_dance_confirm or current.dance_pair_selected)
-                    and current.employee_event_confirm() is None):
-                self._check_budget()
-                raise CurrencyWarsPageBlocked(self.frame, "多次复核后仍未确认两个共舞卡位已选中及按钮可用，保留当前现场") from error
-            raise
+        except (CurrencyWarsRecoverable, CurrencyWarsUnavailable) as error:
+            if confirm_dispatches:
+                message = "确认已派发但未转场"
+            elif confirm_seen:
+                message = "确认键已可用，但确认输入未派发"
+            elif False in selections.values():
+                message = "点选已派发但未确认选中，未确认两个共舞卡位已选中及按钮可用"
+            else:
+                message = "未确认两个共舞卡位已选中及按钮可用，确认键持续不可用"
+            raise failure(message) from error
+        if confirm_dispatches:
+            log.info(f"{stage} 梦境交织共舞已确认，转到{frame.page.value}（选卡派发 {card_dispatches} 次）")
+        return frame
 
     def _choose_special_event(self, frame):
         event = frame.page
@@ -5447,8 +5590,10 @@ class CurrencyWars:
             return self._choose(frame)
         if page == Page.TREASURY:
             return self._claim_treasury(frame)
-        if page in (Page.DANCE, Page.RANGER):
-            return self._employee_event(frame)
+        if page == Page.DANCE:
+            return self._dance(frame)
+        if page == Page.RANGER:
+            return self._appoint_ranger(frame)
         if page == Page.SVAROG_MODIFICATION:
             return self._choose_special_event(frame)
         if page == Page.DRAGON_CLEANSE:

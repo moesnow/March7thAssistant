@@ -687,11 +687,8 @@ class Frame:
             if bright.mean(axis=1).max() >= 0.66:
                 return Page.HALO_TIP
 
-        if (self.stage and self.has("梦境交织", area=EMPLOYEE_EVENT_TITLE)
-                and self.has("选择2个角色进行共舞", "选择2名角色进行共舞",
-                             area=EMPLOYEE_EVENT_SUBTITLE, contains=True)):
-            if self.has("确认选择", area=EMPLOYEE_EVENT_CONFIRM) or len(self.dance_cards) >= 2:
-                return Page.DANCE
+        if self.dance_overlay:
+            return Page.DANCE
         if (self.has("巡海游侠", area=EMPLOYEE_EVENT_TITLE)
                 and (self.has("任命1名角色", "任命一名角色", area=EMPLOYEE_EVENT_SUBTITLE, contains=True)
                      or self.has("确认选择", area=EMPLOYEE_EVENT_CONFIRM))):
@@ -1574,6 +1571,14 @@ class Frame:
                         area=DANCE_SELECTION_PROMPT, contains=True)
 
     @cached_property
+    def dance_overlay(self) -> bool:
+        return (self.dance_needs_pair
+                or self.has("选择2个角色进行共舞", "选择2名角色进行共舞",
+                            area=EMPLOYEE_EVENT_SUBTITLE, contains=True)
+                or self.has("梦境交织", area=EMPLOYEE_EVENT_TITLE) and (
+                    self.has("确认选择", area=EMPLOYEE_EVENT_CONFIRM) or len(self.dance_cards) >= 2))
+
+    @cached_property
     def unlabeled_dance_confirm(self) -> Label | None:
         if (self.page == Page.DANCE and not self.dance_needs_pair
                 and not self.has("确认选择", area=EMPLOYEE_EVENT_CONFIRM)):
@@ -1590,6 +1595,7 @@ class Frame:
             if self.page == Page.DANCE:
                 if self.dance_needs_pair:
                     return None
+                # 有文字且整条按钮点亮时，游戏已校验人数。按钮文字漏读时还要核对两个选中徽标。
                 return self._wide_confirm(button, EMPLOYEE_EVENT_CONFIRM, DANCE_CONFIRM_X)
             return self.enabled_button(button)
         if self.unlabeled_dance_confirm and self.dance_pair_selected:

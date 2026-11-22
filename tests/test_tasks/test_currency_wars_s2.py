@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw
 import pytest
 
 from module.automation.automation import Automation
+from module.automation.input_base import begin_input_dispatch
 from module.screen.screen import Screen
 from tasks.weekly import currency_wars as task
 from tasks.weekly import currency_wars_strategy as policy
@@ -92,7 +93,7 @@ def world(monkeypatch):
 
 def drive(monkeypatch, world, initial, on_click=None, after_capture=None):
     state = SimpleNamespace(frame=initial, clicks=[], keys=[])
-    def observe():
+    def observe(*, until=None):
         world.war._check_budget()
         if after_capture is not None:
             after_capture(state)
@@ -4699,7 +4700,8 @@ def test_dreamscape_dance_pairs_anaxa_with_sparkle_first(monkeypatch, world):
 
 
 @pytest.mark.parametrize("entry", ("single", "loop", "takeover", "daily"))
-def test_dreamscape_dance_ignores_bright_employee_tab_behind_confirmation(monkeypatch, world, entry):
+@pytest.mark.parametrize("ocr_seconds", (0.2, 2.25))
+def test_dreamscape_dance_ignores_bright_employee_tab_behind_confirmation(monkeypatch, world, entry, ocr_seconds):
     stage = "2-3"
     confirm, settlement = (1487, 576), (960, 899)
     left, right = (928, 358), (1166, 359)
@@ -4724,8 +4726,20 @@ def test_dreamscape_dance_ignores_bright_employee_tab_behind_confirmation(monkey
     world.cfg.currencywars_rank_difficulty = "lowest"
     world.cfg.currencywars_strategy = "default"
     world.cfg.currencywars_time_limit = 1
-    state = drive(monkeypatch, world, before if entry == "takeover" else lobby,
-                  lambda s, point: setattr(s, "frame", routes[s.frame, point]))
+    state = SimpleNamespace(frame=before if entry == "takeover" else lobby, clicks=[])
+
+    def capture():
+        if state.frame.page == Page.DANCE:
+            world.now[0] += ocr_seconds
+        return state.frame
+
+    def click(point, *, press_duration):
+        state.clicks.append((state.frame.page, point))
+        state.frame = routes[state.frame, point]
+        return True
+
+    monkeypatch.setattr(world.war, "_capture", capture)
+    world.auto.click_element_with_pos.side_effect = click
     monkeypatch.setattr(world.war, "get_reward", lambda f: (
         f, (18000 if world.war.result else 15000, 18000), False))
     assert before.page is Page.DANCE
@@ -4740,7 +4754,8 @@ def test_dreamscape_dance_ignores_bright_employee_tab_behind_confirmation(monkey
 
     assert state.clicks[-4:] == [(Page.DANCE, left), (Page.DANCE, right), (Page.DANCE, confirm),
                                  (Page.MATCH_RESULT, settlement)]
-    assert not state.keys and state.frame is lobby and world.war.result is True
+    world.auto.press_key.assert_not_called()
+    assert state.frame is lobby and world.war.result is True
 
 
 def test_dreamscape_dance_uses_card_locations_when_names_and_badges_are_unreadable(monkeypatch, world):
@@ -4855,6 +4870,161 @@ def test_dreamscape_dance_rechecks_selection_and_button_when_confirm_text_is_unr
         with pytest.raises(task.CurrencyWarsUnavailable, match="未确认两个共舞卡位已选中及按钮可用"):
             world.war.start(resume=True)
         assert state.clicks == [(1165, 357), (928, 357)]
+
+
+def replay_dreamscape_dance(monkeypatch, world, initial, on_click, *, before_capture=None, ocr_seconds=0.2,
+                            refuse_input=False):
+    state = SimpleNamespace(frame=initial, pending=[], clicks=[])
+    world.cfg.currencywars_time_limit = 1
+    monkeypatch.setattr(world.war, "_check_weekly_reward", lambda f: (f, (18000, 18000), False))
+    monkeypatch.setattr(world.war, "_notify", Mock())
+    world.auto.input_handler.reports_dispatch = True
+
+    def screenshot():
+        world.now[0] += 0.05
+        if before_capture is not None and before_capture(state) is False:
+            return False
+        state.capture = state.pending.pop(0) if state.pending else state.frame
+        world.auto.screenshot = state.capture.image
+        return True
+
+    def ocr(*, raise_on_error):
+        world.now[0] += ocr_seconds if state.capture.page == Page.DANCE else 0.2
+        world.auto.ocr_result = [([label.point], (label.text, label.confidence)) for label in state.capture.labels]
+
+    def click(point, *, press_duration):
+        if refuse_input or not begin_input_dispatch(world.now[0]):
+            return False
+        state.clicks.append(point)
+        on_click(state, point)
+        return True
+
+    world.auto.take_screenshot.side_effect = screenshot
+    world.auto.perform_ocr.side_effect = ocr
+    world.auto.click_element_with_pos.side_effect = click
+    return state
+
+
+DANCE_CARD_POINTS = ((690, 357), (928, 357), (1166, 358))
+DANCE_CONFIRM_POINT = (1492, 576)
+
+
+def dance_dialog(*chosen, enabled=False, stage="1-3", cards=True):
+    common = labels(("备战阶段", 316, 70), (stage, 316, 106), ("梦境交织", 1045, 77),
+                    ("选择2个角色进行共舞，为其增加战斗内连携效果", 1045, 136),
+                    ("确认选择", *DANCE_CONFIRM_POINT), ("出战", 1790, 751))
+    if cards:
+        common += labels(*((name, *point) for name, point in zip(("白露", "那刻夏", "花火"), DANCE_CARD_POINTS)),
+                         *(("详情", x + 9, 412) for x, _ in DANCE_CARD_POINTS))
+    common += labels(*(("已选择", point[0] - 48, 194) for point in chosen))
+    image = CANVAS.copy()
+    if enabled:
+        ImageDraw.Draw(image).rectangle((1310, 550, 1670, 601), fill=(235, 235, 235))
+    elif len(chosen) < 2:
+        common += labels(("请选择2名共舞的角色", 1492, 521))
+    return Frame(image, common)
+
+
+@pytest.mark.parametrize("entry", ("late_receipts", "takeover_one", "takeover_two"))
+def test_dreamscape_dance_replays_three_candidates_and_preserves_current_selections(monkeypatch, world, entry):
+    bailu, anaxa, sparkle = DANCE_CARD_POINTS
+    initial = dance_dialog()
+    already_one = dance_dialog(bailu)
+    picked_anaxa = dance_dialog(anaxa)
+    both = dance_dialog(anaxa, bailu if entry == "takeover_one" else sparkle, enabled=True)
+    won = page(Page.MATCH_RESULT, ("对局胜利", 960, 233), ("返回货币战争", 960, 899))
+    # 淡出时只读到了共舞标题和确认字样，仍需要等待真实后续页面。
+    fading = Frame(both.image, tuple(label for label in both.labels if label.text in ("梦境交织", "确认选择")))
+
+    def click(state, point):
+        if point == anaxa:
+            state.frame = both if state.frame is already_one else picked_anaxa
+            if entry == "late_receipts":
+                state.pending[:] = [initial, initial]
+        elif point == sparkle:
+            state.frame = both
+        elif point == DANCE_CONFIRM_POINT:
+            state.pending[:] = [fading]
+            state.frame = won
+        else:
+            assert point == (960, 899)
+            state.frame = Frame(CANVAS, home().labels + labels(("入画奇航", 160, 110)))
+
+    start = {"late_receipts": initial, "takeover_one": already_one, "takeover_two": both}[entry]
+    state = replay_dreamscape_dance(monkeypatch, world, start, click, ocr_seconds=2.25)
+    chosen = {"late_receipts": [anaxa, sparkle], "takeover_one": [anaxa], "takeover_two": []}[entry]
+    assert world.war.start(resume=True)
+    assert state.clicks == [*chosen, DANCE_CONFIRM_POINT, (960, 899)]
+    world.auto.press_key.assert_not_called()
+
+
+@pytest.mark.parametrize(("fault", "diagnosis"), (
+    ("no_candidates", "未确认两个共舞候选卡位"),
+    ("wrong_stage", "选卡未派发"),
+    ("slow_frame", "选卡未派发"),
+    ("input_refused", "选卡未派发"),
+    ("missing_receipt", "点选已派发但未确认选中"),
+    ("gray_confirm", "确认键持续不可用"),
+    ("confirm_refused", "确认输入未派发"),
+    ("stuck_confirm", "确认已派发但未转场"),
+    ("popup_limit", "点选已派发但未确认选中"),
+    ("no_capture", "点选期间画面持续不可用"),
+    ("task_limit", "货币战争已到达任务总时限"),
+    ("stop", None),
+))
+def test_dreamscape_dance_reports_the_blocked_phase_and_sends_no_background_input(monkeypatch, world, fault, diagnosis):
+    _, anaxa, sparkle = DANCE_CARD_POINTS
+    confirm = DANCE_CONFIRM_POINT
+    first = dance_dialog(anaxa)
+    both = dance_dialog(anaxa, sparkle)
+    selected = dance_dialog(anaxa, sparkle, enabled=True)
+    initial = dance_dialog(cards=fault != "no_candidates")
+    if fault in ("confirm_refused", "stuck_confirm"):
+        initial = selected
+    if fault == "popup_limit":
+        monkeypatch.setattr(task, "DANCE_SECONDS", 1)
+
+    def capture(state):
+        if world.auto.take_screenshot.call_count > 1:
+            if fault == "wrong_stage":
+                state.frame = dance_dialog(stage="1-4")
+            if fault == "no_capture":
+                return False
+
+    def click(state, point):
+        if fault == "gray_confirm":
+            state.frame = first if point == anaxa else both
+        elif fault in ("task_limit", "stop"):
+            state.frame = first
+
+    ocr_seconds = {"slow_frame": 10.1, "popup_limit": 0.55}.get(fault, 0.2)
+    state = replay_dreamscape_dance(monkeypatch, world, initial, click, before_capture=capture, ocr_seconds=ocr_seconds,
+                                    refuse_input=fault in ("input_refused", "confirm_refused"))
+    if fault in ("task_limit", "stop"):
+        map_point = world.auto.find_element.side_effect
+
+        def interrupt_after_mapping(*args, **kwargs):
+            point = map_point(*args, **kwargs)
+            if state.clicks:
+                if fault == "task_limit":
+                    world.now[0] = world.war.deadline
+                else:
+                    task.pause_ctl.checkpoint.side_effect = RunStopRequested
+            return point
+
+        world.auto.find_element.side_effect = interrupt_after_mapping
+
+    error = {"task_limit": task.CurrencyWarsBudgetExceeded, "stop": RunStopRequested}.get(fault, task.CurrencyWarsUnavailable)
+    with pytest.raises(error, match=diagnosis) as failure:
+        world.war.start(resume=True)
+    expected = {"missing_receipt": [anaxa, sparkle], "gray_confirm": [anaxa, sparkle], "stuck_confirm": [confirm],
+                "popup_limit": [anaxa], "task_limit": [anaxa], "stop": [anaxa]}.get(fault, [])
+    assert state.clicks == expected
+    if error == task.CurrencyWarsUnavailable:
+        assert failure.value.preserve_game
+        assert f"选卡派发 {len([point for point in expected if point != confirm])} 次" in str(failure.value)
+        assert f"确认派发 {expected.count(confirm)} 次" in str(failure.value)
+    world.auto.press_key.assert_not_called()
 
 
 @pytest.mark.parametrize("read_card_names", (True, False))
