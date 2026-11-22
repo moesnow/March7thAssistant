@@ -210,7 +210,7 @@ smtp_temp.bin
 
 .agents/
 # 仅忽略仓库根目录的个人开发说明；assets/agent/AGENTS.md 是随发布包分发的公开文件
-/AGENTS.md
+/AGENTS.override.md
 .claude/
 CLAUDE.md
 
