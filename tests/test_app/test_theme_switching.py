@@ -84,6 +84,29 @@ def test_theme_preferences_follow_system_only_in_auto_without_icon_refresh(windo
     assert window.windowIcon().pixmap(32, 32).toImage() == QIcon('./assets/logo/March7th.ico').pixmap(32, 32).toImage()
 
 
+def test_fixed_themes_stop_qt_following_the_system_color_scheme(window, monkeypatch):
+    """Qt resets Mica and the palette on system theme changes unless a color scheme is pinned."""
+    import darkdetect
+    from PySide6.QtWidgets import QApplication
+    from app.tools import check_theme_change
+
+    system_scheme = Qt.ColorScheme.Dark if darkdetect.isDark() else Qt.ColorScheme.Light
+    hints = QApplication.instance().styleHints()
+    monkeypatch.setattr(window._evernight, 'selected', False)
+    try:
+        for preference, expected in [('light', Qt.ColorScheme.Light), ('dark', Qt.ColorScheme.Dark),
+                                     ('auto', system_scheme)]:
+            cfg.config['ui_theme'] = preference
+            check_theme_change.applyTheme(window)
+            assert hints.colorScheme() == expected, preference
+        cfg.config['ui_theme'] = 'evernight'
+        window._evernight.selected = True
+        check_theme_change.applyTheme(window)
+        assert hints.colorScheme() == Qt.ColorScheme.Dark
+    finally:
+        hints.setColorScheme(Qt.ColorScheme.Unknown)
+
+
 def test_external_config_reload_applies_theme_and_updates_setting(window, monkeypatch):
     from module import notification
     from app.tools import check_theme_change
