@@ -13,8 +13,17 @@ from tasks.power.policy import (
 from utils.pause import RunStopRequested
 
 
-@pytest.mark.parametrize("old_frames", [1, 11], ids=["panel-switch", "panel-wait-timeout"])
-def test_pc_instance_entry_recovers_from_stale_cultivation_panel(monkeypatch, old_frames):
+@pytest.mark.parametrize(
+    "old_frames, target_page, missed_drags, expected_drags",
+    [
+        (1, 0, (), []),
+        (11, 0, (), [True, True, True, True, False, False]),
+        (0, 1, (1,), [True, True]),
+        (0, 2, (1, 3), [True, True, True, True]),
+    ],
+    ids=["panel-switch", "panel-wait-timeout", "first-drag-missed", "later-drag-missed-after-movement"],
+)
+def test_pc_instance_entry_search(monkeypatch, old_frames, target_page, missed_drags, expected_drags):
     name = "密伶之径"
     now = 0.0
     page = 0
@@ -32,18 +41,18 @@ def test_pc_instance_entry_recovers_from_stale_cultivation_panel(monkeypatch, ol
         nonlocal now
         now += seconds
 
-    def capture(crop, *_args):
+    def capture(crop=(0, 0, 1, 1), *_args):
         nonlocal row_reads, texts
         if crop == instance.ENTRY_ROWS:
             row_reads += 1
             if row_reads <= old_frames and not drags:
                 texts = ["角色培养", "前往", "隧洞遗器推荐", "培养设置"]
             else:
-                texts = [name if page == 0 else "霜风之径", "40", "进入"]
+                texts = [name if page == target_page else "霜风之径", "40", "进入"]
         else:
             texts = [name] if entered else []
         auto.screenshot = Image.new("RGB", (30, 40), (page * 60,) * 3)
-        auto.screenshot_pos = (686, 287)
+        auto.screenshot_pos = (686, 287, 980, 650) if crop == instance.ENTRY_ROWS else (0, 0, 1920, 1080)
         return auto.screenshot, auto.screenshot_pos, 1
 
     def ocr():
@@ -53,34 +62,33 @@ def test_pc_instance_entry_recovers_from_stale_cultivation_panel(monkeypatch, ol
             for i, text in enumerate(texts)
         ]
 
-    def drag(_auto, start, end, **_kwargs):
+    def drag(_start_x, start_y, _end_x, end_y, *_args):
         nonlocal page
-        drags.append(end[1] < start[1])
-        page = min(2, max(0, page + (1 if drags[-1] else -1)))
-        capture(instance.ENTRY_ROWS)
+        down = end_y < start_y
+        drags.append(down)
+        if len(drags) not in missed_drags:
+            page = min(2, max(0, page + (1 if down else -1)))
         return True
 
-    def enter(_position):
+    def enter(_x, _y):
         nonlocal entered
         entered = True
         return True
 
     auto.take_screenshot = capture
     auto.perform_ocr = ocr
-    auto.click_element_with_pos = Mock(side_effect=enter)
+    auto.mouse_drag = drag
+    auto.mouse_click = Mock(side_effect=enter)
     clock = SimpleNamespace(monotonic=lambda: now, sleep=sleep)
     monkeypatch.setattr(instance, "auto", auto)
     monkeypatch.setattr(instance, "screen", Mock())
-    monkeypatch.setattr(instance, "drag_list", drag)
     monkeypatch.setattr(instance, "time", clock)
+    monkeypatch.setattr("tasks.base.list_drag.time", clock)
     monkeypatch.setattr("utils.wait.time", clock)
 
     assert instance.Instance.prepare_instance(CAVERN, name)
-    auto.click_element_with_pos.assert_called_once()
-    if old_frames == 1:
-        assert drags == [], "旧面板消失前不应开始拖动，否则会跳过首项"
-    else:
-        assert True in drags and False in drags, "等待超时后仍能反向找回被跳过的首项"
+    assert drags == expected_drags
+    auto.mouse_click.assert_called_once_with(921, 407)
 
 
 @pytest.mark.parametrize(

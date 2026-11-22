@@ -75,7 +75,7 @@ class Instance:
         is_ornament = instance_type == ORNAMENT
         start = (1125 / 1920, 810 / 1080)
         end = (1125 / 1920, (490 if is_ornament else 410) / 1080)
-        reversed_search = False
+        unchanged_drags = 0
         for attempt in range(24):
             entry = auto.find_element(
                 ("传送", "进入", "追踪"), "min_distance_text", crop=ENTRY_ROWS, include=True,
@@ -88,15 +88,14 @@ class Instance:
                 if not auto.click_element_with_pos(entry):
                     raise PowerError(f"无法点击副本入口：{instance_name}")
                 break
-            if attempt == 12 and not reversed_search:
-                start, end = end, start
-                reversed_search = True
+            # 单次手势可能漏收，连续两次停稳无位移才提前反向。
+            search_down = attempt < 12 and unchanged_drags < 2
+            drag_start, drag_end = (start, end) if search_down else (end, start)
             before = auto.screenshot.copy()
-            if not drag_list(auto, start, end, crop=ENTRY_ROWS, end_pause=0.2, settle=0.45):
+            if not drag_list(auto, drag_start, drag_end, crop=ENTRY_ROWS, end_pause=0.2, settle=0.45):
                 raise PowerError("生存索引列表未稳定")
-            if not reversed_search and changed_ratio(before, auto.screenshot) <= 0.01:
-                start, end = end, start
-                reversed_search = True
+            if search_down:
+                unchanged_drags = unchanged_drags + 1 if changed_ratio(before, auto.screenshot) <= 0.01 else 0
         else:
             raise PowerError(f"未找到指定副本：{instance_name}")
 
