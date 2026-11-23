@@ -493,16 +493,21 @@ def initialize(install=None, override=None, session=None):
         explicit = str(inherited.root) if inherited.mode == "custom" else None
     elif explicit and inherited and (inherited.mode != "custom" or inherited.root != (install / explicit).resolve()):
         inherited = None
+    observer = paths.readonly_role()
     recovering = False
     try:
         initial = inherited or paths.select(install, explicit)
         if (initial.storage / "backup" / paths.RESTORE_RECORD).is_file():
             recovering = True
-            if automatic_migration_allowed():
+            if not observer and automatic_migration_allowed():
                 from utils.data_backup import recover
                 recover(initial)
                 recovering = False
-        chosen, result = _choose(install, explicit, inherited)
+        if observer:
+            # Selecting an existing layout needs no backup, migration, lease or lock file.
+            chosen, result = initial, {"status": "unchanged"}
+        else:
+            chosen, result = _choose(install, explicit, inherited)
     except Exception as exc:
         chosen = paths.select(install, explicit)
         result = {"status": "failed", "reason": str(exc)}

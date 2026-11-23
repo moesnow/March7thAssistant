@@ -99,6 +99,8 @@ runpy.run_path(entry, run_name="__main__")
         "readonly": expected_readonly, "memory": "epic", "disk": expected_disk,
     }
     if expected_readonly:
+        assert not (tmp_path / "userdata").exists()
+        assert not (tmp_path / "logs").exists()
         assert (tmp_path / "config.yaml").read_text(encoding="utf-8") == "game_launch_method: direct\n"
 
     # 新进程重新加载同一文件，覆盖任务进程不能读取 GUI 内存中设置的实际场景。

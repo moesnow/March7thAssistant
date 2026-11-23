@@ -93,9 +93,32 @@ def _brief(record) -> dict:
     return brief
 
 
-def _dir_writable(path: str) -> bool:
+def _dir_writable(path: str, *, probe: bool = True) -> bool:
     while not os.path.exists(path):
-        path = os.path.dirname(path)
+        parent = os.path.dirname(path)
+        if parent == path:
+            return False
+        path = parent
+    if not os.path.isdir(path):
+        return False
+    if not probe:
+        # Query the directory ACL without creating the usual write probe.
+        if os.name == "nt":
+            import ntsecuritycon
+            import pywintypes
+            import win32con
+            import win32file
+            try:
+                handle = win32file.CreateFile(
+                    path, ntsecuritycon.FILE_ADD_FILE,
+                    win32con.FILE_SHARE_READ | win32con.FILE_SHARE_WRITE | win32con.FILE_SHARE_DELETE,
+                    None, win32con.OPEN_EXISTING, win32con.FILE_FLAG_BACKUP_SEMANTICS, None,
+                )
+            except pywintypes.error:
+                return False
+            handle.Close()
+            return True
+        return os.access(path, os.W_OK | os.X_OK)
     try:
         with tempfile.NamedTemporaryFile(dir=path, prefix=".m7a_write_test_", delete=True):
             pass
@@ -129,6 +152,7 @@ def collect_status() -> dict:
     """汇总安装、配置与运行状态。只读：以只读方式加载配置，不写 config.yaml。"""
     import base64
 
+    observer = paths.readonly_role()
     os.environ["MARCH7TH_CONFIG_READONLY"] = "1"
     from module.config import cfg
     from module.config.platform import get_control_backend, get_ui_profile
@@ -159,7 +183,7 @@ def collect_status() -> dict:
         "characters_file": paths.characters_path(),
         "config_file": config_path,
         "config_exists": os.path.exists(config_path),
-        "config_writable": _dir_writable(paths.data_dir()),
+        "config_writable": _dir_writable(paths.data_dir(), probe=not observer),
         "config_reference": os.path.abspath(os.path.join("assets", "config", "config.example.yaml")),
         "first_run_completed": bool(cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8"))),
         "cloud_game_enable": bool(cfg.get_value("cloud_game_enable", False)),

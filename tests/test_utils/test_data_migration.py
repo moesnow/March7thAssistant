@@ -198,6 +198,56 @@ def test_cross_volume_copy_and_readonly(install, monkeypatch):
         assert start(install, monkeypatch)["status"] == "success"
 
 
+def test_observer_respects_layout_and_leaves_pending_restore_alone(install, monkeypatch):
+    populate(install, [paths.CONFIG, "settings/accounts/one.acc"])
+    custom = paths.select(install, "explicit")
+    journal = custom.storage / "backup" / paths.RESTORE_RECORD
+    journal.parent.mkdir(parents=True)
+    journal.write_bytes(b"pending")
+    monkeypatch.setenv("MARCH7TH_CONFIG_READONLY", "true")
+    monkeypatch.setenv(paths.RECOVERY_ENV, "")
+    monkeypatch.setattr("utils.data_backup.recover", lambda *_: pytest.fail("observer tried to restore"))
+    monkeypatch.setattr(migration, "_choose", lambda *_: pytest.fail("observer tried to migrate or pin"))
+    result = migration.initialize(install, session=custom.serialize())
+    assert paths.layout() == custom and result["status"] == "recovery_pending"
+    assert journal.read_bytes() == b"pending"
+    assert not (install / paths.USERDATA).exists()
+    assert not (custom.storage / "backup" / ".data.lock").exists()
+
+
+@pytest.mark.parametrize("args", [
+    ("--status",), ("--list", "--json"), ("--list-workflows", "--json"), ("--version",),
+])
+def test_cli_observer_reads_legacy_install_without_writing(install, args):
+    shutil.copy2(ROOT / "main.py", install / "main.py")
+    shutil.copytree(ROOT / "assets/config", install / "assets/config")
+    sponsor = Path("assets/app/images/sponsor.jpg")
+    (install / sponsor).parent.mkdir(parents=True)
+    shutil.copy2(ROOT / sponsor, install / sponsor)
+    (install / paths.CONFIG).write_text("auto_set_game_path_enable: false\nui_language: zh_CN\n", encoding="utf-8")
+    workflows = install / "config/workflows"
+    for name in ("first", "second"):
+        (workflows / name).mkdir(parents=True)
+        (workflows / name / "workflow.yaml").write_text("name: legacy\nsteps: []\n", encoding="utf-8")
+
+    def snapshot():
+        return {p.relative_to(install): (p.stat().st_mtime_ns, p.read_bytes()) if p.is_file() else None
+                for p in install.rglob("*")}
+
+    before = snapshot()
+    env = dict(os.environ, PYTHONPATH=str(ROOT), PYTHONDONTWRITEBYTECODE="1", MARCH7TH_CONFIG_READONLY="true")
+    query = subprocess.run([sys.executable, str(install / "main.py"), *args], cwd=install, env=env,
+                           capture_output=True, timeout=60, check=True)
+    if args[0] == "--status":
+        status = json.loads(query.stdout)
+        assert status["data_layout"] == "legacy" and Path(status["config_file"]) == install / paths.CONFIG
+        assert status["config_writable"] is True
+    elif args[0] == "--list-workflows":
+        names = json.loads(query.stdout)["workflows"]
+        assert len({name for name in names if name.startswith("legacy")}) == 2
+    assert snapshot() == before
+
+
 def test_status_entry_concurrent_and_second_launch(install, monkeypatch):
     populate(install, ALL)
     shutil.copy2(ROOT / "main.py", install / "main.py")

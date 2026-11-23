@@ -26,7 +26,8 @@ class Logger(metaclass=SingletonMeta):
         """根据提供的日志级别初始化日志器及其配置。"""
         self._create_logger()
         self._create_logger_title()
-        self._cleanup_old_logs()
+        if not paths.readonly_role():
+            self._cleanup_old_logs()
 
     def _current_datetime(self):
         """获取当前日期，格式为YYYY-MM-DD."""
@@ -63,6 +64,8 @@ class Logger(metaclass=SingletonMeta):
         self._add_file_handler(self.logger_title, logging.Formatter('%(message)s'))
 
     def _add_file_handler(self, logger, formatter):
+        if paths.readonly_role():
+            return
         try:
             self._ensure_log_directory_exists()
             path = os.path.join(paths.logs_dir(), f"{self._current_datetime()}.log")

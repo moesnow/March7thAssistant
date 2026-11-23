@@ -714,13 +714,15 @@ def normalize_workflow(workflow: dict) -> dict:
 
 
 def load_workflows() -> list[dict]:
-    ensure_workflow_directories()
+    observer = paths.readonly_role()
+    if not observer:
+        ensure_workflow_directories()
 
     allowed_sample_dirs, _ = _read_official_workflow_config()
     sample_workflows = _load_workflows_from_root(WORKFLOW_EXAMPLE_ROOT, read_only=True, allowed_dirs=allowed_sample_dirs)
     user_workflows = _load_workflows_from_root(WORKFLOW_USER_ROOT, read_only=False)
 
-    if not sample_workflows and not user_workflows:
+    if not observer and not sample_workflows and not user_workflows:
         save_workflows([create_default_workflow()])
         user_workflows = _load_workflows_from_root(WORKFLOW_USER_ROOT, read_only=False)
 
@@ -735,7 +737,7 @@ def load_workflows() -> list[dict]:
                 renamed_user_workflow = True
         existing_names.add(workflow["name"])
 
-    if renamed_user_workflow:
+    if renamed_user_workflow and not observer:
         save_workflows(workflows)
         user_workflows = _load_workflows_from_root(WORKFLOW_USER_ROOT, read_only=False)
         workflows = sample_workflows + user_workflows

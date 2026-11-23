@@ -140,12 +140,13 @@ def parse_args():
     args = parser.parse_args()
     if args.retry_step and (args.task != "routine" or args.workflow_name):
         parser.error("--retry-step 只能与 routine 一起使用")
+    from utils import paths
     from utils.data_migration import initialize
     initialize(override=args.data_dir, session=args.data_session)
 
     # AI 助手里已安装的 Skill 副本跟随小助手更新（仅打包版；不输出内容，不影响下面查询类命令的结果）
     from utils.agent_skill import sync_installed_skills
-    if not os.environ.get("MARCH7TH_DESKTOP_TWIN"):
+    if not paths.readonly_role() and not os.environ.get("MARCH7TH_DESKTOP_TWIN"):
         sync_installed_skills()
 
     # 查询类命令只读配置：可能由未提权的 m7a.exe 调用，安装目录不一定可写

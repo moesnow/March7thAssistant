@@ -88,6 +88,7 @@ def parse_args():
     # 处理 --list 参数
     if args.list:
         from utils.data_migration import initialize
+        # 初始化先识别继承的只读角色。普通启动仍遵循平台的首次迁移策略。
         initialize(override=args.data_dir, session=args.data_session)
         os.environ["MARCH7TH_CONFIG_READONLY"] = "1"
         from module.localization import load_language

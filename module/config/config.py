@@ -36,6 +36,11 @@ def _diag_rotated_path():
 
 def _diag(level, message):
     """写诊断日志（绝不抛错）。level: debug/info/warning/error"""
+    if paths.readonly_role():
+        # Keep observer diagnostics off the user's disk, including log rotation.
+        import logging
+        logging.getLogger(__name__).log(getattr(logging, level.upper()), message)
+        return
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
     millis = int((time.time() % 1) * 1000)
     thread_name = threading.current_thread().name
@@ -175,8 +180,7 @@ class Config(metaclass=SingletonMeta):
     writes_suspended = False
 
     def __init__(self, version_path, example_path, config_path):
-        Config._readonly = (os.environ.get("MARCH7TH_CONFIG_READONLY", "").lower() in ("1", "true") or
-                            os.environ.get(paths.RECOVERY_ENV) == "1")
+        Config._readonly = paths.readonly_role() or os.environ.get(paths.RECOVERY_ENV) == "1"
         if Config._readonly:
             _diag("info", "当前进程以只读模式加载配置（更新器/清理器等旁观进程），不会写入配置文件")
         _diag("info", f"Config 初始化: config_path={os.path.abspath(config_path)} "

@@ -98,6 +98,11 @@ def inherited(install, value):
             pass
 
 
+def readonly_role():
+    """The updater and other observers declare this role before importing the app."""
+    return os.environ.get("MARCH7TH_CONFIG_READONLY", "").lower() in ("1", "true")
+
+
 _layout = None
 
 
