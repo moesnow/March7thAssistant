@@ -16,7 +16,6 @@ from module.config import cfg
 from module.game.adb_status import AdbRunStatus, read_adb_run_status
 from module.game.adb_transport import AdbError
 from module.localization import tr
-from utils.desktop_twin import in_desktop_twin
 from .messagebox_custom import MessageBoxEdit
 
 
@@ -66,59 +65,6 @@ def _status_icon(parent=None):
     icon = IconWidget(InfoBarIcon.INFORMATION, parent)
     icon.setFixedSize(16, 16)
     return icon
-
-
-class AdbBackendSettingCard(SettingCard):
-    """设备后端三选一。本地和云游戏沿用旧开关，ADB 写入显式后端和触屏形态。"""
-
-    backendChanged = Signal(str)
-
-    def __init__(self, parent=None, *, blocker=None):
-        super().__init__(FIF.CONNECT, tr("游戏运行位置"), parent=parent)
-        self._blocker = blocker
-        self.comboBox = ComboBox(self)
-        self.comboBox.setMinimumWidth(190)
-        if sys.platform == "win32":
-            self.comboBox.addItem(tr("本地游戏"), userData="local")
-        self.comboBox.addItem(tr("云·星穹铁道"), userData="cloud")
-        self.comboBox.addItem(tr("安卓设备（ADB）"), userData="adb")
-        self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignmentFlag.AlignRight)
-        self.hBoxLayout.addSpacing(16)
-
-        self._backend = adb_service.current_backend()
-        self.setBackend(self._backend)
-        # 桌面分身固定使用本地后端，在分身里改动会影响主程序的配置。
-        self.comboBox.setEnabled(not in_desktop_twin())
-        self.comboBox.currentIndexChanged.connect(self._onCurrentIndexChanged)
-
-    def backend(self):
-        return self._backend
-
-    def setBackend(self, backend):
-        """只更新显示，不写配置。"""
-        self._backend = backend
-        error = adb_service.display_connection().error
-        self.setContent(error or "")
-        index = -1 if error else self.comboBox.findData(backend)
-        if index != self.comboBox.currentIndex():
-            self.comboBox.blockSignals(True)
-            try:
-                self.comboBox.setCurrentIndex(index)
-            finally:
-                self.comboBox.blockSignals(False)
-
-    def _onCurrentIndexChanged(self, index):
-        backend = self.comboBox.itemData(index)
-        if backend is None or backend == self._backend and not adb_service.display_connection().error:
-            return
-        if self._blocker is not None and self._blocker(backend):
-            self.setBackend(self._backend)
-            return
-        changes = adb_service.backend_changes(backend)
-        if changes:
-            cfg.set_values(changes)
-        self.setBackend(adb_service.current_backend())
-        self.backendChanged.emit(self._backend)
 
 
 class _PanelCard(ExpandSettingCard):

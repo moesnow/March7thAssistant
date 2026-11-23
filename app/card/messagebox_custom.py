@@ -788,40 +788,6 @@ class MessageBoxInstanceChallengeCount(MessageBox):
             self.textLayout.addLayout(horizontalLayout)
 
 
-class MessageBoxNotify(MessageBox):
-    def __init__(self, title: str, configlist: dict, parent=None):
-        super().__init__(title.capitalize(), "", parent)
-        self.configlist = configlist
-
-        self.textLayout.removeWidget(self.contentLabel)
-        self.contentLabel.clear()
-
-        self.yesButton.setText(tr('确认'))
-        self.cancelButton.setText(tr('取消'))
-
-        self.buttonGroup.setMinimumWidth(480)
-
-        font = QFont()
-        font.setPointSize(10)
-        lineEditFont = QFont()
-        lineEditFont.setPointSize(9)
-        self.textLayout.setSpacing(4)
-
-        self.lineEdit_dict = {}
-        for name, config in self.configlist.items():
-            titleLabel = QLabel(name.capitalize(), parent)
-            titleLabel.setFont(font)
-            self.textLayout.addWidget(titleLabel, 0, Qt.AlignmentFlag.AlignTop)
-
-            lineEdit = LineEdit(self)
-            lineEdit.setText(str(cfg.get_value(config)))
-            lineEdit.setFont(lineEditFont)
-            lineEdit.setFixedHeight(22)
-
-            self.textLayout.addWidget(lineEdit, 0, Qt.AlignmentFlag.AlignTop)
-            self.lineEdit_dict[config] = lineEdit
-
-
 class MessageBoxNotifyTemplate(MessageBox):
     def __init__(self, title: str, content: dict, parent=None):
         super().__init__(title, "", parent)

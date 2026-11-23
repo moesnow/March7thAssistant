@@ -1,4 +1,4 @@
-from qfluentwidgets import (ComboBox, SettingCard, FluentIcon, FluentIconBase, InfoBar, InfoBarPosition)
+from qfluentwidgets import (ComboBox, SettingCard, FluentIcon, FluentIconBase)
 from typing import Union
 from PySide6.QtCore import Qt, QSignalBlocker
 from PySide6.QtGui import QIcon
@@ -7,7 +7,6 @@ from PySide6.QtWidgets import QPushButton
 from module.config import cfg
 from module.localization import tr
 from utils.desktop import open_log_folder
-from ..tools.check_update import checkUpdate
 from ..tools.check_theme_change import applyTheme, current_theme_preference
 from ..components.evey_decoration import EveyControlDecoration
 from app.common.signal_bus import signalBus
@@ -71,29 +70,6 @@ class ComboBoxSettingCardTheme(ComboBoxSettingCard2):
             previous = self.comboBox.findData(current_theme_preference(self._window))
             with QSignalBlocker(self.comboBox):
                 self.comboBox.setCurrentIndex(max(0, previous))
-
-
-class ComboBoxSettingCardUpdateSource(SettingCard):
-    """ Setting card with a combo box """
-
-    def __init__(self, configname: str, icon: Union[str, QIcon, FluentIconBase], title, update_callback, content=None, texts=None, parent=None):
-        super().__init__(icon, title, content, parent)
-        self.configname = configname
-        self.update_callback = update_callback
-        self.comboBox = ComboBox(self)
-        self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignmentFlag.AlignRight)
-        self.hBoxLayout.addSpacing(16)
-
-        for key, value in texts.items():
-            self.comboBox.addItem(key, userData=value)
-            if value == cfg.get_value(configname):
-                self.comboBox.setCurrentText(key)
-
-        self.comboBox.currentIndexChanged.connect(self._onCurrentIndexChanged)
-
-    def _onCurrentIndexChanged(self, index: int):
-        cfg.set_value(self.configname, self.comboBox.itemData(index))
-        checkUpdate(self.update_callback)
 
 
 class ComboBoxSettingCardLog(SettingCard):

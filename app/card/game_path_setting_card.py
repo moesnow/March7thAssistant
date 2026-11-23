@@ -71,4 +71,4 @@ class GamePathSettingCard(ExpandSettingCard):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         if hasattr(self, "epicDescription"):
-            QTimer.singleShot(0, self._updateDescription)
+            QTimer.singleShot(0, self, self._updateDescription)
