@@ -10378,3 +10378,219 @@ msgstr "頁面"
 
 msgid "“退出”会关闭游戏。需要定时运行时，请打开「运行」页的「定时任务」。"
 msgstr "「退出」會關閉遊戲。需要定時執行時，請開啟「執行」頁的「定時任務」。"
+
+#: module/docs/catalog.py:22
+msgid "每日实训对照表"
+msgstr "每日實訓對照表"
+
+#: module/docs/catalog.py:26
+msgid "安卓版教程"
+msgstr "安卓版教學"
+
+#: module/docs/catalog.py:29
+msgid "Docker 部署"
+msgstr "Docker 部署"
+
+#: module/docs/catalog.py:30
+msgid "Termux 安卓部署"
+msgstr "Termux 安卓部署"
+
+#: app/help_interface.py:41
+msgid "搜索帮助文档"
+msgstr "搜尋說明文件"
+
+#: app/help_interface.py:43
+msgid "本页目录"
+msgstr "本頁目錄"
+
+#: app/help_interface.py:264
+msgid "新"
+msgstr "新"
+
+#: app/help/page.py:56
+msgid "返回"
+msgstr "返回"
+
+#: app/help/page.py:54
+msgid "随 {version} 更新"
+msgstr "隨 {version} 更新"
+
+#: app/help/page.py:103
+msgid "这篇文档的排版出了问题，下面按原文显示。"
+msgstr "這篇文件的排版出了問題，以下顯示原文。"
+
+#: app/help/page.py:161
+msgid "已复制本节的官网链接"
+msgstr "已複製本節的官網連結"
+
+#: app/help/blocks.py:87
+msgid "图片"
+msgstr "圖片"
+
+#: app/help/blocks.py:87
+msgid "图片：{name}"
+msgstr "圖片：{name}"
+
+#: app/help/blocks.py:102
+msgid "复制本节的官网链接"
+msgstr "複製本節的官網連結"
+
+#: app/help/blocks.py:369
+msgid "已复制"
+msgstr "已複製"
+
+#: app/help/blocks.py:493
+msgid "详细信息"
+msgstr "詳細資訊"
+
+#: app/help/richtext.py:322
+msgid "前往"
+msgstr "前往"
+
+#: app/help/richtext.py:454
+msgid "前往：{path}"
+msgstr "前往：{path}"
+
+#: app/help/richtext.py:63
+msgid "部分"
+msgstr "部分"
+
+#: app/help/richtext.py:518
+msgid "复制链接地址"
+msgstr "複製連結網址"
+
+#: app/help/search.py:111
+msgid "没有找到相关内容"
+msgstr "找不到相關內容"
+
+#: app/help/search.py:113
+msgid "换个说法试试："
+msgstr "試試其他關鍵字："
+
+#: app/help/search.py:113
+msgid "换个说法，或者少输入几个字试试。"
+msgstr "請換個說法，或試著減少關鍵字。"
+
+#: app/help/search.py:190
+msgid "找到 {count} 个相关小节"
+msgstr "找到 {count} 個相關小節"
+
+#: app/help/sections.py:173
+msgid "当前版本"
+msgstr "目前版本"
+
+#: app/help/sections.py:175
+msgid "测试版"
+msgstr "測試版"
+
+#: app/help/sections.py:183
+msgid "这个版本的说明暂时无法显示。"
+msgstr "暫時無法顯示這個版本的更新說明。"
+
+#: app/help/side.py:254
+msgid "没找到答案？"
+msgstr "找不到答案嗎？"
+
+#: app/help/side.py:263
+msgid "换个说法搜索，或带上日志去 QQ 群提问"
+msgstr "換個關鍵字搜尋，或帶著日誌到 QQ 群組提問"
+
+#: app/help/side.py:255
+msgid "打开常见问题"
+msgstr "開啟常見問題"
+
+#: app/help/side.py:265
+msgid "QQ 群"
+msgstr "QQ 群組"
+
+#: module/channel_catalog.py:37
+msgid "启用 Windows 通知"
+msgstr "啟用 Windows 通知"
+
+#: module/channel_catalog.py:39
+msgid "启用 企业微信机器人 通知"
+msgstr "啟用 企業微信機器人 通知"
+
+#: module/channel_catalog.py:43
+msgid "启用 QQ 官方机器人 通知"
+msgstr "啟用 QQ 官方機器人 通知"
+
+#: module/channel_catalog.py:49
+msgid "启用 SMTP 通知"
+msgstr "啟用 SMTP 通知"
+
+#: module/channel_catalog.py:61
+msgid "启用 飞书 通知"
+msgstr "啟用 飛書 通知"
+
+#: module/channel_catalog.py:70
+msgid "启用 Telegram 通知"
+msgstr "啟用 Telegram 通知"
+
+#: module/channel_catalog.py:77
+msgid "启用 钉钉 通知"
+msgstr "啟用 釘釘 通知"
+
+#: module/channel_catalog.py:81
+msgid "启用 Server酱³ 通知"
+msgstr "啟用 Server醬³ 通知"
+
+#: module/channel_catalog.py:84
+msgid "启用 OneBot 通知"
+msgstr "啟用 OneBot 通知"
+
+#: module/channel_catalog.py:90
+msgid "启用 Server酱·Turbo版 通知"
+msgstr "啟用 Server醬·Turbo版 通知"
+
+#: module/channel_catalog.py:95
+msgid "启用 Bark 通知"
+msgstr "啟用 Bark 通知"
+
+#: module/channel_catalog.py:108
+msgid "启用 企业微信应用 通知"
+msgstr "啟用 企業微信應用 通知"
+
+#: module/channel_catalog.py:115
+msgid "启用 Pushplus 通知"
+msgstr "啟用 Pushplus 通知"
+
+#: module/channel_catalog.py:121
+msgid "启用 Discord 通知"
+msgstr "啟用 Discord 通知"
+
+#: module/channel_catalog.py:127
+msgid "启用 MeoW 通知"
+msgstr "啟用 MeoW 通知"
+
+#: module/channel_catalog.py:130
+msgid "启用 Gotify 通知"
+msgstr "啟用 Gotify 通知"
+
+#: module/channel_catalog.py:135
+msgid "启用 KOOK 通知"
+msgstr "啟用 KOOK 通知"
+
+#: module/channel_catalog.py:140
+msgid "启用 Qmsg 通知"
+msgstr "啟用 Qmsg 通知"
+
+#: module/channel_catalog.py:145
+msgid "启用 Matrix 通知"
+msgstr "啟用 Matrix 通知"
+
+#: module/channel_catalog.py:154
+msgid "启用 Pushdeer 通知"
+msgstr "啟用 Pushdeer 通知"
+
+#: module/channel_catalog.py:158
+msgid "启用 Go-cqhttp 通知"
+msgstr "啟用 Go-cqhttp 通知"
+
+#: module/channel_catalog.py:165
+msgid "启用 Webhook 通知"
+msgstr "啟用 Webhook 通知"
+
+#: module/channel_catalog.py:171
+msgid "启用 自定义通知 通知"
+msgstr "啟用自訂通知"

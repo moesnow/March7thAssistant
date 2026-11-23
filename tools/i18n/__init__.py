@@ -241,7 +241,7 @@ TABLE_SOURCES = [
     ("app/setting_interface.py", (("DESCRIPTIONS", None),)),
     ("app/pages/run_mode.py", (("TAGS", None), ("DETAILS", None))),
     ("app/pages/tasks.py", (("PROGRESS_LABELS", None), ("GROUPS", None))),
-    ("module/search/__init__.py", (("SYNONYMS", None),)),
+    ("module/search/terms.py", (("SYNONYMS", None),)),
     ("app/content/settings_state.py", (("MANUAL", None),)),
     ("module/notification/results.py", (("REASONS", None),)),
     ("module/search/setting_text.py", (("DESCRIPTIONS", None), ("CHOICES", None), ("PAGE_DESCRIPTIONS", None))),
@@ -330,6 +330,7 @@ def collect_table_literals() -> tuple[set[str], dict[str, str]]:
     # Constructor arguments containing msgids in the desktop content catalogs.
     constructors = {
         "module/content_pages.py": {"Page": (1, 4), "Group": (1,)},
+        "module/docs/catalog.py": {"Manual": (1,)},
         "module/channel_catalog.py": {"Channel": (1, 3), "Field": (1, 3)},
         "module/task_catalog.py": {"Task": (1,)},
         "module/tool_catalog.py": {"Tool": (1, 2)},
@@ -342,7 +343,11 @@ def collect_table_literals() -> tuple[set[str], dict[str, str]]:
             for index in specs.get(node.func.id, ()):
                 if len(node.args) <= index:
                     continue
-                for value in _collect_table_values(node.args[index]):
+                values = _collect_table_values(node.args[index])
+                if node.func.id == "Channel" and index == 1:
+                    # 注册表用渠道名生成开关标题，阅读器逐段翻译完整的设置路径。
+                    values |= {f"启用 {name} 通知" for name in values}
+                for value in values:
                     literals.add(value)
                     refs.setdefault(value, f"{rel}:{node.lineno}")
     return literals, refs
@@ -506,7 +511,7 @@ def run_checks() -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
-# 界面实际加载的文档基名（help_interface / changelog_interface 经 localized_doc_path 读取）。
+# 原生帮助阅读器侧栏的六篇手册，文档源由 module.docs.catalog.source_for 选择。
 # 后缀登记校验、译文完整性校验、zh_TW 生成共用此清单，防止多处清单漂移。
 DOC_BASES = ("Tutorial", "Workflow", "FAQ", "Background", "TasksTable", "Changelog")
 
@@ -516,7 +521,7 @@ def check_docs(docs_dir: Path | None = None) -> list[str]:
 
     - TasksTable 各语言版本表格行数须与基准版一致（防止改漏一份）
     - {Base}_{后缀}.md 的后缀须在 module.localization.languages 注册表声明
-    - 帮助页/更新日志实际加载的文档，声明了 docs_suffix 的语言必须有对应译文
+    - 帮助侧栏列出的文档，声明了 docs_suffix 的语言必须有对应译文
     """
     warnings: list[str] = []
     from module.localization.languages import LANGS
@@ -545,7 +550,7 @@ def check_docs(docs_dir: Path | None = None) -> list[str]:
                     warnings.append(f"文档 {f.name} 的语言后缀 {suf!r} 未在语言注册表声明")
                 break
 
-    # 界面实际加载的文档（app/help_interface.py 与 changelog_interface.py 经 localized_doc_path 读取）
+    # 每篇侧栏文档的译本都应使用该语言登记的后缀。
     for b in DOC_BASES:
         if not (docs_dir / f"{b}.md").is_file():
             continue  # 缺基准文档由其它校验负责
@@ -565,7 +570,7 @@ def check_docs(docs_dir: Path | None = None) -> list[str]:
 # 同步桌面帮助和另有繁体版本的安卓教程。
 ZH_TW_DOC_BASES = (*DOC_BASES, "Android")
 
-# 译文文档第 3 行的声明（界面按行号剥离，位置固定：第 1 行标题 / 第 2 行空行 / 第 3 行声明 / 第 4 行空行）
+# 生成器把转换声明放在标题后的第一个引用块，阅读器按声明文字识别。
 ZH_TW_DOC_NOTE = "> 本文件由簡體中文版經 OpenCC 簡繁轉換產生，用語以台灣習慣為準；內容如有差異，請以簡體中文版為準。"
 
 # 纯表格文档不带声明（与其它语言保持一致）
