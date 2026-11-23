@@ -1,5 +1,9 @@
 # 更新日志
 
+## v2026.11.23
+
+- 补上 Windows 版漏打包的模块，修复保存密码后无法启动桌面分身或打开「自动登录」窗口的问题 [#1435](https://github.com/moesnow/March7thAssistant/pull/1435) @Oc8369
+
 ## v2026.11.22
 
 开拓者开拓者！这次又有一些新玩意儿啦！✨
@@ -33,7 +37,6 @@
 - 修复电脑版固定浅色、深色或长夜主题后，窗口背景仍随 Windows 系统切换深浅色的问题 [#1432](https://github.com/moesnow/March7thAssistant/pull/1432) @Schrodingers-Neko
 - 保存错误截图时，日志会同时记录小助手版本号，方便反馈问题
 - 优化性能和稳定性并修复若干已知问题
-- [欢迎关注我们的B站账号，获取最新动态和教程](https://space.bilibili.com/3706960664857075)
 
 ## v2026.11.20
 
