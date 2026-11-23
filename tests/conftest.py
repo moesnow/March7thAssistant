@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -6,6 +7,17 @@ import pytest
 
 # 确保项目根目录在 Python 路径中
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_configure(config):
+    # Several modules import cfg and open log files during collection, before tmp_path fixtures run.
+    from utils import paths
+    if not os.environ.get("M7A_DATA_DIR") and not os.environ.get(paths.SESSION_ENV):
+        data = config._tmp_path_factory.mktemp("userdata")
+        patch = pytest.MonkeyPatch()
+        patch.setattr(paths, "_layout", paths.select(Path.cwd(), data))
+        config.add_cleanup(patch.undo)
 
 
 @pytest.fixture(scope="session")

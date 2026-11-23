@@ -19,6 +19,7 @@ from utils.pause import CONTROL_FILE_ENV, COMMAND_RESUME, RunStopRequested, _rea
 def workdir(tmp_path, monkeypatch):
     """在临时目录中运行：runs_dir() 相对当前目录；隔离控制文件环境变量。"""
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(runs, "_current_session", None)
     monkeypatch.setattr(runs.paths, "_layout", runs.paths.select(tmp_path, tmp_path))
     saved = os.environ.pop(CONTROL_FILE_ENV, None)
     yield tmp_path
