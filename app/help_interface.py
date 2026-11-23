@@ -296,25 +296,30 @@ a {
             browser.verticalScrollBar().setValue(0)
             return
 
-        browser.scrollToAnchor(anchor)
-        # Markdown headings currently have no HTML id. Match their Qt blocks too,
-        # including the short form of titles such as “Windows 后台模式（推荐）”.
+        from module.search.documents import localized_anchor, slug
+        anchor = localized_anchor(DOC_OF_TAB[attr], anchor).casefold()
+        counts = {}
         document = browser.document()
         block = document.begin()
         while block.isValid():
             if block.blockFormat().headingLevel():
-                title = block.text().strip()
-                names = (title, re.sub(r'\s*[（(][^）)]*[）)]$', '', title))
-                if any(re.sub(r'[^\w\s-]', '', n.casefold()).replace(' ', '-') == anchor.casefold()
-                       for n in names):
+                title = " ".join(block.text().split())
+                base = slug(title)
+                count = counts.get(base, 0) + 1
+                counts[base] = count
+                candidate = base if count == 1 else f"{base}~{count}"
+                short = slug(re.sub(r'\s*[（(][^）)]*[）)]$', '', title))
+                if anchor == candidate or count == 1 and anchor == short:
                     top = document.documentLayout().blockBoundingRect(block).top()
                     browser.verticalScrollBar().setValue(round(top))
-                    return
+                    return True
             block = block.next()
+        browser.scrollToAnchor(anchor)
+        return False
 
     def open_url(self, url):
         url = QUrl(url)
-        if url.scheme() in ('setting', 'task', 'doc'):
+        if url.scheme() in ('setting', 'category', 'task', 'doc', 'tool', 'page', 'run'):
             from app.navigation import navigate
             navigate(self.window(), url.toString())
         else:

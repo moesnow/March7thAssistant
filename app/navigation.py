@@ -1,13 +1,11 @@
-from operator import attrgetter
-
 from PySide6.QtCore import QEvent, QRectF, Qt, QVariantAnimation
 from PySide6.QtGui import QColor, QPainter, QPen
 from PySide6.QtWidgets import QWidget
-from qfluentwidgets import ExpandSettingCard, isDarkTheme, qconfig
+from qfluentwidgets import isDarkTheme, qconfig
 
 from app.common import design_tokens as tokens
 from module.logger import log
-from module.navigation import parse_link
+from module.navigation import DOCUMENTS, resolve_link
 
 
 class _CardHighlight(QWidget):
@@ -48,68 +46,35 @@ class _CardHighlight(QWidget):
                                 tokens.CARD_RADIUS, tokens.CARD_RADIUS)
 
 
-def _show_setting(page, setting):
-    if setting.widget:
-        card = attrgetter(setting.widget)(page)
-    else:
-        # Channel cards are built from configuration. Keys survive language and order changes.
-        card = next((child for child in page.NotifyGroup.findChildren(QWidget)
-                     if getattr(child, 'configname', None) in setting.keys), None)
-    if card is None:
-        return False
-
-    parents = []
-    group = card.parentWidget()
-    while group is not None and page.stackedWidget.indexOf(group) < 0:
-        if isinstance(group, ExpandSettingCard):
-            parents.append(group)
-        group = group.parentWidget()
-    if group is None:
-        return False
-    tab = page.pivot.items[group.objectName()]
-    if tab.isHidden():
-        return False
-    page.stackedWidget.setCurrentWidget(group)
-    page.pivotScrollArea.ensureWidgetVisible(tab)
-    # Backend- and strategy-dependent cards must respect the user's current configuration.
-    if card.isHidden() or any(parent.isHidden() for parent in parents):
-        return False
-    for parent in reversed(parents):
-        if not parent.isExpand:
-            parent.setExpand(True)
-        parent.expandAni.setCurrentTime(parent.expandAni.duration())
-    group.layout().activate()
-    page.stackedWidget.setFixedHeight(group.sizeHint().height())
-    page.vBoxLayout.activate()
-    page.scrollWidget.adjustSize()
-    target = getattr(card, 'card', card)  # An expanded card's header may be far above its bottom.
-    # Center the header when possible: the Fluent page slides in from below and
-    # can still clip the bottom of its viewport when the highlight starts.
-    viewport = page.viewport()
-    center_y = target.mapTo(viewport, target.rect().center()).y()
-    scrollbar = page.verticalScrollBar()
-    scrollbar.setValue(scrollbar.value() + center_y - viewport.rect().center().y())
-    for previous in page.findChildren(_CardHighlight):
+def highlight(widget):
+    target = getattr(widget, "card", widget)
+    for previous in widget.window().findChildren(_CardHighlight):
         previous.hide()
         previous.deleteLater()
-    _CardHighlight(target)
-    return True
+    return _CardHighlight(target)
 
 
 def navigate(window, link: str) -> bool:
     """Dispatch a link on the UI thread. Unavailable destinations never interrupt a task."""
     try:
-        route = parse_link(link)
-        if route is None:
+        target = resolve_link(link)
+        if target is None:
             log.warning(f'无法识别的界面链接：{link}')
             return False
-        kind, name, anchor = route
+        kind, name = target.kind, target.page
+        page = getattr(window, target.interface, None)
+        if name == "accounts":
+            from app.content.visibility import page_visible
+            if not page_visible(name):
+                return False
+        if page is None:
+            return False
+        window.switchTo(page)
         if kind == 'run':
-            page = window.logInterface
-            window.switchTo(page)
             if name == 'current':
                 return True
             if name == 'schedule':
+                highlight(page.manageScheduleButton)
                 page._openScheduleManager()
                 return True
             from pathlib import Path
@@ -122,29 +87,17 @@ def navigate(window, link: str) -> bool:
                 return QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
             log.warning(f'该次运行的日志文件不存在：{name}')
             return False
+        if target.item is not None:
+            return bool(page.locate(target.item))
         if kind == 'task':
-            log.info(f'任务页暂不支持深链接：{link}')
-            return False
+            return page.showTask(name) is not False
+        if kind == 'category':
+            return page.showCategory(name) is not False
         if kind == 'doc':
-            from app.help_interface import DOC_OF_TAB
-
-            attr = next((tab for tab, doc in DOC_OF_TAB.items() if doc.casefold() == name.casefold()), None)
-            if attr:
-                page = window.helpInterface
-                window.switchTo(page)
-                page.showDocument(attr, anchor)
-                return True
-        else:
-            from module.settings_registry import find_setting
-
-            setting = find_setting(name)
-            if setting:
-                page = getattr(window, 'settingInterface', window)
-                if page is not window:
-                    window.switchTo(page)
-                if _show_setting(page, setting):
-                    return True
-        log.warning(f'界面链接的目标不存在或当前不可用：{link}')
+            return page.showDocument(DOCUMENTS[name][0], target.anchor) is not False
+        if kind == 'tool':
+            return bool(page.locate(name))
+        return kind == 'page'
     except Exception as exc:
         log.warning(f'界面链接跳转失败：{link}，{exc}')
     return False

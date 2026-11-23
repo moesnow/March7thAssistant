@@ -91,6 +91,20 @@ class ToolsInterface(ScrollArea):
         if sys.platform == 'win32' and not self.automaticPlotCard.isHidden() and self.automaticPlotCard.getSwitchState():
             self.__startAutoPlot()
 
+    def locate(self, tool_id):
+        from module.tool_catalog import TOOL_BY_ID
+        from app.navigation import highlight
+        tool = TOOL_BY_ID.get(tool_id)
+        card = getattr(self, tool.widget, None) if tool else None
+        if card is None or card.isHidden():
+            return False
+        target = getattr(card, "card", card)
+        bar = self.verticalScrollBar()
+        center = target.mapTo(self.viewport(), target.rect().center())
+        bar.setValue(bar.value() + center.y() - self.viewport().rect().center().y())
+        highlight(target)
+        return True
+
     def retranslateUi(self):
         """保留自动对话开关及其运行状态，不再次启动后台工具。"""
         StyleSheet.TOOLS_INTERFACE.apply(self)
@@ -261,7 +275,7 @@ class ToolsInterface(ScrollArea):
             if not game_path or not os.path.exists(game_path):
                 InfoBar.warning(
                     title=tr('游戏路径配置错误(╥╯﹏╰╥)'),
-                    content=tr("请在“设置”→“游戏连接”中配置正确的游戏路径"),
+                    content=tr("请在「设置 → 运行方式 → 游戏路径」中选择正确的游戏文件"),
                     orient=Qt.Orientation.Horizontal,
                     isClosable=True,
                     position=InfoBarPosition.TOP,
