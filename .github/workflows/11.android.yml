@@ -86,6 +86,8 @@ jobs:
         run: |
           cc -Wall -Wextra -Werror -pthread app/src/test/native/launcher_contract.c -o "$RUNNER_TEMP/m7a-launcher-test"
           "$RUNNER_TEMP/m7a-launcher-test"
+          cc -Wall -Wextra -Werror -pthread app/src/test/native/service_files_test.c -o "$RUNNER_TEMP/m7a-service-files-test"
+          sudo "$RUNNER_TEMP/m7a-service-files-test"
           tasks=(:device-service:test :device-service:dexJar :app:testDebugUnitTest :app:assembleRelease)
           if [[ "$APK_VERSION_CODE" == '0' ]]; then
             APK_VERSION_CODE=1
