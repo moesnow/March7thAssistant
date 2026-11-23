@@ -1,5 +1,5 @@
 import pytest
-from app.tools.warp_export import srgf_to_uigf_hkrpg, uigf_to_srgf_hkrpg, detect_format
+from module.gacha.formats import srgf_to_uigf_hkrpg, uigf_to_srgf_hkrpg, detect_format
 
 
 class TestSrgfToUigf:

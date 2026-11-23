@@ -172,7 +172,7 @@ def test_export_headers_and_weekdays_are_statically_extractable():
     from tools.i18n import collect_literals_from_source
 
     for path, expected in (
-        ("app/warp_interface.py", {"总次数", "保底内"}),
+        ("module/gacha/transfer.py", {"总次数", "保底内"}),
         ("app/card/expandable_switch_setting_card.py",
          {"周一", "周二", "周三", "周四", "周五", "周六", "周日"}),
     ):
