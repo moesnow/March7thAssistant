@@ -1134,55 +1134,51 @@ msgstr "프로그램이 트레이로 최소화되었습니다"
 msgid "停止任务"
 msgstr "임무 중지"
 
-#: app/home_interface.py:28
 msgid "更换背景图片"
 msgstr "배경 이미지 변경"
 
-#: app/home_interface.py:35
 msgid "恢复默认图片"
 msgstr "기본 이미지 복구"
 
-#: app/home_interface.py:42
 msgid "三月七小助手"
 msgstr "March 7th 도우미"
 
-#: app/home_interface.py:70
+#: app/overview/shortcut_dialog.py:70
 msgid "选择图片"
 msgstr "이미지 선택"
 
-#: app/home_interface.py:165
 msgid "任务 >"
 msgstr "임무 >"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "运行一次"
 msgstr "1회 실행"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "循环运行"
 msgstr "반복 실행"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "快速启动 ⭐"
 msgstr "빠른 시작 ⭐"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "原版运行"
 msgstr "원본 실행"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "更新锄大地"
 msgstr "필드 정리 업데이트"
 
-#: app/card/card_edit_dialog.py:32
+#: app/common/home_actions.py:25
 msgid "重置配置文件"
 msgstr "설정 파일 초기화"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "打开程序目录"
 msgstr "프로그램 폴더 열기"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "打开项目主页"
 msgstr "프로젝트 홈페이지 열기"
 
@@ -1820,7 +1816,7 @@ msgstr "알림"
 msgid "添加"
 msgstr "추가"
 
-#: app/home_interface.py:168
+#: app/overview/cards.py:393
 msgid "编辑"
 msgstr "편집"
 
@@ -4079,35 +4075,35 @@ msgstr "차분 우주 루프"
 msgid "差分宇宙中途接管"
 msgstr "차분 우주 중간 인수"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "差分宇宙运行一次 ⭐"
 msgstr "차분 우주 1회 실행 ⭐"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "差分宇宙循环运行 ⭐"
 msgstr "차분 우주 루프 실행 ⭐"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "模拟宇宙快速启动（停止维护）"
 msgstr "시뮬레이션 우주 빠른 시작（유지보수 중단）"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "模拟宇宙原版运行（停止维护）"
 msgstr "시뮬레이션 우주 원본 실행（유지보수 중단）"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "更新模拟宇宙（停止维护）"
 msgstr "시뮬레이션 우주 업데이트（유지보수 중단）"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "重置模拟宇宙配置文件（停止维护）"
 msgstr "시뮬레이션 우주 설정 파일 초기화（유지보수 중단）"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "打开模拟宇宙目录（停止维护）"
 msgstr "시뮬레이션 우주 폴더 열기（유지보수 중단）"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "打开模拟宇宙项目主页（停止维护）"
 msgstr "시뮬레이션 우주 프로젝트 홈페이지 열기（유지보수 중단）"
 
@@ -4197,83 +4193,78 @@ msgstr "제로 / 천성"
 msgid "鎏金追忆"
 msgstr "금빛 추억"
 
-#: app/card/card_edit_dialog.py:19
+#: module/overview/legacy_cards.py:6
 msgid "重置模拟宇宙配置文件"
 msgstr "시뮬레이션 우주 설정 파일 초기화"
 
-#: app/card/card_edit_dialog.py:19
+#: module/overview/legacy_cards.py:6
 msgid "打开模拟宇宙目录"
 msgstr "시뮬레이션 우주 폴더 열기"
 
-#: app/card/card_edit_dialog.py:19
+#: module/overview/legacy_cards.py:6
 msgid "打开模拟宇宙项目主页"
 msgstr "시뮬레이션 우주 프로젝트 홈페이지 열기"
 
-#: app/card/card_edit_dialog.py:19
+#: module/overview/legacy_cards.py:6
 msgid "重置锄大地配置文件"
 msgstr "Fhoe-Rail 설정 파일 초기화"
 
-#: app/card/card_edit_dialog.py:19
+#: module/overview/legacy_cards.py:6
 msgid "打开锄大地程序目录"
 msgstr "Fhoe-Rail 프로그램 폴더 열기"
 
-#: app/card/card_edit_dialog.py:19
+#: module/overview/legacy_cards.py:6
 msgid "打开锄大地项目主页"
 msgstr "Fhoe-Rail 프로젝트 홈페이지 열기"
 
-#: app/card/card_edit_dialog.py:425
 msgid "编辑主页卡片"
 msgstr "홈 카드 편집"
 
-#: app/card/card_edit_dialog.py:280
+#: app/overview/shortcut_dialog.py:77
 msgid "图标"
 msgstr "아이콘"
 
-#: app/card/card_edit_dialog.py:292
 msgid "标题："
 msgstr "제목:"
 
-#: app/card/card_edit_dialog.py:295
 msgid "卡片标题"
 msgstr "카드 제목"
 
-#: app/card/card_edit_dialog.py:323
+#: app/overview/shortcut_dialog.py:76
 msgid "操作类型："
 msgstr "동작 유형:"
 
-#: app/card/card_edit_dialog.py:325
+#: app/overview/shortcut_dialog.py:64
 msgid "单个任务"
 msgstr "단일 작업"
 
-#: app/card/card_edit_dialog.py:325
+#: app/overview/shortcut_dialog.py:64
 msgid "任务菜单"
 msgstr "작업 메뉴"
 
-#: app/card/card_edit_dialog.py:229
+#: app/overview/shortcut_dialog.py:77
 msgid "任务："
 msgstr "작업:"
 
-#: app/card/card_edit_dialog.py:353
+#: app/overview/shortcut_dialog.py:75
 msgid "添加菜单项"
 msgstr "메뉴 항목 추가"
 
-#: app/card/card_edit_dialog.py:207
 msgid "菜单项名称"
 msgstr "메뉴 항목 이름"
 
-#: app/card/card_edit_dialog.py:227
+#: app/card/messagebox_custom.py:1215
 msgid "名称："
 msgstr "이름:"
 
-#: app/card/card_edit_dialog.py:460
 msgid "添加卡片"
 msgstr "카드 추가"
 
-#: app/card/card_edit_dialog.py:462
+#: app/card/stationprioritysettingcard.py:181
 msgid "恢复默认"
 msgstr "기본값 복원"
 
-#: app/card/card_edit_dialog.py:465
+#: app/warp_interface.py:196
 msgid "确定"
 msgstr "확인"
 
@@ -4306,7 +4297,6 @@ msgstr "다운로드 프록시"
 msgid "留空则使用系统代理；支持 http:// 和 socks5://"
 msgstr "비워두면 시스템 프록시를 사용합니다. http:// 및 socks5:// 지원"
 
-#: app/card/card_edit_dialog.py:379
 msgid "选择图标"
 msgstr "아이콘 선택"
 
@@ -4819,7 +4809,7 @@ msgstr "누름 시간"
 msgid "请选择模板图片"
 msgstr "템플릿 이미지를 선택하세요"
 
-#: app/card/card_edit_dialog.py:530
+#: app/overview/shortcut_dialog.py:267
 msgid "保存失败"
 msgstr "저장 실패"
 
@@ -5221,11 +5211,10 @@ msgstr "업데이트 패키지 압축 해제 중..."
 msgid "检测到新版本：{version}"
 msgstr "새 버전 감지: {version}"
 
-#: app/card/card_edit_dialog.py:543
+#: module/overview/shortcuts.py:229
 msgid "任务菜单中的菜单项名称不能为空"
 msgstr "작업 메뉴의 메뉴 항목 이름은 비워 둘 수 없습니다"
 
-#: app/card/card_edit_dialog.py:531
 msgid "卡片标题不能为空"
 msgstr "카드 제목은 비워 둘 수 없습니다"
 
@@ -5704,11 +5693,9 @@ msgstr "체인 실패 후:"
 msgid "启动任务失败：{error}"
 msgstr "작업 시작 실패: {error}"
 
-#: app/card/samplecardview1.py:61
 msgid "执行完成(＾∀＾●)"
 msgstr "실행 완료(＾∀＾●)"
 
-#: app/card/samplecardview1.py:73
 msgid "执行出错"
 msgstr "실행 오류"
 
@@ -8172,11 +8159,10 @@ msgstr "도감 우선"
 msgid "忆灵「长夜」"
 msgstr "기억 정령 Evey"
 
-#: app/home_interface.py:54
+#: app/overview/greeting.py:150
 msgid "别晃啦！本姑娘头好晕( ꩜ ᯅ ꩜;)"
 msgstr "그만 흔들어! 나 어지럽단 말이야! ( ꩜ ᯅ ꩜;)"
 
-#: app/home_interface.py:123
 msgid "长夜月小助手"
 msgstr "Evernight 도우미"
 

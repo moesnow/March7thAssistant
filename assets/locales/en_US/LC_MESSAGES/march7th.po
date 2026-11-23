@@ -1178,55 +1178,51 @@ msgstr "Program minimized to tray"
 msgid "停止任务"
 msgstr "Stop Task"
 
-#: app/home_interface.py:28
 msgid "更换背景图片"
 msgstr "Change Background Image"
 
-#: app/home_interface.py:35
 msgid "恢复默认图片"
 msgstr "Restore Default Image"
 
-#: app/home_interface.py:42
 msgid "三月七小助手"
 msgstr "March7th Assistant"
 
-#: app/home_interface.py:70
+#: app/overview/shortcut_dialog.py:70
 msgid "选择图片"
 msgstr "Select Image"
 
-#: app/home_interface.py:165
 msgid "任务 >"
 msgstr "Task >"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "运行一次"
 msgstr "Run Once"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "循环运行"
 msgstr "Loop Run"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "快速启动 ⭐"
 msgstr "Quick Start ⭐"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "原版运行"
 msgstr "Original Run"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "更新锄大地"
 msgstr "Update Fhoe-Rail"
 
-#: app/card/card_edit_dialog.py:32
+#: app/common/home_actions.py:25
 msgid "重置配置文件"
 msgstr "Reset Config"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "打开程序目录"
 msgstr "Open Program Dir"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "打开项目主页"
 msgstr "Open Project Page"
 
@@ -1871,7 +1867,7 @@ msgstr "Notify"
 msgid "添加"
 msgstr "Add"
 
-#: app/home_interface.py:168
+#: app/overview/cards.py:393
 msgid "编辑"
 msgstr "Edit"
 
@@ -4159,35 +4155,35 @@ msgstr "Divergent Universe Loop"
 msgid "差分宇宙中途接管"
 msgstr "Divergent Universe Mid-takeover"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "差分宇宙运行一次 ⭐"
 msgstr "Divergent Universe Run Once ⭐"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "差分宇宙循环运行 ⭐"
 msgstr "Divergent Universe Loop Run ⭐"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "模拟宇宙快速启动（停止维护）"
 msgstr "Simulated Universe Quick Start (Stop Maintain)"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "模拟宇宙原版运行（停止维护）"
 msgstr "Simulated Universe Original Run (Stop Maintain)"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "更新模拟宇宙（停止维护）"
 msgstr "Update Simulated Universe (Stop Maintain)"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "重置模拟宇宙配置文件（停止维护）"
 msgstr "Reset Simulated Universe Config (Stop Maintain)"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "打开模拟宇宙目录（停止维护）"
 msgstr "Open Simulated Universe Dir (Stop Maintain)"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "打开模拟宇宙项目主页（停止维护）"
 msgstr "Open Simulated Universe Project Homepage (Stop Maintain)"
 
@@ -4278,83 +4274,78 @@ msgstr "Zero / Thousand Stars"
 msgid "鎏金追忆"
 msgstr "Gilded Reminiscence"
 
-#: app/card/card_edit_dialog.py:19
+#: module/overview/legacy_cards.py:6
 msgid "重置模拟宇宙配置文件"
 msgstr "Reset Simulated Universe Config"
 
-#: app/card/card_edit_dialog.py:19
+#: module/overview/legacy_cards.py:6
 msgid "打开模拟宇宙目录"
 msgstr "Open Simulated Universe Directory"
 
-#: app/card/card_edit_dialog.py:19
+#: module/overview/legacy_cards.py:6
 msgid "打开模拟宇宙项目主页"
 msgstr "Open Simulated Universe Project Homepage"
 
-#: app/card/card_edit_dialog.py:19
+#: module/overview/legacy_cards.py:6
 msgid "重置锄大地配置文件"
 msgstr "Reset Fhoe-Rail Config"
 
-#: app/card/card_edit_dialog.py:19
+#: module/overview/legacy_cards.py:6
 msgid "打开锄大地程序目录"
 msgstr "Open Fhoe-Rail Directory"
 
-#: app/card/card_edit_dialog.py:19
+#: module/overview/legacy_cards.py:6
 msgid "打开锄大地项目主页"
 msgstr "Open Fhoe-Rail Project Homepage"
 
-#: app/card/card_edit_dialog.py:425
 msgid "编辑主页卡片"
 msgstr "Edit Home Cards"
 
-#: app/card/card_edit_dialog.py:280
+#: app/overview/shortcut_dialog.py:77
 msgid "图标"
 msgstr "Icon"
 
-#: app/card/card_edit_dialog.py:292
 msgid "标题："
 msgstr "Title:"
 
-#: app/card/card_edit_dialog.py:295
 msgid "卡片标题"
 msgstr "Card Title"
 
-#: app/card/card_edit_dialog.py:323
+#: app/overview/shortcut_dialog.py:76
 msgid "操作类型："
 msgstr "Action Type:"
 
-#: app/card/card_edit_dialog.py:325
+#: app/overview/shortcut_dialog.py:64
 msgid "单个任务"
 msgstr "Single Task"
 
-#: app/card/card_edit_dialog.py:325
+#: app/overview/shortcut_dialog.py:64
 msgid "任务菜单"
 msgstr "Task Menu"
 
-#: app/card/card_edit_dialog.py:229
+#: app/overview/shortcut_dialog.py:77
 msgid "任务："
 msgstr "Task:"
 
-#: app/card/card_edit_dialog.py:353
+#: app/overview/shortcut_dialog.py:75
 msgid "添加菜单项"
 msgstr "Add Menu Item"
 
-#: app/card/card_edit_dialog.py:207
 msgid "菜单项名称"
 msgstr "Menu Item Name"
 
-#: app/card/card_edit_dialog.py:227
+#: app/card/messagebox_custom.py:1215
 msgid "名称："
 msgstr "Name:"
 
-#: app/card/card_edit_dialog.py:460
 msgid "添加卡片"
 msgstr "Add Card"
 
-#: app/card/card_edit_dialog.py:462
+#: app/card/stationprioritysettingcard.py:181
 msgid "恢复默认"
 msgstr "Restore Defaults"
 
-#: app/card/card_edit_dialog.py:465
+#: app/warp_interface.py:196
 msgid "确定"
 msgstr "Confirm"
 
@@ -4389,7 +4380,6 @@ msgstr "Download Proxy"
 msgid "留空则使用系统代理；支持 http:// 和 socks5://"
 msgstr "Leave empty to use system proxy; supports http:// and socks5://"
 
-#: app/card/card_edit_dialog.py:379
 msgid "选择图标"
 msgstr "Select Icon"
 
@@ -4916,7 +4906,7 @@ msgstr "Press Duration"
 msgid "请选择模板图片"
 msgstr "Please select a template image"
 
-#: app/card/card_edit_dialog.py:530
+#: app/overview/shortcut_dialog.py:267
 msgid "保存失败"
 msgstr "Save Failed"
 
@@ -5329,11 +5319,10 @@ msgstr "Extracting update package..."
 msgid "检测到新版本：{version}"
 msgstr "Update available: {version}"
 
-#: app/card/card_edit_dialog.py:543
+#: module/overview/shortcuts.py:229
 msgid "任务菜单中的菜单项名称不能为空"
 msgstr "Menu item name in task menu cannot be empty"
 
-#: app/card/card_edit_dialog.py:531
 msgid "卡片标题不能为空"
 msgstr "Card title cannot be empty"
 
@@ -5827,11 +5816,9 @@ msgstr "After Chain Failure:"
 msgid "启动任务失败：{error}"
 msgstr "Start Task Failed: {error}"
 
-#: app/card/samplecardview1.py:61
 msgid "执行完成(＾∀＾●)"
 msgstr "Completed(＾∀＾●)"
 
-#: app/card/samplecardview1.py:73
 msgid "执行出错"
 msgstr "Execution Failed"
 
@@ -8499,11 +8486,10 @@ msgstr "Uncollected entries first"
 msgid "忆灵「长夜」"
 msgstr "Memosprite: Evey"
 
-#: app/home_interface.py:54
+#: app/overview/greeting.py:150
 msgid "别晃啦！本姑娘头好晕( ꩜ ᯅ ꩜;)"
 msgstr "Stop shaking me! I'm getting dizzy! ( ꩜ ᯅ ꩜;)"
 
-#: app/home_interface.py:123
 msgid "长夜月小助手"
 msgstr "Evernight Assistant"
 

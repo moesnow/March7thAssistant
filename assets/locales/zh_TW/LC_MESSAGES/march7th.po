@@ -1130,55 +1130,51 @@ msgstr "程式已縮小至系統匣"
 msgid "停止任务"
 msgstr "停止任務"
 
-#: app/home_interface.py:28
 msgid "更换背景图片"
 msgstr "更換背景圖片"
 
-#: app/home_interface.py:35
 msgid "恢复默认图片"
 msgstr "恢復預設圖片"
 
-#: app/home_interface.py:42
 msgid "三月七小助手"
 msgstr "三月七小助手"
 
-#: app/home_interface.py:70
+#: app/overview/shortcut_dialog.py:70
 msgid "选择图片"
 msgstr "選擇圖片"
 
-#: app/home_interface.py:165
 msgid "任务 >"
 msgstr "任務 >"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "运行一次"
 msgstr "運行一次"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "循环运行"
 msgstr "循環運行"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "快速启动 ⭐"
 msgstr "快速啟動 ⭐"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "原版运行"
 msgstr "原版運行"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "更新锄大地"
 msgstr "更新鋤大地"
 
-#: app/card/card_edit_dialog.py:32
+#: app/common/home_actions.py:25
 msgid "重置配置文件"
 msgstr "重置設定檔"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "打开程序目录"
 msgstr "打開程式目錄"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "打开项目主页"
 msgstr "打開專案首頁"
 
@@ -1812,7 +1808,7 @@ msgstr "通知"
 msgid "添加"
 msgstr "新增"
 
-#: app/home_interface.py:168
+#: app/overview/cards.py:393
 msgid "编辑"
 msgstr "編輯"
 
@@ -4067,35 +4063,35 @@ msgstr "差分宇宙循環"
 msgid "差分宇宙中途接管"
 msgstr "差分宇宙中途接管"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "差分宇宙运行一次 ⭐"
 msgstr "差分宇宙運行一次 ⭐"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "差分宇宙循环运行 ⭐"
 msgstr "差分宇宙循環運行 ⭐"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "模拟宇宙快速启动（停止维护）"
 msgstr "模擬宇宙快速啓動（停止維護）"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "模拟宇宙原版运行（停止维护）"
 msgstr "模擬宇宙原版運行（停止維護）"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "更新模拟宇宙（停止维护）"
 msgstr "更新模擬宇宙（停止維護）"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "重置模拟宇宙配置文件（停止维护）"
 msgstr "重置模擬宇宙配置文件（停止維護）"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "打开模拟宇宙目录（停止维护）"
 msgstr "打開模擬宇宙目錄（停止維護）"
 
-#: app/card/card_edit_dialog.py:32
+#: module/overview/legacy_cards.py:19
 msgid "打开模拟宇宙项目主页（停止维护）"
 msgstr "打開模擬宇宙項目主頁（停止維護）"
 
@@ -4183,83 +4179,78 @@ msgstr "零號 / 千星"
 msgid "鎏金追忆"
 msgstr "鎏金追憶"
 
-#: app/card/card_edit_dialog.py:19
+#: module/overview/legacy_cards.py:6
 msgid "重置模拟宇宙配置文件"
 msgstr "重置模擬宇宙配置文件"
 
-#: app/card/card_edit_dialog.py:19
+#: module/overview/legacy_cards.py:6
 msgid "打开模拟宇宙目录"
 msgstr "打開模擬宇宙目錄"
 
-#: app/card/card_edit_dialog.py:19
+#: module/overview/legacy_cards.py:6
 msgid "打开模拟宇宙项目主页"
 msgstr "打開模擬宇宙項目主頁"
 
-#: app/card/card_edit_dialog.py:19
+#: module/overview/legacy_cards.py:6
 msgid "重置锄大地配置文件"
 msgstr "重置鋤大地配置文件"
 
-#: app/card/card_edit_dialog.py:19
+#: module/overview/legacy_cards.py:6
 msgid "打开锄大地程序目录"
 msgstr "打開鋤大地程序目錄"
 
-#: app/card/card_edit_dialog.py:19
+#: module/overview/legacy_cards.py:6
 msgid "打开锄大地项目主页"
 msgstr "打開鋤大地項目主頁"
 
-#: app/card/card_edit_dialog.py:425
 msgid "编辑主页卡片"
 msgstr "編輯主頁卡片"
 
-#: app/card/card_edit_dialog.py:280
+#: app/overview/shortcut_dialog.py:77
 msgid "图标"
 msgstr "圖標"
 
-#: app/card/card_edit_dialog.py:292
 msgid "标题："
 msgstr "標題："
 
-#: app/card/card_edit_dialog.py:295
 msgid "卡片标题"
 msgstr "卡片標題"
 
-#: app/card/card_edit_dialog.py:323
+#: app/overview/shortcut_dialog.py:76
 msgid "操作类型："
 msgstr "操作類型："
 
-#: app/card/card_edit_dialog.py:325
+#: app/overview/shortcut_dialog.py:64
 msgid "单个任务"
 msgstr "單個任務"
 
-#: app/card/card_edit_dialog.py:325
+#: app/overview/shortcut_dialog.py:64
 msgid "任务菜单"
 msgstr "任務菜單"
 
-#: app/card/card_edit_dialog.py:229
+#: app/overview/shortcut_dialog.py:77
 msgid "任务："
 msgstr "任務："
 
-#: app/card/card_edit_dialog.py:353
+#: app/overview/shortcut_dialog.py:75
 msgid "添加菜单项"
 msgstr "添加菜單項"
 
-#: app/card/card_edit_dialog.py:207
 msgid "菜单项名称"
 msgstr "菜單項名稱"
 
-#: app/card/card_edit_dialog.py:227
+#: app/card/messagebox_custom.py:1215
 msgid "名称："
 msgstr "名稱："
 
-#: app/card/card_edit_dialog.py:460
 msgid "添加卡片"
 msgstr "添加卡片"
 
-#: app/card/card_edit_dialog.py:462
+#: app/card/stationprioritysettingcard.py:181
 msgid "恢复默认"
 msgstr "恢復默認"
 
-#: app/card/card_edit_dialog.py:465
+#: app/warp_interface.py:196
 msgid "确定"
 msgstr "確定"
 
@@ -4292,7 +4283,6 @@ msgstr "下載代理"
 msgid "留空则使用系统代理；支持 http:// 和 socks5://"
 msgstr "留空則使用系統代理；支持 http:// 和 socks5://"
 
-#: app/card/card_edit_dialog.py:379
 msgid "选择图标"
 msgstr "選擇圖標"
 
@@ -4800,7 +4790,7 @@ msgstr "按下時長"
 msgid "请选择模板图片"
 msgstr "請選擇模板圖片"
 
-#: app/card/card_edit_dialog.py:530
+#: app/overview/shortcut_dialog.py:267
 msgid "保存失败"
 msgstr "保存失敗"
 
@@ -5200,11 +5190,10 @@ msgstr "正在解壓更新包..."
 msgid "检测到新版本：{version}"
 msgstr "檢測到新版本：{version}"
 
-#: app/card/card_edit_dialog.py:543
+#: module/overview/shortcuts.py:229
 msgid "任务菜单中的菜单项名称不能为空"
 msgstr "任務選單中的選單項目名稱不能為空"
 
-#: app/card/card_edit_dialog.py:531
 msgid "卡片标题不能为空"
 msgstr "卡片標題不能為空"
 
@@ -5683,11 +5672,9 @@ msgstr "鏈式失敗後："
 msgid "启动任务失败：{error}"
 msgstr "啟動任務失敗：{error}"
 
-#: app/card/samplecardview1.py:61
 msgid "执行完成(＾∀＾●)"
 msgstr "執行完成（＾∀＾●）"
 
-#: app/card/samplecardview1.py:73
 msgid "执行出错"
 msgstr "執行發生錯誤"
 
@@ -8090,11 +8077,10 @@ msgstr "圖鑑優先"
 msgid "忆灵「长夜」"
 msgstr "憶靈「長夜」"
 
-#: app/home_interface.py:54
+#: app/overview/greeting.py:150
 msgid "别晃啦！本姑娘头好晕( ꩜ ᯅ ꩜;)"
 msgstr "別晃啦！本姑娘頭好暈( ꩜ ᯅ ꩜;)"
 
-#: app/home_interface.py:123
 msgid "长夜月小助手"
 msgstr "長夜月小助手"
 
