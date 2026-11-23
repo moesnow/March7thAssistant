@@ -23,6 +23,8 @@ _fallback_translation = gettext.NullTranslations()
 _missing_logged = set()
 # 已提示过「直接读取 .po」的语言
 _catalog_logged = set()
+# logger 就绪前记下的目录提示：{语言: (级别, 消息)}，由 flush_catalog_notices() 补写
+_pending_catalog_notices = {}
 
 if getattr(sys, 'frozen', False):
     _locale_dir = os.path.join(os.path.dirname(sys.executable), "assets", "locales")
@@ -63,17 +65,32 @@ def _s2t(text: str):
 _character_names_cache = None
 
 
-def _log_catalog_once(lang_code: str, message: str) -> None:
-    """源码运行的目录提示每种语言只记录一次。"""
+def _log_catalog_once(lang_code: str, level: str, message: str) -> None:
+    """源码运行的目录提示每种语言只记录一次；logger 未就绪时先记下，写出后才算已提示。"""
     if lang_code in _catalog_logged:
         return
-    _catalog_logged.add(lang_code)
-    try:
-        logger = sys.modules.get("module.logger")
-        if logger is not None and getattr(logger, "log", None) is not None:
-            logger.log.info(message)
-    except Exception:
-        pass
+    _pending_catalog_notices[lang_code] = (level, message)
+    flush_catalog_notices()
+
+
+def flush_catalog_notices() -> None:
+    """写出 logger 就绪前记下的目录提示。
+
+    app.py 在导入 module.logger 之前就加载界面语言，由 module.logger 初始化完成后调用本函数补写。
+    """
+    if not _pending_catalog_notices:
+        return
+    logger = sys.modules.get("module.logger")
+    log = getattr(logger, "log", None) if logger is not None else None
+    if log is None:
+        return
+    for lang_code, (level, message) in list(_pending_catalog_notices.items()):
+        try:
+            getattr(log, level)(message)
+        except Exception:
+            return
+        _catalog_logged.add(lang_code)
+        del _pending_catalog_notices[lang_code]
 
 
 def _catalog_from_po(lang_code: str):
@@ -95,10 +112,12 @@ def _catalog_from_po(lang_code: str):
         import polib  # 源码运行的依赖（requirements.txt / uv 默认 dev 组），发布包不需要
         catalog = gettext.GNUTranslations(io.BytesIO(polib.pofile(po_file).to_binary()))
     except Exception as e:
-        _log_catalog_once(lang_code, f"i18n 无法从 .po 读取 {lang_code} 翻译：{e}；请运行 python -m tools.i18n compile")
+        _log_catalog_once(lang_code, "warning",
+                          f"i18n 无法从 .po 读取 {lang_code} 翻译：{e}；请运行 python -m tools.i18n compile")
         return None
     state = "已过期" if mo_exists else "缺失"
-    _log_catalog_once(lang_code, f"i18n {lang_code} 的 .mo {state}，已直接读取 .po；运行 python -m tools.i18n compile 可省去这一步")
+    _log_catalog_once(lang_code, "info",
+                      f"i18n {lang_code} 的 .mo {state}，已直接读取 .po；运行 python -m tools.i18n compile 可省去这一步")
     return catalog
 
 
