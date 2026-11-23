@@ -48,10 +48,12 @@ def defaults_for(item, config=cfg):
 def doc_link(item):
     if not item.doc:
         return None
-    from module.search.documents import heading_pairs, localized_anchor
+    from module.docs.reader import localized_anchor
     name, _, anchor = item.doc[4:].partition("#")
+    if not anchor:
+        return item.doc
     translated = localized_anchor(name, anchor)
-    return f"doc:{name}#{translated}" if any(h.anchor == translated for h, _ in heading_pairs(name)) else None
+    return f"doc:{name}#{translated}" if translated else None
 
 
 def is_modified(item, config=cfg):

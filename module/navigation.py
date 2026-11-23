@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from urllib.parse import unquote
 
 from module.content_pages import PAGE_BY_ID
+from module.docs.catalog import DOCUMENTS
 from module.settings_registry import Setting, find_setting
 from module.tool_catalog import TOOL_BY_ID
 
@@ -16,11 +17,6 @@ TOP_PAGES = {
     "help": ("帮助", "helpInterface", "FIF.BOOK_SHELF"),
     "accounts": ("账号", "accountsInterface", "FIF.PEOPLE"),
     "settings": ("设置", "settingInterface", "FIF.SETTING"),
-}
-DOCUMENTS = {
-    "Tutorial": ("tutorialLabel", "使用教程"), "Workflow": ("workflowLabel", "流程编排"),
-    "FAQ": ("faqLabel", "常见问题"), "Background": ("backgroundLabel", "后台运行"),
-    "TasksTable": ("tasksLabel", "每日实训"), "Changelog": ("changelogLabel", "更新日志"),
 }
 
 

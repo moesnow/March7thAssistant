@@ -5,7 +5,7 @@ from qfluentwidgets import isDarkTheme, qconfig
 
 from app.common import design_tokens as tokens
 from module.logger import log
-from module.navigation import DOCUMENTS, resolve_link
+from module.navigation import resolve_link
 
 
 class _CardHighlight(QWidget):
@@ -94,7 +94,7 @@ def navigate(window, link: str) -> bool:
         if kind == 'category':
             return page.showCategory(name) is not False
         if kind == 'doc':
-            return page.showDocument(DOCUMENTS[name][0], target.anchor) is not False
+            return bool(page.showDocument(name, target.anchor))
         if kind == 'tool':
             return bool(page.locate(name))
         return kind == 'page'

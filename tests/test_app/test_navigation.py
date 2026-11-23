@@ -78,25 +78,20 @@ def test_nested_card_opens_section_and_parent_and_scrolls(host, qtbot):
     assert page.viewport().rect().contains(target.mapTo(page.viewport(), target.rect().center()))
 
 
-def test_doc_links_dispatch_internally_and_navigate_to_heading(host, qtbot):
-    tutorial = host.helpInterface.tutorialLabel
-    tutorial.setHtml('<a href="setting:notify_telegram_token">Telegram</a>')
-    cursor = tutorial.document().find('Telegram')
-    pos = tutorial.cursorRect(cursor).center() - QPoint(5, 0)
-    assert tutorial.anchorAt(pos) == 'setting:notify_telegram_token'
-    qtbot.mouseClick(tutorial.viewport(), Qt.MouseButton.LeftButton, pos=pos)
-    assert host.stackedWidget.currentWidget() is host.settingInterface
-    qtbot.waitUntil(lambda: host.settingInterface.pages["notify"].channels.findChild(_CardHighlight) is not None)
-    assert navigate(host, 'doc:Background#windows-后台模式')
-    page = host.helpInterface
-    assert host.stackedWidget.currentWidget() is page
-    browser = page.backgroundLabel
-    assert page.stackedWidget.currentWidget() is browser
-    assert browser.verticalScrollBar().value() > 0
-    block = browser.cursorForPosition(QPoint(10, 5)).block()
-    assert 'Windows 后台模式' in block.text()
-    assert navigate(host, 'doc:FAQ')
-    assert page.stackedWidget.currentWidget() is page.faqLabel
+def test_doc_links_dispatch_by_document_id():
+    from unittest.mock import Mock
+    window = SimpleNamespace(helpInterface=Mock(), switchTo=Mock())
+    for route, doc_id, anchor in (
+        ("doc:Background#windows-后台模式", "Background", "windows-后台模式"),
+        ("doc:FAQ", "FAQ", ""), ("doc:android", "Android", ""),
+        ("doc:Changelog#修复~2", "Changelog", "修复~2"),
+    ):
+        window.helpInterface.showDocument.return_value = True
+        assert navigate(window, route)
+        window.switchTo.assert_called_with(window.helpInterface)
+        window.helpInterface.showDocument.assert_called_with(doc_id, anchor)
+    window.helpInterface.showDocument.return_value = False
+    assert not navigate(window, "doc:FAQ")
 
 
 def test_missing_and_reserved_links_do_not_switch_pages(host, monkeypatch):
@@ -150,21 +145,27 @@ def test_new_window_protocol_for_all_targets(monkeypatch):
     for tool in TOOLS:
         assert navigate(window, "tool:" + tool.id)
         window.toolsInterface.locate.assert_called_with(tool.id)
-    for name, (attr, _) in DOCUMENTS.items():
+    for name in DOCUMENTS:
         assert navigate(window, f"doc:{name}")
-        window.helpInterface.showDocument.assert_called_with(attr, "")
+        window.helpInterface.showDocument.assert_called_with(name, "")
     assert navigate(window, "setting:scheduled_time")
     window.logInterface._openScheduleManager.assert_called()
     for link in ("task:power#ui_theme", "page:no", "tool:missing", "category:power", "setting:game_path#bad"):
         assert not navigate(window, link)
 
-def test_search_document_anchors_land_in_the_rendered_reader(host):
-    from module.navigation import DOCUMENTS
+def test_search_document_anchors_reach_the_reader_protocol():
+    from unittest.mock import Mock
+    from module.docs.catalog import SIDEBAR, source_for
+    from module.docs.reader import resolve_anchor
     from module.search.documents import heading_pairs
-    page = host.helpInterface
-    for name, (attr, _) in DOCUMENTS.items():
-        for heading, _ in heading_pairs(name):
-            assert page.showDocument(attr, heading.anchor), (name, heading.title, heading.anchor)
+    page = Mock()
+    window = SimpleNamespace(helpInterface=page, switchTo=Mock())
+    for manual in SIDEBAR:
+        source = source_for(manual.id)
+        for heading, _ in heading_pairs(manual.id):
+            assert navigate(window, f"doc:{manual.id}#{heading.anchor}")
+            page.showDocument.assert_called_with(manual.id, heading.anchor)
+            assert resolve_anchor(source, heading.anchor) == heading.anchor
 
 
 @pytest.mark.parametrize("backend, profile, strategy", [

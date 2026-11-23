@@ -4,6 +4,7 @@ from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import InfoBar, InfoBarPosition, PrimaryPushSettingCard
 from app.common.icon import BrandIcon
 from module.config import cfg
+from module.docs.support import QQ_GROUP_URL
 from module.localization import tr
 from app.tools.check_update import checkUpdate
 from app.tools.agent_prompt import build_agent_prompt
@@ -73,7 +74,7 @@ def build(host):
     )
     host.githubCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant")))
     host.agentPromptCard.clicked.connect(copy_prompt)
-    host.qqGroupCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://qm.qq.com/q/C3IryUWCQw")))
+    host.qqGroupCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(QQ_GROUP_URL)))
     host.bilibiliCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://space.bilibili.com/3706960664857075")))
     host.aboutCard.clicked.connect(lambda: checkUpdate(host.window))
     return host.finish("about")
