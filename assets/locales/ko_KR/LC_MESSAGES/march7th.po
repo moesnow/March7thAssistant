@@ -8347,3 +8347,235 @@ msgstr "지금은 데스크톱 분신 비밀번호를 변경할 수 없습니다
 #: app/tools/desktop_twin_password_dialog.py:114
 msgid "分身凭据已在其他位置更改，请核对后再操作。"
 msgstr "저장된 자격 증명이 다른 곳에서 변경되었습니다. 계정을 확인한 후 계속하세요."
+
+#: app/data_settings.py:30
+msgid "数据已移到 userdata 文件夹"
+msgstr "데이터를 userdata 폴더로 옮겼습니다"
+
+#: app/data_settings.py:31
+msgid "设置、账号、流程编排和记录现在都保存在这个文件夹里，迁移前的副本在 userdata\\backup。"
+msgstr "설정, 계정, 워크플로 및 기록이 이 폴더에 저장됩니다. 이전 데이터의 백업은 userdata\\backup에 있습니다."
+
+#: app/data_settings.py:32 app/data_settings.py:62
+msgid "打开文件夹"
+msgstr "폴더 열기"
+
+#: app/data_settings.py:61
+msgid "数据与备份"
+msgstr "데이터 및 백업"
+
+#: app/data_settings.py:62
+msgid "数据文件夹"
+msgstr "데이터 폴더"
+
+#: app/data_settings.py:63
+msgid "备份到文件"
+msgstr "파일로 백업"
+
+#: app/data_settings.py:63 app/data_settings.py:85
+msgid "备份数据"
+msgstr "데이터 백업"
+
+#: app/data_settings.py:64
+msgid "把设置、账号、流程编排和各种记录打包成一个 zip 文件，不含日志和云游戏浏览器数据"
+msgstr "설정, 계정, 워크플로 및 기록을 ZIP 파일로 저장합니다. 로그와 클라우드 게임 브라우저 데이터는 제외됩니다."
+
+#: app/data_settings.py:105 app/data_settings.py:65
+msgid "选择备份文件"
+msgstr "백업 파일 선택"
+
+#: app/data_settings.py:65
+msgid "从备份恢复"
+msgstr "백업에서 복원"
+
+#: app/data_settings.py:66
+msgid "恢复前会自动备份当前数据，恢复后需要重启小助手"
+msgstr "복원 전에 현재 데이터를 자동으로 백업합니다. 복원 후 도우미를 다시 시작하세요."
+
+#: app/data_settings.py:67
+msgid "选择文件夹"
+msgstr "폴더 선택"
+
+#: app/data_settings.py:103 app/data_settings.py:67
+msgid "从旧版文件夹导入"
+msgstr "이전 버전 폴더에서 가져오기"
+
+#: app/data_settings.py:68
+msgid "选择以前的小助手文件夹，把其中的设置、账号、流程编排和记录复制过来，导入前会自动备份当前数据"
+msgstr "이전 도우미 폴더에서 설정, 계정, 워크플로 및 기록을 복사합니다. 현재 데이터는 먼저 자동으로 백업됩니다."
+
+#: app/data_settings.py:69 app/data_settings.py:85
+msgid "导出排查包"
+msgstr "진단 파일 내보내기"
+
+#: app/data_settings.py:70
+msgid "隐藏 Token、密码、Cookie 和推送密钥后，导出设置和最近一次运行的日志，可以直接发到群里或 Issue"
+msgstr "토큰, 비밀번호, 쿠키 및 알림 키를 가린 설정과 최근 실행 로그를 내보냅니다. 그룹이나 이슈에 공유할 수 있습니다."
+
+#: app/data_settings.py:37
+msgid "截图"
+msgstr "스크린샷"
+
+#: app/data_settings.py:37
+msgid "云游戏浏览器数据"
+msgstr "클라우드 게임 브라우저 데이터"
+
+#: app/data_settings.py:38
+msgid "部分数据还在原来的位置"
+msgstr "일부 데이터가 기존 위치에 있습니다"
+
+#: app/data_settings.py:100 app/data_settings.py:115
+msgid "请先停止正在运行的任务"
+msgstr "먼저 실행 중인 작업을 중지하세요"
+
+#: app/data_settings.py:123
+msgid "请重新启动小助手以使用这份数据。"
+msgstr "이 데이터를 사용하려면 도우미를 다시 시작하세요."
+
+#: app/data_settings.py:124
+msgid "关闭小助手"
+msgstr "도우미 닫기"
+
+#: app/data_settings.py:50
+msgid "数据迁移没有完成"
+msgstr "데이터 이전을 완료하지 못했습니다"
+
+#: app/data_settings.py:23
+msgid "无法打开数据文件夹"
+msgstr "데이터 폴더를 열 수 없습니다"
+
+#: app/data_settings.py:94
+msgid "文件已保存"
+msgstr "파일을 저장했습니다"
+
+#: app/data_settings.py:117 app/data_settings.py:45
+msgid "数据操作没有完成"
+msgstr "데이터 작업을 완료하지 못했습니다"
+
+#: app/data_settings.py:122
+msgid "数据已导入"
+msgstr "데이터를 가져왔습니다"
+
+#: app/data_settings.py:122
+msgid "数据已恢复"
+msgstr "데이터를 복원했습니다"
+
+#: app/data_settings.py:39
+msgid "{items}暂时沿用原位置，下次启动会再试。"
+msgstr "{items} 항목은 당분간 기존 위치를 사용합니다. 다음 실행 시 다시 이전합니다."
+
+#: app/data_settings.py:92
+msgid "文件保存失败"
+msgstr "파일을 저장하지 못했습니다"
+
+#: app/data_settings.py:51
+msgid "这次继续使用原来的位置，下次启动会再试。原因：{reason}"
+msgstr "이번에는 기존 위치를 사용하며 다음 실행 시 다시 시도합니다. 이유: {reason}"
+
+#: utils/data_backup.py:106
+msgid "请选择 ZIP 文件"
+msgstr "ZIP 파일을 선택하세요"
+
+#: utils/data_backup.py:104
+msgid "请选择数据文件以外的位置保存压缩包"
+msgstr "백업 대상 데이터 이외의 위치에 압축 파일을 저장하세요"
+
+#: app/data_settings.py:113 app/data_settings.py:42 utils/data_backup.py:199
+msgid "上次还原尚未完成，请重启小助手后重试"
+msgstr "이전 복원이 완료되지 않았습니다. 도우미를 다시 시작한 후 다시 시도하세요"
+
+#: utils/data_backup.py:50
+msgid "备份中有无法恢复的项目：{name}"
+msgstr "복원할 수 없는 항목: {name}"
+
+#: utils/data_backup.py:213
+msgid "没有找到可以恢复的数据文件"
+msgstr "복원할 데이터 파일이 없습니다"
+
+#: utils/data_backup.py:215
+msgid "备份中的设置文件无效"
+msgstr "백업에 있는 설정 파일이 올바르지 않습니다"
+
+#: utils/data_backup.py:317
+msgid "运行日志路径是链接"
+msgstr "실행 로그 경로가 링크입니다"
+
+#: utils/data_backup.py:67
+msgid "数据目录中包含链接：{path}"
+msgstr "데이터 폴더에 링크가 있습니다: {path}"
+
+#: utils/data_backup.py:146
+msgid "无法导入文件：{name}"
+msgstr "파일을 가져올 수 없습니다: {name}"
+
+#: utils/data_backup.py:151
+msgid "导入期间文件发生了变化：{name}"
+msgstr "가져오는 중 파일이 변경되었습니다: {name}"
+
+#: utils/data_backup.py:126
+msgid "备份中包含无效或重复的文件：{name}"
+msgstr "백업에 잘못되었거나 중복된 파일이 있습니다: {name}"
+
+#: utils/data_backup.py:169 utils/data_backup.py:241
+msgid "恢复校验失败：{name}"
+msgstr "복원된 파일을 검증하지 못했습니다: {name}"
+
+#: app/setting_interface.py:2976
+msgid "数据"
+msgstr "데이터"
+
+#: utils/data_migration.py:21
+msgid "另一个小助手进程正在使用原来的数据位置"
+msgstr "다른 도우미 프로세스에서 기존 데이터 위치를 사용 중입니다."
+
+#: utils/data_migration.py:22
+msgid "此安装的其他界面或任务仍在运行"
+msgstr "이 설치의 다른 창이나 작업이 아직 실행 중입니다."
+
+#: utils/data_migration.py:23
+msgid "其他进程仍在处理数据文件"
+msgstr "다른 프로세스가 데이터 파일을 처리 중입니다."
+
+#: utils/data_migration.py:24
+msgid "设置文件不是有效的 YAML 配置"
+msgstr "설정 파일이 올바른 YAML 설정이 아닙니다."
+
+#: utils/data_migration.py:25
+msgid "userdata 与原数据目录重叠，无法安全移动文件"
+msgstr "userdata 폴더가 기존 데이터 폴더와 겹쳐 파일을 안전하게 옮길 수 없습니다."
+
+#: utils/data_migration.py:26
+msgid "迁移记录格式无效"
+msgstr "이전 기록의 형식이 올바르지 않습니다."
+
+#: utils/data_migration.py:27
+msgid "迁移记录中含有未知项目"
+msgstr "이전 기록에 알 수 없는 항목이 있습니다."
+
+#: utils/data_migration.py:28
+msgid "迁移备份路径错误"
+msgstr "이전 백업 경로가 올바르지 않습니다."
+
+#: utils/data_migration.py:29
+msgid "迁移记录中的目录无效"
+msgstr "이전 기록에 잘못된 폴더가 있습니다."
+
+#: utils/data_migration.py:30
+msgid "迁移后的设置文件与原文件不同"
+msgstr "이전된 설정 파일이 원본과 일치하지 않습니다."
+
+#: utils/data_backup.py:120
+msgid "请选择备份文件，排查包仅用于分享。"
+msgstr "백업 파일을 선택하세요. 진단 파일은 공유용입니다."
+
+#: module/update/extractor.py:136 module/update/update_engine.py:541
+msgid "更新临时路径与用户数据目录重叠：{path}"
+msgstr "업데이트 임시 경로와 사용자 데이터 폴더가 겹칩니다: {path}"
+
+#: utils/data_backup.py:62
+msgid "文件名与现有目录冲突：{path}"
+msgstr "파일 이름이 기존 폴더와 충돌합니다: {path}"
+
+#: utils/data_migration.py:33
+msgid "上次还原尚未完成，请在设置的「数据」标签重新选择备份文件或导入文件夹。"
+msgstr "이전 복원이 완료되지 않았습니다. 설정의 데이터 탭에서 백업 파일이나 가져올 폴더를 다시 선택하세요."

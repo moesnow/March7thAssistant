@@ -5,6 +5,7 @@ from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, InfoBarPosition, PrimaryPushSettingCard, MessageBox, PushButton, StateToolTip, ExpandSettingCard
 from app.sub_interfaces.accounts_interface import accounts_interface
 from .common.style_sheet import StyleSheet
+from .data_settings import DataSettings
 from .common.icon import UiIcon, BrandIcon
 from .components.pivot import SettingPivot
 from .card.comboboxsettingcard1 import ComboBoxSettingCard1
@@ -2597,6 +2598,7 @@ class SettingInterface(ScrollArea):
             tr("配置秘技、地图、跃迁、停止任务等按键设置")
         )
 
+        self.DataGroup = DataSettings(self.scrollWidget)
         self.AboutGroup = SettingCardGroup(tr('关于'), self.scrollWidget)
         self.githubCard = PrimaryPushSettingCard(
             tr('项目主页'),
@@ -2971,6 +2973,8 @@ class SettingInterface(ScrollArea):
                 'AccountsInterface',
                 tr('账号')
             )
+        self.addSubInterface(self.DataGroup, 'DataInterface', tr('数据'))
+        self.DataGroup.titleLabel.show()
         self.addSubInterface(self.AboutGroup, 'AboutInterface', tr('关于'))
 
         self.stackedWidget.currentChanged.connect(self.onCurrentIndexChanged)

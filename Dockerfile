@@ -103,7 +103,8 @@ COPY . .
 
 RUN python -m tools.i18n compile
 
-RUN python build.py --task ocr \
+RUN M7A_DATA_DIR=/tmp/m7a-build-data python build.py --task ocr \
+    && rm -rf /tmp/m7a-build-data \
     && rm -rf ./logs \
     && rm -f config.yaml
 

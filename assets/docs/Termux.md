@@ -63,10 +63,12 @@ termux-wake-lock
 
 ### 3. 创建项目目录并下载配置文件
 
+以下命令用于新安装。配置只在 `~/march7thassistant/config.yaml` 的旧安装可以继续用原挂载；要切换到 `userdata`，先在 Termux 中停止小助手并备份 `~/march7thassistant`。在这个宿主目录内，把原配置复制为 `userdata/config.yaml`，再把 `logs/` 和 `3rdparty/WebBrowser/UserProfile/` 里的内容分别复制到 `userdata/logs/` 和 `userdata/browser/`。复制完成后运行新版 `start-m7a.sh`，它会挂载准备好的 `userdata`。
+
 ```bash
-mkdir -p march7thassistant/logs march7thassistant/3rdparty/WebBrowser/UserProfile
+mkdir -p march7thassistant/userdata
 cd march7thassistant
-curl -o config.yaml https://m7a.top/assets/config/config.example.yaml
+curl -o userdata/config.yaml https://m7a.top/assets/config/config.example.yaml
 ```
 
 ### 4. 下载启动脚本
@@ -98,7 +100,7 @@ proot-distro install ghcr.io/moesnow/march7thassistant:latest
 
 首次运行时，程序会自动进入**二维码登录**模式。
 
-二维码图片会保存在 `logs/qrcode_login.png`，使用手机**米游社 APP** 扫描完成登录。
+二维码图片会保存在 `userdata/logs/qrcode_login.png`（旧挂载为 `logs/qrcode_login.png`），使用手机**米游社 APP** 扫描完成登录。
 
 也可以查看终端输出中的二维码内容，使用在线工具（如 [草料二维码](https://cli.im/)）将网址生成二维码后扫码登录。
 
@@ -267,7 +269,7 @@ uv run --only-group docker main.py
 
 首次运行时，程序会自动进入**二维码登录**模式。
 
-二维码图片会保存在 `logs/qrcode_login.png`，使用手机**米游社 APP** 扫描完成登录。
+二维码图片会保存在 `userdata/logs/qrcode_login.png`（旧挂载为 `logs/qrcode_login.png`），使用手机**米游社 APP** 扫描完成登录。
 
 也可以查看终端输出中的二维码内容，使用在线工具（如 [草料二维码](https://cli.im/)）将网址生成二维码后扫码登录。
 
@@ -334,11 +336,10 @@ chmod +x ~/start-m7a.sh
 
 ## 修改配置文件
 
-配置文件位于项目目录下的 `config.yaml`，首次运行后会自动生成。使用文本编辑器修改：
+新版配置文件位于项目目录的 `userdata/config.yaml`（旧挂载仍使用 `config.yaml`），首次运行后会自动生成。镜像方式在 Termux 里进入 `~/march7thassistant`，源码方式在 Debian 里进入 `~/March7thAssistant`，然后用文本编辑器修改：
 
 ```bash
-cd ~/March7thAssistant
-vim config.yaml
+vim userdata/config.yaml
 ```
 
 常用配置项示例：
@@ -356,7 +357,7 @@ run_daily_time: "04:00"
 如果不熟悉 vim，也可以使用 nano：
 
 ```bash
-nano config.yaml
+nano userdata/config.yaml
 ```
 
 修改完成后按 `Ctrl+O` 保存，`Ctrl+X` 退出 nano。

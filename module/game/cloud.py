@@ -599,6 +599,7 @@ class CloudGameController(GameControllerBase):
             return
         try:
             cookies_json = json.dumps(self.driver.get_cookies(), ensure_ascii=False, indent=4)
+            os.makedirs(os.path.dirname(os.path.abspath(self.COOKIE_PATH)), exist_ok=True)
             with open(self.COOKIE_PATH, "wb") as f:
                 # f.write(wdp_encrypt(cookies_json.encode()))
                 f.write(cookies_json.encode())
@@ -1125,8 +1126,9 @@ class CloudGameController(GameControllerBase):
 
         return closed
 
-    def try_dump_page(self, dump_dir=paths.webdump_dir()) -> None:
+    def try_dump_page(self, dump_dir=None) -> None:
         if self.driver:
+            dump_dir = dump_dir or paths.webdump_dir()
             os.makedirs(dump_dir, exist_ok=True)
             from datetime import datetime
             ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")

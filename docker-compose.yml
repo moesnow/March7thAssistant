@@ -5,9 +5,7 @@ services:
     # image: ghcr.io/moesnow/march7thassistant:latest
     # image: ghcr.nju.edu.cn/moesnow/march7thassistant:latest
     volumes:
-      - ./config.yaml:/m7a/config.yaml
-      - ./logs:/m7a/logs
-      - ./3rdparty/WebBrowser/UserProfile:/m7a/3rdparty/WebBrowser/UserProfile
+      - ./userdata:/m7a/userdata
     environment:
       - MARCH7TH_LOG_LEVEL=DEBUG
     network_mode: "bridge"

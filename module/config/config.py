@@ -175,7 +175,8 @@ class Config(metaclass=SingletonMeta):
     writes_suspended = False
 
     def __init__(self, version_path, example_path, config_path):
-        Config._readonly = os.environ.get("MARCH7TH_CONFIG_READONLY", "").lower() in ("1", "true")
+        Config._readonly = (os.environ.get("MARCH7TH_CONFIG_READONLY", "").lower() in ("1", "true") or
+                            os.environ.get(paths.RECOVERY_ENV) == "1")
         if Config._readonly:
             _diag("info", "当前进程以只读模式加载配置（更新器/清理器等旁观进程），不会写入配置文件")
         _diag("info", f"Config 初始化: config_path={os.path.abspath(config_path)} "
@@ -184,7 +185,11 @@ class Config(metaclass=SingletonMeta):
         self.version = self._load_version(version_path)
         self.config = self._load_default_config(example_path)
         self.config_path = config_path
-        self._load_config()
+        try:
+            self._load_config()
+        except OSError as exc:
+            import logging
+            logging.warning("配置暂时无法写入，本次使用已读取的设置：%s", exc)
 
     def _load_version(self, version_path):
         """加载版本信息"""
@@ -275,7 +280,8 @@ class Config(metaclass=SingletonMeta):
         if status == "broken":
             _diag("error", f"配置文件损坏: {os.path.abspath(path)} 原因={detail}\n"
                            f"文件内容: {_file_fingerprint(path)}")
-            self._handle_broken_config(path, detail)
+            if not Config._readonly:
+                self._handle_broken_config(path, detail)
             return
 
         # 旧体力循环统一转为定时模式；缺失的定时时间沿用模板默认值。
@@ -418,6 +424,7 @@ class Config(metaclass=SingletonMeta):
             _diag("info", f"save_config 跳过（当前进程为只读角色，不写配置文件）: {os.path.abspath(self.config_path)}")
             return
         config_dir = os.path.dirname(os.path.abspath(self.config_path))
+        os.makedirs(config_dir, exist_ok=True)
         self._warn_stale_tmp_files(config_dir)
         # 临时文件名唯一，避免多进程同时保存时互相截断
         tmp_fd, tmp_path = tempfile.mkstemp(

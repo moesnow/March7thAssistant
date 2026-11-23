@@ -83,6 +83,7 @@ class TestLaunchApplicationEnvironment:
         for key in qt_keys:
             monkeypatch.setenv(key, "updater-qt-path")
         monkeypatch.setenv("MARCH7TH_START_MINIMIZED_TO_TRAY", "1")
+        monkeypatch.setenv("M7A_SESSION_LAYOUT", "previous process")
         original_env = os.environ.copy()
         engine = self._engine()
         effects = [OSError("detached launch failed"), Mock()] if fallback else None
@@ -91,7 +92,7 @@ class TestLaunchApplicationEnvironment:
 
         assert popen.call_count == (2 if fallback else 1)
         expected_env = original_env.copy()
-        for key in (*qt_keys, "MARCH7TH_CONFIG_READONLY"):
+        for key in (*qt_keys, "MARCH7TH_CONFIG_READONLY", "M7A_SESSION_LAYOUT"):
             expected_env.pop(key, None)
         expected_env["PYINSTALLER_RESET_ENVIRONMENT"] = "1"
         for call in popen.call_args_list:

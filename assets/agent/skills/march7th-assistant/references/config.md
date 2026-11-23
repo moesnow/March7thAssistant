@@ -1,6 +1,6 @@
 # 常见配置修改
 
-配置文件是安装目录的 `config.yaml`。**每个键的含义、可选值都写在 `assets/config/config.example.yaml` 同名键的注释里**，
+配置文件的完整路径取自 `m7a.exe --status` 的 `config_file`。**每个键的含义、可选值都写在 `assets/config/config.example.yaml` 同名键的注释里**，
 改之前先读那里；这里只列最常被问到的几类。只改需要改的键，保持 YAML 缩进，改完可以重新读一遍确认格式正确。
 
 ## 体力计划（清体力刷什么）
@@ -62,5 +62,5 @@ scheduled_tasks:
 
 ## 流程编排
 
-流程保存在 `config/workflows/<目录>/workflow.yaml`，说明见 `assets/docs/Workflow.md`。
+`--status` 的 `workflows_dir` 指向流程目录，其中每个流程保存在 `<目录>/workflow.yaml`，说明见 `assets/docs/Workflow.md`。
 包含图片识别、截图模板的步骤建议在图形界面「流程编排」里创建；运行已有流程用 `.\m7a.exe --workflow-name "名称"`。

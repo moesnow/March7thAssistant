@@ -13,6 +13,6 @@
 .\m7a.exe --follow latest                   # 查看最近一次运行的输出与结果
 ```
 
-- 配置文件是 `config.yaml`，每个配置项的说明在 `assets/config/config.example.yaml`；直接编辑即可，图形界面会自动重新加载。
+- 从 `--status` 的 `config_file` 读取实际配置路径，每个配置项的说明在 `assets/config/config.example.yaml`；直接编辑即可，图形界面会自动重新加载。
 - 首次使用必须由用户本人打开 `March7th Launcher.exe` 并确认免责声明，不要代为确认或绕过。
-- 运行记录与日志在 `logs/runs/` 和 `logs/`。
+- `--status` 的 `data_dir` 是数据目录，`runs_dir` 和 `logs_dir` 分别给出运行记录和日志的实际位置。

@@ -104,6 +104,7 @@ def test_child_gui_refuses_to_run_on_parent_desktop(monkeypatch):
 
 def test_forced_normal_run_does_not_replace_desktop_twin_lock(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(runs.paths, '_layout', runs.paths.select(tmp_path))
     monkeypatch.setattr(runs, "is_process_alive", lambda pid, _: pid == 42)
     desktop = {"run_id": "desktop", "pid": 42, "invoker": runs.INVOKER_DESKTOP_TWIN}
     normal = {"run_id": "normal", "pid": 43, "invoker": "cli"}
@@ -119,6 +120,8 @@ def test_launcher_task_uses_runex_for_gui_entry(monkeypatch, tmp_path):
     from utils import uac_free
 
     monkeypatch.chdir(tmp_path)
+    snapshot = desktop_twin.paths.select(tmp_path, tmp_path / "custom").serialize()
+    monkeypatch.setenv(desktop_twin.paths.SESSION_ENV, snapshot)
     entry = tmp_path / "app.py"
     entry.touch()
     scheduler = Mock()
@@ -137,7 +140,7 @@ def test_launcher_task_uses_runex_for_gui_entry(monkeypatch, tmp_path):
     assert action.Path == sys.executable
     assert action.WorkingDirectory == str(tmp_path)
     assert action.Arguments == list2cmdline([
-        str(entry), "--desktop-twin-session", "7", "200", str(os.getpid()), "100.0",
+        str(entry), "--desktop-twin-session", "7", "200", str(os.getpid()), "100.0", "--data-session", snapshot,
     ])
     registered.RunEx.assert_called_once_with(None, 4, 7, "")
     root.DeleteTask.assert_not_called()

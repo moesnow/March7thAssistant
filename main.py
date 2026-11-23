@@ -132,7 +132,11 @@ def parse_args():
     # 内部参数：由免 UAC 计划任务启动时最小化自身窗口（计划任务无法指定窗口状态）
     agent.add_argument('--minimize-console', action='store_true', help=argparse.SUPPRESS)
 
+    optional.add_argument("--data-dir", help="指定数据文件夹（直接使用，不迁移）")
+    optional.add_argument("--data-session", help=argparse.SUPPRESS)
     args = parser.parse_args()
+    from utils.data_migration import initialize
+    initialize(override=args.data_dir, session=args.data_session)
 
     # AI 助手里已安装的 Skill 副本跟随小助手更新（仅打包版；不输出内容，不影响下面查询类命令的结果）
     from utils.agent_skill import sync_installed_skills

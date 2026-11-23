@@ -593,6 +593,7 @@ class TestDiagLogRotation:
         """轮转文件必须以 .log 结尾，才能被 utils.logger 的 30 天保留清理机制回收"""
         import module.config.config as config_module
         monkeypatch.chdir(tmp_path)
+        monkeypatch.setattr(config_module, '_DIAG_FILE', str(tmp_path / 'logs/config_diag.log'))
         monkeypatch.setattr(config_module, "_DIAG_FILE_MAX_BYTES", 0)  # 每次写入都触发轮转
 
         config_module._diag("debug", "first")

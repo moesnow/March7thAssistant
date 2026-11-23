@@ -94,6 +94,8 @@ def _brief(record) -> dict:
 
 
 def _dir_writable(path: str) -> bool:
+    while not os.path.exists(path):
+        path = os.path.dirname(path)
     try:
         with tempfile.NamedTemporaryFile(dir=path, prefix=".m7a_write_test_", delete=True):
             pass
@@ -130,7 +132,7 @@ def collect_status() -> dict:
     os.environ["MARCH7TH_CONFIG_READONLY"] = "1"
     from module.config import cfg
     from module.config.platform import get_control_backend, get_ui_profile
-    from utils import uac_free
+    from utils import data_migration, uac_free
     from utils.admin import is_user_admin
     from utils.agent_skill import last_sync_results
     from utils.install_registry import is_gui_running, registry_path
@@ -150,9 +152,14 @@ def collect_status() -> dict:
         "elevation": _elevation(is_admin, uac_free_state),
         "uac_free": uac_free_state,
         "entrypoints": _entrypoints(install_dir),
+        "data_dir": paths.data_dir(),
+        "data_layout": paths.layout().mode,
+        "migration": data_migration.result,
+        "workflows_dir": paths.workflows_dir(),
+        "characters_file": paths.characters_path(),
         "config_file": config_path,
         "config_exists": os.path.exists(config_path),
-        "config_writable": _dir_writable(install_dir),
+        "config_writable": _dir_writable(paths.data_dir()),
         "config_reference": os.path.abspath(os.path.join("assets", "config", "config.example.yaml")),
         "first_run_completed": bool(cfg.get_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8"))),
         "cloud_game_enable": bool(cfg.get_value("cloud_game_enable", False)),
@@ -262,6 +269,8 @@ def _normalize_exit_code(code) -> int:
 def worker_args(argv, run_id: str) -> list:
     """管理员进程的参数：去掉仅入口处理的参数，附加运行编号与非交互模式。"""
     args = [arg for arg in argv if arg not in FRONTEND_ONLY_FLAGS]
+    if "--data-session" not in args:
+        args += paths.child_arguments()
     args += ["--run-id", run_id]
     if "--non-interactive" not in args:
         args.append("--non-interactive")

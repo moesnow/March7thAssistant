@@ -1,3 +1,4 @@
+from utils import paths
 from utils.command import subprocess_with_stdout
 import subprocess
 import sys
@@ -23,16 +24,17 @@ def execute_command_in_new_environment(command, use_windows_terminal=False):
     executable_path = os.path.abspath("./March7th Assistant.exe") if getattr(sys, 'frozen', False) else sys.executable
     main_script = [] if getattr(sys, 'frozen', False) else ["main.py"]
 
+    command_args = [command, *paths.child_arguments()]
     if use_windows_terminal:
         # 尝试使用 Windows Terminal 执行命令
         try:
-            subprocess.Popen(["wt", executable_path] + main_script + [command], creationflags=subprocess.DETACHED_PROCESS)
+            subprocess.Popen(["wt", executable_path] + main_script + command_args, creationflags=subprocess.DETACHED_PROCESS)
         except:
             # 如果执行失败，则回退到创建新控制台的方式执行
-            subprocess.Popen([executable_path] + main_script + [command], creationflags=subprocess.CREATE_NEW_CONSOLE)
+            subprocess.Popen([executable_path] + main_script + command_args, creationflags=subprocess.CREATE_NEW_CONSOLE)
     else:
         # 直接在新的控制台中执行命令
-        subprocess.Popen([executable_path] + main_script + [command], creationflags=subprocess.CREATE_NEW_CONSOLE)
+        subprocess.Popen([executable_path] + main_script + command_args, creationflags=subprocess.CREATE_NEW_CONSOLE)
 
 
 def start_task(command):

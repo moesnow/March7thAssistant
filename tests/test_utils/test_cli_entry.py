@@ -14,7 +14,7 @@ from pathlib import Path
 import pytest
 
 import utils.schedule as schedule
-from utils import cli_entry, runs, uac_free
+from utils import cli_entry, paths, runs, uac_free
 from utils.admin import ERROR_CANCELLED, is_user_admin
 from utils.pause import CONTROL_FILE_ENV, PauseController, read_state
 from utils.tasks import AVAILABLE_TASKS
@@ -25,6 +25,7 @@ REPO = Path(__file__).resolve().parents[2]
 @pytest.fixture
 def workdir(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(runs.paths, "_layout", runs.paths.select(tmp_path, tmp_path))
     saved = os.environ.pop(CONTROL_FILE_ENV, None)
     yield tmp_path
     os.environ.pop(CONTROL_FILE_ENV, None)
@@ -340,6 +341,14 @@ class TestControl:
         assert read_state(runs.run_file("20261030-000001-aaaa", ".control")) is None
 
 
+@pytest.fixture(autouse=True)
+def isolated_install(tmp_path, monkeypatch):
+    monkeypatch.setenv("M7A_DATA_DIR", str(tmp_path / "data"))
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "local"))
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "local"))
+    monkeypatch.delenv(paths.SESSION_ENV, raising=False)
+
+
 def _run_main(*args):
     env = dict(os.environ, MARCH7TH_CONFIG_READONLY="1")
     return subprocess.run([sys.executable, str(REPO / "main.py"), *args], capture_output=True, timeout=120, env=env)
@@ -452,7 +461,8 @@ class TestReadOnlyCommands:
         assert isinstance(json.loads(result.stdout)["workflows"], list)
 
     def test_status_json(self):
-        config = REPO / "config.yaml"
+        root = Path(os.environ["M7A_DATA_DIR"])
+        config = root / "config.yaml"
         before = config.read_bytes() if config.exists() else None
         result = _run_main("--status")
         assert result.returncode == 0, result.stderr.decode("utf-8", "replace")
@@ -462,9 +472,11 @@ class TestReadOnlyCommands:
                     "recent_runs", "runs_dir", "install_registry", "agent_skill", "elevation", "uac_free"):
             assert key in status
         assert status["install_dir"] == str(REPO)
-        assert status["config_file"] == str(REPO / "config.yaml")
-        assert status["logs_dir"] == str(REPO / "logs")
-        assert status["runs_dir"] == str(REPO / "logs" / "runs")
+        assert status["data_dir"] == str(root)
+        assert status["data_layout"] == "custom"
+        assert status["config_file"] == str(config)
+        assert status["logs_dir"] == str(root / "logs")
+        assert status["runs_dir"] == str(root / "logs" / "runs")
         # 源码运行不碰开发者自己技能目录里的副本（同步只在打包版执行）
         assert status["agent_skill_copies"] == []
         after = config.read_bytes() if config.exists() else None
@@ -479,7 +491,7 @@ class TestReadOnlyCommands:
         """回归：入口转交的进程没拿到管理员权限时（如免 UAC 计划任务被改成不以最高权限运行），
         不能再转交一次，否则会不断重复启动自己"""
         run_id = runs.new_run_id()
-        runs_path = REPO / "logs" / "runs"
+        runs_path = Path(os.environ["M7A_DATA_DIR"]) / "logs" / "runs"
         try:
             result = _run_main("--workflow-name", "__不存在的流程__", "--run-id", run_id, "--non-interactive")
             assert result.returncode == runs.EXIT_ELEVATION_FAILED

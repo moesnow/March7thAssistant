@@ -27,6 +27,16 @@ build/
 dist/
 *.egg-info/
 
+# Local assistant data (including backups and secrets)
+/userdata
+/.pytest_tmp
+/config.yaml*
+/settings
+/config/workflows
+/warp.json*
+/characters*.json
+/screenshots
+
 # WebBrowser UserProfile (very large)
 3rdparty/WebBrowser/UserProfile/
 

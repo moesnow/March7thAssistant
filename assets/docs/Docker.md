@@ -29,7 +29,8 @@ mkdir march7thassistant && cd march7thassistant
 ### 2. 下载配置文件
 
 ```bash
-curl -o config.yaml https://m7a.top/assets/config/config.example.yaml
+mkdir -p userdata
+curl -o userdata/config.yaml https://m7a.top/assets/config/config.example.yaml
 ```
 
 ### 3. 下载 docker-compose.yml
@@ -60,7 +61,7 @@ docker compose up -d
 
 首次运行时，程序会自动切换到**二维码登录**模式。
 
-二维码图片会保存在 `./logs/qrcode_login.png`，使用手机 **米游社 APP** 扫描完成登录。
+二维码图片会保存在 `./userdata/logs/qrcode_login.png`，使用手机 **米游社 APP** 扫描完成登录。
 
 查看日志也可以获取二维码内容：
 
@@ -90,7 +91,8 @@ cd March7thAssistant
 ### 2. 创建配置文件
 
 ```bash
-cp assets/config/config.example.yaml config.yaml
+mkdir -p userdata
+cp assets/config/config.example.yaml userdata/config.yaml
 ```
 
 ### 3. 构建镜像
@@ -141,9 +143,7 @@ services:
     container_name: m7a
     build: .
     volumes:
-      - ./config.yaml:/m7a/config.yaml
-      - ./logs:/m7a/logs
-      - ./3rdparty/WebBrowser/UserProfile:/m7a/3rdparty/WebBrowser/UserProfile
+      - ./userdata:/m7a/userdata
     environment:
       - MARCH7TH_LOG_LEVEL=DEBUG
     command: ["python", "main.py", "daily"]
@@ -191,13 +191,9 @@ services:
 
 ## 数据持久化
 
-通过 volumes 挂载以下目录实现数据持久化：
+新版只需挂载 `./userdata:/m7a/userdata`。宿主机上的设置在 `userdata/config.yaml`，日志在 `userdata/logs/`，云游戏登录状态在 `userdata/browser/`。
 
-| 路径 | 说明 |
-|-----|------|
-| `./config.yaml` | 配置文件 |
-| `./logs` | 日志目录 |
-| `./3rdparty/WebBrowser/UserProfile` | 浏览器数据（登录状态） |
+已经分别挂载 `config.yaml`、`logs`、`3rdparty/WebBrowser/UserProfile` 的部署可继续使用原来的 Compose 文件。升级时容器沿用这些位置。要切换到单卷挂载，先停容器并备份，在宿主机上把原 `config.yaml` 复制为 `userdata/config.yaml`，将日志目录和浏览器配置目录里的内容分别复制到 `userdata/logs/` 和 `userdata/browser/`，最后修改 Compose 的挂载并启动。
 
 ## 常见问题
 
@@ -231,11 +227,12 @@ docker compose down
 
 ### Q: 卡在"启动浏览器中..."怎么办？
 
-如果程序一直卡在"启动浏览器中..."无法继续，尝试删除浏览器数据目录后重试：
+如果重启后仍卡在浏览器启动，可先停止容器、备份当前浏览器目录，再启动并重新扫码。以下命令适用于新版挂载。
 
 ```bash
-rm -rf ./3rdparty/WebBrowser/UserProfile
-docker compose restart
+docker compose stop
+mv ./userdata/browser "./userdata/browser_$(date +%Y%m%d-%H%M%S)"
+docker compose up -d
 ```
 
 ### Q: 日志内容直接截断怎么办？
@@ -275,12 +272,7 @@ please specify a unique value for --user-data-dir argument
 
 1. 尝试多重启几次
 
-2. 尝试删除浏览器数据目录后重试：
-
-```bash
-rm -rf ./3rdparty/WebBrowser/UserProfile
-docker compose restart
-```
+2. 如果仍然被占用，按上方「卡在启动浏览器中」的步骤停止容器、备份浏览器目录并重新登录。
 
 ### Q: 报错 "Message: tab crashed" 或 shm 相关错误？
 

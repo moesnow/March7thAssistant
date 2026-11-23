@@ -9,6 +9,7 @@ import os
 import sys
 from datetime import datetime
 
+from utils import paths
 from utils.pause import _atomic_write_json, _read_json
 from utils.runs import is_process_alive, process_create_time
 
@@ -49,6 +50,8 @@ def register_install(version: str, gui_pid: int = None, install_dir: str = None)
     previous = find_install(install_dir) or {}
     entry = {
         "path": install_dir,
+        "data_dir": paths.data_dir() if _same_path(str(paths.layout().install), install_dir) else str(
+            paths.select(install_dir, os.getenv("M7A_DATA_DIR")).root),
         "version": version,
         "frozen": bool(getattr(sys, "frozen", False)),
         "last_seen": datetime.now().astimezone().isoformat(timespec="seconds"),

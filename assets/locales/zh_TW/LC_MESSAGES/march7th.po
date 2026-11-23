@@ -8265,3 +8265,235 @@ msgstr "暫時無法變更分身密碼，請稍後再試。"
 #: app/tools/desktop_twin_password_dialog.py:114
 msgid "分身凭据已在其他位置更改，请核对后再操作。"
 msgstr "分身認證資料已在其他地方變更，請確認後再操作。"
+
+#: app/data_settings.py:30
+msgid "数据已移到 userdata 文件夹"
+msgstr "資料已移到 userdata 資料夾"
+
+#: app/data_settings.py:31
+msgid "设置、账号、流程编排和记录现在都保存在这个文件夹里，迁移前的副本在 userdata\\backup。"
+msgstr "設定、賬號、流程編排和記錄現在都儲存在這個資料夾裡，遷移前的副本在 userdata\\backup。"
+
+#: app/data_settings.py:32 app/data_settings.py:62
+msgid "打开文件夹"
+msgstr "開啟資料夾"
+
+#: app/data_settings.py:61
+msgid "数据与备份"
+msgstr "資料與備份"
+
+#: app/data_settings.py:62
+msgid "数据文件夹"
+msgstr "資料資料夾"
+
+#: app/data_settings.py:63
+msgid "备份到文件"
+msgstr "備份到檔案"
+
+#: app/data_settings.py:63 app/data_settings.py:85
+msgid "备份数据"
+msgstr "備份資料"
+
+#: app/data_settings.py:64
+msgid "把设置、账号、流程编排和各种记录打包成一个 zip 文件，不含日志和云游戏浏览器数据"
+msgstr "把設定、賬號、流程編排和各種記錄打包成一個 zip 檔案，不含日誌和雲遊戲瀏覽器資料"
+
+#: app/data_settings.py:105 app/data_settings.py:65
+msgid "选择备份文件"
+msgstr "選擇備份檔案"
+
+#: app/data_settings.py:65
+msgid "从备份恢复"
+msgstr "從備份恢復"
+
+#: app/data_settings.py:66
+msgid "恢复前会自动备份当前数据，恢复后需要重启小助手"
+msgstr "恢復前會自動備份當前資料，恢復後需要重啟小助手"
+
+#: app/data_settings.py:67
+msgid "选择文件夹"
+msgstr "選擇資料夾"
+
+#: app/data_settings.py:103 app/data_settings.py:67
+msgid "从旧版文件夹导入"
+msgstr "從舊版資料夾匯入"
+
+#: app/data_settings.py:68
+msgid "选择以前的小助手文件夹，把其中的设置、账号、流程编排和记录复制过来，导入前会自动备份当前数据"
+msgstr "選擇以前的小助手資料夾，把其中的設定、賬號、流程編排和記錄複製過來，匯入前會自動備份當前資料"
+
+#: app/data_settings.py:69 app/data_settings.py:85
+msgid "导出排查包"
+msgstr "匯出排查包"
+
+#: app/data_settings.py:70
+msgid "隐藏 Token、密码、Cookie 和推送密钥后，导出设置和最近一次运行的日志，可以直接发到群里或 Issue"
+msgstr "隱藏 Token、密碼、Cookie 和推送金鑰後，匯出設定和最近一次執行的日誌，可以直接發到群裡或 Issue"
+
+#: app/data_settings.py:37
+msgid "截图"
+msgstr "截圖"
+
+#: app/data_settings.py:37
+msgid "云游戏浏览器数据"
+msgstr "雲遊戲瀏覽器資料"
+
+#: app/data_settings.py:38
+msgid "部分数据还在原来的位置"
+msgstr "部分資料還在原來的位置"
+
+#: app/data_settings.py:100 app/data_settings.py:115
+msgid "请先停止正在运行的任务"
+msgstr "請先停止正在執行的任務"
+
+#: app/data_settings.py:123
+msgid "请重新启动小助手以使用这份数据。"
+msgstr "請重新啟動小助手以使用這份資料。"
+
+#: app/data_settings.py:124
+msgid "关闭小助手"
+msgstr "關閉小助手"
+
+#: app/data_settings.py:50
+msgid "数据迁移没有完成"
+msgstr "資料遷移沒有完成"
+
+#: app/data_settings.py:23
+msgid "无法打开数据文件夹"
+msgstr "無法開啟資料資料夾"
+
+#: app/data_settings.py:94
+msgid "文件已保存"
+msgstr "檔案已儲存"
+
+#: app/data_settings.py:117 app/data_settings.py:45
+msgid "数据操作没有完成"
+msgstr "資料操作沒有完成"
+
+#: app/data_settings.py:122
+msgid "数据已导入"
+msgstr "資料已匯入"
+
+#: app/data_settings.py:122
+msgid "数据已恢复"
+msgstr "資料已恢復"
+
+#: app/data_settings.py:39
+msgid "{items}暂时沿用原位置，下次启动会再试。"
+msgstr "{items}暫時沿用原位置，下次啟動會再試。"
+
+#: app/data_settings.py:92
+msgid "文件保存失败"
+msgstr "檔案儲存失敗"
+
+#: app/data_settings.py:51
+msgid "这次继续使用原来的位置，下次启动会再试。原因：{reason}"
+msgstr "這次繼續使用原來的位置，下次啟動會再試。原因：{reason}"
+
+#: utils/data_backup.py:106
+msgid "请选择 ZIP 文件"
+msgstr "請選擇 ZIP 檔案"
+
+#: utils/data_backup.py:104
+msgid "请选择数据文件以外的位置保存压缩包"
+msgstr "請選擇資料檔案以外的位置儲存壓縮包"
+
+#: app/data_settings.py:113 app/data_settings.py:42 utils/data_backup.py:199
+msgid "上次还原尚未完成，请重启小助手后重试"
+msgstr "上次還原尚未完成，請重啟小助手後重試"
+
+#: utils/data_backup.py:50
+msgid "备份中有无法恢复的项目：{name}"
+msgstr "備份中有無法恢復的專案：{name}"
+
+#: utils/data_backup.py:213
+msgid "没有找到可以恢复的数据文件"
+msgstr "沒有找到可以恢復的資料檔案"
+
+#: utils/data_backup.py:215
+msgid "备份中的设置文件无效"
+msgstr "備份中的設定檔案無效"
+
+#: utils/data_backup.py:317
+msgid "运行日志路径是链接"
+msgstr "執行日誌路徑是連結"
+
+#: utils/data_backup.py:67
+msgid "数据目录中包含链接：{path}"
+msgstr "資料目錄中包含連結：{path}"
+
+#: utils/data_backup.py:146
+msgid "无法导入文件：{name}"
+msgstr "無法匯入檔案：{name}"
+
+#: utils/data_backup.py:151
+msgid "导入期间文件发生了变化：{name}"
+msgstr "匯入期間檔案發生了變化：{name}"
+
+#: utils/data_backup.py:126
+msgid "备份中包含无效或重复的文件：{name}"
+msgstr "備份中包含無效或重複的檔案：{name}"
+
+#: utils/data_backup.py:169 utils/data_backup.py:241
+msgid "恢复校验失败：{name}"
+msgstr "恢復校驗失敗：{name}"
+
+#: app/setting_interface.py:2976
+msgid "数据"
+msgstr "資料"
+
+#: utils/data_migration.py:21
+msgid "另一个小助手进程正在使用原来的数据位置"
+msgstr "另一個小助手程序正在使用原來的資料位置"
+
+#: utils/data_migration.py:22
+msgid "此安装的其他界面或任务仍在运行"
+msgstr "此安裝的其他介面或任務仍在執行"
+
+#: utils/data_migration.py:23
+msgid "其他进程仍在处理数据文件"
+msgstr "其他程序仍在處理資料檔案"
+
+#: utils/data_migration.py:24
+msgid "设置文件不是有效的 YAML 配置"
+msgstr "設定檔案不是有效的 YAML 配置"
+
+#: utils/data_migration.py:25
+msgid "userdata 与原数据目录重叠，无法安全移动文件"
+msgstr "userdata 與原資料目錄重疊，無法安全移動檔案"
+
+#: utils/data_migration.py:26
+msgid "迁移记录格式无效"
+msgstr "遷移記錄格式無效"
+
+#: utils/data_migration.py:27
+msgid "迁移记录中含有未知项目"
+msgstr "遷移記錄中含有未知專案"
+
+#: utils/data_migration.py:28
+msgid "迁移备份路径错误"
+msgstr "遷移備份路徑錯誤"
+
+#: utils/data_migration.py:29
+msgid "迁移记录中的目录无效"
+msgstr "遷移記錄中的目錄無效"
+
+#: utils/data_migration.py:30
+msgid "迁移后的设置文件与原文件不同"
+msgstr "遷移後的設定檔案與原檔案不同"
+
+#: utils/data_backup.py:120
+msgid "请选择备份文件，排查包仅用于分享。"
+msgstr "請選擇備份檔案，排查包僅用於分享。"
+
+#: module/update/extractor.py:136 module/update/update_engine.py:541
+msgid "更新临时路径与用户数据目录重叠：{path}"
+msgstr "更新臨時路徑與使用者資料目錄重疊：{path}"
+
+#: utils/data_backup.py:62
+msgid "文件名与现有目录冲突：{path}"
+msgstr "檔名與現有目錄衝突：{path}"
+
+#: utils/data_migration.py:33
+msgid "上次还原尚未完成，请在设置的「数据」标签重新选择备份文件或导入文件夹。"
+msgstr "上次還原尚未完成，請在設定的「資料」分頁重新選擇備份檔案或匯入資料夾。"

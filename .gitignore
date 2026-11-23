@@ -181,6 +181,8 @@ pyrightconfig.json
 /test.py
 
 # March7thAssistant
+/userdata
+/配置已移到 userdata.txt
 /*config.yaml
 /config
 /warp.json

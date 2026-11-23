@@ -24,6 +24,12 @@
 >
 > 本地游戏想一边使用电脑一边运行，可以在 `设置 → 游戏连接 → 本地操作模式` 开启 Windows 后台模式；需要完全不占用当前桌面时，也可以使用远程本地多用户桌面。详见 [后台运行](/assets/docs/Background.md)。
 
+## 数据保存在哪里
+
+新安装默认把设置、账号、流程编排和记录保存在程序目录的 `userdata` 文件夹。Windows 桌面版升级时会先备份再迁移。Linux 和 macOS 上已有的旧安装继续使用原位置。要手动切换，先停止小助手，把旧安装文件夹复制到另一处。用 `--data-dir ./userdata` 启动，在设置页的「数据」标签选择「从旧版文件夹导入」，选中刚才复制的旧安装文件夹。日志、截图和云游戏浏览器数据需在小助手关闭时另行复制到 `userdata/logs/`、`userdata/screenshots/` 和 `userdata/browser/`。需要分享日志时，可在同一页选择「导出排查包」。
+
+要单独使用另一个数据目录，可指定 `--data-dir "D:\M7A-data"` 或设置环境变量 `M7A_DATA_DIR`。明确指定的目录会直接使用，旧数据可通过「从旧版文件夹导入」复制过来。
+
 ## 下载安装
 
 点击 [Releases](https://github.com/moesnow/March7thAssistant/releases/latest) 打开下载页面，滚动到底部。
@@ -168,7 +174,7 @@ March7th Launcher.exe main -e （任务正常完成后自动退出程序）
 - `兑换码`：执行当前配置中的兑换码。
 - `解锁帧率`：在支持的平台上切换 60 / 120 帧。
 - `触屏模式`：按云游戏移动端 UI 方式启动游戏，依赖 [第三方项目](https://github.com/winTEuser/Genshin_StarRail_fps_unlocker) 实现。
-- `角色面板导出`：读取全部角色的属性、光锥、星魂、技能等级和遗器，保存到程序目录的 `characters.json`。也可运行 `python main.py character_export`。
+- `角色面板导出`：读取全部角色的属性、光锥、星魂、技能等级和遗器，默认保存到 `userdata/exports/characters.json`，实际路径见 `--status` 的 `characters_file`。也可运行 `python main.py character_export`。
 
 角色面板导出目前支持简体中文游戏客户端。主角保留玩家设置的名字；主角和三月七只读取当前命途。导出过程可暂停或停止，中途停止会保留 `characters.partial.json`，上一次的 `characters.json` 不受影响。
 

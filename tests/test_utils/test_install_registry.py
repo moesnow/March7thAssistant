@@ -23,6 +23,7 @@ def test_register_and_find(registry_home):
     reg.register_install("v1", install_dir=install)
     entry = reg.find_install(install)
     assert entry["version"] == "v1"
+    assert entry["data_dir"] == os.path.abspath(os.getenv("M7A_DATA_DIR") or os.path.join(install, "userdata"))
     assert entry["path"] == os.path.abspath(install)
     with open(reg.registry_path(), encoding="utf-8") as f:
         assert json.load(f)["schema"] == reg.REGISTRY_SCHEMA

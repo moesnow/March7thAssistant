@@ -92,10 +92,10 @@ class ImportPlan:
     existing_unreadable: bool = False
 
 
-def prepare_import(source, target=paths.gacha_path(), mode='merge'):
+def prepare_import(source, target=None, mode='merge'):
     if mode not in ('merge', 'replace'):
         raise ValueError('Unknown import mode')
-    target = Path(target).resolve()
+    target = Path(target or paths.gacha_path()).resolve()
     incoming = normalize(json.loads(Path(source).read_bytes()))
     original = target.read_bytes() if target.exists() else None
     existing_unreadable = False
@@ -137,6 +137,7 @@ def save_import(plan):
     temporary = None
     backup = None
     try:
+        plan.target.parent.mkdir(parents=True, exist_ok=True)
         with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=plan.target.parent,
                                          prefix='.warp-import-', suffix='.tmp', delete=False) as file:
             temporary = Path(file.name)

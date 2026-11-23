@@ -96,7 +96,7 @@ AI 助手使用的是安装目录里的 `m7a.exe`。它和 `March7th Assistant.e
 | 5 | 没有获得管理员权限（UAC 被取消，或免 UAC 运行没能启动任务） |
 | 6 | 任务被停止指令中止 |
 
-每次运行都会在 `logs\runs\` 留下记录：`<运行编号>.log` 是完整输出，`<运行编号>.json` 是状态、原因、错误与失败截图。
+运行 `m7a.exe --status` 可查到数据目录 `data_dir`、配置文件 `config_file` 和日志目录 `logs_dir`。每次运行在 `runs_dir` 指向的目录留下记录：`<运行编号>.log` 是完整输出，`<运行编号>.json` 是状态、原因、错误与失败截图。
 
 全部参数见 `.\m7a.exe --help`，给 AI 助手看的完整说明见 [SKILL.md](https://github.com/moesnow/March7thAssistant/blob/main/assets/agent/skills/march7th-assistant/SKILL.md)。
 

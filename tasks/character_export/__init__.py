@@ -299,6 +299,7 @@ class CharacterExport:
             "characters": self.characters,
             "failed": self.failed,
         }
+        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
         temporary = f"{path}.tmp"
         with open(temporary, "w", encoding="utf-8") as file:
             json.dump(data, file, ensure_ascii=False, indent=2)

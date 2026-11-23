@@ -44,6 +44,7 @@ _program = partial(Setting, tab='程序', group='程序设置', scope=Scope.GLOB
 _connection = partial(Setting, tab='游戏连接', group='游戏连接', scope=Scope.GLOBAL)
 _notify = partial(Setting, tab='推送', group='消息推送', scope=Scope.GLOBAL)
 _misc = partial(Setting, tab='杂项', group='杂项', scope=Scope.GLOBAL)
+_data = partial(Setting, tab='数据', group='数据与备份', scope=Scope.GLOBAL, destination='设置 › 数据与备份')
 _about = partial(Setting, tab='关于', group='关于', scope=Scope.GLOBAL)
 
 
@@ -448,6 +449,13 @@ SETTINGS = (
          'hotkey_technique', 'hotkey_map', 'hotkey_warp', 'hotkey_message',
          'hotkey_auto_battle', 'hotkey_stop_task', 'hotkey_pause_task',
          'hotkey_toggle_autoplot',)),
+
+    # 数据
+    _data('DataGroup.folderCard', '数据文件夹'),
+    _data('DataGroup.backupCard', '备份数据'),
+    _data('DataGroup.restoreCard', '从备份恢复'),
+    _data('DataGroup.importCard', '从旧版文件夹导入'),
+    _data('DataGroup.diagnosticCard', '导出排查包'),
 
     # 关于
     _about('githubCard', '项目主页', '设置 › 关于'),

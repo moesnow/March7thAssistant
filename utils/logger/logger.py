@@ -45,12 +45,7 @@ class Logger(metaclass=SingletonMeta):
         self.logger.addHandler(console_handler)
 
         # 文件日志
-        self._ensure_log_directory_exists()
-        # 界面、任务进程和测试可能同时写当天的日志，普通追加模式在 Windows 上会互相覆盖。
-        file_handler = AppendFileHandler(os.path.join(paths.logs_dir(), f"{self._current_datetime()}.log"), encoding="utf-8")
-        file_formatter = ColorCodeFilter('%(asctime)s | %(levelname)s | %(message)s')
-        file_handler.setFormatter(file_formatter)
-        self.logger.addHandler(file_handler)
+        self._add_file_handler(self.logger, ColorCodeFilter('%(asctime)s | %(levelname)s | %(message)s'))
 
     def _create_logger_title(self):
         """创建专用于标题日志的日志器."""
@@ -65,16 +60,22 @@ class Logger(metaclass=SingletonMeta):
         self.logger_title.addHandler(console_handler)
 
         # 文件日志
-        self._ensure_log_directory_exists()
-        file_handler = AppendFileHandler(os.path.join(paths.logs_dir(), f"{self._current_datetime()}.log"), encoding="utf-8")
-        file_formatter = logging.Formatter('%(message)s')
-        file_handler.setFormatter(file_formatter)
-        self.logger_title.addHandler(file_handler)
+        self._add_file_handler(self.logger_title, logging.Formatter('%(message)s'))
+
+    def _add_file_handler(self, logger, formatter):
+        try:
+            self._ensure_log_directory_exists()
+            path = os.path.join(paths.logs_dir(), f"{self._current_datetime()}.log")
+            file_handler = AppendFileHandler(path, encoding="utf-8")
+        except OSError as exc:
+            logger.warning("日志文件暂时无法写入，本次继续输出到控制台：%s", exc)
+            return
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
 
     def _ensure_log_directory_exists(self):
         """确保日志目录存在，不存在则创建."""
-        if not os.path.exists(paths.logs_dir()):
-            os.makedirs(paths.logs_dir())
+        os.makedirs(paths.logs_dir(), exist_ok=True)
 
     def _cleanup_old_logs(self):
         """清理超过保留天数的旧日志文件."""

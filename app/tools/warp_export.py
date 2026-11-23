@@ -481,6 +481,7 @@ class WarpThread(QThread):
                 self.parent.warplink = warp.warplink
                 config = warp.export_data()
 
+                os.makedirs(os.path.dirname(paths.gacha_path()), exist_ok=True)
                 with open(paths.gacha_path(), 'w', encoding='utf-8') as file:
                     json.dump(config, file, ensure_ascii=False, indent=4)
 

@@ -75,6 +75,8 @@ def parse_args():
     )
     optional.add_argument("--desktop-twin-session", nargs=4, help=argparse.SUPPRESS)
 
+    optional.add_argument("--data-dir", help="指定数据文件夹（直接使用，不迁移）")
+    optional.add_argument("--data-session", help=argparse.SUPPRESS)
     args = parser.parse_args()
     if args.desktop_twin_session and (sys.platform != "win32" or args.task or args.autostart):
         parser.error("桌面分身入口只用于打开分身内的小助手界面")
@@ -85,6 +87,8 @@ def parse_args():
 
     # 处理 --list 参数
     if args.list:
+        from utils.data_migration import initialize
+        initialize(override=args.data_dir, session=args.data_session)
         os.environ["MARCH7TH_CONFIG_READONLY"] = "1"
         from module.localization import load_language
         from utils.tasks import task_display_names, tasks_for_listing
@@ -143,6 +147,9 @@ if sys.platform == 'win32':
         except Exception:
             sys.exit(1)
 
+
+from utils import data_migration
+data_migration.initialize(override=args.data_dir, session=args.data_session)
 
 # 控制台已隐藏，崩溃信息写入 logs/crash.log，否则闪退时什么都留不下
 from utils.crash_log import enable_crash_log, record_crash
@@ -355,6 +362,9 @@ if __name__ == "__main__":
         exit_on_complete=args.exit,
         start_minimized_to_tray=args.start_minimized_to_tray or _autostart_minimized,
     )
+
+    from app.data_settings import show_migration
+    QTimer.singleShot(0, lambda: show_migration(w, data_migration.result))
 
     # 注册主窗口并处理启动期间收到的挂起消息
     _main_window = w

@@ -11,6 +11,7 @@ from utils import crash_log
 def hooks(tmp_path, monkeypatch):
     """隔离全局状态：pytest 自己也在使用 faulthandler 与 sys.excepthook。"""
     monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(crash_log, 'CRASH_LOG_PATH', str(tmp_path / 'logs/crash.log'))
     monkeypatch.setattr(sys, "excepthook", sys.excepthook)
     monkeypatch.setattr(crash_log, "_crash_file", None)
     with patch.object(crash_log.faulthandler, "enable") as enable, \

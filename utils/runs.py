@@ -226,12 +226,24 @@ def _link_or_create(tmp_path: str, path: str, data: dict):
             f.write(json.dumps(data, ensure_ascii=False).encode("utf-8"))
 
 
-def read_active_run():
+def read_active_run(lock_path=None):
     """当前持有运行锁且进程仍在的运行（锁信息字典），没有则返回 None。"""
-    holder = _read_json(_lock_path())
+    holder = _read_json(lock_path or _lock_path())
     if isinstance(holder, dict) and is_process_alive(holder.get("pid"), holder.get("pid_create_time")):
         return holder
     return None
+
+
+def live_run_in(directory):
+    """Also find forced/idle runs which do not currently own active.json."""
+    if read_active_run(directory / "active.json"):
+        return True
+    for file in directory.glob("*.json"):
+        if is_valid_run_id(file.stem):
+            record = _read_json(file)
+            if isinstance(record, dict) and effective_status(record) == STATUS_RUNNING:
+                return True
+    return False
 
 
 def acquire_run_lock(info: dict, force: bool = False):
@@ -442,7 +454,23 @@ class RunSession:
             "control_file": os.path.abspath(control_path),
         }
         session = cls(record)
-        session._save()
+        # Publish under the restore lock so a new task and an import cannot pass each other's idle check.
+        from utils.data_files import data_lock
+        try:
+            with data_lock(paths.layout().storage):
+                if os.getenv(paths.RECOVERY_ENV) or (paths.layout().storage / "backup" / paths.RESTORE_RECORD).is_file():
+                    from utils.data_migration import recovery_instruction
+                    raise TimeoutError(recovery_instruction())
+                session._save()
+        except TimeoutError as exc:
+            message = str(exc).rstrip("。") + "。本次任务未启动。"
+            print(message, file=sys.stderr)
+            session.note(status=STATUS_BLOCKED, reason="data_busy", error=message)
+            session.finish(EXIT_BUSY)
+            raise SystemExit(EXIT_BUSY) from None
+        except OSError:
+            # Existing behavior for installations with read-only/unavailable run history.
+            session._save()
         global _current_session
         _current_session = session
         return session

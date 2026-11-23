@@ -7,8 +7,6 @@ from module.logger import log
 data_dir = paths.accounts_dir()
 xor_key = "TI4ftRSDaP63kBxxoLoZ5KpVmRBz00JikzLNweryzZ4wecWJxJO9tbxlH9YDvjAr"
 
-if not os.path.exists(data_dir):
-    os.makedirs(data_dir)
 
 class Account:
     def __init__(self, account_id: int, account_name: str, timestamp: int = 0):
@@ -21,6 +19,8 @@ class Account:
 
 def read_all_account_from_files():
     accounts = []
+    if not os.path.exists(data_dir):
+        return accounts
     for file in os.listdir(data_dir):
         if file.endswith(".reg"):
             timestamp = os.path.getmtime(os.path.join(data_dir, file))
@@ -51,6 +51,7 @@ def dump_current_account():
     if gamereg_uid_value is None:
         log.warning("No account found (dump)")
         raise ValueError("未找到已登录的游戏账号")
+    os.makedirs(data_dir, exist_ok=True)
     account_reg_file = os.path.join(data_dir, f"{gamereg_uid_value}.reg")
     gamereg_export(account_reg_file)
     reload_all_account_from_files()
@@ -93,6 +94,7 @@ def import_account(account_id: int):
     gamereg_import(account_reg_file)
 
 def save_account_name(account_id: int, account_name: str):
+    os.makedirs(data_dir, exist_ok=True)
     name_file = os.path.join(data_dir, f"{account_id}.name")
     with open(name_file, "w") as f:
         f.write(account_name)
@@ -112,6 +114,7 @@ def load_to_account(account_id: int) -> bool:
     return True
 
 def save_acc_and_pwd(account_id: int, account_name: str, account_pass: str):
+    os.makedirs(data_dir, exist_ok=True)
     encrypted_text = xor_encrypt_to_base64(account_name + "," + account_pass)
     name_file = os.path.join(data_dir, f"{account_id}.acc")
     with open(name_file, "w") as f:

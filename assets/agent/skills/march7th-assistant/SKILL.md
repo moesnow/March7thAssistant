@@ -19,7 +19,7 @@ license: GPL-3.0
 3. 少数常见位置（如 `~\Games\March7thAssistant`、`D:\March7thAssistant`）。**不要全盘搜索**；找不到就问用户。
 
 安装目录里有 `March7th Launcher.exe`（图形界面）、`March7th Assistant.exe`（命令行，需要管理员权限）、
-`m7a.exe`（给脚本与 AI 用的命令行）、`config.yaml`、`logs\`。
+`m7a.exe`（给脚本与 AI 用的命令行）。`--status` 返回 `data_dir`、`config_file`、`logs_dir` 和 `runs_dir` 的完整路径。
 源码目录（有 `main.py`、`app.py`）用 `python main.py` 代替 `m7a.exe`，参数完全相同。
 还没安装：按 [安装说明](references/install.md) 操作。
 
@@ -74,7 +74,7 @@ license: GPL-3.0
 
 ## 4. 修改配置
 
-- 直接编辑安装目录的 `config.yaml`（YAML）。改之前先在 `assets/config/config.example.yaml` 里找到同名配置项，读它的注释与可选值。
+- 直接编辑 `--status` 的 `config_file` 指向的文件（YAML）。改之前先在 `assets/config/config.example.yaml` 里找到同名配置项，读它的注释与可选值。
 - 只改需要改的键，保留其余内容和注释，不要整份重写。图形界面会自动重新加载被外部修改的配置；**正在运行的任务不一定读取新值**，下次运行生效。
 - 推送令牌、Mirror酱 CDK、账号等敏感值不要显示在对话中；需要填写时让用户在图形界面里输入。
 - 常见修改（体力计划、副本、定时任务、消息推送、云游戏）见 [配置说明](references/config.md)。
@@ -108,7 +108,7 @@ license: GPL-3.0
 1. **导出角色面板**：运行 `.\m7a.exe character_export --after-finish None`，运行前按第 3 节确认。
    后台模式实测 57 个角色约 13 分钟，角色多时按第 3 节用 `--detach`。目前只支持简体中文游戏客户端。
    已有 `characters.json`、`exported_at` 之后用户也没有换过遗器和光锥、没有抽到新角色时，可以直接用，不必重新导出。
-2. **读安装目录的 `characters.json`**：每个角色约 5 KB，不要整份读进对话，先用脚本筛出需要的角色和字段。
+2. **读 `--status` 的 `characters_file` 指向的角色面板**：每个角色约 5 KB，不要整份读进对话，先用脚本筛出需要的角色和字段。
    - `complete` 为 false 或 `failed` 不为空时结果不完整，要告诉用户缺了哪些角色。任务中途停止时，这次的结果在 `characters.partial.json`，`characters.json` 还是上一次的。
    - `characters` 每项的字段：`name`、`path`（命途）、`element`（属性）、`level`、`eidolon`（星魂）、`stats`（面板属性）、
      `light_cone`（光锥，`superimposition` 是叠影）、`skills`（技能等级）、`relics`（`sets` 是套装，`pieces` 是每件的主词条和副词条）、
@@ -123,8 +123,8 @@ license: GPL-3.0
 ## 7. 排查失败
 
 1. `.\m7a.exe --follow latest` 查看最近一次运行的末尾输出与结论；或看 `--status` 的 `recent_runs`。
-2. 运行记录 `logs\runs\<运行编号>.json`：`status`、`reason`、`error`、`screenshot`（失败时的游戏截图，可以直接查看图片）。
-3. 完整输出 `logs\runs\<运行编号>.log`；当天全部日志 `logs\<日期>.log`（含图形界面启动的任务）。
+2. 在 `--status` 的 `runs_dir` 中读取 `<运行编号>.json`：`status`、`reason`、`error`、`screenshot`（失败时的游戏截图，可以直接查看图片）。
+3. 完整输出在 `runs_dir` 的 `<运行编号>.log`，当天全部日志在 `logs_dir` 的 `<日期>.log`（含图形界面启动的任务）。
 4. 对照 `assets/docs/FAQ.md` 与 [排查说明](references/troubleshooting.md)。确认原因、修正配置后再重跑；不确定时把证据和推测分开告诉用户。
 
 ## 8. 更新与其他

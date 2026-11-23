@@ -22,4 +22,4 @@ def open_path(path):
 
 def open_log_folder():
     """打开日志目录（设置的日志等级卡片与任务日志右键菜单共用同一实现）。"""
-    open_path(f"./{paths.logs_dir()}")
+    open_path(paths.logs_dir())

@@ -12,6 +12,7 @@ from uuid import uuid4
 
 import psutil
 
+from utils import paths
 from utils.runs import process_create_time
 from utils.windows_session import SessionIdentity, child_session_id, process_session_id, session_info
 
@@ -262,7 +263,7 @@ class ScheduledLauncher:
         context = SessionContext(identity, pid, host_time)
         program = sys.executable
         args = [] if getattr(sys, "frozen", False) else [entry]
-        args += [SESSION_ARG, *context.as_args()]
+        args += [SESSION_ARG, *context.as_args(), *paths.child_arguments()]
         action = definition.Actions.Create(0)  # TASK_ACTION_EXEC
         action.Path = program
         action.Arguments = list2cmdline(args)

@@ -128,7 +128,13 @@ def extract(
         extract_to = os.path.join(output_dir, detected)
     else:
         _log("debug", "未检测到唯一根目录，使用默认路径")
-        extract_to = output_dir
+        extract_to = os.path.join(output_dir, os.path.splitext(os.path.basename(archive_path))[0])
+
+    base = os.path.realpath(output_dir)
+    target = os.path.realpath(extract_to)
+    if target == base or os.path.commonpath((base, target)) != base:
+        raise ExtractionError(tr("更新临时路径与用户数据目录重叠：{path}").format(path=extract_to))
+    unpack_dir = output_dir if detected else extract_to
 
     # 清理已有解压目录
     if os.path.exists(extract_to):
@@ -142,7 +148,7 @@ def extract(
         _log("debug", f"使用 7za 解压: {exe_path}")
         try:
             _run_subprocess_with_cancel(
-                [exe_path, "x", archive_path, f"-o{output_dir}", "-aoa"],
+                [exe_path, "x", archive_path, f"-o{unpack_dir}", "-aoa"],
                 cancel_check=cancel_check,
             )
         except subprocess.CalledProcessError as e:
@@ -152,7 +158,7 @@ def extract(
             cancel_check()
         _log("debug", "使用 shutil.unpack_archive 解压")
         try:
-            shutil.unpack_archive(archive_path, output_dir)
+            shutil.unpack_archive(archive_path, unpack_dir)
         except Exception as e:
             raise ExtractionError(f"shutil 解压失败: {e}") from e
 
