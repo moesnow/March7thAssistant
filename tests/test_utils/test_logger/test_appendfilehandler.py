@@ -4,6 +4,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from utils import paths
 from utils.logger.appendfilehandler import AppendFileHandler
 from utils.logger.logger import Logger
 
@@ -42,9 +43,8 @@ def test_processes_appending_to_one_log_never_overwrite_each_other(tmp_path):
     assert sorted(lines) == sorted(_line(f"P{n}", i) for n in range(processes) for i in range(count))
 
 
-def test_logger_writes_the_daily_log_through_append_handlers(tmp_path, monkeypatch):
+def test_logger_writes_the_daily_log_through_append_handlers(isolated_layout, monkeypatch):
     """主日志器和标题日志器都用追加处理器写当天的日志，内容和换行与原先一致。"""
-    monkeypatch.chdir(tmp_path)
     created = {}
     monkeypatch.setattr(logging, "getLogger", lambda name=None: created.setdefault(name, logging.Logger(name)))
     logger = Logger.__new__(Logger)
@@ -61,7 +61,7 @@ def test_logger_writes_the_daily_log_through_append_handlers(tmp_path, monkeypat
     finally:
         for handler in handlers:
             handler.close()
-    data = (tmp_path / "logs" / f"{logger._current_datetime()}.log").read_bytes()
+    data = (Path(paths.logs_dir()) / f"{logger._current_datetime()}.log").read_bytes()
     text = data.decode("utf-8")
     assert "| INFO | 中文日志" + os.linesep in text
     assert " 标题 " in text

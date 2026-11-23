@@ -16,8 +16,19 @@ def pytest_configure(config):
     if not os.environ.get("M7A_DATA_DIR") and not os.environ.get(paths.SESSION_ENV):
         data = config._tmp_path_factory.mktemp("userdata")
         patch = pytest.MonkeyPatch()
-        patch.setattr(paths, "_layout", paths.select(Path.cwd(), data))
+        layout = paths.select(Path.cwd(), data)
+        patch.setattr(paths, "_layout", layout)
+        patch.setenv(paths.SESSION_ENV, layout.serialize())  # Child processes need the same isolated data.
         config.add_cleanup(patch.undo)
+
+
+@pytest.fixture
+def isolated_layout(tmp_path, monkeypatch):
+    """Give one test its own desktop installation and userdata, independent of cwd."""
+    from utils import paths
+    layout = paths.select(tmp_path)
+    monkeypatch.setattr(paths, "_layout", layout)
+    return layout
 
 
 @pytest.fixture(scope="session")

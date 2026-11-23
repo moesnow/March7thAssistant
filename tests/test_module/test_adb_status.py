@@ -12,7 +12,7 @@ import pytest
 from module.game import adb_status
 from module.game.adb import AdbRuntimeStatus
 from module.game.adb_transport import AdbError
-from utils import runs
+from utils import paths, runs
 from utils.pause import CONTROL_FILE_ENV, RunStopRequested
 
 
@@ -24,12 +24,11 @@ class Controller:
 
 
 @pytest.fixture(autouse=True)
-def workdir(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    monkeypatch.delenv(CONTROL_FILE_ENV, raising=False)
+def workdir(isolated_layout, monkeypatch):
+    monkeypatch.chdir(isolated_layout.install)
+    monkeypatch.setenv(CONTROL_FILE_ENV, "")
     monkeypatch.setattr(runs, "_current_session", None)
-    yield tmp_path
-    monkeypatch.delenv(CONTROL_FILE_ENV, raising=False)
+    return isolated_layout
 
 
 def wait_for_running(timeout=3):
@@ -65,7 +64,7 @@ def test_status_can_be_read_while_controller_is_blocked():
     session.finish(runs.EXIT_OK)
     status = adb_status.read_adb_run_status(session.run_id)
     assert (status.running, status.phase, status.runtime.connected) == (False, "finished", False)
-    assert not Path("logs/adb_status.json").exists()
+    assert not (Path(paths.logs_dir()) / "adb_status.json").exists()
 
 
 def test_status_preserves_sampled_device_error_in_run_result():
@@ -159,10 +158,13 @@ def test_read_live_status_from_another_process_then_detect_abort(workdir):
 import os
 import sys
 from types import SimpleNamespace
+from utils.data_migration import initialize
+
+# Keep the source assets in cwd, but resolve data just as a child of this test installation does.
+initialize(install=sys.argv[1], session=sys.argv[2])
 from module.game.adb_status import AdbRuntimeStatus, publish_status
 from utils.runs import RunSession
 
-os.chdir(sys.argv[1])
 session = RunSession.begin(capture=False)
 runtime = AdbRuntimeStatus(True, "child", "0.1.1", 44, 0, True, True, 8.3, None, None)
 controller = SimpleNamespace(get_runtime_status=lambda: runtime)
@@ -171,7 +173,8 @@ with publish_status(controller, session, interval=0.01):
     os._exit(1)  # 模拟任务进程被强制终止。
 """
     project = Path(__file__).resolve().parents[2]
-    with subprocess.Popen([sys.executable, "-c", script, str(workdir)], cwd=project, stdin=subprocess.PIPE) as worker:
+    command = [sys.executable, "-c", script, str(workdir.install), workdir.serialize()]
+    with subprocess.Popen(command, cwd=project, stdin=subprocess.PIPE) as worker:
         try:
             status = wait_for_running(timeout=15)
             assert (status.runtime.serial, status.runtime.game_display_id, status.runtime.capture_fps) == ("child", 0, 8.3)
@@ -192,6 +195,6 @@ with publish_status(controller, session, interval=0.01):
 
 def test_legacy_snapshot_and_unrelated_run_are_ignored():
     session = runs.RunSession.begin(capture=False)
-    Path("logs/adb_status.json").write_text('{"schema": 1, "phase": "running"}', encoding="utf-8")
+    (Path(paths.logs_dir()) / "adb_status.json").write_text('{"schema": 1, "phase": "running"}', encoding="utf-8")
     assert adb_status.read_adb_run_status() is None
     assert adb_status.read_adb_run_status(session.run_id) is None
