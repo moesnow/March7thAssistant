@@ -16,7 +16,7 @@
    若包装器对入参再 `tr()` 一次，调用点已翻译的文本会二次查表、命中不到条目，
    既浪费又会在 DEBUG 日志里刷「缺失翻译」。
    例外（有意为之）：
-   - `app/card/card_edit_dialog.py::display_label()`：入参本身就是 msgid（常量/配置里存的中文原文），
+   - `module/overview/legacy_cards.py::display_label()`：入参本身就是 msgid（常量/配置里存的中文原文），
      由它负责解析成当前语言；
    - `module/localization/trc()`：无 msgctxt 条目时回退 `tr()`。
 """
@@ -41,7 +41,8 @@ UI_INFO_KW = {"text", "title", "content", "caption", "label", "placeholder",
 
 # ---- 约定 2 的允许例外 ----
 WRAPPER_ALLOWLIST = {
-    ("app/card/card_edit_dialog.py", "display_label"),      # 入参是 msgid，本就是由它解析
+    ("app/card/card_edit_dialog.py", "display_label"),
+    ("module/overview/legacy_cards.py", "display_label"),      # 入参是 msgid，本就是由它解析
     ("module/localization/__init__.py", "trc"),              # 无 msgctxt 条目时回退 tr()
 }
 

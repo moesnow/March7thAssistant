@@ -8,18 +8,18 @@
 import pytest
 
 import module.localization as loc
-import app.card.card_edit_dialog as ced
-from app.card.card_edit_dialog import (
+from module.overview.legacy_cards import (
     display_label,
     legacy_label_map,
     migrate_home_cards,
 )
-from module.localization import translations_of
 
 
 class TestLegacyTranslationMigration:
-    def test_legacy_value_reverts_and_follows_language(self):
+    def test_legacy_value_reverts_and_follows_language(self, compiled_locales, monkeypatch):
         """核心回归：旧配置里的译文还原为 msgid，切换语言后随语言显示。"""
+        monkeypatch.setattr(loc, "_locale_dir", str(compiled_locales))
+        monkeypatch.setattr(loc, "_lang_catalogs_cache", {})
         reverse = legacy_label_map()
         if not reverse:
             pytest.skip("当前目录无可用作迁移样本的译文")
@@ -44,9 +44,8 @@ class TestLegacyTranslationMigration:
 
     def test_ambiguous_translation_untouched(self, monkeypatch):
         """歧义译文（多个内置文案同译）不迁移，防串味。"""
-        monkeypatch.setattr(ced, "BUILTIN_LABELS", frozenset({"AA", "BB"}))
         monkeypatch.setattr(loc, "translations_of", lambda text: {"ja_JP": "SAME"})
-        reverse = legacy_label_map()
+        reverse = legacy_label_map({"AA", "BB"})
         if "SAME" in reverse:
             pytest.fail("歧义译文不得进入还原表")
         cards = [{"title": "SAME", "menu_items": []}]
@@ -56,19 +55,17 @@ class TestLegacyTranslationMigration:
             pytest.fail("歧义译文不得被改动")
 
     def test_reverse_map_builds_non_ambiguous(self, monkeypatch):
-        monkeypatch.setattr(ced, "BUILTIN_LABELS", frozenset({"AA", "BB"}))
         fake = {"AA": {"ja_JP": "A1", "ko_KR": "A2"}, "BB": {"en_US": "B1"}}
         monkeypatch.setattr(loc, "translations_of", lambda text: fake.get(text, {}))
-        reverse = legacy_label_map()
+        reverse = legacy_label_map({"AA", "BB"})
         if reverse != {"A1": "AA", "A2": "AA", "B1": "BB"}:
             pytest.fail("非歧义译文应完整收录")
 
     def test_msgid_valued_and_identity_skipped(self, monkeypatch):
-        monkeypatch.setattr(ced, "BUILTIN_LABELS", frozenset({"AA", "BB"}))
         # AA 的译文恰是内置原文 BB、BB 与自身同文 —— 都不应进还原表
         fake = {"AA": {"ja_JP": "BB"}, "BB": {"ja_JP": "BB"}}
         monkeypatch.setattr(loc, "translations_of", lambda text: fake.get(text, {}))
-        reverse = legacy_label_map()
+        reverse = legacy_label_map({"AA", "BB"})
         if reverse:
             pytest.fail("译文为内置原文或同文时无需还原")
 
@@ -88,4 +85,4 @@ class TestLegacyTranslationMigration:
     def test_migrate_bad_input_safe(self):
         if migrate_home_cards(None) or migrate_home_cards({"title": "x"}):
             pytest.fail("非法输入应安全返回无改动")
-        assert translations_of("") == {}
+        assert loc.translations_of("") == {}

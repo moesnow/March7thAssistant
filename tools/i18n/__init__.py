@@ -238,6 +238,7 @@ def collect_code_literals() -> tuple[set[str], set[str], int]:
 #   - 必须用 AST 读取、绝不 import —— 否则会把 PySide6 / qfluentwidgets 拖进工具链。
 TABLE_SOURCES = [
     ("module/overview/labels.py", (("TRIGGERS", None), ("RESULTS", None), ("POST_ACTIONS", None))),
+    ("module/overview/shortcuts.py", (("TOOLS", None),)),
     ("module/overview/plan.py", (("STEP_NAMES", None),)),
     ("module/overview/cards.py", (("STATUS_TEXT", None), ("SUMMARY_TEXT", None), ("OPTIONS", None))),
     ("utils/data_migration.py", (("REASONS", None),)),
@@ -246,7 +247,7 @@ TABLE_SOURCES = [
     # 任务名与主页卡片文案：常量里存的是中文原文（msgid），显示时才 tr()
     ("utils/tasks.py", (("AVAILABLE_TASKS", None), ("CLI_ONLY_TASKS", None), ("UNSUPPORTED_TASK", None))),
     ("tasks/weekly/currency_wars_strategy.py", (("STRATEGY_NAMES", None),)),
-    ("app/card/card_edit_dialog.py", (
+    ("module/overview/legacy_cards.py", (
         ("HOME_EXTRA_TASKS", None),
         ("DEFAULT_CARDS", ("title", "label", "menu_items")),
     )),

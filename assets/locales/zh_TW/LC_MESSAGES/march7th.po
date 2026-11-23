@@ -8734,6 +8734,14 @@ msgstr "已略過"
 msgid "异常结束"
 msgstr "異常結束"
 
+#: module/overview/shortcuts.py
+msgid "快捷启动已在其他窗口修改，请重新打开编辑。"
+msgstr "其他視窗已修改快捷啟動，請重新開啟編輯。"
+
+#: module/overview/shortcuts.py
+msgid "快捷启动的名称、图标或操作无效。"
+msgstr "快捷啟動的名稱、圖示或操作無效。"
+
 #: module/overview/labels.py:4
 msgid "手动"
 msgstr "手動"
@@ -8757,3 +8765,103 @@ msgstr "非互動執行"
 #: module/overview/cards.py
 msgid "计划次数为零"
 msgstr "計畫次數為零"
+
+#: app/overview/shortcut_dialog.py:23
+msgid "相机"
+msgstr "相機"
+
+#: app/overview/shortcut_dialog.py:23
+msgid "运行"
+msgstr "執行"
+
+#: app/overview/shortcut_dialog.py:23 app/overview_interface.py:113
+msgid "开拓力"
+msgstr "開拓力"
+
+#: app/overview/shortcut_dialog.py:24
+msgid "任务清单"
+msgstr "任務清單"
+
+#: app/overview/shortcut_dialog.py:25
+msgid "宇宙"
+msgstr "宇宙"
+
+#: app/overview/shortcut_dialog.py:25
+msgid "奖杯"
+msgstr "獎盃"
+
+#: app/overview/shortcut_dialog.py:26
+msgid "指南针"
+msgstr "指南針"
+
+#: app/overview/shortcut_dialog.py:27
+msgid "发送"
+msgstr "傳送"
+
+#: app/overview/shortcut_dialog.py:28
+msgid "下载"
+msgstr "下載"
+
+#: app/overview/shortcut_dialog.py:28
+msgid "礼物"
+msgstr "禮物"
+
+#: app/overview/shortcut_dialog.py:29
+msgid "列表"
+msgstr "清單"
+
+#: app/overview/shortcut_dialog.py:29
+msgid "星星"
+msgstr "星星"
+
+#: app/overview/shortcut_dialog.py:72
+msgid "清除图片"
+msgstr "清除圖片"
+
+#: app/overview/shortcut_dialog.py:38
+msgid "编辑快捷启动"
+msgstr "編輯快速啟動"
+
+#: app/overview/shortcut_dialog.py:80
+msgid "自选图片"
+msgstr "自選圖片"
+
+#: app/overview/style.py:104
+msgid "不到 1 分钟"
+msgstr "不到 1 分鐘"
+
+#: app/overview/style.py:111
+msgid "{hours} 小时 {minutes} 分钟"
+msgstr "{hours} 小時 {minutes} 分鐘"
+
+#: app/overview/style.py:92
+msgid "今天 {time}"
+msgstr "今天 {time}"
+
+#: app/overview/style.py:94
+msgid "明天 {time}"
+msgstr "明天 {time}"
+
+#: app/overview/style.py:96
+msgid "昨天 {time}"
+msgstr "昨天 {time}"
+
+#: app/overview/style.py:107
+msgid "{minutes} 分钟"
+msgstr "{minutes} 分鐘"
+
+#: app/overview/style.py:110
+msgid "{hours} 小时"
+msgstr "{hours} 小時"
+
+#: module/overview/shortcuts.py:231
+msgid "配置写入已暂停，请恢复后再保存。"
+msgstr "設定寫入已暫停，請在恢復後再儲存。"
+
+#: app/overview/shortcut_dialog.py:77
+msgid "操作类型"
+msgstr "操作類型"
+
+#: app/overview/shortcut_dialog.py:78
+msgid "任务"
+msgstr "任務"

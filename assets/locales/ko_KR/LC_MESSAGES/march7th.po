@@ -8816,6 +8816,14 @@ msgstr "건너뜀"
 msgid "异常结束"
 msgstr "비정상 종료"
 
+#: module/overview/shortcuts.py
+msgid "快捷启动已在其他窗口修改，请重新打开编辑。"
+msgstr "다른 창에서 바로가기를 수정했습니다. 편집 화면을 다시 여세요."
+
+#: module/overview/shortcuts.py
+msgid "快捷启动的名称、图标或操作无效。"
+msgstr "바로가기 이름, 아이콘 또는 작업이 올바르지 않습니다."
+
 #: module/overview/labels.py:4
 msgid "手动"
 msgstr "수동"
@@ -8839,3 +8847,103 @@ msgstr "비대화형 실행"
 #: module/overview/cards.py
 msgid "计划次数为零"
 msgstr "계획 횟수 0회"
+
+#: app/overview/shortcut_dialog.py:23
+msgid "相机"
+msgstr "카메라"
+
+#: app/overview/shortcut_dialog.py:23
+msgid "运行"
+msgstr "실행"
+
+#: app/overview/shortcut_dialog.py:23 app/overview_interface.py:113
+msgid "开拓力"
+msgstr "개척력"
+
+#: app/overview/shortcut_dialog.py:24
+msgid "任务清单"
+msgstr "작업 목록"
+
+#: app/overview/shortcut_dialog.py:25
+msgid "宇宙"
+msgstr "우주"
+
+#: app/overview/shortcut_dialog.py:25
+msgid "奖杯"
+msgstr "트로피"
+
+#: app/overview/shortcut_dialog.py:26
+msgid "指南针"
+msgstr "나침반"
+
+#: app/overview/shortcut_dialog.py:27
+msgid "发送"
+msgstr "보내기"
+
+#: app/overview/shortcut_dialog.py:28
+msgid "下载"
+msgstr "다운로드"
+
+#: app/overview/shortcut_dialog.py:28
+msgid "礼物"
+msgstr "선물"
+
+#: app/overview/shortcut_dialog.py:29
+msgid "列表"
+msgstr "목록"
+
+#: app/overview/shortcut_dialog.py:29
+msgid "星星"
+msgstr "별"
+
+#: app/overview/shortcut_dialog.py:72
+msgid "清除图片"
+msgstr "이미지 지우기"
+
+#: app/overview/shortcut_dialog.py:38
+msgid "编辑快捷启动"
+msgstr "바로가기 편집"
+
+#: app/overview/shortcut_dialog.py:80
+msgid "自选图片"
+msgstr "사용자 이미지"
+
+#: app/overview/style.py:104
+msgid "不到 1 分钟"
+msgstr "1분 미만"
+
+#: app/overview/style.py:111
+msgid "{hours} 小时 {minutes} 分钟"
+msgstr "{hours}시간 {minutes}분"
+
+#: app/overview/style.py:92
+msgid "今天 {time}"
+msgstr "오늘 {time}"
+
+#: app/overview/style.py:94
+msgid "明天 {time}"
+msgstr "내일 {time}"
+
+#: app/overview/style.py:96
+msgid "昨天 {time}"
+msgstr "어제 {time}"
+
+#: app/overview/style.py:107
+msgid "{minutes} 分钟"
+msgstr "{minutes}분"
+
+#: app/overview/style.py:110
+msgid "{hours} 小时"
+msgstr "{hours}시간"
+
+#: module/overview/shortcuts.py:231
+msgid "配置写入已暂停，请恢复后再保存。"
+msgstr "설정 저장이 일시 중지되었습니다. 다시 활성화한 후 저장하세요."
+
+#: app/overview/shortcut_dialog.py:77
+msgid "操作类型"
+msgstr "동작 유형"
+
+#: app/overview/shortcut_dialog.py:78
+msgid "任务"
+msgstr "작업"

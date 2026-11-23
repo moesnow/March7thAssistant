@@ -8816,6 +8816,14 @@ msgstr "スキップ済み"
 msgid "异常结束"
 msgstr "異常終了"
 
+#: module/overview/shortcuts.py
+msgid "快捷启动已在其他窗口修改，请重新打开编辑。"
+msgstr "ほかのウィンドウでショートカットが変更されました。編集画面を開き直してください。"
+
+#: module/overview/shortcuts.py
+msgid "快捷启动的名称、图标或操作无效。"
+msgstr "ショートカットの名前、アイコン、または操作が無効です。"
+
 #: module/overview/labels.py:4
 msgid "手动"
 msgstr "手動"
@@ -8839,3 +8847,103 @@ msgstr "非対話実行"
 #: module/overview/cards.py
 msgid "计划次数为零"
 msgstr "予定回数は0回"
+
+#: app/overview/shortcut_dialog.py:23
+msgid "相机"
+msgstr "カメラ"
+
+#: app/overview/shortcut_dialog.py:23
+msgid "运行"
+msgstr "実行"
+
+#: app/overview/shortcut_dialog.py:23 app/overview_interface.py:113
+msgid "开拓力"
+msgstr "開拓力"
+
+#: app/overview/shortcut_dialog.py:24
+msgid "任务清单"
+msgstr "タスクリスト"
+
+#: app/overview/shortcut_dialog.py:25
+msgid "宇宙"
+msgstr "宇宙"
+
+#: app/overview/shortcut_dialog.py:25
+msgid "奖杯"
+msgstr "トロフィー"
+
+#: app/overview/shortcut_dialog.py:26
+msgid "指南针"
+msgstr "コンパス"
+
+#: app/overview/shortcut_dialog.py:27
+msgid "发送"
+msgstr "送信"
+
+#: app/overview/shortcut_dialog.py:28
+msgid "下载"
+msgstr "ダウンロード"
+
+#: app/overview/shortcut_dialog.py:28
+msgid "礼物"
+msgstr "ギフト"
+
+#: app/overview/shortcut_dialog.py:29
+msgid "列表"
+msgstr "リスト"
+
+#: app/overview/shortcut_dialog.py:29
+msgid "星星"
+msgstr "星"
+
+#: app/overview/shortcut_dialog.py:72
+msgid "清除图片"
+msgstr "画像を解除"
+
+#: app/overview/shortcut_dialog.py:38
+msgid "编辑快捷启动"
+msgstr "ショートカットを編集"
+
+#: app/overview/shortcut_dialog.py:80
+msgid "自选图片"
+msgstr "カスタム画像"
+
+#: app/overview/style.py:104
+msgid "不到 1 分钟"
+msgstr "1 分未満"
+
+#: app/overview/style.py:111
+msgid "{hours} 小时 {minutes} 分钟"
+msgstr "{hours} 時間 {minutes} 分"
+
+#: app/overview/style.py:92
+msgid "今天 {time}"
+msgstr "今日 {time}"
+
+#: app/overview/style.py:94
+msgid "明天 {time}"
+msgstr "明日 {time}"
+
+#: app/overview/style.py:96
+msgid "昨天 {time}"
+msgstr "昨日 {time}"
+
+#: app/overview/style.py:107
+msgid "{minutes} 分钟"
+msgstr "{minutes} 分"
+
+#: app/overview/style.py:110
+msgid "{hours} 小时"
+msgstr "{hours} 時間"
+
+#: module/overview/shortcuts.py:231
+msgid "配置写入已暂停，请恢复后再保存。"
+msgstr "設定の書き込みは一時停止中です。再開後に保存してください。"
+
+#: app/overview/shortcut_dialog.py:77
+msgid "操作类型"
+msgstr "操作の種類"
+
+#: app/overview/shortcut_dialog.py:78
+msgid "任务"
+msgstr "タスク"

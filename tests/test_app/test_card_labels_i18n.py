@@ -49,7 +49,7 @@ class TestTaskConstants:
 class TestCardLabels:
     def test_default_cards_hold_msgids(self):
         import polib
-        from app.card.card_edit_dialog import DEFAULT_CARDS, BUILTIN_LABELS
+        from module.overview.legacy_cards import DEFAULT_CARDS, BUILTIN_LABELS
         from tools.i18n.po import pot_path
         keys = po_keyset(polib.pofile(str(pot_path())))
         for card in DEFAULT_CARDS:
@@ -60,7 +60,7 @@ class TestCardLabels:
         assert DEFAULT_CARDS[0]["title"] in BUILTIN_LABELS
 
     def test_display_label_follows_language(self, switch_lang):
-        from app.card.card_edit_dialog import display_label
+        from module.overview.legacy_cards import display_label
         switch_lang("en_US")
         assert display_label("完整运行") != "完整运行"
         assert display_label("完整运行") == tr("完整运行")
@@ -74,7 +74,7 @@ class TestCardLabels:
         只做正向比较（msgid -> 显示 -> msgid），因为不同原文可能有相同译文
         （如日文的「更新锄大地」与「锄大地更新」），按译文反查会串味。
         """
-        from app.card.card_edit_dialog import BUILTIN_LABELS, display_label, stored_label
+        from module.overview.legacy_cards import BUILTIN_LABELS, display_label, stored_label
         for lang in LOCALES:
             switch_lang(lang)
             for msgid in sorted(BUILTIN_LABELS):
@@ -82,7 +82,7 @@ class TestCardLabels:
                 assert stored_label(display_label(msgid), msgid) == msgid, f"{lang} 下 {msgid!r} 无法还原"
 
     def test_stored_label_keeps_user_text(self, switch_lang):
-        from app.card.card_edit_dialog import stored_label
+        from module.overview.legacy_cards import stored_label
         switch_lang("en_US")
         # 用户自定义（msgid 为 None）原样保存
         assert stored_label("My Own Card", None) == "My Own Card"
@@ -91,7 +91,7 @@ class TestCardLabels:
 
     def test_no_translation_persisted_after_edit(self, switch_lang):
         """在英文界面下「不改动」保存，落盘的仍是中文原文。"""
-        from app.card.card_edit_dialog import DEFAULT_CARDS, display_label, stored_label
+        from module.overview.legacy_cards import DEFAULT_CARDS, display_label, stored_label
         switch_lang("en_US")
         card = DEFAULT_CARDS[1]  # 带 menu_items 的卡片
         persisted = {

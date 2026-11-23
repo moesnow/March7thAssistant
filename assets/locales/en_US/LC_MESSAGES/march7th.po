@@ -9161,6 +9161,14 @@ msgstr "Skipped"
 msgid "异常结束"
 msgstr "Exited unexpectedly"
 
+#: module/overview/shortcuts.py
+msgid "快捷启动已在其他窗口修改，请重新打开编辑。"
+msgstr "Shortcuts changed in another window. Reopen the editor."
+
+#: module/overview/shortcuts.py
+msgid "快捷启动的名称、图标或操作无效。"
+msgstr "The shortcut name, icon, or action is invalid."
+
 #: module/overview/labels.py:4
 msgid "手动"
 msgstr "Manual"
@@ -9184,3 +9192,103 @@ msgstr "Non-interactive run"
 #: module/overview/cards.py
 msgid "计划次数为零"
 msgstr "Zero runs scheduled"
+
+#: app/overview/shortcut_dialog.py:23
+msgid "相机"
+msgstr "Camera"
+
+#: app/overview/shortcut_dialog.py:23
+msgid "运行"
+msgstr "Run"
+
+#: app/overview/shortcut_dialog.py:23 app/overview_interface.py:113
+msgid "开拓力"
+msgstr "Trailblaze Power"
+
+#: app/overview/shortcut_dialog.py:24
+msgid "任务清单"
+msgstr "Task list"
+
+#: app/overview/shortcut_dialog.py:25
+msgid "宇宙"
+msgstr "Universe"
+
+#: app/overview/shortcut_dialog.py:25
+msgid "奖杯"
+msgstr "Trophy"
+
+#: app/overview/shortcut_dialog.py:26
+msgid "指南针"
+msgstr "Compass"
+
+#: app/overview/shortcut_dialog.py:27
+msgid "发送"
+msgstr "Send"
+
+#: app/overview/shortcut_dialog.py:28
+msgid "下载"
+msgstr "Download"
+
+#: app/overview/shortcut_dialog.py:28
+msgid "礼物"
+msgstr "Gift"
+
+#: app/overview/shortcut_dialog.py:29
+msgid "列表"
+msgstr "List"
+
+#: app/overview/shortcut_dialog.py:29
+msgid "星星"
+msgstr "Star"
+
+#: app/overview/shortcut_dialog.py:72
+msgid "清除图片"
+msgstr "Clear image"
+
+#: app/overview/shortcut_dialog.py:38
+msgid "编辑快捷启动"
+msgstr "Edit shortcuts"
+
+#: app/overview/shortcut_dialog.py:80
+msgid "自选图片"
+msgstr "Custom image"
+
+#: app/overview/style.py:104
+msgid "不到 1 分钟"
+msgstr "Less than 1 min"
+
+#: app/overview/style.py:111
+msgid "{hours} 小时 {minutes} 分钟"
+msgstr "{hours} hr {minutes} min"
+
+#: app/overview/style.py:92
+msgid "今天 {time}"
+msgstr "Today {time}"
+
+#: app/overview/style.py:94
+msgid "明天 {time}"
+msgstr "Tomorrow {time}"
+
+#: app/overview/style.py:96
+msgid "昨天 {time}"
+msgstr "Yesterday {time}"
+
+#: app/overview/style.py:107
+msgid "{minutes} 分钟"
+msgstr "{minutes} min"
+
+#: app/overview/style.py:110
+msgid "{hours} 小时"
+msgstr "{hours} hr"
+
+#: module/overview/shortcuts.py:231
+msgid "配置写入已暂停，请恢复后再保存。"
+msgstr "Saving settings is paused. Try again after it resumes."
+
+#: app/overview/shortcut_dialog.py:77
+msgid "操作类型"
+msgstr "Action Type"
+
+#: app/overview/shortcut_dialog.py:78
+msgid "任务"
+msgstr "Task"
