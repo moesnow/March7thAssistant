@@ -134,6 +134,8 @@ DRAGON_BOND_PROMPT = (845, 112, 1260, 200)
 DRAGON_BOND_CARDS = (575, 325, 1525, 448)
 DRAGON_BOND_CONFIRM = (1300, 550, 1690, 725)
 DRAGON_BOND_NAMES = ("召唤", "治疗", "连击", "反击")
+DRAGON_BOND_SIDEBAR = (95, 212, 277, 790)
+DRAGON_BOND_FIRST_CARD = (686, 352)
 SUPPLY_CENTERS = (250, 605, 960, 1315, 1670)
 SUPPLY_FOUR_CENTERS = (428, 783, 1137, 1492)
 RAIL_TITLE = (655, 51, 1450, 108)
@@ -1653,10 +1655,9 @@ class Frame:
                 return False
         return True
 
-    def dragon_bond_confirm(self) -> Label | None:
-        if button := self.find("确认选择", area=DRAGON_BOND_CONFIRM):
-            return self._wide_confirm(button, DRAGON_BOND_CONFIRM, button.point[0])
-        return None
+    def dragon_bond_confirm(self, *, allow_unlabeled=False) -> Label | None:
+        button = self.find("确认选择", area=DRAGON_BOND_CONFIRM)
+        return self._wide_confirm(button, DRAGON_BOND_CONFIRM, 1492) if button or allow_unlabeled else None
 
     @cached_property
     def board_effect_cards(self) -> tuple[tuple[Label, str], ...]:

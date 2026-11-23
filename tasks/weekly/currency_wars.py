@@ -102,6 +102,7 @@ SUPPLY_ITEMS = ("火力风暴潮", "反螺旋舞步", "永动机", "电磁弹射
                 "生命之环", "信心注入器", "绝对热量", "反卫星狙击枪")
 REWARD_CHOICES = (*ui.ITEM_CHOICES, *ui.RECRUIT_CHOICES)
 EMBLEM_PREFERENCES = ("连击星徽", "治疗星徽", "开拓银轨星徽", "奇兽花园星徽")
+DRAGON_BOND_PREFERENCES = ("连击", "治疗", "召唤", "反击")
 SAFE_BENEFITS = ("免费刷新", "额外金币", "获得金币", "简易装备", "获得装备", "提升伤害",
                  "伤害提高", "伤害增幅", "额外造成", "回复生命值", "经验", "治疗",
                  "前台强度", "后台强度", "速度增幅提高", "战利品晶矿")
@@ -4839,9 +4840,7 @@ class CurrencyWars:
 
     def _choose_dragon_bond(self, frame):
         target = self.lineup.dragon_bond if self.lineup else None
-        if target not in ui.DRAGON_BOND_NAMES:
-            raise CurrencyWarsUnavailable("双龙吟：当前阵容没有指定目标羁绊，已保留当前现场")
-
+        use_default = target not in ui.DRAGON_BOND_NAMES
         stage = frame.stage or self.last_result_stage
 
         def advanced(f):
@@ -4851,15 +4850,22 @@ class CurrencyWars:
             return f.page == Page.DRAGON_BOND and f.stage in (None, stage)
 
         def target_card(f):
-            if same_dialog(f) and all(f.dragon_bond_heading):
-                return f.dragon_bond_card(target)
-            return None
+            if not same_dialog(f):
+                return None
+            if not use_default:
+                return f.dragon_bond_card(target) if all(f.dragon_bond_heading) else None
+            cards = [card for name in DRAGON_BOND_PREFERENCES if (card := f.dragon_bond_card(name))]
+            if not cards:
+                return ui.Label("羁绊卡片", ui.DRAGON_BOND_FIRST_CARD)
+            return next((card for card in cards if f.has(card.text, area=ui.DRAGON_BOND_SIDEBAR)), cards[0])
 
         def option(f):
             card = target_card(f)
             return card.point if card and not f.dragon_bond_selected(card) else None
 
         def confirm(f):
+            if use_default:
+                return ui.point(f.dragon_bond_confirm(allow_unlabeled=True)) if same_dialog(f) else None
             card = target_card(f)
             return ui.point(f.dragon_bond_confirm()) if card and f.dragon_bond_selected(card) else None
 
@@ -4868,9 +4874,10 @@ class CurrencyWars:
                 frame = self._expect(lambda f: f.page == Page.DRAGON_BOND and f.stage is not None,
                                      5, "双龙吟未确认当前备战节点")
                 stage = frame.stage
+            selection = "可用羁绊" if use_default else f"「{target}」"
             frame = self._click_to(
                 frame, option, lambda f: advanced(f) or confirm(f) is not None,
-                f"双龙吟未确认「{target}」及可用的确认按钮", seconds=7, attempts=2, same_view=same_dialog,
+                f"双龙吟未确认{selection}及可用的确认按钮", seconds=7, attempts=2, same_view=same_dialog,
             )
             if not advanced(frame):
                 frame = self._click_to(
