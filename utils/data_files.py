@@ -80,8 +80,14 @@ def walk_files(path):
 def critical_items(layout, *, external=False):
     members = list(paths.CRITICAL)
     members.extend(p.name for p in sorted(layout.root.glob(paths.CONFIG + ".bak-*")))
-    for p in sorted(layout.path("gacha/warp.json").parent.glob("warp.json.*.bak")):
-        members.append("gacha/" + p.name)
+    old = layout.path(paths.OLD_GACHA)
+    members.extend(f"{paths.GACHA}/{p.name}" for p in sorted(old.parent.glob(old.name + ".*.bak")))
+    directory = layout.path(paths.GACHA)
+    if directory.exists():
+        for file in sorted(directory.iterdir()):
+            member = f"{paths.GACHA}/{file.name}"
+            if paths.is_uid_member(member) or paths.UID_BACKUP.fullmatch(file.name):
+                members.append(member)
     if external and layout.mode != "legacy":
         for kind, names in paths.EXTERNAL.items():
             members.extend(f"external/{kind}/{name}" for name in names)

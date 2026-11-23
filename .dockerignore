@@ -29,6 +29,10 @@ dist/
 
 # Local assistant data (including backups and secrets)
 /userdata
+**/gacha/[0-9]*.json
+**/gacha/*.bak
+**/gacha/.*.tmp
+**/gacha/.import-pending.json
 /.pytest_tmp
 /config.yaml*
 /settings

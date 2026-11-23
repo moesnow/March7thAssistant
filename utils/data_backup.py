@@ -14,6 +14,7 @@ from ruamel.yaml import YAML, YAMLError
 from module.localization import tr
 from module.settings_registry import SETTINGS, Scope
 from utils import paths, runs
+from utils.gacha_transaction import PENDING, recover_import
 from utils.data_files import (BACKUP_FORMAT, DIAGNOSTIC_FORMAT, atomic_json, critical_items, data_lock, file_hash, linked, members_of,
                               digest, install_stream as _install_file, stamp, walk_files, write_zip)
 
@@ -41,7 +42,7 @@ def _managed(name):
                 re.fullmatch(r"(?:CON|PRN|AUX|NUL|COM[1-9¹²³]|LPT[1-9¹²³])(?:\..*)?", part, re.I)):
             return False
     return (name in paths.CRITICAL and name not in ("accounts", "workflows") or
-            paths.is_extra_backup(name) or parts[0] in ("accounts", "workflows") and len(parts) > 1 or
+            paths.is_uid_member(name) or paths.is_extra_backup(name) or parts[0] in ("accounts", "workflows") and len(parts) > 1 or
             len(parts) == 3 and parts[0] == "external" and parts[2] in paths.EXTERNAL.get(parts[1], ()))
 
 
@@ -107,9 +108,15 @@ def _safe_output(layout, destination):
     return destination
 
 
+def backup_size(current=None):
+    """Uncompressed bytes included in a configuration backup."""
+    return sum(p.stat().st_size for _, p in members_of(_items(current or paths.layout())))
+
+
 def backup(destination):
     current = paths.layout()
     with data_lock(current.storage):
+        recover_import(current)
         write_zip(_safe_output(current, destination), _items(current))
 
 
@@ -138,8 +145,10 @@ def _import(folder, stage):
         if folder.name == paths.USERDATA or any((folder / key).is_dir()
                 for key in ("accounts", "workflows", "gacha", "exports", "external")):
             source = paths.Layout(folder, folder, "userdata")
-        elif not source.root.is_dir():
+        elif not source.root.is_dir() or (folder / paths.LEGACY_GACHA).is_dir():
             source = paths.Layout(folder, folder, "legacy")
+    if (source.path(paths.GACHA) / PENDING).exists():
+        raise ValueError(tr("所选目录的抽卡导入尚未完成，请先在原安装中打开抽卡页。"))
     items = _items(source, confined=True)
     for name, file in members_of(items):
         if not _managed(name):
@@ -199,6 +208,7 @@ def _restore(source, importing):
     directory = current.storage / "backup"
     with data_lock(current.storage):
         _check_idle(current)
+        recover_import(current)
         record = directory / RESTORE_RECORD
         if record.exists():
             from utils.data_migration import automatic_migration_allowed

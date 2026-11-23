@@ -182,10 +182,15 @@ pyrightconfig.json
 
 # March7thAssistant
 /userdata
+**/gacha/[0-9]*.json
+**/gacha/*.bak
+**/gacha/.*.tmp
+**/gacha/.import-pending.json
 /配置已移到 userdata.txt
 /*config.yaml
 /config
 /warp.json
+/warp.json.*.bak
 /characters.json
 /characters.partial.json
 /logs

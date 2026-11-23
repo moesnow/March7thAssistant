@@ -9,6 +9,7 @@ import tempfile
 import zipfile
 
 from utils import paths
+from utils.gacha_transaction import recover_import
 from utils.data_files import (atomic_json, critical_items, data_lock, install_stream, linked, move, remove, remove_retired, stamp,
                               verified_copy, verify_zip, write_zip)
 from utils.install_registry import find_install, is_gui_running
@@ -161,7 +162,7 @@ def _notice(install):
 def _rollback(old, record):
     # The intent is persisted before the first rename, including for the item in flight.
     items = record["items"]
-    if not all(name in paths.CRITICAL or paths.is_extra_backup(name) for name in items):
+    if not all(name in paths.CRITICAL or paths.is_uid_member(name) or paths.is_extra_backup(name) for name in items):
         raise ValueError(REASONS["unknown_item"])
     for name in reversed(items):
         target, source = _destination(old, name, record), old.path(name)
@@ -198,6 +199,7 @@ def _rollback(old, record):
 
 def _critical(old, record):
     record.pop("reason", None)
+    recover_import(old)
     items = critical_items(old)
     conflicts = [name for name in items if (old.storage / name).exists()]
     _validate_config(old.path(paths.CONFIG))
@@ -315,6 +317,7 @@ def _remaining(old, record):
 
 
 def _leftovers(old, record):
+    recover_import(old)
     items = critical_items(old)
     items.update({k: old.path(k) for k in paths.OPTIONAL if k not in record.get("pending", ())})
     folder = old.storage / "backup" / ("旧位置残留_" + stamp())

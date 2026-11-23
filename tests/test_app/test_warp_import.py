@@ -1,10 +1,13 @@
-from copy import deepcopy
 import json
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from app.tools.warp_import import prepare_import, save_import, WarpImportError, normalize
+from module.gacha.records import WarpImportError, normalize, plan_account, publish, read_bytes, unchanged
+
+
+def prepare_import(source, target, mode="merge"):
+    incoming = normalize(json.loads(source.read_bytes()))
+    return plan_account(incoming, target, read_bytes(target), mode)
 
 
 def data(ids=(1, 2), uid='100000001'):
@@ -28,7 +31,7 @@ def test_merge_and_exact_backup(files):
     before = target.read_bytes()
     plan = prepare_import(source, target)
     assert (plan.existing_count, plan.incoming_count, plan.added_count, plan.duplicate_count) == (2, 2, 1, 1)
-    backup = save_import(plan)
+    backup = publish(plan)
     assert backup.read_bytes() == before
     assert [r['id'] for r in json.loads(target.read_bytes())['list']] == ['1', '2', '3']
     assert not list(target.parent.glob('*.tmp'))
@@ -39,7 +42,7 @@ def test_first_import_and_repeat(tmp_path):
     target = tmp_path / 'warp.json'
     plan = prepare_import(source, target)
     assert plan.duplicate_count == 1
-    assert save_import(plan) is None
+    assert publish(plan) is None
     assert prepare_import(source, target).added_count == 0
 
 
@@ -103,7 +106,7 @@ def test_changed_after_preview(files):
     put(target, data((4,)))
     before = target.read_bytes()
     with pytest.raises(WarpImportError, match='发生变化'):
-        save_import(plan)
+        publish(plan)
     assert target.read_bytes() == before
 
 
@@ -111,9 +114,9 @@ def test_changed_after_preview(files):
 def test_failed_write_keeps_original(files, operation):
     source, target = files
     plan = prepare_import(source, target)
-    with patch('app.tools.warp_import.os.' + operation, side_effect=OSError('disk error')):
+    with patch('module.gacha.records.os.' + operation, side_effect=OSError('disk error')):
         with pytest.raises(OSError):
-            save_import(plan)
+            publish(plan)
     assert target.read_bytes() == plan.original
     assert not list(target.parent.glob('*.tmp'))
 
@@ -129,16 +132,14 @@ def test_bad_existing_file_never_overwritten(files):
 def test_mutation_before_replace(files):
     source, target = files
     plan = prepare_import(source, target)
-    import app.tools.warp_import as module
-    check = module._unchanged
     calls = []
     def concurrent(plan):
         calls.append(1)
         if len(calls) == 2:
             put(target, data((99,)))
-        check(plan)
-    with patch.object(module, '_unchanged', concurrent), pytest.raises(WarpImportError):
-        save_import(plan)
+        unchanged(plan)
+    with pytest.raises(WarpImportError):
+        publish(plan, check=concurrent)
     assert json.loads(target.read_bytes())['list'][0]['id'] == '99'
 
 
@@ -147,7 +148,7 @@ def test_explicit_replace_keeps_exact_backup(files):
     before = target.read_bytes()
     plan = prepare_import(source, target, mode='replace')
     assert plan.mode == 'replace' and plan.removed_count == 1
-    backup = save_import(plan)
+    backup = publish(plan)
     assert backup.read_bytes() == before
     assert [r['id'] for r in json.loads(target.read_bytes())['list']] == ['2', '3']
 
@@ -159,7 +160,7 @@ def test_replace_allows_conflict_and_locale_change(files):
     incoming['info']['region_time_zone'] = -5
     put(source, incoming)
     plan = prepare_import(source, target, mode='replace')
-    save_import(plan)
+    publish(plan)
     assert json.loads(target.read_bytes()) == incoming
 
 
@@ -169,7 +170,7 @@ def test_explicit_replace_can_change_single_account(files):
     put(source, data(uid='100000002'))
     plan = prepare_import(source, target, mode='replace')
     assert plan.existing_uid == '100000001'
-    backup = save_import(plan)
+    backup = publish(plan)
     assert backup.read_bytes() == before
     assert json.loads(target.read_bytes())['info']['uid'] == '100000002'
 
@@ -177,9 +178,9 @@ def test_explicit_replace_can_change_single_account(files):
 def test_replace_write_failure_preserves_original(files):
     source, target = files
     plan = prepare_import(source, target, mode='replace')
-    with patch('app.tools.warp_import.os.replace', side_effect=OSError('locked')):
+    with patch('module.gacha.records.os.replace', side_effect=OSError('locked')):
         with pytest.raises(OSError):
-            save_import(plan)
+            publish(plan)
     assert target.read_bytes() == plan.original
     assert next(target.parent.glob('*.bak')).read_bytes() == plan.original
 
@@ -195,6 +196,6 @@ def test_replace_unreadable_file_backups_raw_bytes(files):
     target.write_bytes(b'{broken')
     plan = prepare_import(source, target, mode='replace')
     assert plan.existing_unreadable
-    backup = save_import(plan)
+    backup = publish(plan)
     assert backup.read_bytes() == b'{broken'
     assert len(json.loads(target.read_bytes())['list']) == 2

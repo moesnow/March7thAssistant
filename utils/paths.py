@@ -2,7 +2,8 @@
 from dataclasses import dataclass
 import json
 import os
-from pathlib import Path
+import re
+from pathlib import Path, PurePosixPath
 import sys
 
 USERDATA = "userdata"
@@ -13,13 +14,18 @@ RECOVERY_ENV = "M7A_DATA_RECOVERY_PENDING"
 COOKIES = "browser/cookies.enc"
 PROFILE = "3rdparty/WebBrowser/UserProfile"
 LEGACY_MARKERS = (CONFIG, CONFIG + ".bak", "settings", "config/workflows")
+GACHA = "gacha"
+OLD_GACHA = "gacha/warp.json"
+LEGACY_GACHA = "logs/gacha"
+UID_FILE = re.compile(r"[0-9]+\.json")
+UID_BACKUP = re.compile(r"[0-9]+\.json\.[\w.-]+\.bak", re.ASCII)
 # Archive member names use the new layout, including when backing up an old installation.
 CRITICAL = {
     CONFIG + ".bak": CONFIG + ".bak",
     CONFIG + ".prefallback": CONFIG + ".prefallback",
     "accounts": "settings/accounts",
     "workflows": "config/workflows",
-    "gacha/warp.json": "warp.json",
+    OLD_GACHA: "warp.json",
     "exports/characters.json": "characters.json",
     "exports/characters.partial.json": "characters.partial.json",
     COOKIES: "settings/cookies.enc",
@@ -53,16 +59,29 @@ class Layout:
         return json.dumps([str(self.install), str(self.root), self.mode, self.pending], ensure_ascii=True)
 
 
+def is_uid_member(member):
+    directory, _, name = member.partition("/")
+    return directory == GACHA and bool(UID_FILE.fullmatch(name))
+
+
 def is_extra_backup(member):
-    from pathlib import PurePosixPath
+    if "\\" in member or ":" in member:
+        return False
     p = PurePosixPath(member)
-    return (len(p.parts) == 1 and p.name.startswith(CONFIG + ".bak-") or
-            p.parent.as_posix() == "gacha" and p.name.startswith("warp.json.") and p.name.endswith(".bak")) and (
-                "\\" not in member and ":" not in member)
+    if len(p.parts) == 1:
+        return p.name.startswith(CONFIG + ".bak-")
+    return (p.parent.as_posix() == GACHA and
+            (bool(UID_BACKUP.fullmatch(p.name)) or
+             (p.name.startswith("warp.json.") and p.name.endswith(".bak"))))
 
 
 def legacy_name(member):
-    if member.startswith("gacha/"):
+    if member == GACHA:
+        return LEGACY_GACHA
+    parent, _, name = member.partition("/")
+    if parent == GACHA and (UID_FILE.fullmatch(name) or UID_BACKUP.fullmatch(name)):
+        return LEGACY_GACHA + "/" + name
+    if member.startswith(GACHA + "/"):
         return member.split("/", 1)[1]
     return CRITICAL.get(member, OPTIONAL.get(member, member))
 
@@ -149,8 +168,17 @@ def workflows_dir():
     return str(layout().path("workflows"))
 
 
-def gacha_path():
-    return str(layout().path("gacha/warp.json"))
+def gacha_dir(current=None):
+    return str((current or layout()).path(GACHA))
+
+
+def gacha_path(uid=None, *, current=None):
+    current = current or layout()
+    if uid is None:
+        return str(current.path(OLD_GACHA))
+    if not re.fullmatch(r"[0-9]+", str(uid)):
+        raise ValueError("无效的 UID")
+    return str(current.path(f"{GACHA}/{uid}.json"))
 
 
 def characters_path(*, partial=False):

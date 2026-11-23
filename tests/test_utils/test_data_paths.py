@@ -66,6 +66,7 @@ def test_updater_keeps_archive_marker_spelling():
 
 # Only desktop Python sources and entry points own these paths. Other trees are separate consumers.
 EXCLUDED_TREES = {
+    'userdata': 'Private runtime files, never application source.',
     'tests': 'Fixtures intentionally assert the literal legacy paths.',
     'docs': 'Documentation, including literal paths for users.',
     'website': 'Public documentation website.',
@@ -85,7 +86,6 @@ EXCLUDED_FILES = {
 # Match the expression, not the entire file. A new open("temp") in main.py must still fail.
 OTHER_MEANINGS = {
     ('app/content/__init__.py', '{"setting": "settings", "task": "tasks"}'),  # Python package under app.content.
-    ('app/tools/warp_export.py', "os.getenv('userprofile')"),  # Windows account home for Player.log.
     ('tasks/game/__init__.py', 'cloud_click_element("Settings", "text", 0.9, take_screenshot=False)'),  # Game button.
     ('main.py', 'mode == "temp"'),              # Currency wars / universe resume mode.
     ('main.py', 'currencywars("temp")'),

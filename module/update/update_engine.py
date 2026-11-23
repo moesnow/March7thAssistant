@@ -522,7 +522,8 @@ class UpdateEngine:
     def _protected_data(self):
         install = Path(self.cover_folder_path).resolve()
         storage = paths.layout().storage.resolve()
-        roots = {(install / paths.USERDATA).resolve()}
+        roots = {(install / paths.USERDATA).resolve(), (install / paths.LEGACY_GACHA).resolve(),
+                 (install / paths.legacy_name(paths.OLD_GACHA)).resolve()}
         if storage != install:
             roots.add(storage)
         else:
@@ -557,7 +558,8 @@ class UpdateEngine:
                 rel = os.path.relpath(src, self.extract_folder_path)
                 dest = os.path.join(self.cover_folder_path, rel)
                 relative = Path(rel).as_posix().casefold()
-                if any(relative == key or relative.startswith(key + "/") for key in USER_DATA_MARKERS):
+                if (any(relative == key or relative.startswith(key + "/") for key in USER_DATA_MARKERS)
+                        or paths.is_extra_backup(f"{paths.GACHA}/{relative}")):
                     continue
                 resolved = Path(dest).resolve()
                 if any(resolved.is_relative_to(directory) for directory in protected):
