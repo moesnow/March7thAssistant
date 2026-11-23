@@ -98,6 +98,8 @@ AI 助手使用的是安装目录里的 `m7a.exe`。它和 `March7th Assistant.e
 
 运行 `m7a.exe --status` 可查到数据目录 `data_dir`、配置文件 `config_file` 和日志目录 `logs_dir`。每次运行在 `runs_dir` 指向的目录留下记录：`<运行编号>.log` 是完整输出，`<运行编号>.json` 是状态、原因、错误与失败截图。
 
+抽卡记录按 UID 分文件保存。默认或自定义数据目录使用 `<data_dir>/gacha/<UID>.json`，旧布局使用 `<logs_dir>/gacha/<UID>.json`。在桌面端的「抽卡记录」页打开「更多操作」可找到当前数据文件夹。
+
 全部参数见 `.\m7a.exe --help`，给 AI 助手看的完整说明见 [SKILL.md](https://github.com/moesnow/March7thAssistant/blob/main/assets/agent/skills/march7th-assistant/SKILL.md)。
 
 ## 常见问题

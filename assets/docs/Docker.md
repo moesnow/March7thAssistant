@@ -191,9 +191,11 @@ services:
 
 ## 数据持久化
 
-新版只需挂载 `./userdata:/m7a/userdata`。宿主机上的设置在 `userdata/config.yaml`，日志在 `userdata/logs/`，云游戏登录状态在 `userdata/browser/`。
+新版只需挂载 `./userdata:/m7a/userdata`。宿主机上的设置在 `userdata/config.yaml`，日志在 `userdata/logs/`，云游戏登录状态在 `userdata/browser/`。每个账号的抽卡记录保存在 `userdata/gacha/<UID>.json`。
 
-已经分别挂载 `config.yaml`、`logs`、`3rdparty/WebBrowser/UserProfile` 的部署可继续使用原来的 Compose 文件。升级时容器沿用这些位置。要切换到单卷挂载，先停容器并备份，在宿主机上把原 `config.yaml` 复制为 `userdata/config.yaml`，将日志目录和浏览器配置目录里的内容分别复制到 `userdata/logs/` 和 `userdata/browser/`，最后修改 Compose 的挂载并启动。
+已经分别挂载 `config.yaml`、`logs`、`3rdparty/WebBrowser/UserProfile` 的部署可继续使用原来的 Compose 文件。这种布局下，每个账号的抽卡记录和备份都保存在宿主机的 `logs/gacha/`。
+
+要切换到单卷挂载，先停容器并备份。在宿主机上把原 `config.yaml` 复制为 `userdata/config.yaml`，把日志和浏览器配置分别复制到 `userdata/logs/` 和 `userdata/browser/`。再将旧 `logs/gacha/` 中的 `<UID>.json` 和 `.bak` 备份复制到 `userdata/gacha/`。如果旧记录还在容器内的 `/m7a/warp.json`，要在重建容器前将它复制到宿主机的 `userdata/gacha/warp.json`。完成后修改 Compose 的挂载并启动。
 
 ## 常见问题
 

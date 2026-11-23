@@ -63,7 +63,7 @@ termux-wake-lock
 
 ### 3. 创建项目目录并下载配置文件
 
-以下命令用于新安装。配置只在 `~/march7thassistant/config.yaml` 的旧安装可以继续用原挂载；要切换到 `userdata`，先在 Termux 中停止小助手并备份 `~/march7thassistant`。在这个宿主目录内，把原配置复制为 `userdata/config.yaml`，再把 `logs/` 和 `3rdparty/WebBrowser/UserProfile/` 里的内容分别复制到 `userdata/logs/` 和 `userdata/browser/`。复制完成后运行新版 `start-m7a.sh`，它会挂载准备好的 `userdata`。
+以下命令用于新安装。配置只在 `~/march7thassistant/config.yaml` 的旧安装可以继续用原挂载；要切换到 `userdata`，先在 Termux 中停止小助手并备份 `~/march7thassistant`。在这个宿主目录内，把原配置复制为 `userdata/config.yaml`，再把 `logs/` 和 `3rdparty/WebBrowser/UserProfile/` 里的内容分别复制到 `userdata/logs/` 和 `userdata/browser/`。如果原来有抽卡记录，还要把 `logs/gacha/` 里的 `<UID>.json` 和 `.bak` 备份复制到 `userdata/gacha/`。复制完成后运行新版 `start-m7a.sh`，它会挂载准备好的 `userdata`。
 
 ```bash
 mkdir -p march7thassistant/userdata
