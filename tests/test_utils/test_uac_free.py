@@ -3,6 +3,7 @@
 import json
 import os
 import sys
+from unittest.mock import Mock
 
 import pytest
 
@@ -12,7 +13,7 @@ from utils.pause import CONTROL_FILE_ENV
 
 
 @pytest.fixture
-def workdir(tmp_path, monkeypatch):
+def workdir(tmp_path, isolated_layout, monkeypatch):
     monkeypatch.chdir(tmp_path)
     saved = os.environ.pop(CONTROL_FILE_ENV, None)
     yield tmp_path
@@ -178,8 +179,12 @@ class TestLaunch:
     def test_timeout_reports_last_result(self, workdir, monkeypatch):
         monkeypatch.setattr(schedule, "run_task", lambda name, params: None)
         monkeypatch.setattr(schedule, "get_task_info", lambda name: {"last_result": -2147024894})
+        clock = Mock()
+        clock.monotonic.side_effect = (10.0, 10.0, 10.31)
+        monkeypatch.setattr(uac_free, "time", clock)
         with pytest.raises(uac_free.LaunchError) as excinfo:
             uac_free.launch(["daily"], "20261101-120000-abcd", timeout=0.3, poll_interval=0.05)
+        clock.sleep.assert_called_once_with(0.05)
         assert "0.3 秒内任务没有开始运行" in str(excinfo.value)
         assert "0x80070002" in str(excinfo.value)
 

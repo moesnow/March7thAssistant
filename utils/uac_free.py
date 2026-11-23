@@ -162,12 +162,12 @@ def launch(args, run_id: str, timeout: float = START_TIMEOUT_SECONDS, poll_inter
         run_task(TASK_NAME, list2cmdline(list(args)))
     except Exception as e:
         raise LaunchError(f"启动计划任务 {TASK_NAME} 失败：{describe_com_error(e)}") from e
-    deadline = time.time() + timeout
+    deadline = time.monotonic() + timeout
     while True:
         record = load_run(run_id)
         if record is not None:
             return TaskRun(record)
-        if time.time() >= deadline:
+        if time.monotonic() >= deadline:
             break
         time.sleep(poll_interval)
     detail = ""
