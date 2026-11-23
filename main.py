@@ -136,8 +136,11 @@ def parse_args():
     optional.add_argument("--data-session", help=argparse.SUPPRESS)
     from module.overview.plan import STEPS
     optional.add_argument('--retry-step', choices=sorted(STEPS.keys() - {'prepare'}), help=argparse.SUPPRESS)
+    optional.add_argument('--page-task', choices=('activity', 'reward', 'echo', 'assets', 'daily'), help=argparse.SUPPRESS)
     optional.add_argument('--scheduled', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
+    if args.page_task and (args.task != "routine" or args.workflow_name or args.retry_step):
+        parser.error("--page-task 只能单独与 routine 一起使用")
     if args.retry_step and (args.task != "routine" or args.workflow_name):
         parser.error("--retry-step 只能与 routine 一起使用")
     from utils import paths
@@ -327,6 +330,8 @@ run_session = RunSession.begin(
     trigger='scheduled' if args.scheduled else 'manual' if is_gui_started() else None,
     version=read_version(),
 )
+if args.page_task:
+    run_session.note(page_task=args.page_task)
 run_session.print_json = args.json
 if desktop_twin_context:
     run_session.record["windows_session_id"] = desktop_twin_context.session.session_id
@@ -335,7 +340,7 @@ if desktop_twin_context:
 if sys.platform == 'win32' and requires_admin and not is_user_admin():
     # 入口转交的管理员进程却没有管理员权限（例如免 UAC 运行的计划任务被改成了不以最高权限运行）：
     # 不执行任务，把原因写进运行记录，入口会照常转告调用方
-    _message = "没有获得管理员权限，任务未运行。如果开启了免 UAC 运行，请在图形界面「设置 → 杂项」中关闭后重新开启"
+    _message = "没有获得管理员权限，任务未运行。如果开启了免 UAC 运行，请在图形界面「设置 → 高级」中关闭后重新开启"
     print(_message, flush=True)
     run_session.note(error=_message)
     run_session.finish(EXIT_ELEVATION_FAILED)
@@ -753,6 +758,14 @@ def _run_action(action=None, no_run_immediately=False, workflow_name=None, workf
 
     # 子任务
     elif action in ["routine", "daily", "power", "currencywars", "currencywarsloop", "currencywarstemp", "divergent", "divergentloop", "divergenttemp", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption", "screen_test", "character_export"]:
+        page_task = run_session.record.get("page_task")
+        if action == "routine" and isinstance(page_task, str):
+            from tasks.page_actions import run_page
+            from module.task_catalog import BY_ID
+            if touch and not BY_ID[page_task].touch:
+                log.warning("触屏模式不支持此项任务")
+                return False
+            return run_sub_task(action, task_override=lambda: run_page(page_task, cfg, touch=touch))
         retry_step = run_session.record.get("retry_step")
         if action == "routine" and isinstance(retry_step, str):
             if touch:

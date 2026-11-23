@@ -1325,7 +1325,9 @@ class LogInterface(ScrollArea):
                 program, args = self._resolveWorkflowLaunch(task)
             timeout = int(task.get('timeout', 0) or 0)
             if program.lower() == 'self':
-                if task.get('retry_step') and args == 'routine':
+                if task.get('page_task') and args == 'routine':
+                    self._startTask(args, timeout, page_task=task['page_task'])
+                elif task.get('retry_step') and args == 'routine':
                     self._startTask(args, timeout, retry_step=task['retry_step'])
                 else:
                     self._startTask(args, timeout)
@@ -1462,7 +1464,7 @@ class LogInterface(ScrollArea):
         self.taskFinished.emit(effective_exit_code)
         self._finishTaskSequence(sequence)
 
-    def _startTask(self, task, timeout=0, *, retry_step=None):
+    def _startTask(self, task, timeout=0, *, retry_step=None, page_task=None):
         self.current_task = task
         command = str(task)
         # 内置任务按白名单启用暂停（workflow 与外部任务的判定见 _resolvePauseSupport）
@@ -1545,6 +1547,8 @@ class LogInterface(ScrollArea):
                 pass
             arguments = [main_script, command]
 
+        if page_task:
+            arguments.extend(['--page-task', page_task])
         if retry_step:
             arguments.extend(['--retry-step', retry_step])
         self._linkScheduledRun(proc, arguments)
@@ -2476,7 +2480,7 @@ class LogInterface(ScrollArea):
             pass
         self.appendLog(f"\n错误: {msg}\n")
         if error == QProcess.Crashed:
-            self.appendLog(f"\n可尝试将 “设置-杂项-OCR加速模式” 修改为 CPU 后重新运行\n")
+            self.appendLog(f"\n可尝试将 「设置 → 高级 → OCR 加速模式」 修改为 CPU 后重新运行\n")
         elif error == QProcess.FailedToStart:
             self.appendLog(f"\n请查看 “帮助-常见问题” 中关于杀毒软件的处理方式，必要时将小助手文件夹加入排除项/白名单\n")
             self._onProcessFinished(-1, QProcess.CrashExit, process)

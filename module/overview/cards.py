@@ -2,6 +2,7 @@ from pathlib import Path
 
 from module.localization import get_current_language, tr
 from module.settings_registry import SETTINGS
+from module.task_catalog import step_page
 from utils.tasks import TASK_NAMES
 from . import plan
 from .history import game_day
@@ -70,7 +71,7 @@ def preview(config, now, *, touch=False, backend="local", current_step=None):
         if get_current_language() in ("zh_CN", "zh_TW") and len(detail) > 16:
             detail = detail[:15] + "…"
         rows.append(PlanItem(key, tr(plan.STEP_NAMES[key]), step.icon, detail, state,
-                             tr(STATUS_TEXT[state]), "setting:" + step.setting))
+                             tr(STATUS_TEXT[state]), "task:" + step_page(key)))
     return tuple(rows)
 
 
