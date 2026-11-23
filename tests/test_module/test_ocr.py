@@ -227,6 +227,26 @@ class TestDisableOpenVINOTelemetry:
                 delattr(OptInChecker, "_march7th_telemetry_disabled")
 
 
+def test_kleidiai_workaround_preserves_rapidocr_session_options(monkeypatch):
+    from omegaconf import OmegaConf
+    from rapidocr import EngineType
+    from rapidocr.inference_engine import onnxruntime
+    from rapidocr.inference_engine.base import get_engine
+
+    class IsolatedSession(onnxruntime.OrtInferSession):
+        pass
+
+    monkeypatch.setattr(onnxruntime, "OrtInferSession", IsolatedSession)
+    OCR._disable_kleidiai_for_rapidocr()
+    factory = get_engine(EngineType.ONNXRUNTIME)._init_sess_opts
+    OCR._disable_kleidiai_for_rapidocr()
+    assert IsolatedSession._init_sess_opts is factory
+    options = factory(OmegaConf.create({"enable_cpu_mem_arena": False, "inter_op_num_threads": 1}))
+    assert options.get_session_config_entry("mlas.disable_kleidiai") == "1"
+    assert options.enable_cpu_mem_arena is False
+    assert options.inter_op_num_threads == 1
+
+
 class _FakeConfig:
     """最小配置桩：仅实现 OCR 用到的 get_value / set_value。"""
 
