@@ -8692,3 +8692,17 @@ msgstr "Couldn’t change the Desktop Twin password. Try again shortly."
 #: app/tools/desktop_twin_password_dialog.py:114
 msgid "分身凭据已在其他位置更改，请核对后再操作。"
 msgstr "The saved credentials changed elsewhere. Check the account before continuing."
+
+#: module/game/adb_startup_frames.py:110
+msgid "游戏已启动，但后台虚拟屏持续输出黑帧，请导出本轮日志反馈"
+msgstr ""
+"The game has started, but the background virtual display keeps producing "
+"black frames. Please export the log for this run and attach it to your "
+"report."
+
+#: module/game/adb_startup_frames.py:111
+msgid "游戏已启动，但后台虚拟屏持续没有新帧，请导出本轮日志反馈"
+msgstr ""
+"The game has started, but no new frames are coming from the background "
+"virtual display. Please export the log for this run and attach it to your "
+"report."
