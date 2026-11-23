@@ -339,14 +339,16 @@ def test_persistent_pages_keep_models_workers_tabs_and_user_state(window, qtbot,
     selected.setExpanded(False)
     workflow.stepTree.setCurrentItem(selected)
     help_page = window.helpInterface
-    help_page.stackedWidget.setCurrentWidget(help_page.faqLabel)
+    window.stackedWidget.setAnimationEnabled(False)
+    window.switchTo(help_page)
+    assert help_page.showDocument('Background', '窗口状态变化')
+    qtbot.waitUntil(lambda: help_page.toc.current() == '窗口状态变化')
     warp = window.warpInterface
     worker = object()
     warp.warp_thread = worker
     warp.warplink = 'user-owned-url'
     warp.updateBtn.setEnabled(False)
     warp.copyLinkBtn.setEnabled(True)
-    window.stackedWidget.setAnimationEnabled(False)
     window.switchTo(workflow)
     switch_language(qtbot, window, 'en_US')
     assert window.stackedWidget.currentWidget() is workflow
@@ -361,9 +363,13 @@ def test_persistent_pages_keep_models_workers_tabs_and_user_state(window, qtbot,
     title, detail = summarize_step(workflow._step_for_path(next(iter(items))))
     assert selected.text(0) == title
     assert selected.text(1) == (detail or '')
-    assert window.helpInterface is help_page and help_page.stackedWidget.currentWidget() is help_page.faqLabel
-    assert help_page.helpLabel.text() == localization.tr('帮助')
-    assert help_page.width() - help_page.websiteButton.geometry().right() - 1 == 36
+    assert window.helpInterface is help_page and help_page.docList.current() == 'Background'
+    assert help_page.currentPage().doc.language == 'en_US'
+    assert help_page.titleLabel.text() == localization.tr('帮助')
+    assert help_page.currentPage().meta.websiteButton.text() == localization.tr('在官网查看')
+    window.switchTo(help_page)
+    qtbot.waitUntil(lambda: help_page.toc.current() == 'window-state-changes'
+                    and help_page.currentPage().currentAnchor() == 'window-state-changes')
     assert window.warpInterface is warp and warp.warp_thread is worker
     assert warp.warplink == 'user-owned-url'
     assert not warp.updateBtn.isEnabled() and warp.copyLinkBtn.isEnabled()
@@ -665,7 +671,7 @@ def test_generated_workflow_status_retranslates_snapshot_and_preserves_custom_na
 
 
 @pytest.mark.parametrize('page_name,label_name', [
-    ('toolsInterface', 'toolsLabel'), ('helpInterface', 'helpLabel'),
+    ('toolsInterface', 'toolsLabel'), ('helpInterface', 'titleLabel'),
     ('warpInterface', 'titleLabel'), ('workflowInterface', 'titleLabel'),
 ])
 def test_deferred_language_refresh_resizes_visible_page_title(window, qtbot, page_name, label_name):
@@ -698,5 +704,9 @@ def test_deferred_language_refresh_resizes_visible_page_title(window, qtbot, pag
         qtbot.wait(20)
         assert window.stackedWidget.currentWidget() is page
         assert label.isVisible()
-        assert label.width() >= label.sizeHint().width()
-        assert label.height() >= label.sizeHint().height()
+        if page is window.helpInterface:
+            assert label.text() == localization.tr('帮助')
+            assert page.currentPage().doc.language == language
+        else:
+            assert label.width() >= label.sizeHint().width()
+            assert label.height() >= label.sizeHint().height()

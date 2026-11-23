@@ -15,7 +15,6 @@ from app.tools.game_starter import GameStartStatus, GameLaunchThread
 from .overview_interface import OverviewInterface
 from .overview_model import OverviewModel
 from .help_interface import HelpInterface
-# from .changelog_interface import ChangelogInterface
 from .warp_interface import WarpInterface
 from .tools_interface import ToolsInterface
 from .workflow_interface import WorkflowInterface
@@ -557,7 +556,6 @@ class MainWindow(FluentWindow):
     def initInterface(self):
         self.homeInterface = OverviewInterface(self)
         self.helpInterface = HelpInterface(self)
-        # self.changelogInterface = ChangelogInterface(self)
         self.warpInterface = WarpInterface(self)
         self.toolsInterface = ToolsInterface(self)
         self.workflowInterface = WorkflowInterface(self)
@@ -966,11 +964,13 @@ class MainWindow(FluentWindow):
         old.deleteLater()
 
     def _retranslate_persistent_interfaces(self):
-        for interface in (self.homeInterface, self.helpInterface, self.warpInterface,
+        for interface in (self.homeInterface, self.warpInterface,
                           self.toolsInterface, self.workflowInterface, self.logInterface):
             position = interface.verticalScrollBar().value()
             interface.retranslateUi()
             interface.verticalScrollBar().setValue(position)
+        # 帮助页按小节保存和恢复阅读位置：换语言后文档长度不同，不能沿用像素位置。
+        self.helpInterface.retranslateUi()
         labels = {
             'homeInterface': tr('总览'), 'taskInterface': tr('任务'), 'helpInterface': tr('帮助'),
             'warpInterface': tr('抽卡记录'), 'toolsInterface': tr('工具箱'),

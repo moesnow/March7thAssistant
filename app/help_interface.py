@@ -1,372 +1,322 @@
-import os
-import re
-import sys
+"""帮助：原生文档阅读器。
 
-import markdown
-from PySide6.QtCore import QEvent, Qt, QUrl
+左侧是文档列表、本页目录和「没找到答案？」卡片，右侧是排好版的正文。文档由 module.docs 解析成块，
+这里只负责排版、跳转、搜索和阅读位置；切换主题只重建样式，不重新解析文档。
+"""
+from PySide6.QtCore import QTimer, QUrl, Qt
 from PySide6.QtGui import QDesktopServices
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QStackedWidget, QScroller, QScrollerProperties, QSizePolicy
-from qfluentwidgets import qconfig, ScrollArea, Pivot, TextBrowser, setCustomStyleSheet, PushButton, FluentIcon
-from .common.style_sheet import StyleSheet
-from .common.accent import accent_html
+from PySide6.QtWidgets import QHBoxLayout, QStackedWidget, QVBoxLayout, QWidget
+from qfluentwidgets import CaptionLabel, ScrollArea, SearchLineEdit, TitleLabel, qconfig
+
+from app.content.help_state import ChangelogBadge, open_link
+from app.help.page import DocPage
+from app.help.search import HelpSearchPage
+from app.help.side import DocList, SidePanel, SupportCard, TocView
+from app.pages.common import secondary
+from module.docs.catalog import DOCUMENTS, SIDEBAR, source_for
+from module.docs.model import Link, SettingPath
+from module.docs.reader import load_document, resolve_anchor
+from module.docs.search import HelpResults, search_help
 from module.localization import tr
+from module.logger import log
+
+DEFAULT_DOCUMENT = "Tutorial"
+HISTORY_LIMIT = 20
 
 
-# 各标签对应的文档：“在官网查看”按钮打开当前标签的同一份文档（按界面语言）
-DOC_OF_TAB = {
-    'tutorialLabel': 'Tutorial',
-    'workflowLabel': 'Workflow',
-    'faqLabel': 'FAQ',
-    'backgroundLabel': 'Background',
-    'tasksLabel': 'TasksTable',
-    'changelogLabel': 'Changelog',
-}
-
-
-class HelpInterface(ScrollArea):
+class HelpInterface(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.scrollWidget = QWidget()
-        self.vBoxLayout = QVBoxLayout(self.scrollWidget)
+        self.setObjectName("helpInterface")
+        self.window_ = parent
+        self.pages = {}
+        self.current = None
+        self._history = []
+        self.badge = ChangelogBadge(self)
 
-        self.pivot = Pivot(self)
-        self.stackedWidget = QStackedWidget(self)
+        self.sidePanel = SidePanel(self)
+        self.sidePanel.setFixedWidth(228)
+        self.titleLabel = TitleLabel(tr("帮助"), self.sidePanel)
+        self.searchBox = SearchLineEdit(self.sidePanel)
+        self.searchBox.setPlaceholderText(tr("搜索帮助文档"))
+        self.docList = DocList(SIDEBAR, self.sidePanel)
+        self.tocLabel = secondary(CaptionLabel(tr("本页目录"), self.sidePanel))
+        self.toc = TocView()
+        self.tocScroll = ScrollArea(self.sidePanel)
+        self.tocScroll.setWidget(self.toc)
+        self.tocScroll.setWidgetResizable(True)
+        self.tocScroll.enableTransparentBackground()
+        self.tocScroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.tocScroll.setMinimumHeight(52)
+        self.toc.setStyleSheet("background: transparent")
+        self.supportCard = SupportCard(self.sidePanel)
+        side = QVBoxLayout(self.sidePanel)
+        side.setContentsMargins(16, 14, 10, 12)
+        side.setSpacing(0)
+        side.addWidget(self.titleLabel)
+        side.addSpacing(10)
+        side.addWidget(self.searchBox)
+        side.addSpacing(10)
+        side.addWidget(self.docList)
+        side.addSpacing(14)
+        side.addWidget(self.tocLabel)
+        side.addSpacing(4)
+        side.addWidget(self.tocScroll, 1)
+        side.addSpacing(10)
+        side.addWidget(self.supportCard)
 
-        self.helpLabel = QLabel(tr("帮助"), self)
-        self.websiteButton = PushButton(FluentIcon.GLOBE, tr("在官网查看"), self)
-        self.tutorialLabel = TextBrowser(parent)
-        self.workflowLabel = TextBrowser(parent)
-        self.faqLabel = TextBrowser(parent)
-        self.backgroundLabel = TextBrowser(parent)
-        self.tasksLabel = TextBrowser(parent)
-        self.changelogLabel = TextBrowser(parent)
-        self._pending_accent = set()
+        self.stack = QStackedWidget(self)
+        self.searchPage = HelpSearchPage(self)
+        self.stack.addWidget(self.searchPage)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(self.sidePanel)
+        layout.addWidget(self.stack, 1)
 
-        self.__initWidget()
-        self.__initCard()
-        self.__initLayout()
-        for attr in DOC_OF_TAB:
-            widget = getattr(self, attr)
-            widget.setOpenLinks(False)
-            widget.anchorClicked.connect(self.open_url)
-            widget.installEventFilter(self)
-        qconfig.themeChanged.connect(self.__themeChanged)
-        qconfig.themeColorChanged.connect(self._onAccentChanged)
+        self._searchTimer = QTimer(self)
+        self._searchTimer.setSingleShot(True)
+        self._searchTimer.setInterval(180)
+        self._searchTimer.timeout.connect(self._search)
+        self.searchBox.textChanged.connect(self._scheduleSearch)
+        self.searchBox.searchSignal.connect(self._searchNow)
+        self.searchBox.returnPressed.connect(self._openFirstHit)
+        self.docList.currentChanged.connect(self._listSelected)
+        self.toc.entryClicked.connect(self._tocClicked)
+        self.toc.currentMoved.connect(self._ensureTocVisible)
+        self.supportCard.faqClicked.connect(lambda: self.showDocument("FAQ", remember=True))
+        self.supportCard.qqClicked.connect(self._openQQ)
+        self.supportCard.logsClicked.connect(self._openLogs)
+        self.searchPage.hitClicked.connect(self.openHit)
+        self.searchPage.suggestionClicked.connect(self.searchBox.setText)
+        self.badge.changed.connect(self._refreshBadge)
+        qconfig.themeChanged.connect(self._restyle)
+        qconfig.themeColorChanged.connect(self._restyle)
+        self._refreshBadge()
 
-    def __initWidget(self):
-        self.setWidget(self.scrollWidget)
-        self.setWidgetResizable(True)
-        self.setViewportMargins(0, 140, 0, 5)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+    # 打开文档 -----------------------------------------------------------
 
-        self.setObjectName('helpInterface')
-        self.scrollWidget.setObjectName('scrollWidget')
-        self.helpLabel.setObjectName('helpLabel')
-        StyleSheet.HELP_INTERFACE.apply(self)
-        self.websiteButton.adjustSize()
-        self.websiteButton.clicked.connect(self.openWebsite)
+    def showEvent(self, event):
+        super().showEvent(event)
+        if self.current is None:
+            # 跳转链接会紧接着打开别的文档，稍后再决定是否打开默认的使用教程。
+            QTimer.singleShot(0, self, self._showDefault)
 
-        QScroller.grabGesture(self.viewport(), QScroller.ScrollerGestureType.LeftMouseButtonGesture)
-        scroller = QScroller.scroller(self.viewport())
-        scroller_props = scroller.scrollerProperties()
-        scroller_props.setScrollMetric(QScrollerProperties.ScrollMetric.OvershootDragDistanceFactor, 0.05)
-        scroller_props.setScrollMetric(QScrollerProperties.ScrollMetric.OvershootScrollDistanceFactor, 0.05)
-        scroller_props.setScrollMetric(QScrollerProperties.ScrollMetric.DecelerationFactor, 0.5)
-        scroller.setScrollerProperties(scroller_props)
-
-    def __initCard(self):
-        tutorial_style = """
-<style>
-a {
-    color: #f18cb9;
-    font-weight: bold;
-}
-
-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-th, td {
-  border: 1px solid black;
-  padding: 1px 30px 1px 30px;
-  text-align: left;
-  font-size: 15px;
-}
-</style>
-"""
-        from module.config import cfg
-        tutorial_file = self._get_localized_doc_path("Tutorial")
-        try:
-            with open(tutorial_file, 'r', encoding='utf-8') as file:
-                self.content = self._site_links(file.read())
-                self.content = '\n'.join(self.content.split('\n')[1:])
-        except FileNotFoundError:
-            sys.exit(1)
-        self.tutorial_content = tutorial_style + markdown.markdown(self.content, extensions=['tables']).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
-
-        workflow_file = self._get_localized_doc_path("Workflow")
-        try:
-            with open(workflow_file, 'r', encoding='utf-8') as file:
-                self.content = file.read()
-                self.content = '\n'.join(self.content.split('\n')[1:])
-        except FileNotFoundError:
-            sys.exit(1)
-        self.workflow_content = tutorial_style + markdown.markdown(self.content, extensions=['tables']).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
-
-        faq_style = """
-<style>
-a {
-    color: #f18cb9;
-    font-weight: bold;
-}
-</style>
-"""
-        faq_file = self._get_localized_doc_path("FAQ")
-        try:
-            with open(faq_file, 'r', encoding='utf-8') as file:
-                self.content = file.read()
-                self.content = '\n'.join(self.content.split('\n')[2:])
-        except FileNotFoundError:
-            sys.exit(1)
-        self.faq_content = faq_style + markdown.markdown(self.content).replace('<h3>', '<br><h3>').replace('</h3>', '</h3><hr>').replace('<br>', '', 1) + '<br>'
-
-        background_file = self._get_localized_doc_path("Background")
-        try:
-            with open(background_file, 'r', encoding='utf-8') as file:
-                self.content = self._site_links(file.read())
-                self.content = '\n'.join(self.content.split('\n')[1:])
-        except FileNotFoundError:
-            sys.exit(1)
-        self.background_content = tutorial_style + markdown.markdown(self.content, extensions=['tables', 'fenced_code']).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
-
-        tasks_style = """
-<style>
-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-th, td {
-  border: 1px solid black;
-  padding: 1px 30px 1px 30px;
-  text-align: left;
-  font-size: 15px;
-}
-</style>
-"""
-        # Daily training tasks table - 多语言文档（assets/docs/TasksTable*.md，缺失时回退中文）
-        tasks_file = self._get_localized_doc_path("TasksTable")
-        try:
-            with open(tasks_file, 'r', encoding='utf-8') as file:
-                self.content = file.read()
-                self.content = '\n'.join(self.content.split('\n')[1:])
-        except FileNotFoundError:
-            sys.exit(1)
-        self.tasks_content = tasks_style + markdown.markdown(self.content, extensions=['tables'])
-
-        changelog_style = """
-<style>
-a {
-    color: #f18cb9;
-    font-weight: bold;
-}
-</style>
-"""
-        changelog_file = self._get_localized_doc_path("Changelog")
-        try:
-            with open(changelog_file, 'r', encoding='utf-8') as file:
-                self.content = file.read()
-                self.content = '\n'.join(self.content.split('\n')[1:])
-        except FileNotFoundError:
-            sys.exit(1)
-        self.changelog_content = changelog_style + markdown.markdown(self.content).replace('<h2>', '<br><h2>').replace('</h2>', '</h2><hr>').replace('<br>', '', 1) + '<br>'
-        self.__themeChanged()
-
-    def retranslateUi(self):
-        StyleSheet.HELP_INTERFACE.apply(self)
-        self.helpLabel.setText(tr('帮助'))
-        self.helpLabel.adjustSize()
-        self.websiteButton.setText(tr('在官网查看'))
-        self.websiteButton.adjustSize()
-        self.websiteButton.move(self.width() - self.websiteButton.width() - 36, 36)
-        labels = [tr('使用教程'), tr('流程编排'), tr('常见问题'),
-                  tr('后台运行'), tr('每日实训'), tr('更新日志')]
-        positions = {}
-        for attr, text in zip(DOC_OF_TAB, labels):
-            self.pivot.items[attr].setText(text)
-            positions[attr] = getattr(self, attr).verticalScrollBar().value()
-        self.pivot.adjustSize()
-        # 重新读取本地文档，但不重建标签页或重复连接信号。
-        self.__initCard()
-        for attr, position in positions.items():
-            getattr(self, attr).verticalScrollBar().setValue(position)
-
-    def __initLayout(self):
-        self.helpLabel.move(36, 30)
-        self.pivot.move(40, 80)
-
-        self.stackedWidget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.vBoxLayout.addWidget(self.stackedWidget, 1)
-        self.vBoxLayout.setContentsMargins(36, 0, 36, 0)
-
-        # self.vBoxLayout.addWidget(self.tutorialLabel, 0, Qt.AlignTop)
-        self.addSubInterface(self.tutorialLabel, 'tutorialLabel', tr('使用教程'))
-        self.addSubInterface(self.workflowLabel, 'workflowLabel', tr('流程编排'))
-        self.addSubInterface(self.faqLabel, 'faqLabel', tr('常见问题'))
-        self.addSubInterface(self.backgroundLabel, 'backgroundLabel', tr('后台运行'))
-        self.addSubInterface(self.tasksLabel, 'tasksLabel', tr('每日实训'))
-        self.addSubInterface(self.changelogLabel, 'changelogLabel', tr('更新日志'))
-
-        self.stackedWidget.currentChanged.connect(self.onCurrentIndexChanged)
-        self.pivot.setCurrentItem(self.stackedWidget.currentWidget().objectName())
-
-    def addSubInterface(self, widget: TextBrowser, objectName, text):
-        widget.setObjectName(objectName)
-        widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        widget.document().setDocumentMargin(10)
-
-        custom_scrollbar_qss = """
-            QTextBrowser {
-                background: transparent;
-                border: none;
-                selection-background-color: --ThemeColorPrimary;
-            }
-            QTextBrowser:hover {
-                background: transparent;
-                border: none;
-                selection-background-color: --ThemeColorPrimary;
-            }
-            QTextBrowser:focus {
-                background: transparent;
-                border: none;
-                selection-background-color: --ThemeColorPrimary;
-            }
-            
-            QScrollBar:vertical {
-                background: transparent;
-                width: 12px;
-                margin: 0px;
-            }
-            
-            QScrollBar::handle:vertical {
-                background: rgba(128, 128, 128, 150);
-                border-radius: 5px;
-                border-width: 1px;
-                width: 10px;
-                min-height: 30px;
-                margin: 2px 1px 2px 1px;
-            }
-            
-            QScrollBar::handle:vertical:hover {
-                background: rgba(128, 128, 128, 200);
-                border-radius: 5px;
-            }
-            
-            QScrollBar::add-line:vertical,
-            QScrollBar::sub-line:vertical {
-                height: 0px;
-                background: transparent;
-            }
-            
-            QScrollBar::add-page:vertical,
-            QScrollBar::sub-page:vertical {
-                background: transparent;
-            }
-        """
-        setCustomStyleSheet(widget, custom_scrollbar_qss, custom_scrollbar_qss)
-
-        self.stackedWidget.addWidget(widget)
-        self.pivot.addItem(
-            routeKey=objectName,
-            text=text,
-            onClick=lambda: self.stackedWidget.setCurrentWidget(widget)
-        )
-
-    def onCurrentIndexChanged(self, index):
-        widget = self.stackedWidget.widget(index)
-        self.pivot.setCurrentItem(widget.objectName())
-
-        self.verticalScrollBar().setValue(0)
-
-    def showDocument(self, attr, anchor):
-        browser = getattr(self, attr)
-        self.stackedWidget.setCurrentWidget(browser)
-        if not anchor:
-            browser.verticalScrollBar().setValue(0)
-            return
-
-        from module.search.documents import localized_anchor, slug
-        anchor = localized_anchor(DOC_OF_TAB[attr], anchor).casefold()
-        counts = {}
-        document = browser.document()
-        block = document.begin()
-        while block.isValid():
-            if block.blockFormat().headingLevel():
-                title = " ".join(block.text().split())
-                base = slug(title)
-                count = counts.get(base, 0) + 1
-                counts[base] = count
-                candidate = base if count == 1 else f"{base}~{count}"
-                short = slug(re.sub(r'\s*[（(][^）)]*[）)]$', '', title))
-                if anchor == candidate or count == 1 and anchor == short:
-                    top = document.documentLayout().blockBoundingRect(block).top()
-                    browser.verticalScrollBar().setValue(round(top))
-                    return True
-            block = block.next()
-        browser.scrollToAnchor(anchor)
-        return False
-
-    def open_url(self, url):
-        url = QUrl(url)
-        if url.scheme() in ('setting', 'category', 'task', 'doc', 'tool', 'page', 'run'):
-            from app.navigation import navigate
-            navigate(self.window(), url.toString())
-        else:
-            QDesktopServices.openUrl(url)
-
-    def openWebsite(self):
-        doc = os.path.splitext(os.path.basename(
-            self._get_localized_doc_path(DOC_OF_TAB[self.stackedWidget.currentWidget().objectName()])))[0]
-        self.open_url(f'https://m7a.top/docs/#/assets/docs/{doc}')
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        # 按钮与标题同一行、靠右对齐（右边距与左侧 36px 对称）
-        self.websiteButton.move(self.width() - self.websiteButton.width() - 36, 36)
+    def _showDefault(self):
+        if self.current is None:
+            self.showDocument(DEFAULT_DOCUMENT, flash=False)
 
     @staticmethod
-    def _site_links(text: str) -> str:
-        """文档里的站内链接（/assets/docs/X.md）换成官网文档地址，界面中才能直接打开。"""
-        return re.sub(r'\]\(/assets/docs/(\w+)\.md\)', r'](https://m7a.top/docs/#/assets/docs/\1)', text)
+    def _canonical(doc_id):
+        text = str(doc_id or "").strip()
+        return next((name for name in DOCUMENTS if name.casefold() == text.casefold()), None)
 
-    def _get_localized_doc_path(self, base_name: str) -> str:
-        from module.localization.languages import localized_doc_path
-        return localized_doc_path(base_name)
+    def _page(self, doc_id):
+        page = self.pages.get(doc_id)
+        if page is None:
+            try:
+                page = DocPage(self, load_document(doc_id))
+            except Exception as exc:
+                log.warning(f"帮助文档无法打开：{doc_id}，{type(exc).__name__}: {exc}")
+                return None
+            page.anchorChanged.connect(self.toc.setCurrent)
+            self.pages[doc_id] = page
+            self.stack.addWidget(page)
+        elif page.dirty:
+            page.restyle()
+        return page
 
-    def __themeChanged(self):
-        for attr in DOC_OF_TAB:
-            self._renderDocument(attr)
+    def currentPage(self):
+        return self.pages.get(self.current)
 
-    def _renderDocument(self, attr):
-        widget = getattr(self, attr)
-        position = widget.verticalScrollBar().value()
-        content = getattr(self, attr.removesuffix('Label') + '_content')
-        if qconfig.theme.name == 'DARK':
-            content = content.replace('border: 1px solid black;', 'border: 1px solid white;')
-        widget.setText(accent_html(content))
-        widget.verticalScrollBar().setValue(position)
-        self._pending_accent.discard(attr)
+    def showDocument(self, doc_id, anchor="", *, flash=True, remember=False, keep_position=False):
+        doc_id = self._canonical(doc_id)
+        if doc_id is None:
+            return False
+        previous = self.currentPage()
+        if remember and previous is not None:
+            self._history.append((previous.doc.id, previous.doc.language, previous.captureState()))
+            del self._history[:-HISTORY_LIMIT]
+        page = self._page(doc_id)
+        if page is None:
+            return False
+        self._leaveSearch()
+        self.stack.setCurrentWidget(page)
+        self.current = doc_id
+        self.docList.setCurrent(doc_id)
+        self.toc.setEntries(page.tocEntries())
+        self.tocLabel.setVisible(bool(page.tocEntries()))
+        page.meta.backButton.setVisible(bool(self._history))
+        target = ""
+        if anchor:
+            try:
+                target = resolve_anchor(source_for(page.doc.id, page.doc.language), anchor)
+            except Exception as exc:
+                log.warning(f"帮助文档的位置无法识别：{doc_id}#{anchor}，{exc}")
+        if not (target and page.scrollToAnchor(target, flash=flash)) and not keep_position:
+            page.scrollToTop()
+        self.toc.setCurrent(page.currentAnchor())
+        if doc_id == "Changelog":
+            self.badge.mark_seen()
+        return True
 
-    def _onAccentChanged(self):
-        # Do not reparse all six hidden documents at the animation midpoint.
-        for attr in DOC_OF_TAB:
-            if getattr(self, attr).isVisible():
-                self._renderDocument(attr)
+    def _listSelected(self, doc_id):
+        self._history.clear()
+        if not self.showDocument(doc_id, keep_position=True):
+            self.docList.setCurrent(self.current)
+
+    def _tocClicked(self, anchor):
+        page = self.currentPage()
+        if page is not None and self.stack.currentWidget() is page:
+            page.scrollToAnchor(anchor, flash=False, smooth=True)
+            self.toc.setCurrent(anchor)
+
+    def _ensureTocVisible(self, y, height):
+        self.tocScroll.ensureVisible(0, y + height // 2, 0, height)
+
+    def goBack(self):
+        if not self._history:
+            return
+        doc_id, language, state = self._history.pop()
+        if self.showDocument(doc_id, flash=False, keep_position=True):
+            self.currentPage().restoreState(state, language)
+
+    # 链接 ---------------------------------------------------------------
+
+    def _window(self):
+        return self.window_ if self.window_ is not None else self.window()
+
+    def activate(self, target):
+        from app.navigation import navigate
+        from module.navigation import parse_link
+        try:
+            if isinstance(target, SettingPath):
+                navigate(self._window(), target.target)
+            elif isinstance(target, Link) and target.kind == "doc":
+                route = parse_link(target.target)
+                if route is not None:
+                    self.showDocument(route[1], route[2], remember=True)
+            elif isinstance(target, Link) and target.kind == "file":
+                QDesktopServices.openUrl(QUrl.fromLocalFile(target.target))
+            elif isinstance(target, Link):
+                open_link(self._window(), target)
+        except Exception as exc:
+            log.warning(f"帮助文档的链接无法打开：{target}，{exc}")
+
+    def _openQQ(self):
+        from module.docs.support import QQ_GROUP_URL
+        QDesktopServices.openUrl(QUrl(QQ_GROUP_URL))
+
+    def _openLogs(self):
+        try:
+            from module.docs.support import support_actions
+            folder = support_actions().log_folder
+        except Exception as exc:
+            log.warning(f"找不到日志文件夹：{exc}")
+            return
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
+
+    # 搜索 ---------------------------------------------------------------
+
+    def _scheduleSearch(self, *_):
+        self._searchTimer.start()
+
+    def _searchNow(self, *_):
+        self._searchTimer.stop()
+        self._search()
+
+    def _search(self):
+        query = self.searchBox.text().strip()
+        if not query:
+            self._leaveSearch()
+            return
+        try:
+            results = search_help(query, limit=30)
+        except Exception as exc:
+            log.warning(f"帮助搜索失败：{type(exc).__name__}: {exc}")
+            results = HelpResults((), ())
+        self.searchPage.setResults(query, results)
+        self.stack.setCurrentWidget(self.searchPage)
+        # 搜索结果跨文档，左侧不再显示某一篇的目录。
+        self.toc.setEntries(())
+        self.tocLabel.hide()
+
+    def _leaveSearch(self):
+        if self.stack.currentWidget() is self.searchPage:
+            page = self.currentPage()
+            if page is not None:
+                self.stack.setCurrentWidget(page)
+                self.toc.setEntries(page.tocEntries())
+                self.tocLabel.setVisible(bool(page.tocEntries()))
+                self.toc.setCurrent(page.currentAnchor())
+
+    def _openFirstHit(self):
+        self._searchNow()
+        rows = self.searchPage.rows
+        if self.stack.currentWidget() is self.searchPage and rows:
+            self.openHit(rows[0].hit)
+
+    def openHit(self, hit):
+        self.searchBox.blockSignals(True)
+        self.searchBox.clear()
+        self.searchBox.blockSignals(False)
+        self._searchTimer.stop()
+        self._history.clear()
+        self.showDocument(hit.section.doc_id, hit.section.anchor)
+
+    # 状态 ---------------------------------------------------------------
+
+    def _refreshBadge(self, *_):
+        self.docList.setBadge("Changelog", tr("新") if self.badge.is_new else "")
+
+    def _restyle(self, *_):
+        current = self.stack.currentWidget()
+        for page in self.pages.values():
+            if page is current:
+                page.restyle()
             else:
-                self._pending_accent.add(attr)
+                page.dirty = True
+        self.searchPage.restyle()
+        self.supportCard.restyle()
+        self.docList.update()
+        for item in self.docList.items.values():
+            item.update()
+        self.toc.update()
 
-    def eventFilter(self, watched, event):
-        if event.type() == QEvent.Type.Show and watched.objectName() in self._pending_accent:
-            self._renderDocument(watched.objectName())
-        return super().eventFilter(watched, event)
+    def captureViewState(self):
+        page = self.currentPage()
+        state = {"doc": self.current, "search": self.searchBox.text()}
+        if page is not None:
+            state.update(page.captureState(), language=page.doc.language)
+        return state
+
+    def restoreViewState(self, state):
+        if not state or not state.get("doc"):
+            return
+        if not self.showDocument(state["doc"], flash=False):
+            return
+        self.currentPage().restoreState(state, state.get("language"))
+        if state.get("search"):
+            self.searchBox.setText(state["search"])
+            self._searchNow()
+
+    def retranslateUi(self):
+        state = self.captureViewState()
+        self.titleLabel.setText(tr("帮助"))
+        self.searchBox.setPlaceholderText(tr("搜索帮助文档"))
+        self.tocLabel.setText(tr("本页目录"))
+        self.docList.retranslate()
+        self.supportCard.retranslate()
+        self._refreshBadge()
+        # 换语言后文档文件也换了：丢掉旧页面，按保存的位置重新打开。
+        for page in self.pages.values():
+            self.stack.removeWidget(page)
+            page.hide()
+            page.deleteLater()
+        self.pages.clear()
+        self.current = None
+        self._history.clear()
+        if state.get("doc"):
+            self.restoreViewState(state)
+        elif self.isVisible():
+            self._showDefault()

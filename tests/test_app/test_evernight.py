@@ -87,7 +87,8 @@ def test_greeting_background_crossfades_at_midpoint_below_text_and_buttons(windo
 def test_real_button_changes_all_branding_and_restores_without_starting_tasks(window, qtbot, monkeypatch):
     from app.log_interface import GameLogOverlay
     from app.sub_interfaces.accounts_interface import AccountsCard
-    from app.help_interface import DOC_OF_TAB
+    from app.common.design_tokens import DARK, LIGHT
+    from tests.test_app.test_help_interface import link_colors
     start_task = Mock()
     monkeypatch.setattr(window, 'startFullTask', start_task)
     setTheme(Theme.LIGHT)
@@ -149,9 +150,8 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
         midpoint.setattr(artwork, '_pixmap', Mock(side_effect=AssertionError('decoration decoded at midpoint')))
         midpoint.setattr(window.stackedWidget, 'setStyleSheet',
                          Mock(side_effect=AssertionError('unchanged parent stylesheet reset at midpoint')))
-        for attr in DOC_OF_TAB:
-            midpoint.setattr(getattr(window.helpInterface, attr), 'setText',
-                             Mock(side_effect=AssertionError('hidden help document parsed at midpoint')))
+        midpoint.setattr('app.help_interface.load_document',
+                         Mock(side_effect=AssertionError('hidden help document parsed at midpoint')))
         animation.timeline.setCurrentTime(animation.DURATION_MS // 2)
     assert window._evey_animation is animation and animation.isVisible()
     assert all(not art.isHidden() for art in (
@@ -170,12 +170,12 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
     assert window.titleBar.iconLabel.pixmap().toImage() == QIcon(
         application_icon_path(True)).pixmap(window.titleBar.iconLabel.size()).toImage()
     assert window.stackedWidget.currentWidget() is current_page
-    # Deferred HTML adopts the current accent before the page's first paint.
+    # The lazily opened manual uses the active palette on its first visit.
     window.switchTo(window.helpInterface)
     qtbot.wait(20)
     assert page.greeting.crossfade.isHidden()
-    assert themeColor().name() in window.helpInterface.tutorialLabel.toHtml()
-    assert MARCH7TH_PINK not in window.helpInterface.tutorialLabel.toHtml()
+    qtbot.waitUntil(lambda: window.helpInterface.current == 'Tutorial')
+    assert link_colors(window.helpInterface.currentPage()) == {DARK.evernight_accent}
     window.switchTo(current_page)
     qtbot.waitUntil(lambda: window._evey_animation is None, timeout=6500)
     assert window.windowTitle() == 'Evernight Assistant'
@@ -189,7 +189,7 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
     assert qconfig.get(qconfig.themeColor).name() == MARCH7TH_PINK
     window.switchTo(window.helpInterface)
     qtbot.wait(20)
-    assert MARCH7TH_PINK in window.helpInterface.tutorialLabel.toHtml()
+    assert link_colors(window.helpInterface.currentPage()) == {LIGHT.deep_pink}
     window.switchTo(current_page)
     assert all(label.palette().color(QPalette.ColorRole.WindowText).name() == '#f94e9b' for label in tips)
     assert overlay.panel.styleSheet() == original_overlay_style
