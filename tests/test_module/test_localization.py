@@ -15,6 +15,13 @@ from module.localization import (
 )
 
 
+@pytest.fixture(scope="module", autouse=True)
+def restore_language():
+    original = get_current_language()
+    yield
+    loc.load_language(original)
+
+
 def _build(tmp_path, lang, entries=None, plurals=None, contexts=None, nplurals=2):
     """构造并加载一个合成 gettext 目录（键值均为 ASCII 占位串）。"""
     po = polib.POFile()
