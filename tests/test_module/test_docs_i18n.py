@@ -85,7 +85,7 @@ class TestLocalizedDocPath:
             assert get_lang_meta(code)["docs_suffix"] == code
 
     def test_all_loaded_docs_localized_for_every_language(self):
-        """界面加载的 5 类文档，每种语言都要有独立版本（缺失会回退中文基准）。"""
+        """帮助侧栏列出的 6 篇文档，每种语言都要有独立版本（缺失会回退中文基准）。"""
         missing = []
         for base in LOCALIZED_DOC_BASES:
             for suffix in ALL_SUFFIXES:
@@ -94,17 +94,16 @@ class TestLocalizedDocPath:
                     missing.append(path)
         assert missing == [], f"缺少本地化文档: {missing}"
 
-    def test_note_line_after_title(self):
-        """译文文档遵循「首行标题 / 第 2 行空 / 第 3 行声明」的结构（界面按行号剥离）。"""
-        for base in LOCALIZED_DOC_BASES:
-            if base == "TasksTable":
-                continue  # 纯表格文档不带声明
-            for suffix in ALL_SUFFIXES:
-                lines = open(f"assets/docs/{base}_{suffix}.md", encoding="utf-8").read().split("\n")
-                assert lines[0].startswith("# "), f"{base}_{suffix} 首行应为 # 标题"
-                assert lines[1].strip() == "", f"{base}_{suffix} 第 2 行应为空行"
-                assert lines[2].startswith("> "), f"{base}_{suffix} 第 3 行应为声明"
-                assert lines[3].strip() == "", f"{base}_{suffix} 声明后应为空行"
+    def test_reader_recognizes_translation_note_after_blank_lines(self, tmp_path):
+        from module.docs.model import Callout
+        from module.docs.reader import load_file
+
+        manual = tmp_path / "Sample_en_US.md"
+        manual.write_text("# Help\n\n\n\n> This document was translated from Simplified Chinese.\n\n"
+                          "> Warning: Keep the backup.\n", encoding="utf-8")
+        doc = load_file(manual, language="en_US")
+        assert doc.title == "Help"
+        assert [block.kind for block in doc.blocks if isinstance(block, Callout)] == ["declaration", "warning"]
 
 
 class TestCheckDocs:
@@ -119,7 +118,7 @@ class TestCheckDocs:
         assert stale == [], f"这些 zh_TW 文档落后于简体基准，运行 python -m tools.i18n docs-tw: {stale}"
 
     def test_zh_tw_doc_structure(self):
-        """生成的 zh_TW 文档遵循固定行结构（界面按行号剥离）。"""
+        """校验繁体文档生成器写出的标题、空行及转换声明。"""
         from tools.i18n import ZH_TW_DOC_BASES, ZH_TW_DOC_NO_NOTE, render_zh_tw_doc
         for base in ZH_TW_DOC_BASES:
             lines = render_zh_tw_doc(base).split("\n")

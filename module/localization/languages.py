@@ -54,12 +54,12 @@ def available_languages() -> dict:
     return {meta["native"]: code for code, meta in LANGS.items()}
 
 
-def localized_doc_path(base_name: str) -> str:
+def localized_doc_path(base_name: str, language: str | None = None) -> str:
     """按当前语言解析文档路径：优先 {base}_{lang}.md（后缀取自注册表），不存在则回退 {base}.md。"""
     import os
     from module.localization import get_current_language
 
-    suffix = get_lang_meta(get_current_language())["docs_suffix"]
+    suffix = get_lang_meta(language or get_current_language())["docs_suffix"]
     if suffix:
         p = f"./assets/docs/{base_name}_{suffix}.md"
         if os.path.exists(p):

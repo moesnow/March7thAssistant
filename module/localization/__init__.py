@@ -217,7 +217,7 @@ def tn(text: str, n: float, **kwargs) -> str:
 _lang_catalogs_cache = {}
 
 
-def translations_of(text: str) -> dict:
+def translations_of(text: str, *, language: str | None = None) -> dict:
     """返回 text 在各语言目录中的译文 {lang: 译文}（未翻译的语言不含在内）。
 
     与当前界面语言无关，供跨语言比对使用（如旧配置里遗留译文的还原）。
@@ -227,8 +227,11 @@ def translations_of(text: str) -> dict:
     from .languages import LANGS
 
     result = {}
-    for lang in LANGS:
-        trans = _lang_catalogs_cache.get(lang)
+    for lang in (language,) if language else LANGS:
+        # A document in one language needs only its own catalogue.
+        trans = _translation if language == _current_lang and hasattr(_translation, "_catalog") else None
+        if trans is None:
+            trans = _lang_catalogs_cache.get(lang)
         if trans is None:
             trans = _load_translation(lang)
             _lang_catalogs_cache[lang] = trans

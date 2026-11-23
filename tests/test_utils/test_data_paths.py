@@ -93,6 +93,7 @@ OTHER_MEANINGS = {
     ('tasks/daily/fight.py', 'os.path.join(cfg.fight_path, "logs")'),  # External tool's own logs.
     ('tasks/weekly/universe.py', 'os.path.join(cfg.universe_path, "logs")'),
     ('utils/temporary_graphics.py', 'os.environ.get("LOCALAPPDATA", "settings")'),  # OS fallback.
+    ('module/docs/paths.py', '"Settings"'),  # English breadcrumb root printed in the manuals.
 }
 
 # Only the dictionary keys identify a desktop page. Values and file operations are checked normally.
