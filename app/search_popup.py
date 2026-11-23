@@ -276,7 +276,11 @@ class SearchPopup(QWidget):
     def _query(self):
         text = self.input.text().strip()
         try:
-            self.results = list(self.index.query(text, limit=40)) if text else []
+            if text:
+                self.results = list(self.index.query(text, limit=40))
+            else:
+                self.index.prepare()
+                self.results = []
         except Exception as exc:
             log.warning(f"全局搜索失败：{type(exc).__name__}: {exc}")
             self.results = []

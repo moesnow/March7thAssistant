@@ -19,6 +19,7 @@
    - `module/overview/legacy_cards.py::display_label()`：入参本身就是 msgid（常量/配置里存的中文原文），
      由它负责解析成当前语言；
    - `module/localization/trc()`：无 msgctxt 条目时回退 `tr()`。
+   - `module/search/terms.py::_label()`：输入是搜索词表和建议词的原文，需要按查询语言翻译。
 """
 import ast
 import re
@@ -43,6 +44,7 @@ UI_INFO_KW = {"text", "title", "content", "caption", "label", "placeholder",
 WRAPPER_ALLOWLIST = {
     ("module/overview/legacy_cards.py", "display_label"),      # 入参是 msgid，本就是由它解析
     ("module/localization/__init__.py", "trc"),              # 无 msgctxt 条目时回退 tr()
+    ("module/search/terms.py", "_label"),                    # 只接收内置同义词和建议词的 msgid
 }
 
 

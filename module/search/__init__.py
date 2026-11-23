@@ -1,29 +1,22 @@
 """Cached, language-aware desktop search. Index text is independent of the user's secrets."""
 from dataclasses import dataclass, replace
 import re
-import unicodedata
 from urllib.parse import quote
 
 from module.channel_catalog import CHANNELS
 from module.content_visibility import Visibility
 from module.connection_values import configured_backend
 from module.content_pages import GROUP_BY_ID, PAGES, PAGE_BY_ID
+from module.docs.catalog import SIDEBAR
 from module.localization import get_current_language, tr
 from module.localization.languages import available_languages
-from module.navigation import DOCUMENTS, TOP_PAGES
+from module.navigation import TOP_PAGES
 from module.settings_registry import SETTINGS, Scope
 from module.task_catalog import TASKS
 from module.tool_catalog import TOOLS
 from .documents import heading_pairs
 from .setting_text import CHOICES, DESCRIPTIONS, PAGE_DESCRIPTIONS
-
-SYNONYMS = (
-    ("后台", "挂机", "不占鼠标", "最小化", "桌面分身"), ("开拓力", "体力", "清体力"),
-    ("刷本", "清体力", "副本"), ("抽卡", "跃迁", "抽卡记录"), ("关机", "完成后操作", "任务完成后"),
-    ("通知", "推送", "消息推送"), ("模拟器", "安卓设备", "ADB"), ("云游戏", "云·星穹铁道"),
-    ("开机自启", "在用户登录时启动", "自启动"), ("代理", "下载代理", "proxy"),
-    ("分辨率", "画面", "HDR"), ("截图", "截屏", "游戏截图"), ("按键", "热键", "快捷键"),
-)
+from .terms import SYNONYMS, normalize, suggestions, synonyms
 
 
 @dataclass(frozen=True)
@@ -46,10 +39,7 @@ class _Entry:
     keywords: frozenset
     detail: str
     setting: object = None
-
-
-def normalize(text):
-    return " ".join(unicodedata.normalize("NFKC", text).casefold().split())
+    body: str = ""
 
 
 def _entry(kind, title, path, description, link, icon, keywords=(), *, item=None, original=None, source_description=""):
@@ -64,7 +54,9 @@ def _entry(kind, title, path, description, link, icon, keywords=(), *, item=None
     return _Entry(result, terms, titles, words, detail, item)
 
 
-def _entries():
+def _entries(files):
+    from module.docs.search import sections
+
     fields = {f.key: (c, f) for c in CHANNELS for f in c.fields}
     providers = {c.enable_key: c for c in CHANNELS}
     for item in SETTINGS:
@@ -107,21 +99,27 @@ def _entries():
         yield _entry("page", tr(name), (), tr(PAGE_DESCRIPTIONS[key]), "page:" + key, icon, original=name)
     for tool in TOOLS:
         yield _entry("tool", tr(tool.name), ("工具箱",), tr(tool.description), "tool:" + tool.id, tool.icon, original=tool.name, source_description=tool.description)
-    for name, (_, label) in DOCUMENTS.items():
+    for manual, (source, stamp) in zip(SIDEBAR, files):
+        name, label = manual.id, manual.name
+        indexed = {s.anchor: s for s in sections(source, stamp)}
+        root = _entry("doc", tr(label), ("帮助",), tr(PAGE_DESCRIPTIONS[name]), "doc:" + name,
+                      manual.icon, original=label)
+        yield replace(root, body=normalize(indexed[""].body))
         parents = []
-        yield _entry("doc", tr(label), ("帮助",), tr(PAGE_DESCRIPTIONS[name]), "doc:" + name, "FIF.BOOK_SHELF", original=label)
         for heading, original in heading_pairs(name):
-            while parents and parents[-1][0] >= heading.level:
+            while parents and parents[-1].level >= heading.level:
                 parents.pop()
-            # Heading strings already belong to the localized Markdown file.
-            entry = _entry("doc", heading.title, ("帮助", label), heading.excerpt or tr(PAGE_DESCRIPTIONS[name]), f"doc:{name}#{quote(heading.anchor)}",
-                           "FIF.BOOK_SHELF", original=original)
-            trail = " › ".join(parent for _, parent in parents)
-            if trail:
-                loc = entry.result.location + " › " + trail
-                entry = replace(entry, result=replace(entry.result, location=loc), detail=entry.detail + " " + normalize(trail))
-            yield entry
-            parents.append((heading.level, heading.title))
+            section = indexed.get(heading.anchor)
+            if name != "Changelog" or section:
+                title = section.title if section else heading.title
+                entry = _entry("doc", title, ("帮助", label), heading.excerpt or tr(PAGE_DESCRIPTIONS[name]),
+                               f"doc:{name}#{quote(heading.anchor)}", manual.icon, original=original)
+                trail = " › ".join(p.title for p in parents)
+                if trail:
+                    entry = replace(entry, result=replace(entry.result, location=entry.result.location + " › " + trail),
+                                    detail=entry.detail + " " + normalize(trail))
+                yield replace(entry, body=normalize(section.body) if section else "")
+            parents.append(heading)
 
 
 def current_value(item, config):
@@ -159,6 +157,7 @@ class SearchIndex:
     def __init__(self, config):
         self.config = config
         self._language = None
+        self._files = ()
         self._entries = ()
         self._synonyms = {}
         self._unsubscribe = config.subscribe(self._changed) if hasattr(config, "subscribe") else None
@@ -175,19 +174,14 @@ class SearchIndex:
     def invalidate(self):
         self._language = None
 
-    def _build(self):
-        self._entries = tuple(_entries())
-        synonyms = {}
-        for words in SYNONYMS:
-            variants = {normalize(v) for w in words for v in (w, tr(w))}
-            for w in variants:
-                synonyms.setdefault(w, set()).update(variants - {w})
-        self._synonyms = synonyms
-        self._language = get_current_language()
-
     def prepare(self):
-        if self._language != get_current_language():
-            self._build()
+        from module.docs.search import signatures
+        language = get_current_language()
+        files = signatures(language)
+        if self._language != language or self._files != files:
+            self._entries = tuple(_entries(files))
+            self._synonyms = synonyms(language)
+            self._language, self._files = language, files
 
     def query(self, text, *, limit=24, kinds=None, settings_only=False):
         words = normalize(text).split()
@@ -223,6 +217,10 @@ class SearchIndex:
                     score += 35
                 elif any(alias in entry.detail for alias in aliases):
                     score += 18
+                elif word in entry.body:
+                    score += 12
+                elif entry.body and any(alias in entry.body for alias in aliases):
+                    score += 6
                 else:
                     break
             else:
@@ -245,6 +243,4 @@ class SearchIndex:
                 break
         return results
 
-    @staticmethod
-    def suggestions():
-        return tuple(tr(w) for w in ("后台", "清体力", "消息推送", "快捷键", "游戏截图"))
+    suggestions = staticmethod(suggestions)
