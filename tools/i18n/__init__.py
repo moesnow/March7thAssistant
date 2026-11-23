@@ -237,6 +237,16 @@ def collect_code_literals() -> tuple[set[str], set[str], int]:
 #   - 键为元组表示只取这些 dict 键对应的值，避免把图标路径、task_id 等一起登记；
 #   - 必须用 AST 读取、绝不 import —— 否则会把 PySide6 / qfluentwidgets 拖进工具链。
 TABLE_SOURCES = [
+    ("app/search_popup.py", (("GROUP_LABELS", None),)),
+    ("app/setting_interface.py", (("DESCRIPTIONS", None),)),
+    ("app/pages/run_mode.py", (("TAGS", None), ("DETAILS", None))),
+    ("app/pages/tasks.py", (("PROGRESS_LABELS", None), ("GROUPS", None))),
+    ("module/search/__init__.py", (("SYNONYMS", None),)),
+    ("app/content/settings_state.py", (("MANUAL", None),)),
+    ("module/notification/results.py", (("REASONS", None),)),
+    ("module/search/setting_text.py", (("DESCRIPTIONS", None), ("CHOICES", None), ("PAGE_DESCRIPTIONS", None))),
+    ("app/content/tasks/power.py", (("INSTANCE_TYPES", None),)),
+    ("app/content/tasks/echo.py", (("WEEKDAYS", None),)),
     ("module/overview/labels.py", (("TRIGGERS", None), ("RESULTS", None), ("POST_ACTIONS", None))),
     ("module/overview/shortcuts.py", (("TOOLS", None),)),
     ("module/overview/plan.py", (("STEP_NAMES", None),)),
@@ -317,6 +327,24 @@ def collect_table_literals() -> tuple[set[str], dict[str, str]]:
             for value in _collect_table_values(node.value, by_name[matched[0]]):
                 literals.add(value)
                 refs.setdefault(value, f"{rel}:{node.lineno}")
+    # Constructor arguments containing msgids in the desktop content catalogs.
+    constructors = {
+        "module/content_pages.py": {"Page": (1, 4), "Group": (1,)},
+        "module/channel_catalog.py": {"Channel": (1, 3), "Field": (1, 3)},
+        "module/task_catalog.py": {"Task": (1,)},
+        "module/tool_catalog.py": {"Tool": (1, 2)},
+        "module/settings_registry.py": {"_plan": (1,), "_global": (1,)},
+    }
+    for rel, specs in constructors.items():
+        for node in ast.walk(ast.parse((ROOT / rel).read_text(encoding="utf-8"))):
+            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
+                continue
+            for index in specs.get(node.func.id, ()):
+                if len(node.args) <= index:
+                    continue
+                for value in _collect_table_values(node.args[index]):
+                    literals.add(value)
+                    refs.setdefault(value, f"{rel}:{node.lineno}")
     return literals, refs
 
 
@@ -534,8 +562,8 @@ def check_docs(docs_dir: Path | None = None) -> list[str]:
 # zh_TW 文档生成（繁体由简体基准机械转换，不需要人工翻译）
 # ---------------------------------------------------------------------------
 
-# 界面会加载的文档；zh_TW 版本由简体基准经 OpenCC s2twp 生成（清单与 DOC_BASES 同源）
-ZH_TW_DOC_BASES = DOC_BASES
+# 同步桌面帮助和另有繁体版本的安卓教程。
+ZH_TW_DOC_BASES = (*DOC_BASES, "Android")
 
 # 译文文档第 3 行的声明（界面按行号剥离，位置固定：第 1 行标题 / 第 2 行空行 / 第 3 行声明 / 第 4 行空行）
 ZH_TW_DOC_NOTE = "> 本文件由簡體中文版經 OpenCC 簡繁轉換產生，用語以台灣習慣為準；內容如有差異，請以簡體中文版為準。"

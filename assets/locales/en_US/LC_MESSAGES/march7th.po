@@ -9622,3 +9622,1248 @@ msgstr "Action Type"
 #: app/overview/shortcut_dialog.py:78
 msgid "任务"
 msgstr "Task"
+
+#: module/channel_catalog.py:95
+msgid "Bark"
+msgstr "Bark"
+
+#: module/channel_catalog.py:121
+msgid "Discord"
+msgstr "Discord"
+
+#: module/search/setting_text.py:3
+msgid "GitHub API 认证 Token，选填"
+msgstr "Optional GitHub API token"
+
+#: module/channel_catalog.py:158
+msgid "Go-cqhttp"
+msgstr "Go-cqhttp"
+
+#: module/channel_catalog.py:130
+msgid "Gotify"
+msgstr "Gotify"
+
+#: module/channel_catalog.py:135
+msgid "KOOK"
+msgstr "KOOK"
+
+#: module/channel_catalog.py:145
+msgid "Matrix"
+msgstr "Matrix"
+
+#: module/channel_catalog.py:127
+msgid "MeoW"
+msgstr "MeoW"
+
+#: module/search/setting_text.py:3
+msgid "MirrorChyan CDK"
+msgstr "MirrorChyan CDK"
+
+#: module/channel_catalog.py:84
+msgid "OneBot"
+msgstr "OneBot"
+
+#: module/channel_catalog.py:154
+msgid "Pushdeer"
+msgstr "Pushdeer"
+
+#: module/channel_catalog.py:115
+msgid "Pushplus"
+msgstr "Pushplus"
+
+#: module/channel_catalog.py:140
+msgid "Qmsg"
+msgstr "Qmsg"
+
+#: module/channel_catalog.py:49
+msgid "SMTP"
+msgstr "SMTP"
+
+#: module/channel_catalog.py:70
+msgid "Telegram"
+msgstr "Telegram"
+
+#: module/channel_catalog.py:165
+msgid "Webhook"
+msgstr "Webhook"
+
+#: module/channel_catalog.py:37
+msgid "Windows"
+msgstr "Windows"
+
+#: module/search/setting_text.py:3
+msgid "adb 可执行文件"
+msgstr "ADB executable"
+
+#: module/search/setting_text.py:3
+msgid "上次完成3次「历战余响」的时间戳"
+msgstr "Time when all three Echo of War attempts were last completed"
+
+#: module/search/setting_text.py:3
+msgid "上次运行模拟宇宙的时间戳，用于记录和控制运行频率"
+msgstr "Last Simulated Universe run, used to determine when to run again"
+
+#: app/content/settings_state.py:62
+msgid "主题切换由主窗口管理"
+msgstr "The main window manages theme changes"
+
+#: module/search/setting_text.py:3
+msgid "云崩铁是否全屏运行"
+msgstr "Run the cloud game in full screen"
+
+#: module/content_pages.py:34
+msgid "任务结束后"
+msgstr "After tasks finish"
+
+#: module/notification/channels.py
+msgid "保存失败，请稍后重试"
+msgstr "Could not save. Try again later."
+
+#: module/content_pages.py:43
+msgid "全局热键"
+msgstr "Global hotkeys"
+
+#: module/search/__init__.py
+msgid "共 {count} 项"
+msgstr "Items: {count}"
+
+#: module/task_catalog.py:57
+msgid "分别配置混沌回忆、虚构叙事和末日幻影。"
+msgstr ""
+"Configure Memory of Chaos, Pure Fiction, and Apocalyptic Shadow "
+"individually."
+
+#: app/content/settings_state.py:62
+msgid "切换更新源会检查更新"
+msgstr "Changing the update source checks for updates"
+
+#: module/content_pages.py:67
+msgid "刷什么"
+msgstr "What to farm"
+
+#: module/content_pages.py:66
+msgid "加入完整运行"
+msgstr "Include in full run"
+
+#: module/search/setting_text.py:3
+msgid "单次触摸点按的毫秒数"
+msgstr "Duration of each tap in milliseconds"
+
+#: module/content_pages.py:95
+msgid "博弈策略"
+msgstr "Strategies"
+
+#: module/task_catalog.py:53
+msgid "参加货币战争并获取每周积分。"
+msgstr "Play Currency Wars to earn weekly points."
+
+#: app/content/notify_model.py
+msgid "发送失败"
+msgstr "Sending failed"
+
+#: module/notification/results.py:12
+msgid "发送失败，请检查渠道配置"
+msgstr "Sending failed. Check the channel settings."
+
+#: module/notification/results.py
+msgid "发送成功"
+msgstr "Sent successfully"
+
+#: module/content_pages.py:59
+msgid "启动与权限"
+msgstr "Startup and permissions"
+
+#: module/search/setting_text.py:3
+msgid "启动器类型及窗口标题，可选 米哈游启动器、HoYoPlay"
+msgstr ""
+"Launcher type and window title, either the miHoYo launcher or HoYoPlay"
+
+#: module/settings_registry.py:163
+msgid "启用「每月自动购买命运的足迹」"
+msgstr "Automatically buy Tracks of Destiny each month"
+
+#: module/settings_registry.py:157
+msgid "启用「每月自动购买星轨专票」"
+msgstr "Automatically buy Star Rail Special Passes each month"
+
+#: module/settings_registry.py:160
+msgid "启用「每月自动购买星轨通票」"
+msgstr "Automatically buy Star Rail Passes each month"
+
+#: module/notification/channels.py
+msgid "启用图片时请填写此项"
+msgstr "Required when images are enabled"
+
+#: module/search/setting_text.py:3
+msgid "周几开始执行「历战余响」，假设值为4，那么周1、2、3不执行「历战余响」，周4、5、6、7则执行"
+msgstr ""
+"Earliest weekday for Echo of War. For example, 4 allows Thursday through "
+"Sunday."
+
+#: module/settings_registry.py:125
+msgid "周几开始执行历战余响"
+msgstr "First weekday for Echo of War"
+
+#: module/search/setting_text.py:3
+msgid "在总览问候区显示 Q 版小人"
+msgstr "Show the chibi illustration in the overview greeting"
+
+#: app/content/backend.py
+msgid "在这台电脑上运行 PC 版游戏。"
+msgstr "Run the PC game on this computer."
+
+#: module/content_pages.py:85
+msgid "地图与队伍"
+msgstr "Maps and teams"
+
+#: module/task_catalog.py:60
+msgid "处理每月兑换、光锥叠加和遗器清理。"
+msgstr ""
+"Handle monthly exchanges, Light Cone superimposition, and relic cleanup."
+
+#: module/content_pages.py:54
+msgid "备份与恢复"
+msgstr "Backup and restore"
+
+#: module/content_pages.py:46
+msgid "外观"
+msgstr "Appearance"
+
+#: module/content_pages.py:45
+msgid "外观与窗口"
+msgstr "Appearance and window"
+
+#: module/content_pages.py:35
+msgid "完成后操作"
+msgstr "Completion action"
+
+#: module/task_catalog.py:47
+msgid "完成当天的每日实训。"
+msgstr "Complete today's Daily Training."
+
+#: app/content/settings_state.py:62
+msgid "定时计划由运行页管理"
+msgstr "Manage schedules on the Run page"
+
+#: module/content_pages.py:73
+msgid "实训项目"
+msgstr "Training activities"
+
+#: app/content/settings_state.py
+msgid "密钥由编辑表单管理"
+msgstr "Manage credentials in the edit form"
+
+#: module/tool_catalog.py:20
+msgid "导出角色的属性、光锥、星魂、技能和遗器。"
+msgstr "Export character stats, Light Cones, Eidolons, skills, and relics."
+
+#: module/notification/channels.py
+msgid "已填写 {count} 个字段"
+msgstr "Fields filled: {count}"
+
+#: module/content_pages.py:39
+msgid "已添加的渠道"
+msgstr "Added channels"
+
+#: module/search/__init__.py
+msgid "已设置"
+msgstr "Configured"
+
+#: module/content_pages.py:68
+msgid "开拓力不够时"
+msgstr "When Trailblaze Power is low"
+
+#: app/content/settings_state.py
+msgid "当前值由运行环境指定"
+msgstr "The runtime environment sets this value"
+
+#: module/search/setting_text.py:3
+msgid "当日成功通关差分宇宙的次数，任何方式运行并成功通关都会记录此值"
+msgstr "Today's successful Divergent Universe runs across all run modes"
+
+#: module/content_pages.py:42
+msgid "快捷键"
+msgstr "Hotkeys"
+
+#: module/content_pages.py:69
+msgid "战斗与高级"
+msgstr "Combat and advanced settings"
+
+#: module/search/setting_text.py:3
+msgid "战斗内角色详情键"
+msgstr "Key for character details in combat"
+
+#: module/search/setting_text.py:3
+msgid "战斗外交互键"
+msgstr "Interaction key outside combat"
+
+#: module/search/setting_text.py:3
+msgid "执行差分宇宙时的难度等级，取值范围 1-6，数值越大难度越高，其中难度 6 对应常规演算星阶模式"
+msgstr ""
+"Divergent Universe difficulty from 1 to 6. Level 6 selects the higher-"
+"difficulty mode of Ordinary Extrapolation."
+
+#: module/content_pages.py:91
+msgid "执行时间"
+msgstr "Run time"
+
+#: module/search/setting_text.py:3
+msgid "投资环境和投资策略的选择优先级"
+msgstr "Priority for investment environments and strategies"
+
+#: module/task_catalog.py
+msgid "按上次读取的 {power} 开拓力，{name}可挑战 {count} 次（每次 {waves} 轮）"
+msgstr ""
+"With the last reading of {power} Trailblaze Power, you can run {name} "
+"{count} times ({waves} waves each)"
+
+#: module/task_catalog.py:46
+msgid "按体力计划或所选副本消耗开拓力。"
+msgstr ""
+"Spend Trailblaze Power according to your plan or the selected instance."
+
+#: module/task_catalog.py:50
+msgid "按地图路线清理大世界敌人。"
+msgstr "Defeat overworld enemies along the chosen route."
+
+#: module/task_catalog.py:52
+msgid "按所选星期挑战历战余响。"
+msgstr "Challenge Echo of War from the selected weekday."
+
+#: module/content_pages.py:108
+msgid "按月和其他"
+msgstr "Monthly and other"
+
+#: module/content_pages.py:40
+msgid "推送内容"
+msgstr "Notification content"
+
+#: module/notification/results.py:12
+msgid "推送参数无效，请检查渠道配置"
+msgstr "Invalid notification parameters. Check the channel settings."
+
+#: module/notification/results.py:12
+msgid "推送服务拒绝了身份验证。请打开此渠道的编辑窗口，核对机器人密钥和收件人，再发送一条测试消息。"
+msgstr ""
+"The service rejected authentication. Edit this channel, verify the bot "
+"credentials and recipient, then send a test message."
+
+#: app/content/settings_state.py
+msgid "操作或进度没有可恢复的设置"
+msgstr "This action or progress indicator has no setting to reset"
+
+#: module/search/setting_text.py:3
+msgid "支援列表滚动查找次数"
+msgstr "Number of scrolls when searching for support characters"
+
+#: module/notification/results.py:12
+msgid "无法连接推送服务"
+msgstr "Cannot connect to the notification service"
+
+#: module/search/setting_text.py:3
+msgid "是否体力优先完成3次「历战余响」"
+msgstr "Spend Trailblaze Power on three Echo of War attempts first"
+
+#: module/search/setting_text.py:3
+msgid "是否使用支援角色"
+msgstr "Use a support character"
+
+#: module/search/setting_text.py:3
+msgid "是否使用镜像下载浏览器和驱动"
+msgstr "Download the browser and driver from a mirror"
+
+#: module/search/setting_text.py:3
+msgid "是否允许浏览器保存数据（登录状态/游戏本地数据）"
+msgstr "Allow the browser to save login and local game data"
+
+#: module/search/setting_text.py:3
+msgid "是否启用「差分宇宙」积分奖励"
+msgstr "Enable Divergent Universe point rewards"
+
+#: module/search/setting_text.py:3
+msgid "是否启用「货币战争」积分奖励"
+msgstr "Enable Currency Wars point rewards"
+
+#: module/search/setting_text.py:3
+msgid "是否启用日常任务"
+msgstr "Enable daily tasks"
+
+#: module/search/setting_text.py:3
+msgid "是否启用每月自动购买余烬兑换中的「命运的足迹」"
+msgstr "Buy Tracks of Destiny in the Embers Exchange each month"
+
+#: module/search/setting_text.py:3
+msgid "是否启用每月自动购买余烬兑换中的「星轨专票」"
+msgstr "Buy Star Rail Special Passes in the Embers Exchange each month"
+
+#: module/search/setting_text.py:3
+msgid "是否启用每月自动购买余烬兑换中的「星轨通票」"
+msgstr "Buy Star Rail Passes in the Embers Exchange each month"
+
+#: module/search/setting_text.py:3
+msgid "是否启用活动功能"
+msgstr "Enable event checks"
+
+#: module/search/setting_text.py:3
+msgid "是否启用清体力总开关"
+msgstr "Include Trailblaze Power farming in full runs"
+
+#: module/search/setting_text.py:3
+msgid "是否启用资产管理功能"
+msgstr "Enable asset management"
+
+#: module/search/setting_text.py:3
+msgid "是否启用锄大地功能"
+msgstr "Enable field farming"
+
+#: module/search/setting_text.py:3
+msgid "是否启用领取奖励功能"
+msgstr "Enable reward collection"
+
+#: module/search/setting_text.py:3
+msgid "是否在打副本时自动切换队伍"
+msgstr "Switch teams automatically in instances"
+
+#: module/search/setting_text.py:3
+msgid "是否在进入副本前进行传送至任意锚点"
+msgstr "Teleport to a Space Anchor before entering an instance"
+
+#: module/search/setting_text.py:3
+msgid "是否在锄大地时自动切换队伍"
+msgstr "Switch teams automatically during field farming"
+
+#: module/search/setting_text.py:3
+msgid "是否检查更新"
+msgstr "Check for updates"
+
+#: module/search/setting_text.py:3
+msgid "是否通过启动器更新游戏"
+msgstr "Update the game through the launcher"
+
+#: module/search/setting_text.py:3
+msgid "是否领取兑换码奖励"
+msgstr "Claim redemption code rewards"
+
+#: module/search/setting_text.py:3
+msgid "是否领取委托奖励"
+msgstr "Claim assignment rewards"
+
+#: module/search/setting_text.py:3
+msgid "是否领取成就奖励"
+msgstr "Claim achievement rewards"
+
+#: module/search/setting_text.py:3
+msgid "是否领取支援奖励"
+msgstr "Claim support rewards"
+
+#: module/search/setting_text.py:3
+msgid "是否领取无名勋礼奖励"
+msgstr "Claim Nameless Honor rewards"
+
+#: module/search/setting_text.py:3
+msgid "是否领取每日实训奖励"
+msgstr "Claim Daily Training rewards"
+
+#: module/search/setting_text.py:3
+msgid "是否领取短信奖励"
+msgstr "Claim message rewards"
+
+#: module/search/setting_text.py:3
+msgid "是否领取邮件奖励"
+msgstr "Claim mail rewards"
+
+#: module/search/__init__.py
+msgid "暂时无法读取"
+msgstr "Currently unavailable"
+
+#: module/content_pages.py:49
+msgid "更新"
+msgstr "Updates"
+
+#: module/search/setting_text.py:3
+msgid "更新下载代理，留空则使用系统代理"
+msgstr "Download proxy for updates. Leave blank to use the system proxy."
+
+#: module/notification/results.py:12
+msgid "服务未接受消息，请检查渠道配置"
+msgstr "The service did not accept the message. Check the channel settings."
+
+#: module/notification/results.py
+msgid "服务返回 HTTP {status}"
+msgstr "The service returned HTTP {status}"
+
+#: module/notification/channels.py
+msgid "未知字段"
+msgstr "Unknown field"
+
+#: module/search/__init__.py
+msgid "未设置"
+msgstr "Not configured"
+
+#: module/search/setting_text.py:3
+msgid "末日幻影关卡范围，设置允许尝试的关卡等级范围"
+msgstr "Apocalyptic Shadow stage range to attempt"
+
+#: module/search/setting_text.py:150
+msgid "本地客户端"
+msgstr "Local client"
+
+#: module/task_catalog.py:49
+msgid "检查并领取已选的日常奖励。"
+msgstr "Check and collect the selected daily rewards."
+
+#: module/task_catalog.py:48
+msgid "检查签到、双倍掉落和活动热点。"
+msgstr "Check sign-in rewards, double drops, and event highlights."
+
+#: module/search/setting_text.py:3
+msgid "模拟宇宙使用的命途"
+msgstr "Simulated Universe path"
+
+#: module/search/setting_text.py:3
+msgid "模拟宇宙使用的难度"
+msgstr "Simulated Universe difficulty"
+
+#: module/search/setting_text.py:3
+msgid "模拟宇宙类型，可选 \"差分宇宙\"（divergent）或 \"模拟宇宙\"（universe）"
+msgstr ""
+"Choose Divergent Universe (divergent) or Simulated Universe (universe)"
+
+#: module/search/setting_text.py:3
+msgid "模拟宇宙运行方式，可选 \"源码\"（source）或 \"集成\"（exe）"
+msgstr ""
+"Run Simulated Universe from source (source) or the bundled executable (exe)"
+
+#: module/search/setting_text.py:3
+msgid "模拟宇宙运行频率，可选 \"每周\"（weekly）或 \"每天\"（daily）"
+msgstr "Run Simulated Universe weekly (weekly) or daily (daily)"
+
+#: module/content_pages.py:101
+msgid "模拟宇宙（外部工具，停止维护）"
+msgstr "Simulated Universe (external tool, discontinued)"
+
+#: module/search/setting_text.py:3
+msgid "每周所选日期清理四星及以下遗器；可在展开项启用智能弃置"
+msgstr ""
+"Clear four-star and lower relics on the selected weekday. Expand to enable "
+"smart discard."
+
+#: module/content_pages.py:110
+msgid "每月兑换"
+msgstr "Monthly exchange"
+
+#: module/content_pages.py:77
+msgid "活动项目"
+msgstr "Event activities"
+
+#: module/search/setting_text.py:3
+msgid "浏览器启动的额外参数，如 \"--auto-open-devtools-for-tabs\""
+msgstr "Extra browser launch arguments, e.g. \"--auto-open-devtools-for-tabs\""
+
+#: module/search/setting_text.py:3
+msgid "混沌回忆关卡范围，设置允许尝试的关卡等级范围"
+msgstr "Memory of Chaos stage range to attempt"
+
+#: app/content/settings_state.py:62
+msgid "清空路径会影响完成后操作"
+msgstr "Clearing this path affects the completion action"
+
+#: app/content/settings_state.py:62
+msgid "清空路径可能使任务无法启动"
+msgstr "Clearing this path may prevent tasks from starting"
+
+#: app/content/settings_state.py
+msgid "渠道字段需要一起校验"
+msgstr "Channel fields must be validated together"
+
+#: module/content_pages.py:29
+msgid "游戏与启动"
+msgstr "Game and launch"
+
+#: module/content_pages.py:31
+msgid "游戏优化"
+msgstr "Game optimization"
+
+#: module/content_pages.py:32
+msgid "游戏内按键"
+msgstr "In-game keys"
+
+#: module/search/setting_text.py:3
+msgid "游戏安装路径"
+msgstr "Game installation path"
+
+#: app/content/notify_model.py
+msgid "点击「开始监听」后，请在 {seconds} 秒内在群聊中 @ 机器人发送验证码 {code}，或将机器人拉进目标群"
+msgstr ""
+"After selecting Start listening, mention the bot with code {code} in the "
+"group or invite it to the group within {seconds} seconds."
+
+#: module/content_pages.py:86
+msgid "特殊物品领取"
+msgstr "Special item collection"
+
+#: module/search/setting_text.py:3
+msgid "用于“回忆一”的队伍配置"
+msgstr "Team for Memory Stage 1"
+
+#: module/settings_registry.py:370
+msgid "界面语言 / 界面語言 / 日本語 / 인터페이스 언어 / UI Language"
+msgstr "界面语言 / 界面語言 / 日本語 / 인터페이스 언어 / UI Language"
+
+#: module/content_pages.py:100
+msgid "积分奖励"
+msgstr "Point rewards"
+
+#: module/content_pages.py:47
+msgid "窗口"
+msgstr "Window"
+
+#: module/notification/channels.py
+msgid "端口应在 1 到 65535 之间"
+msgstr "Use a port between 1 and 65535"
+
+#: module/search/setting_text.py:3
+msgid "米哈游启动器安装路径"
+msgstr "miHoYo launcher installation path"
+
+#: app/content/notify_model.py
+msgid "绑定失败，请检查机器人凭据和网络"
+msgstr "Binding failed. Check the bot credentials and network."
+
+#: app/content/notify_model.py
+msgid "绑定超时，请重新发起绑定"
+msgstr "Binding timed out. Start binding again."
+
+#: module/search/setting_text.py:3
+msgid "自动识别 Windows 本地客户端的按键，缺失时使用以下设置"
+msgstr ""
+"Detect local Windows game key bindings. Use the following settings for any "
+"keys that are not detected."
+
+#: module/task_catalog.py:55
+msgid "获取差分宇宙积分，或按配置运行模拟宇宙。"
+msgstr ""
+"Earn Divergent Universe points or run Simulated Universe as configured."
+
+#: module/search/setting_text.py:3
+msgid "虚构叙事关卡范围，设置允许尝试的关卡等级范围"
+msgstr "Pure Fiction stage range to attempt"
+
+#: module/search/setting_text.py:3
+msgid "设备序列号或 IP:端口"
+msgstr "Device serial number or IP:port"
+
+#: app/content/settings_state.py:62
+msgid "设备连接由运行方式页面管理"
+msgstr "Manage device connections on the Run Mode page"
+
+#: module/search/setting_text.py:3
+msgid "设置停止任务的全局快捷键（支持后台）"
+msgstr "Global hotkey to stop a task, including in the background"
+
+#: module/search/setting_text.py:3
+msgid "设置切换自动对话的全局快捷键（支持后台）"
+msgstr ""
+"Global hotkey to toggle automatic dialogue, including in the background"
+
+#: module/search/setting_text.py:3
+msgid "设置打开地图的按键"
+msgstr "Key to open the map"
+
+#: module/search/setting_text.py:3
+msgid "设置打开短信的按键"
+msgstr "Key to open messages"
+
+#: module/search/setting_text.py:3
+msgid "设置打开跃迁的按键"
+msgstr "Key to open Warp"
+
+#: module/search/setting_text.py:3
+msgid "设置暂停/继续任务的全局快捷键（支持后台，仅内置任务有效）"
+msgstr ""
+"Global pause/resume hotkey for built-in tasks, including in the background"
+
+#: module/search/setting_text.py:3
+msgid "设置游戏内使用秘技的按键"
+msgstr "Key to use a Technique"
+
+#: module/search/setting_text.py:3
+msgid "设置自动战斗的按键"
+msgstr "Key for auto-battle"
+
+#: app/content/settings_state.py:62
+msgid "语言切换需要重建界面"
+msgstr "Changing language requires rebuilding the interface"
+
+#: module/notification/channels.py
+msgid "请填写此项"
+msgstr "Fill in this field"
+
+#: module/notification/channels.py
+msgid "请求头应为 JSON 对象"
+msgstr "Request headers must be a JSON object"
+
+#: module/notification/channels.py
+msgid "请至少填写其中一项"
+msgstr "Fill in at least one of these fields"
+
+#: module/notification/channels.py
+msgid "请输入完整的 HTTP 或 HTTPS 地址"
+msgstr "Enter a complete HTTP or HTTPS address"
+
+#: module/notification/channels.py
+msgid "请输入整数"
+msgstr "Enter an integer"
+
+#: module/notification/channels.py
+msgid "请输入有效的 JSON"
+msgstr "Enter valid JSON"
+
+#: module/notification/channels.py
+msgid "请选择列表中的选项"
+msgstr "Select an option from the list"
+
+#: module/notification/channels.py
+msgid "请选择开或关"
+msgstr "Select on or off"
+
+#: module/content_pages.py:111
+msgid "资产处理"
+msgstr "Asset processing"
+
+#: module/content_pages.py:108
+msgid "资产管理"
+msgstr "Asset management"
+
+#: module/content_pages.py:23
+msgid "运行方式"
+msgstr "Run mode"
+
+#: app/content/settings_state.py:62
+msgid "运行方式需要检查任务状态"
+msgstr "Check task status before changing run mode"
+
+#: module/notification/results.py:12
+msgid "连接超时，请检查网络或代理"
+msgstr "Connection timed out. Check your network or proxy."
+
+#: app/content/backend.py
+msgid "通过 ADB 连接手机或模拟器。"
+msgstr "Connect a phone or emulator via ADB."
+
+#: app/content/backend.py
+msgid "通过浏览器运行云游戏。"
+msgstr "Play the cloud game in a browser."
+
+#: module/search/setting_text.py:3
+msgid "遇到未完成对局时，\"restart\" 结算后重新开局，\"resume\" 按配置的策略继续进度"
+msgstr ""
+"For an unfinished game, restart settles it and starts over, while resume "
+"continues it using the selected strategy."
+
+#: module/content_pages.py:112
+msgid "遗器清理"
+msgstr "Relic cleanup"
+
+#: module/search/setting_text.py:3
+msgid "锄大地运行方式，可选 \"源码\"（source）或 \"集成\"（exe）"
+msgstr ""
+"Run field farming from source (source) or the bundled executable (exe)"
+
+#: module/search/setting_text.py:3
+msgid "问候区自选背景；留空时使用当前主题的星轨"
+msgstr ""
+"Custom greeting background. Leave blank for the current theme's star trail."
+
+#: module/content_pages.py:60
+msgid "隐私"
+msgstr "Privacy"
+
+#: app/content/settings_state.py:62
+msgid "需要同步系统计划任务"
+msgstr "The system scheduled task must be updated"
+
+#: module/content_pages.py:79
+msgid "领取奖励"
+msgstr "Collect rewards"
+
+#: module/content_pages.py:81
+msgid "领取项目"
+msgstr "Rewards to collect"
+
+#: module/content_pages.py:57
+msgid "高级"
+msgstr "Advanced"
+
+#: module/task_catalog.py
+msgid "，另可挑战 {count} 轮"
+msgstr ", plus {count} more waves"
+
+#: module/search/setting_text.py:216
+msgid "使用截图、兑换码和角色面板导出等工具。"
+msgstr "Take screenshots, redeem codes, and export character stats."
+
+#: module/search/setting_text.py:3
+msgid "切换后即时生效"
+msgstr "Takes effect immediately"
+
+#: module/search/setting_text.py:216
+msgid "创建、编辑和运行自定义流程。"
+msgstr "Create, edit, and run custom workflows."
+
+#: module/search/setting_text.py:216
+msgid "创建第一个流程"
+msgstr "Create your first workflow"
+
+#: module/search/setting_text.py:3
+msgid "刷周积分 / 刷晋升点 / 冲职级"
+msgstr "Weekly points / Promotion points / Rank up"
+
+#: module/search/setting_text.py:3
+msgid "加入用户交流群"
+msgstr "Join the user community"
+
+#: module/search/__init__.py
+msgid "可选项包括 {items}"
+msgstr "Options include {items}"
+
+#: module/search/setting_text.py:3
+msgid "向所有已启用的渠道发送测试消息。"
+msgstr "Send a test message to all enabled channels."
+
+#: module/search/setting_text.py:3
+msgid "数据保存在哪里"
+msgstr "Where data is stored"
+
+#: module/search/setting_text.py:216
+msgid "查看、导入和导出跃迁记录。"
+msgstr "View, import, and export Warp records."
+
+#: module/search/setting_text.py:216
+msgid "查看各版本的改动。"
+msgstr "See what changed in each version."
+
+#: module/search/setting_text.py:216
+msgid "查看开拓力、完整运行清单与最近结果。"
+msgstr "View Trailblaze Power, the full run plan, and recent results."
+
+#: module/search/setting_text.py:216
+msgid "查看本地后台模式与云游戏的使用条件。"
+msgstr "Check the requirements for local background mode and cloud gaming."
+
+#: module/search/setting_text.py:216
+msgid "查看运行日志、控制任务或管理定时计划。"
+msgstr "View logs, control running tasks, or manage schedules."
+
+#: module/search/setting_text.py:216
+msgid "查阅使用教程和常见问题。"
+msgstr "Read the user guide and frequently asked questions."
+
+#: module/search/setting_text.py:216
+msgid "检查版本，访问项目主页和社区。"
+msgstr "Check the version and open the project homepage or community."
+
+#: module/search/setting_text.py:3
+msgid "管理已添加的推送渠道。"
+msgstr "Manage your notification channels."
+
+#: module/search/setting_text.py:216
+msgid "管理更新源、下载代理和版本检测。"
+msgstr "Manage update sources, the download proxy, and version checks."
+
+#: module/search/setting_text.py:216
+msgid "管理本地游戏账号。"
+msgstr "Manage local game accounts."
+
+#: module/search/setting_text.py:3
+msgid "设备运行状态"
+msgstr "Device status"
+
+#: module/search/setting_text.py:216
+msgid "设置停止、暂停和自动对话的全局热键。"
+msgstr "Set global hotkeys for stopping, pausing, and automatic dialogue."
+
+#: module/search/setting_text.py:216
+msgid "设置日志、启动权限和隐私选项。"
+msgstr "Configure logs, startup permissions, and privacy options."
+
+#: module/search/setting_text.py:3
+msgid "设置通知的标题和正文。"
+msgstr "Set the notification title and body."
+
+#: module/search/setting_text.py:216
+msgid "调整助手的程序与环境设置。"
+msgstr "Adjust the assistant and its runtime environment."
+
+#: module/search/setting_text.py:216
+msgid "运行前准备"
+msgstr "Before you run"
+
+#: module/search/setting_text.py:3
+msgid "远程一号位锄地 / 黄泉一号位锄地 / 仅获取特殊物品"
+msgstr "Ranged lead / Acheron lead / Special items only"
+
+#: module/search/setting_text.py:216
+msgid "选择任务并调整完整运行的内容。"
+msgstr "Choose tasks and configure what to include in a full run."
+
+msgid " 任务相关的内容请到「任务」页查看。"
+msgstr " See the Task page for task-specific options."
+
+msgid "ADB"
+msgstr "ADB"
+
+msgid "HDR"
+msgstr "HDR"
+
+msgid "Windows / macOS / Linux"
+msgstr "Windows / macOS / Linux"
+
+msgid "proxy"
+msgstr "proxy"
+
+msgid "{count} 个渠道"
+msgstr "Channels: {count}"
+
+msgid "{count} 次"
+msgstr "{count} runs"
+
+msgid "{enabled} / {total} 已开启"
+msgstr "{enabled} / {total} enabled"
+
+msgid "{name} 测试失败"
+msgstr "{name} test failed"
+
+msgid "{name} 测试消息已发出"
+msgstr "Test message sent to {name}"
+
+msgid "、"
+msgstr ", "
+
+msgid "上次发送失败：{reason}"
+msgstr "Last delivery failed: {reason}"
+
+msgid "上次发送成功"
+msgstr "Last delivery succeeded"
+
+msgid "上次完成历战余响"
+msgstr "Last Echo of War completion"
+
+msgid "上次完成每日实训"
+msgstr "Last Daily Training completion"
+
+msgid "上次完成锄大地"
+msgstr "Last Fhoe-Rail completion"
+
+msgid "上次拿满本周积分"
+msgstr "Last time weekly points were maxed out"
+
+msgid "上次运行模拟宇宙"
+msgstr "Last Simulated Universe run"
+
+msgid "不占鼠标"
+msgstr "Without taking over the mouse"
+
+msgid "也匹配了：{words}"
+msgstr "Also matched: {words}"
+
+msgid "仅 Windows"
+msgstr "Windows only"
+
+msgid "从未完成"
+msgstr "Never completed"
+
+msgid "代理"
+msgstr "Proxy"
+
+msgid "任务完成或失败时通知你。先添加一个常用的渠道，再点「测试」确认能收到。"
+msgstr ""
+"Get notified when a task finishes or fails. Add a channel, then select Test "
+"to check delivery."
+
+msgid "保存本地客户端的登录状态，换号时直接导入，不用每次重新登录。只支持本地客户端。"
+msgstr ""
+"Save the local client’s login details and import them when switching "
+"accounts. Available for the local client only."
+
+msgid "全部"
+msgstr "All"
+
+msgid "全部任务结束后要做什么，例如关机、退出小助手或运行脚本。"
+msgstr ""
+"Choose what happens after all tasks finish, such as shutting down, exiting "
+"the assistant, or running a script."
+
+msgid "分辨率"
+msgstr "Resolution"
+
+msgid "切换分类"
+msgstr "Switch category"
+
+msgid "刷本"
+msgstr "Farm stages"
+
+msgid "前往任务页 ›"
+msgstr "Go to Task page ›"
+
+msgid "副本"
+msgstr "Stage"
+
+msgid "发送测试"
+msgstr "Send test"
+
+msgid "可后台"
+msgstr "Background mode supported"
+
+msgid "启动游戏的方式和等待时间，以及运行期间对画面和按键的调整。"
+msgstr ""
+"Adjust how the game starts, how long to wait, and the graphics and keys used"
+" while running."
+
+msgid "和默认值不同，悬停卡片可以恢复默认"
+msgstr "Changed from its default. Hover over the card to restore it."
+
+msgid "在帮助中查看这项设置的说明"
+msgstr "View this setting in Help"
+
+msgid "在浏览器中运行云游戏，可以无窗口运行，也能用 Docker 部署。"
+msgstr ""
+"Run the cloud game in a browser. Headless mode and Docker deployments are "
+"supported."
+
+msgid "在这台电脑上运行 PC 版游戏，支持全部任务。"
+msgstr "Run the PC game on this computer with support for all tasks."
+
+msgid "差分宇宙今日已完成"
+msgstr "Divergent Universe completions today"
+
+msgid "已修改"
+msgstr "Modified"
+
+msgid "已停用"
+msgstr "Disabled"
+
+msgid "已添加"
+msgstr "Added"
+
+msgid "已添加，点击编辑"
+msgstr "Already added. Click to edit."
+
+msgid "开机自启"
+msgstr "Start at login"
+
+msgid "当前系统不支持这种运行方式"
+msgstr "This operating system does not support this run mode"
+
+msgid "当前运行方式不支持这项任务，或者已有任务正在运行"
+msgstr ""
+"This run mode does not support the task, or another task is already running"
+
+msgid "当前配置无法识别：{error}。请重新选择运行方式。"
+msgstr "Unrecognized configuration: {error}. Select a run mode again."
+
+msgid "想找什么？"
+msgstr "What are you looking for?"
+
+msgid "截屏"
+msgstr "Screen capture"
+
+msgid "打开并定位"
+msgstr "Open result"
+
+msgid "打开开关的任务会加入「完整运行」，每项也可以单独立即运行"
+msgstr ""
+"Enabled tasks are included in Full Run. You can also run any task on its "
+"own."
+
+msgid "抽卡"
+msgstr "Warp pulls"
+
+msgid "挂机"
+msgstr "AFK"
+
+msgid "按键"
+msgstr "Keys"
+
+msgid "换个说法试试，比如用功能的名字，或者下面这些常用词："
+msgstr "Try the feature name or one of these common searches."
+
+msgid "换个说法试试：{words}"
+msgstr "Try another term: {words}"
+
+msgid "搜索「{query}」"
+msgstr "Search for “{query}”"
+
+msgid "搜索功能、设置、帮助"
+msgstr "Search features, settings, and help"
+
+msgid "搜索设置"
+msgstr "Search settings"
+
+msgid "搜索设置、任务、帮助和工具"
+msgstr "Search settings, tasks, help, and tools"
+
+msgid "搜索（Ctrl+K）"
+msgstr "Search (Ctrl+K)"
+
+msgid "收起"
+msgstr "Show less"
+
+msgid "无法停用这个渠道"
+msgstr "Could not disable this channel"
+
+msgid "无法启用这个渠道"
+msgstr "Could not enable this channel"
+
+msgid "无窗口"
+msgstr "Headless"
+
+msgid "更多 {count} 个"
+msgstr "Show {count} more"
+
+msgid "更新策略"
+msgstr "Update strategy"
+
+msgid "最小化"
+msgstr "Minimize"
+
+msgid "查看教程"
+msgstr "View guide"
+
+msgid "检查更新的时机、下载来源和代理。"
+msgstr ""
+"Choose when to check for updates, where to download them, and which proxy to"
+" use."
+
+msgid "正在发送测试消息……"
+msgstr "Sending test message…"
+
+msgid "正在测试"
+msgstr "Testing"
+
+msgid "每个任务做什么，在「任务」页设置。"
+msgstr "Choose what each task does on the Task page."
+
+msgid "没有恢复默认"
+msgstr "Default could not be restored"
+
+msgid "没有找到「{query}」"
+msgstr "No results for “{query}”"
+
+msgid "没有找到相关设置。"
+msgstr "No matching settings found."
+
+msgid "测试消息已发出，请确认是否收到"
+msgstr "Test message sent. Check that it arrived."
+
+msgid "添加 {name}"
+msgstr "Add {name}"
+
+msgid "添加渠道"
+msgstr "Add channel"
+
+msgid "清除记录后，下次运行会重新执行这一项"
+msgstr "Clearing this record makes the item run again next time"
+
+msgid "热键"
+msgstr "Hotkeys"
+
+msgid "版本信息、项目主页和社区。"
+msgstr "Version information, project homepage, and community."
+
+msgid "现在无法运行"
+msgstr "Cannot run now"
+
+msgid "画面"
+msgstr "Graphics"
+
+msgid "界面语言、主题、总览的问候区，以及关闭和记忆窗口的方式。"
+msgstr ""
+"Change the language, theme, overview greeting, and how the window closes or "
+"remembers its position."
+
+msgid "等 {count} 项"
+msgstr "and more ({count} total)"
+
+msgid "筛选任务"
+msgstr "Filter tasks"
+
+msgid "编辑 {name}"
+msgstr "Edit {name}"
+
+msgid "自动绑定单聊用户"
+msgstr "Bind direct-message recipient"
+
+msgid "自动绑定群聊"
+msgstr "Bind group chat"
+
+msgid "自启动"
+msgstr "Autostart"
+
+msgid "设置、账号、运行记录和日志都放在数据文件夹里，可以在这里备份、恢复或导出排查包。"
+msgstr ""
+"The data folder holds your settings, accounts, run history, and logs. Back "
+"up, restore, or export diagnostics here."
+
+msgid "请到对应应用里确认是否收到"
+msgstr "Check the receiving app for the message"
+
+msgid "请在这张卡片上手动修改"
+msgstr "Edit this setting on the card"
+
+msgid "输入功能、设置或问题里的词。用平时的说法也行，比如「挂机」「体力」「刷本」。"
+msgstr ""
+"Search by feature, setting, or question. Try everyday terms such as “AFK”, "
+"“power”, or “farming”."
+
+msgid "还没有添加渠道。从下面选一个你常用的，填好后点「测试」确认能收到。"
+msgstr ""
+"No channels added yet. Choose one below, fill in its details, and select "
+"Test to check delivery."
+
+msgid "这个渠道不需要填写任何内容。"
+msgstr "No information is needed for this channel."
+
+msgid "选择游戏在哪里运行，以及小助手怎样操作它。切换后从下一次任务开始生效。"
+msgstr ""
+"Choose where the game runs and how the assistant controls it. Changes apply "
+"from the next task."
+
+msgid "通常不需要修改，排查问题时再来调整。"
+msgstr "These settings usually only need changing for troubleshooting."
+
+msgid "通过 ADB 连接手机或模拟器，支持清体力、每日实训、领奖和历战余响。"
+msgstr ""
+"Connect a phone or emulator via ADB for Spend Power, Daily Training, "
+"rewards, and Echo of War."
+
+msgid "部分任务"
+msgstr "Some tasks"
+
+msgid "重置"
+msgstr "Reset"
+
+msgid "随时停止、暂停任务或切换自动对话的全局快捷键，小助手在后台时也能用。"
+msgstr ""
+"Global hotkeys let you stop or pause tasks and toggle auto-dialogue, even "
+"while the assistant is in the background."
+
+msgid "请在「设置 → 运行方式 → 游戏路径」中选择正确的游戏文件"
+msgstr ""
+"Select the correct game executable under Settings → Run Mode → Game Path."
+
+msgid "请按提示处理后重试。仍然失败时，把运行页的日志发给开发者。"
+msgstr ""
+"Follow the instructions and try again. If it still fails, send the log from "
+"the Run page to the developer."
+
+msgid "工具"
+msgstr "Tools"
+
+msgid "页面"
+msgstr "Pages"
+
+msgid "“退出”会关闭游戏。需要定时运行时，请打开「运行」页的「定时任务」。"
+msgstr ""
+"“Exit” closes the game. To run on a schedule, open Scheduled Tasks on the "
+"Run page."

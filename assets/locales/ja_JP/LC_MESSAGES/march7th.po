@@ -9277,3 +9277,1188 @@ msgstr "操作の種類"
 #: app/overview/shortcut_dialog.py:78
 msgid "任务"
 msgstr "タスク"
+
+#: module/channel_catalog.py:95
+msgid "Bark"
+msgstr "Bark"
+
+#: module/channel_catalog.py:121
+msgid "Discord"
+msgstr "Discord"
+
+#: module/search/setting_text.py:3
+msgid "GitHub API 认证 Token，选填"
+msgstr "GitHub API の認証トークン（任意）"
+
+#: module/channel_catalog.py:158
+msgid "Go-cqhttp"
+msgstr "Go-cqhttp"
+
+#: module/channel_catalog.py:130
+msgid "Gotify"
+msgstr "Gotify"
+
+#: module/channel_catalog.py:135
+msgid "KOOK"
+msgstr "KOOK"
+
+#: module/channel_catalog.py:145
+msgid "Matrix"
+msgstr "Matrix"
+
+#: module/channel_catalog.py:127
+msgid "MeoW"
+msgstr "MeoW"
+
+#: module/search/setting_text.py:3
+msgid "MirrorChyan CDK"
+msgstr "MirrorChyan CDK"
+
+#: module/channel_catalog.py:84
+msgid "OneBot"
+msgstr "OneBot"
+
+#: module/channel_catalog.py:154
+msgid "Pushdeer"
+msgstr "Pushdeer"
+
+#: module/channel_catalog.py:115
+msgid "Pushplus"
+msgstr "Pushplus"
+
+#: module/channel_catalog.py:140
+msgid "Qmsg"
+msgstr "Qmsg"
+
+#: module/channel_catalog.py:49
+msgid "SMTP"
+msgstr "SMTP"
+
+#: module/channel_catalog.py:70
+msgid "Telegram"
+msgstr "Telegram"
+
+#: module/channel_catalog.py:165
+msgid "Webhook"
+msgstr "Webhook"
+
+#: module/channel_catalog.py:37
+msgid "Windows"
+msgstr "Windows"
+
+#: module/search/setting_text.py:3
+msgid "adb 可执行文件"
+msgstr "ADB 実行ファイル"
+
+#: module/search/setting_text.py:3
+msgid "上次完成3次「历战余响」的时间戳"
+msgstr "歴戦余韻を3回クリアした最終日時"
+
+#: module/search/setting_text.py:3
+msgid "上次运行模拟宇宙的时间戳，用于记录和控制运行频率"
+msgstr "模擬宇宙の実行間隔を判定するための最終実行日時"
+
+#: app/content/settings_state.py:62
+msgid "主题切换由主窗口管理"
+msgstr "テーマの変更はメインウィンドウで管理します"
+
+#: module/search/setting_text.py:3
+msgid "云崩铁是否全屏运行"
+msgstr "クラウド版を全画面で実行する"
+
+#: module/content_pages.py:34
+msgid "任务结束后"
+msgstr "タスク終了後"
+
+#: module/notification/channels.py
+msgid "保存失败，请稍后重试"
+msgstr "保存できませんでした。しばらくしてから再試行してください"
+
+#: module/content_pages.py:43
+msgid "全局热键"
+msgstr "グローバルホットキー"
+
+#: module/search/__init__.py
+msgid "共 {count} 项"
+msgstr "全 {count} 件"
+
+#: module/task_catalog.py:57
+msgid "分别配置混沌回忆、虚构叙事和末日幻影。"
+msgstr "混沌の記憶、虚構叙事、末日の幻影を個別に設定します。"
+
+#: app/content/settings_state.py:62
+msgid "切换更新源会检查更新"
+msgstr "更新元を変更すると更新を確認します"
+
+#: module/content_pages.py:67
+msgid "刷什么"
+msgstr "周回先"
+
+#: module/content_pages.py:66
+msgid "加入完整运行"
+msgstr "完全実行に含める"
+
+#: module/search/setting_text.py:3
+msgid "单次触摸点按的毫秒数"
+msgstr "タップ1回の長さ（ミリ秒）"
+
+#: module/content_pages.py:95
+msgid "博弈策略"
+msgstr "攻略戦略"
+
+#: module/task_catalog.py:53
+msgid "参加货币战争并获取每周积分。"
+msgstr "貨幣戦争に参加して週間ポイントを獲得します。"
+
+#: app/content/notify_model.py
+msgid "发送失败"
+msgstr "送信失敗"
+
+#: module/notification/results.py:12
+msgid "发送失败，请检查渠道配置"
+msgstr "送信に失敗しました。チャンネル設定を確認してください"
+
+#: module/notification/results.py
+msgid "发送成功"
+msgstr "送信成功"
+
+#: module/content_pages.py:59
+msgid "启动与权限"
+msgstr "起動と権限"
+
+#: module/search/setting_text.py:3
+msgid "启动器类型及窗口标题，可选 米哈游启动器、HoYoPlay"
+msgstr "ランチャーの種類とウィンドウ名。miHoYo ランチャーまたは HoYoPlay を選択します"
+
+#: module/settings_registry.py:163
+msgid "启用「每月自动购买命运的足迹」"
+msgstr "毎月「運命の足跡」を自動購入"
+
+#: module/settings_registry.py:157
+msgid "启用「每月自动购买星轨专票」"
+msgstr "毎月「星軌専用チケット」を自動購入"
+
+#: module/settings_registry.py:160
+msgid "启用「每月自动购买星轨通票」"
+msgstr "毎月「星軌チケット」を自動購入"
+
+#: module/notification/channels.py
+msgid "启用图片时请填写此项"
+msgstr "画像を有効にする場合は入力してください"
+
+#: module/search/setting_text.py:3
+msgid "周几开始执行「历战余响」，假设值为4，那么周1、2、3不执行「历战余响」，周4、5、6、7则执行"
+msgstr "歴戦余韻を開始する曜日。4なら木曜から日曜まで実行します"
+
+#: module/settings_registry.py:125
+msgid "周几开始执行历战余响"
+msgstr "歴戦余韻の開始曜日"
+
+#: module/search/setting_text.py:3
+msgid "在总览问候区显示 Q 版小人"
+msgstr "総覧の挨拶欄にミニキャラを表示"
+
+#: app/content/backend.py
+msgid "在这台电脑上运行 PC 版游戏。"
+msgstr "このパソコンで PC 版を起動します。"
+
+#: module/content_pages.py:85
+msgid "地图与队伍"
+msgstr "マップと編成"
+
+#: module/task_catalog.py:60
+msgid "处理每月兑换、光锥叠加和遗器清理。"
+msgstr "毎月の交換、光円錐の重畳、遺物整理を行います。"
+
+#: module/content_pages.py:54
+msgid "备份与恢复"
+msgstr "バックアップと復元"
+
+#: module/content_pages.py:46
+msgid "外观"
+msgstr "外観"
+
+#: module/content_pages.py:45
+msgid "外观与窗口"
+msgstr "外観とウィンドウ"
+
+#: module/content_pages.py:35
+msgid "完成后操作"
+msgstr "完了後の操作"
+
+#: module/task_catalog.py:47
+msgid "完成当天的每日实训。"
+msgstr "今日のデイリートレーニングを完了します。"
+
+#: app/content/settings_state.py:62
+msgid "定时计划由运行页管理"
+msgstr "スケジュールは実行ページで管理します"
+
+#: module/content_pages.py:73
+msgid "实训项目"
+msgstr "訓練項目"
+
+#: app/content/settings_state.py
+msgid "密钥由编辑表单管理"
+msgstr "認証情報は編集フォームで管理します"
+
+#: module/tool_catalog.py:20
+msgid "导出角色的属性、光锥、星魂、技能和遗器。"
+msgstr "キャラクターのステータス、光円錐、星魂、スキル、遺物を出力します。"
+
+#: module/notification/channels.py
+msgid "已填写 {count} 个字段"
+msgstr "入力済み {count} 項目"
+
+#: module/content_pages.py:39
+msgid "已添加的渠道"
+msgstr "追加済みのチャンネル"
+
+#: module/search/__init__.py
+msgid "已设置"
+msgstr "設定済み"
+
+#: module/content_pages.py:68
+msgid "开拓力不够时"
+msgstr "開拓力が足りないとき"
+
+#: app/content/settings_state.py
+msgid "当前值由运行环境指定"
+msgstr "実行環境によって指定されています"
+
+#: module/search/setting_text.py:3
+msgid "当日成功通关差分宇宙的次数，任何方式运行并成功通关都会记录此值"
+msgstr "実行方法を問わず集計した、本日の階差宇宙クリア回数"
+
+#: module/content_pages.py:42
+msgid "快捷键"
+msgstr "ショートカットキー"
+
+#: module/content_pages.py:69
+msgid "战斗与高级"
+msgstr "戦闘と詳細設定"
+
+#: module/search/setting_text.py:3
+msgid "战斗内角色详情键"
+msgstr "戦闘中にキャラクター詳細を開くキー"
+
+#: module/search/setting_text.py:3
+msgid "战斗外交互键"
+msgstr "戦闘外でのインタラクトキー"
+
+#: module/search/setting_text.py:3
+msgid "执行差分宇宙时的难度等级，取值范围 1-6，数值越大难度越高，其中难度 6 对应常规演算星阶模式"
+msgstr "階差宇宙の難易度（1～6）。数字が大きいほど高難度で、6は通常演算の星階モードです"
+
+#: module/content_pages.py:91
+msgid "执行时间"
+msgstr "実行時期"
+
+#: module/search/setting_text.py:3
+msgid "投资环境和投资策略的选择优先级"
+msgstr "投資環境と投資戦略の選択優先度"
+
+#: module/task_catalog.py
+msgid "按上次读取的 {power} 开拓力，{name}可挑战 {count} 次（每次 {waves} 轮）"
+msgstr "前回の開拓力 {power} なら、{name} に {count} 回挑戦できます（1回 {waves} ウェーブ）"
+
+#: module/task_catalog.py:46
+msgid "按体力计划或所选副本消耗开拓力。"
+msgstr "プランまたは選択したステージに従って開拓力を消費します。"
+
+#: module/task_catalog.py:50
+msgid "按地图路线清理大世界敌人。"
+msgstr "選択したルートに沿ってフィールドの敵を倒します。"
+
+#: module/task_catalog.py:52
+msgid "按所选星期挑战历战余响。"
+msgstr "指定した曜日から歴戦余韻に挑戦します。"
+
+#: module/content_pages.py:108
+msgid "按月和其他"
+msgstr "毎月・その他"
+
+#: module/content_pages.py:40
+msgid "推送内容"
+msgstr "通知内容"
+
+#: module/notification/results.py:12
+msgid "推送参数无效，请检查渠道配置"
+msgstr "通知のパラメーターが無効です。チャンネル設定を確認してください"
+
+#: module/notification/results.py:12
+msgid "推送服务拒绝了身份验证。请打开此渠道的编辑窗口，核对机器人密钥和收件人，再发送一条测试消息。"
+msgstr "通知サービスが認証を拒否しました。このチャンネルの編集画面でボットの認証情報と宛先を確認し、テストメッセージを送信してください。"
+
+#: app/content/settings_state.py
+msgid "操作或进度没有可恢复的设置"
+msgstr "操作や進捗表示にはリセットできる設定がありません"
+
+#: module/search/setting_text.py:3
+msgid "支援列表滚动查找次数"
+msgstr "サポート一覧を検索するスクロール回数"
+
+#: module/notification/results.py:12
+msgid "无法连接推送服务"
+msgstr "通知サービスに接続できません"
+
+#: module/search/setting_text.py:3
+msgid "是否体力优先完成3次「历战余响」"
+msgstr "歴戦余韻3回を優先して開拓力を使う"
+
+#: module/search/setting_text.py:3
+msgid "是否使用支援角色"
+msgstr "サポートキャラクターを使う"
+
+#: module/search/setting_text.py:3
+msgid "是否使用镜像下载浏览器和驱动"
+msgstr "ミラーからブラウザーとドライバーをダウンロードする"
+
+#: module/search/setting_text.py:3
+msgid "是否允许浏览器保存数据（登录状态/游戏本地数据）"
+msgstr "ログイン状態とゲームのローカルデータをブラウザーに保存する"
+
+#: module/search/setting_text.py:3
+msgid "是否启用「差分宇宙」积分奖励"
+msgstr "階差宇宙のポイント報酬を有効にする"
+
+#: module/search/setting_text.py:3
+msgid "是否启用「货币战争」积分奖励"
+msgstr "貨幣戦争のポイント報酬を有効にする"
+
+#: module/search/setting_text.py:3
+msgid "是否启用日常任务"
+msgstr "日常タスクを有効にする"
+
+#: module/search/setting_text.py:3
+msgid "是否启用每月自动购买余烬兑换中的「命运的足迹」"
+msgstr "毎月エンバー交換で運命の足跡を購入する"
+
+#: module/search/setting_text.py:3
+msgid "是否启用每月自动购买余烬兑换中的「星轨专票」"
+msgstr "毎月エンバー交換で星軌専用チケットを購入する"
+
+#: module/search/setting_text.py:3
+msgid "是否启用每月自动购买余烬兑换中的「星轨通票」"
+msgstr "毎月エンバー交換で星軌チケットを購入する"
+
+#: module/search/setting_text.py:3
+msgid "是否启用活动功能"
+msgstr "イベント確認を有効にする"
+
+#: module/search/setting_text.py:3
+msgid "是否启用清体力总开关"
+msgstr "完全実行で開拓力を消費する"
+
+#: module/search/setting_text.py:3
+msgid "是否启用资产管理功能"
+msgstr "資産管理を有効にする"
+
+#: module/search/setting_text.py:3
+msgid "是否启用锄大地功能"
+msgstr "フィールド周回を有効にする"
+
+#: module/search/setting_text.py:3
+msgid "是否启用领取奖励功能"
+msgstr "報酬受け取りを有効にする"
+
+#: module/search/setting_text.py:3
+msgid "是否在打副本时自动切换队伍"
+msgstr "ステージで自動的に編成を切り替える"
+
+#: module/search/setting_text.py:3
+msgid "是否在进入副本前进行传送至任意锚点"
+msgstr "ステージに入る前に界域アンカーに移動する"
+
+#: module/search/setting_text.py:3
+msgid "是否在锄大地时自动切换队伍"
+msgstr "フィールド周回で自動的に編成を切り替える"
+
+#: module/search/setting_text.py:3
+msgid "是否检查更新"
+msgstr "更新を確認する"
+
+#: module/search/setting_text.py:3
+msgid "是否通过启动器更新游戏"
+msgstr "ランチャーからゲームを更新する"
+
+#: module/search/setting_text.py:3
+msgid "是否领取兑换码奖励"
+msgstr "交換コード報酬を受け取る"
+
+#: module/search/setting_text.py:3
+msgid "是否领取委托奖励"
+msgstr "依頼報酬を受け取る"
+
+#: module/search/setting_text.py:3
+msgid "是否领取成就奖励"
+msgstr "アチーブメント報酬を受け取る"
+
+#: module/search/setting_text.py:3
+msgid "是否领取支援奖励"
+msgstr "サポート報酬を受け取る"
+
+#: module/search/setting_text.py:3
+msgid "是否领取无名勋礼奖励"
+msgstr "ナナシの勲功報酬を受け取る"
+
+#: module/search/setting_text.py:3
+msgid "是否领取每日实训奖励"
+msgstr "デイリートレーニング報酬を受け取る"
+
+#: module/search/setting_text.py:3
+msgid "是否领取短信奖励"
+msgstr "メッセージ報酬を受け取る"
+
+#: module/search/setting_text.py:3
+msgid "是否领取邮件奖励"
+msgstr "メール報酬を受け取る"
+
+#: module/search/__init__.py
+msgid "暂时无法读取"
+msgstr "現在読み取れません"
+
+#: module/content_pages.py:49
+msgid "更新"
+msgstr "アップデート"
+
+#: module/search/setting_text.py:3
+msgid "更新下载代理，留空则使用系统代理"
+msgstr "更新のダウンロードプロキシ。空欄ならシステムの設定を使います"
+
+#: module/notification/results.py:12
+msgid "服务未接受消息，请检查渠道配置"
+msgstr "サービスがメッセージを受け付けませんでした。チャンネル設定を確認してください"
+
+#: module/notification/results.py
+msgid "服务返回 HTTP {status}"
+msgstr "サービスが HTTP {status} を返しました"
+
+#: module/notification/channels.py
+msgid "未知字段"
+msgstr "不明な項目"
+
+#: module/search/__init__.py
+msgid "未设置"
+msgstr "未設定"
+
+#: module/search/setting_text.py:3
+msgid "末日幻影关卡范围，设置允许尝试的关卡等级范围"
+msgstr "末日の幻影で挑戦するステージの範囲"
+
+#: module/search/setting_text.py:150
+msgid "本地客户端"
+msgstr "ローカルクライアント"
+
+#: module/task_catalog.py:49
+msgid "检查并领取已选的日常奖励。"
+msgstr "選択した日常報酬を確認して受け取ります。"
+
+#: module/task_catalog.py:48
+msgid "检查签到、双倍掉落和活动热点。"
+msgstr "ログイン報酬、ドロップ2倍、注目イベントを確認します。"
+
+#: module/search/setting_text.py:3
+msgid "模拟宇宙使用的命途"
+msgstr "模擬宇宙の運命"
+
+#: module/search/setting_text.py:3
+msgid "模拟宇宙使用的难度"
+msgstr "模擬宇宙の難易度"
+
+#: module/search/setting_text.py:3
+msgid "模拟宇宙类型，可选 \"差分宇宙\"（divergent）或 \"模拟宇宙\"（universe）"
+msgstr "階差宇宙（divergent）または模擬宇宙（universe）を選択"
+
+#: module/search/setting_text.py:3
+msgid "模拟宇宙运行方式，可选 \"源码\"（source）或 \"集成\"（exe）"
+msgstr "模擬宇宙をソース（source）または同梱版（exe）で実行"
+
+#: module/search/setting_text.py:3
+msgid "模拟宇宙运行频率，可选 \"每周\"（weekly）或 \"每天\"（daily）"
+msgstr "模擬宇宙を毎週（weekly）または毎日（daily）実行"
+
+#: module/content_pages.py:101
+msgid "模拟宇宙（外部工具，停止维护）"
+msgstr "模擬宇宙（外部ツール、メンテナンス終了）"
+
+#: module/search/setting_text.py:3
+msgid "每周所选日期清理四星及以下遗器；可在展开项启用智能弃置"
+msgstr "指定した曜日に星4以下の遺物を整理します。展開するとスマート廃棄を有効にできます"
+
+#: module/content_pages.py:110
+msgid "每月兑换"
+msgstr "毎月の交換"
+
+#: module/content_pages.py:77
+msgid "活动项目"
+msgstr "イベント項目"
+
+#: module/search/setting_text.py:3
+msgid "浏览器启动的额外参数，如 \"--auto-open-devtools-for-tabs\""
+msgstr "ブラウザーの追加起動引数（例 \"--auto-open-devtools-for-tabs\"）"
+
+#: module/search/setting_text.py:3
+msgid "混沌回忆关卡范围，设置允许尝试的关卡等级范围"
+msgstr "混沌の記憶で挑戦するステージの範囲"
+
+#: app/content/settings_state.py:62
+msgid "清空路径会影响完成后操作"
+msgstr "パスを消去すると完了後の操作に影響します"
+
+#: app/content/settings_state.py:62
+msgid "清空路径可能使任务无法启动"
+msgstr "パスを消去するとタスクを開始できなくなる場合があります"
+
+#: app/content/settings_state.py
+msgid "渠道字段需要一起校验"
+msgstr "チャンネルの項目はまとめて検証する必要があります"
+
+#: module/content_pages.py:29
+msgid "游戏与启动"
+msgstr "ゲームと起動"
+
+#: module/content_pages.py:31
+msgid "游戏优化"
+msgstr "ゲーム最適化"
+
+#: module/content_pages.py:32
+msgid "游戏内按键"
+msgstr "ゲーム内キー"
+
+#: module/search/setting_text.py:3
+msgid "游戏安装路径"
+msgstr "ゲームのインストール先"
+
+#: app/content/notify_model.py
+msgid "点击「开始监听」后，请在 {seconds} 秒内在群聊中 @ 机器人发送验证码 {code}，或将机器人拉进目标群"
+msgstr ""
+"「リスニング開始」を選んでから {seconds} 秒以内に、グループでボットをメンションして確認コード {code} "
+"を送るか、対象グループに招待してください"
+
+#: module/content_pages.py:86
+msgid "特殊物品领取"
+msgstr "特殊アイテムの受け取り"
+
+#: module/search/setting_text.py:3
+msgid "用于“回忆一”的队伍配置"
+msgstr "記憶・1で使う編成"
+
+#: module/settings_registry.py:370
+msgid "界面语言 / 界面語言 / 日本語 / 인터페이스 언어 / UI Language"
+msgstr "界面语言 / 界面語言 / 日本語 / 인터페이스 언어 / UI Language"
+
+#: module/content_pages.py:100
+msgid "积分奖励"
+msgstr "ポイント報酬"
+
+#: module/content_pages.py:47
+msgid "窗口"
+msgstr "ウィンドウ"
+
+#: module/notification/channels.py
+msgid "端口应在 1 到 65535 之间"
+msgstr "1～65535 のポートを入力してください"
+
+#: module/search/setting_text.py:3
+msgid "米哈游启动器安装路径"
+msgstr "miHoYo ランチャーのインストール先"
+
+#: app/content/notify_model.py
+msgid "绑定失败，请检查机器人凭据和网络"
+msgstr "紐付けに失敗しました。ボットの認証情報とネットワークを確認してください"
+
+#: app/content/notify_model.py
+msgid "绑定超时，请重新发起绑定"
+msgstr "紐付けがタイムアウトしました。もう一度開始してください"
+
+#: module/search/setting_text.py:3
+msgid "自动识别 Windows 本地客户端的按键，缺失时使用以下设置"
+msgstr "Windows ローカル版のキー設定を自動検出し、不明なキーには以下の設定を使います"
+
+#: module/task_catalog.py:55
+msgid "获取差分宇宙积分，或按配置运行模拟宇宙。"
+msgstr "階差宇宙のポイントを獲得するか、設定に従って模擬宇宙を実行します。"
+
+#: module/search/setting_text.py:3
+msgid "虚构叙事关卡范围，设置允许尝试的关卡等级范围"
+msgstr "虚構叙事で挑戦するステージの範囲"
+
+#: module/search/setting_text.py:3
+msgid "设备序列号或 IP:端口"
+msgstr "デバイスのシリアル番号または IP:ポート"
+
+#: app/content/settings_state.py:62
+msgid "设备连接由运行方式页面管理"
+msgstr "デバイス接続は実行方法ページで管理します"
+
+#: module/search/setting_text.py:3
+msgid "设置停止任务的全局快捷键（支持后台）"
+msgstr "バックグラウンドでも有効なタスク停止ホットキー"
+
+#: module/search/setting_text.py:3
+msgid "设置切换自动对话的全局快捷键（支持后台）"
+msgstr "バックグラウンドでも有効な自動会話の切り替えホットキー"
+
+#: module/search/setting_text.py:3
+msgid "设置打开地图的按键"
+msgstr "マップを開くキー"
+
+#: module/search/setting_text.py:3
+msgid "设置打开短信的按键"
+msgstr "メッセージを開くキー"
+
+#: module/search/setting_text.py:3
+msgid "设置打开跃迁的按键"
+msgstr "跳躍を開くキー"
+
+#: module/search/setting_text.py:3
+msgid "设置暂停/继续任务的全局快捷键（支持后台，仅内置任务有效）"
+msgstr "内蔵タスクを一時停止・再開するホットキー（バックグラウンド対応）"
+
+#: module/search/setting_text.py:3
+msgid "设置游戏内使用秘技的按键"
+msgstr "秘技を使うキー"
+
+#: module/search/setting_text.py:3
+msgid "设置自动战斗的按键"
+msgstr "オート戦闘のキー"
+
+#: app/content/settings_state.py:62
+msgid "语言切换需要重建界面"
+msgstr "言語の変更時は画面を再構築します"
+
+#: module/notification/channels.py
+msgid "请填写此项"
+msgstr "この項目を入力してください"
+
+#: module/notification/channels.py
+msgid "请求头应为 JSON 对象"
+msgstr "リクエストヘッダーには JSON オブジェクトを指定してください"
+
+#: module/notification/channels.py
+msgid "请至少填写其中一项"
+msgstr "いずれか1項目以上を入力してください"
+
+#: module/notification/channels.py
+msgid "请输入完整的 HTTP 或 HTTPS 地址"
+msgstr "HTTP または HTTPS の完全なアドレスを入力してください"
+
+#: module/notification/channels.py
+msgid "请输入整数"
+msgstr "整数を入力してください"
+
+#: module/notification/channels.py
+msgid "请输入有效的 JSON"
+msgstr "有効な JSON を入力してください"
+
+#: module/notification/channels.py
+msgid "请选择列表中的选项"
+msgstr "リストから選択してください"
+
+#: module/notification/channels.py
+msgid "请选择开或关"
+msgstr "オンまたはオフを選択してください"
+
+#: module/content_pages.py:111
+msgid "资产处理"
+msgstr "資産の処理"
+
+#: module/content_pages.py:108
+msgid "资产管理"
+msgstr "資産管理"
+
+#: module/content_pages.py:23
+msgid "运行方式"
+msgstr "実行方法"
+
+#: app/content/settings_state.py:62
+msgid "运行方式需要检查任务状态"
+msgstr "実行方法を変更する前にタスクの状態を確認します"
+
+#: module/notification/results.py:12
+msgid "连接超时，请检查网络或代理"
+msgstr "接続がタイムアウトしました。ネットワークまたはプロキシを確認してください"
+
+#: app/content/backend.py
+msgid "通过 ADB 连接手机或模拟器。"
+msgstr "ADB でスマートフォンまたはエミュレーターに接続します。"
+
+#: app/content/backend.py
+msgid "通过浏览器运行云游戏。"
+msgstr "ブラウザーでクラウド版を実行します。"
+
+#: module/search/setting_text.py:3
+msgid "遇到未完成对局时，\"restart\" 结算后重新开局，\"resume\" 按配置的策略继续进度"
+msgstr "未完了の対局では restart で精算して再開し、resume で設定した戦略に従って続行します"
+
+#: module/content_pages.py:112
+msgid "遗器清理"
+msgstr "遺物整理"
+
+#: module/search/setting_text.py:3
+msgid "锄大地运行方式，可选 \"源码\"（source）或 \"集成\"（exe）"
+msgstr "フィールド周回をソース（source）または同梱版（exe）で実行"
+
+#: module/search/setting_text.py:3
+msgid "问候区自选背景；留空时使用当前主题的星轨"
+msgstr "挨拶欄の背景画像。空欄なら現在のテーマの星軌を使います"
+
+#: module/content_pages.py:60
+msgid "隐私"
+msgstr "プライバシー"
+
+#: app/content/settings_state.py:62
+msgid "需要同步系统计划任务"
+msgstr "システムのスケジュールタスクの同期が必要です"
+
+#: module/content_pages.py:79
+msgid "领取奖励"
+msgstr "報酬受け取り"
+
+#: module/content_pages.py:81
+msgid "领取项目"
+msgstr "受け取る項目"
+
+#: module/content_pages.py:57
+msgid "高级"
+msgstr "詳細設定"
+
+#: module/task_catalog.py
+msgid "，另可挑战 {count} 轮"
+msgstr "、さらに {count} ウェーブ挑戦できます"
+
+#: module/search/setting_text.py:216
+msgid "使用截图、兑换码和角色面板导出等工具。"
+msgstr "スクリーンショット、交換コード、キャラクター情報の出力などを利用できます。"
+
+#: module/search/setting_text.py:3
+msgid "切换后即时生效"
+msgstr "切り替えるとすぐに反映されます"
+
+#: module/search/setting_text.py:216
+msgid "创建、编辑和运行自定义流程。"
+msgstr "カスタムフローの作成、編集、実行ができます。"
+
+#: module/search/setting_text.py:216
+msgid "创建第一个流程"
+msgstr "最初のフローを作る"
+
+#: module/search/setting_text.py:3
+msgid "刷周积分 / 刷晋升点 / 冲职级"
+msgstr "週間ポイント / 昇進ポイント / ランク上げ"
+
+#: module/search/setting_text.py:3
+msgid "加入用户交流群"
+msgstr "ユーザーのコミュニティに参加する"
+
+#: module/search/__init__.py
+msgid "可选项包括 {items}"
+msgstr "選択肢は {items} です"
+
+#: module/search/setting_text.py:3
+msgid "向所有已启用的渠道发送测试消息。"
+msgstr "有効なすべてのチャンネルにテストメッセージを送信します。"
+
+#: module/search/setting_text.py:3
+msgid "数据保存在哪里"
+msgstr "データの保存場所"
+
+#: module/search/setting_text.py:216
+msgid "查看、导入和导出跃迁记录。"
+msgstr "跳躍履歴の閲覧、インポート、エクスポートができます。"
+
+#: module/search/setting_text.py:216
+msgid "查看各版本的改动。"
+msgstr "各バージョンの変更内容を確認できます。"
+
+#: module/search/setting_text.py:216
+msgid "查看开拓力、完整运行清单与最近结果。"
+msgstr "開拓力、完全実行の予定、最近の結果を確認できます。"
+
+#: module/search/setting_text.py:216
+msgid "查看本地后台模式与云游戏的使用条件。"
+msgstr "ローカルのバックグラウンドモードとクラウド版の利用条件を確認できます。"
+
+#: module/search/setting_text.py:216
+msgid "查看运行日志、控制任务或管理定时计划。"
+msgstr "実行ログの確認、タスクの操作、スケジュールの管理ができます。"
+
+#: module/search/setting_text.py:216
+msgid "查阅使用教程和常见问题。"
+msgstr "使い方とよくある質問を確認できます。"
+
+#: module/search/setting_text.py:216
+msgid "检查版本，访问项目主页和社区。"
+msgstr "バージョンを確認し、プロジェクトのホームページやコミュニティにアクセスできます。"
+
+#: module/search/setting_text.py:3
+msgid "管理已添加的推送渠道。"
+msgstr "追加した通知チャンネルを管理します。"
+
+#: module/search/setting_text.py:216
+msgid "管理更新源、下载代理和版本检测。"
+msgstr "更新元、ダウンロード用プロキシ、バージョン確認を管理します。"
+
+#: module/search/setting_text.py:216
+msgid "管理本地游戏账号。"
+msgstr "ローカルゲームのアカウントを管理します。"
+
+#: module/search/setting_text.py:3
+msgid "设备运行状态"
+msgstr "デバイスの動作状態"
+
+#: module/search/setting_text.py:216
+msgid "设置停止、暂停和自动对话的全局热键。"
+msgstr "停止、一時停止、自動会話のグローバルホットキーを設定します。"
+
+#: module/search/setting_text.py:216
+msgid "设置日志、启动权限和隐私选项。"
+msgstr "ログ、起動権限、プライバシー設定を変更できます。"
+
+#: module/search/setting_text.py:3
+msgid "设置通知的标题和正文。"
+msgstr "通知のタイトルと本文を設定します。"
+
+#: module/search/setting_text.py:216
+msgid "调整助手的程序与环境设置。"
+msgstr "アシスタントと実行環境を設定します。"
+
+#: module/search/setting_text.py:216
+msgid "运行前准备"
+msgstr "実行前の準備"
+
+#: module/search/setting_text.py:3
+msgid "远程一号位锄地 / 黄泉一号位锄地 / 仅获取特殊物品"
+msgstr "遠距離キャラ先頭 / 黄泉先頭 / 特殊アイテムのみ"
+
+#: module/search/setting_text.py:216
+msgid "选择任务并调整完整运行的内容。"
+msgstr "タスクを選び、完全実行に含める内容を設定します。"
+
+msgid " 任务相关的内容请到「任务」页查看。"
+msgstr " タスク別の設定は「タスク」で確認できます。"
+
+msgid "ADB"
+msgstr "ADB"
+
+msgid "HDR"
+msgstr "HDR"
+
+msgid "Windows / macOS / Linux"
+msgstr "Windows / macOS / Linux"
+
+msgid "proxy"
+msgstr "プロキシ"
+
+msgid "{count} 个渠道"
+msgstr "{count} 件のチャンネル"
+
+msgid "{count} 次"
+msgstr "{count} 回"
+
+msgid "{enabled} / {total} 已开启"
+msgstr "{total} 件中 {enabled} 件が有効"
+
+msgid "{name} 测试失败"
+msgstr "{name} のテストに失敗"
+
+msgid "{name} 测试消息已发出"
+msgstr "{name} にテストメッセージを送信しました"
+
+msgid "、"
+msgstr "、"
+
+msgid "上次发送失败：{reason}"
+msgstr "前回の送信に失敗：{reason}"
+
+msgid "上次发送成功"
+msgstr "前回の送信に成功"
+
+msgid "上次完成历战余响"
+msgstr "歴戦余韻の前回クリア"
+
+msgid "上次完成每日实训"
+msgstr "デイリー訓練の前回完了"
+
+msgid "上次完成锄大地"
+msgstr "フィールド探索の前回完了"
+
+msgid "上次拿满本周积分"
+msgstr "週間ポイントが上限に達した最終日時"
+
+msgid "上次运行模拟宇宙"
+msgstr "模擬宇宙の前回実行"
+
+msgid "不占鼠标"
+msgstr "マウスを占有しない"
+
+msgid "也匹配了：{words}"
+msgstr "関連語：{words}"
+
+msgid "仅 Windows"
+msgstr "Windows のみ"
+
+msgid "从未完成"
+msgstr "未完了"
+
+msgid "代理"
+msgstr "プロキシ"
+
+msgid "任务完成或失败时通知你。先添加一个常用的渠道，再点「测试」确认能收到。"
+msgstr "タスクの完了や失敗を通知します。チャンネルを追加し、「テスト」で受信を確認してください。"
+
+msgid "保存本地客户端的登录状态，换号时直接导入，不用每次重新登录。只支持本地客户端。"
+msgstr "ローカルクライアントのログイン状態を保存します。アカウント切り替え時は読み込むだけで、再ログインは不要です。ローカルクライアント専用です。"
+
+msgid "全部"
+msgstr "すべて"
+
+msgid "全部任务结束后要做什么，例如关机、退出小助手或运行脚本。"
+msgstr "全タスク終了後の動作を選びます。シャットダウン、アシスタントの終了、スクリプトの実行などができます。"
+
+msgid "分辨率"
+msgstr "解像度"
+
+msgid "切换分类"
+msgstr "カテゴリ切り替え"
+
+msgid "刷本"
+msgstr "周回"
+
+msgid "前往任务页 ›"
+msgstr "タスクへ ›"
+
+msgid "副本"
+msgstr "ステージ"
+
+msgid "发送测试"
+msgstr "テスト送信"
+
+msgid "可后台"
+msgstr "バックグラウンド対応"
+
+msgid "启动游戏的方式和等待时间，以及运行期间对画面和按键的调整。"
+msgstr "ゲームの起動方法と待機時間、実行中の画面やキーの設定を変更します。"
+
+msgid "和默认值不同，悬停卡片可以恢复默认"
+msgstr "初期値から変更されています。カードにポインターを合わせると元に戻せます。"
+
+msgid "在帮助中查看这项设置的说明"
+msgstr "この設定の説明をヘルプで開く"
+
+msgid "在浏览器中运行云游戏，可以无窗口运行，也能用 Docker 部署。"
+msgstr "ブラウザーでクラウドゲームを実行します。ヘッドレス実行と Docker による運用にも対応しています。"
+
+msgid "在这台电脑上运行 PC 版游戏，支持全部任务。"
+msgstr "この PC でゲームを起動します。すべてのタスクに対応しています。"
+
+msgid "差分宇宙今日已完成"
+msgstr "本日の差分宇宙クリア回数"
+
+msgid "已修改"
+msgstr "変更済み"
+
+msgid "已停用"
+msgstr "無効"
+
+msgid "已添加"
+msgstr "追加済み"
+
+msgid "已添加，点击编辑"
+msgstr "追加済み。クリックして編集"
+
+msgid "开机自启"
+msgstr "ログイン時に起動"
+
+msgid "当前系统不支持这种运行方式"
+msgstr "この OS はこの実行方法に対応していません"
+
+msgid "当前运行方式不支持这项任务，或者已有任务正在运行"
+msgstr "この実行方法では利用できないか、別のタスクが実行中です"
+
+msgid "当前配置无法识别：{error}。请重新选择运行方式。"
+msgstr "設定を認識できません：{error}。実行方法を選び直してください。"
+
+msgid "想找什么？"
+msgstr "何をお探しですか？"
+
+msgid "截屏"
+msgstr "画面キャプチャ"
+
+msgid "打开并定位"
+msgstr "結果を開く"
+
+msgid "打开开关的任务会加入「完整运行」，每项也可以单独立即运行"
+msgstr "有効にしたタスクは「完全実行」に含まれます。個別にすぐ実行することもできます。"
+
+msgid "抽卡"
+msgstr "ガチャ"
+
+msgid "挂机"
+msgstr "放置"
+
+msgid "按键"
+msgstr "キー"
+
+msgid "换个说法试试，比如用功能的名字，或者下面这些常用词："
+msgstr "機能名や、次のよく使われるキーワードで検索してください。"
+
+msgid "换个说法试试：{words}"
+msgstr "別の言葉で検索：{words}"
+
+msgid "搜索「{query}」"
+msgstr "「{query}」の検索結果"
+
+msgid "搜索功能、设置、帮助"
+msgstr "機能・設定・ヘルプを検索"
+
+msgid "搜索设置"
+msgstr "設定を検索"
+
+msgid "搜索设置、任务、帮助和工具"
+msgstr "設定・タスク・ヘルプ・ツールを検索"
+
+msgid "搜索（Ctrl+K）"
+msgstr "検索（Ctrl+K）"
+
+msgid "收起"
+msgstr "折りたたむ"
+
+msgid "无法停用这个渠道"
+msgstr "このチャンネルを無効にできません"
+
+msgid "无法启用这个渠道"
+msgstr "このチャンネルを有効にできません"
+
+msgid "无窗口"
+msgstr "ヘッドレス"
+
+msgid "更多 {count} 个"
+msgstr "さらに {count} 件"
+
+msgid "更新策略"
+msgstr "戦略を更新"
+
+msgid "最小化"
+msgstr "最小化"
+
+msgid "查看教程"
+msgstr "ガイドを開く"
+
+msgid "检查更新的时机、下载来源和代理。"
+msgstr "更新チェックのタイミング、ダウンロード元、プロキシを設定します。"
+
+msgid "正在发送测试消息……"
+msgstr "テストメッセージを送信中…"
+
+msgid "正在测试"
+msgstr "テスト中"
+
+msgid "每个任务做什么，在「任务」页设置。"
+msgstr "各タスクの内容は「タスク」で設定します。"
+
+msgid "没有恢复默认"
+msgstr "初期値に戻せませんでした"
+
+msgid "没有找到「{query}」"
+msgstr "「{query}」は見つかりませんでした"
+
+msgid "没有找到相关设置。"
+msgstr "該当する設定が見つかりませんでした。"
+
+msgid "测试消息已发出，请确认是否收到"
+msgstr "テストメッセージを送信しました。届いているか確認してください。"
+
+msgid "添加 {name}"
+msgstr "{name} を追加"
+
+msgid "添加渠道"
+msgstr "チャンネルを追加"
+
+msgid "清除记录后，下次运行会重新执行这一项"
+msgstr "記録を消去すると、次回はこの項目を再び実行します"
+
+msgid "热键"
+msgstr "ホットキー"
+
+msgid "版本信息、项目主页和社区。"
+msgstr "バージョン情報、プロジェクトのホームページ、コミュニティ。"
+
+msgid "现在无法运行"
+msgstr "現在実行できません"
+
+msgid "画面"
+msgstr "画面"
+
+msgid "界面语言、主题、总览的问候区，以及关闭和记忆窗口的方式。"
+msgstr "表示言語、テーマ、概要の挨拶エリア、ウィンドウを閉じるときの動作と位置の記憶を設定します。"
+
+msgid "等 {count} 项"
+msgstr "など計 {count} 件"
+
+msgid "筛选任务"
+msgstr "タスクを絞り込む"
+
+msgid "编辑 {name}"
+msgstr "{name} を編集"
+
+msgid "自动绑定单聊用户"
+msgstr "個別チャットの相手を自動連携"
+
+msgid "自动绑定群聊"
+msgstr "グループチャットを自動連携"
+
+msgid "自启动"
+msgstr "自動起動"
+
+msgid "设置、账号、运行记录和日志都放在数据文件夹里，可以在这里备份、恢复或导出排查包。"
+msgstr "設定、アカウント、実行履歴、ログはデータフォルダーに保存されます。ここからバックアップ、復元、診断用ファイルの出力ができます。"
+
+msgid "请到对应应用里确认是否收到"
+msgstr "受信先のアプリでメッセージを確認してください"
+
+msgid "请在这张卡片上手动修改"
+msgstr "このカードで手動変更してください"
+
+msgid "输入功能、设置或问题里的词。用平时的说法也行，比如「挂机」「体力」「刷本」。"
+msgstr "機能名や設定、困っていることを入力してください。「放置」「開拓力」「周回」などの言葉でも検索できます。"
+
+msgid "还没有添加渠道。从下面选一个你常用的，填好后点「测试」确认能收到。"
+msgstr "まだチャンネルがありません。下から選んで必要事項を入力し、「テスト」で受信を確認してください。"
+
+msgid "这个渠道不需要填写任何内容。"
+msgstr "このチャンネルには入力項目がありません。"
+
+msgid "选择游戏在哪里运行，以及小助手怎样操作它。切换后从下一次任务开始生效。"
+msgstr "ゲームの実行場所と操作方法を選びます。変更は次のタスクから反映されます。"
+
+msgid "通常不需要修改，排查问题时再来调整。"
+msgstr "通常は変更不要です。問題を調べるときに調整してください。"
+
+msgid "通过 ADB 连接手机或模拟器，支持清体力、每日实训、领奖和历战余响。"
+msgstr "ADB でスマートフォンやエミュレーターに接続し、開拓力消化、デイリー訓練、報酬受取、歴戦余韻を実行します。"
+
+msgid "部分任务"
+msgstr "一部タスク"
+
+msgid "重置"
+msgstr "リセット"
+
+msgid "随时停止、暂停任务或切换自动对话的全局快捷键，小助手在后台时也能用。"
+msgstr "アシスタントがバックグラウンドでも、グローバルホットキーでタスクの停止・一時停止や自動会話の切り替えができます。"
+
+msgid "请在「设置 → 运行方式 → 游戏路径」中选择正确的游戏文件"
+msgstr "「設定 → 実行方法 → ゲームパス」で正しいゲームファイルを選択してください。"
+
+msgid "请按提示处理后重试。仍然失败时，把运行页的日志发给开发者。"
+msgstr "案内に従って再試行してください。解決しない場合は、実行ページのログを開発者に送ってください。"
+
+msgid "工具"
+msgstr "ツール"
+
+msgid "页面"
+msgstr "ページ"
+
+msgid "“退出”会关闭游戏。需要定时运行时，请打开「运行」页的「定时任务」。"
+msgstr "「終了」はゲームを閉じます。スケジュール実行には「実行」ページの「定時タスク」を開いてください。"
