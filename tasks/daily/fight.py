@@ -8,6 +8,7 @@ from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
 from tasks.base.team import Team
 from tasks.base.pythonchecker import PythonChecker
+from utils.external_config import tool_settings
 from utils.command import subprocess_with_timeout
 import subprocess
 import sys
@@ -36,7 +37,7 @@ class Fight:
                     log.error("没有找到可用更新，请稍后再试")
                     pause_on_error()
                     sys.exit(0)
-                update_handler = UpdateHandler(url, cfg.fight_path, "Fhoe-Rail", os.path.join(cfg.fight_path, "map"))
+                update_handler = UpdateHandler(url, cfg.fight_path, "Fhoe-Rail", os.path.join(cfg.fight_path, "map"), tool_kind="fight")
                 update_handler.run()
             else:
                 log.error(f"获取更新信息失败：{response.status_code}")
@@ -44,7 +45,7 @@ class Fight:
             cfg.set_value("fight_requirements", False)
             url = FastestMirror.get_github_mirror(
                 "https://github.com/linruowuyin/Fhoe-Rail/archive/master.zip")
-            update_handler = UpdateHandler(url, cfg.fight_path, "Fhoe-Rail-master")
+            update_handler = UpdateHandler(url, cfg.fight_path, "Fhoe-Rail-master", tool_kind="fight")
             update_handler.run()
 
     @staticmethod
@@ -97,19 +98,20 @@ class Fight:
             return False
 
         if Fight.before_start():
-            # 切换队伍
-            if cfg.fight_team_enable:
-                Team.change_to(cfg.fight_team_number)
+            with tool_settings("fight", cfg.fight_path, log):
+                # 切换队伍
+                if cfg.fight_team_enable:
+                    Team.change_to(cfg.fight_team_number)
 
-            fhoe_config.auto_config()
-            log.info("开始锄大地")
-            screen.change_to('main')
+                fhoe_config.auto_config()
+                log.info("开始锄大地")
+                screen.change_to('main')
 
-            command = [os.path.join(cfg.fight_path, "Fhoe-Rail.exe")] if cfg.fight_operation_mode == "exe" else [cfg.python_exe_path, "fhoe.py"]
-            if subprocess_with_timeout(command, cfg.fight_timeout * 3600, cfg.fight_path, None if cfg.fight_operation_mode == "exe" else cfg.env):
-                cfg.save_timestamp("fight_timestamp")
-                Base.send_notification_with_screenshot(cfg.notify_template['FightCompleted'], NotificationLevel.ALL)
-                return True
+                command = [os.path.join(cfg.fight_path, "Fhoe-Rail.exe")] if cfg.fight_operation_mode == "exe" else [cfg.python_exe_path, "fhoe.py"]
+                if subprocess_with_timeout(command, cfg.fight_timeout * 3600, cfg.fight_path, None if cfg.fight_operation_mode == "exe" else cfg.env):
+                    cfg.save_timestamp("fight_timestamp")
+                    Base.send_notification_with_screenshot(cfg.notify_template['FightCompleted'], NotificationLevel.ALL)
+                    return True
 
         log.error("锄大地失败")
         log_path = os.path.join(cfg.fight_path, "logs")
@@ -119,11 +121,11 @@ class Fight:
 
     @staticmethod
     def gui():
-        if Fight.before_start():
+        if not Fight.before_start() or cfg.fight_operation_mode not in ("exe", "source"):
+            return False
+        with tool_settings("fight", cfg.fight_path, log, collect_on_exit=False):
             if cfg.fight_operation_mode == "exe":
-                if subprocess.run(["start", "Fhoe-Rail.exe", "--debug"], shell=True, check=True, cwd=cfg.fight_path):
-                    return True
-            elif cfg.fight_operation_mode == "source":
-                if subprocess.run(["start", "点这里啦.exe"], shell=True, check=True, cwd=cfg.fight_path, env=cfg.env):
-                    return True
-        return False
+                subprocess.run(["start", "Fhoe-Rail.exe", "--debug"], shell=True, check=True, cwd=cfg.fight_path)
+            else:
+                subprocess.run(["start", "点这里啦.exe"], shell=True, check=True, cwd=cfg.fight_path, env=cfg.env)
+        return True

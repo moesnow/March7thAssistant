@@ -9,15 +9,16 @@ import os
 
 
 class UpdateHandler:
-    def __init__(self, download_url, cover_folder_path, extract_file_name, delete_folder_path=None):
+    def __init__(self, download_url, cover_folder_path, extract_file_name, delete_folder_path=None, *, tool_kind=None):
         self.exe_path = os.path.abspath("./assets/binary/7za.exe")
         self.temp_path = os.path.abspath(paths.cache_dir())
         os.makedirs(self.temp_path, exist_ok=True)
         self.download_url = download_url
         self.download_file_path = os.path.join(self.temp_path, f"{os.path.basename(extract_file_name)}.zip")
-        self.cover_folder_path = cover_folder_path
+        self.cover_folder_path = os.path.abspath(cover_folder_path)
         self.extract_folder_path = os.path.join(self.temp_path, os.path.basename(extract_file_name))
-        self.delete_folder_path = delete_folder_path
+        self.delete_folder_path = os.path.abspath(delete_folder_path) if delete_folder_path else None
+        self.tool_kind = tool_kind
 
     def run(self):
         while True:
@@ -74,12 +75,21 @@ class UpdateHandler:
                 os.remove(self.download_file_path)
                 return False
 
+    def _keep_configs(self, source, names):
+        if not self.tool_kind or os.path.abspath(source) != os.path.abspath(self.extract_folder_path):
+            return []
+        current = paths.layout()
+        return [name for name in paths.EXTERNAL[self.tool_kind] if name in names and (
+            os.path.exists(os.path.join(self.cover_folder_path, name)) or current.mode != "legacy" and
+            (current.root / "external" / self.tool_kind / name).is_file())]
+
     def cover_folder(self):
         while True:
             try:
                 if self.delete_folder_path and os.path.exists(self.delete_folder_path):
                     shutil.rmtree(self.delete_folder_path)
-                shutil.copytree(self.extract_folder_path, self.cover_folder_path, dirs_exist_ok=True)
+                shutil.copytree(self.extract_folder_path, self.cover_folder_path, dirs_exist_ok=True,
+                                ignore=self._keep_configs)
                 log.info(f"覆盖完成: {self.cover_folder_path}")
                 break
             except Exception as e:

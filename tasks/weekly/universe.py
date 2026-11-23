@@ -8,6 +8,7 @@ from module.automation import auto
 from module.notification.notification import NotificationLevel
 from tasks.base.base import Base
 from tasks.base.pythonchecker import PythonChecker
+from utils.external_config import tool_settings
 from utils.command import subprocess_with_timeout
 from utils.game_key_templates import find_interact_prompt
 import subprocess
@@ -44,7 +45,7 @@ class Universe:
                     mirrorchyan_data = response.json()
                     if mirrorchyan_data["code"] == 0 and mirrorchyan_data["msg"] == "success":
                         url = mirrorchyan_data["data"]["url"]
-                        update_handler = UpdateHandler(url, cfg.universe_path, "Auto_Simulated_Universe")
+                        update_handler = UpdateHandler(url, cfg.universe_path, "Auto_Simulated_Universe", tool_kind="universe")
                         update_handler.run()
                 else:
                     try:
@@ -79,14 +80,14 @@ class Universe:
                         log.error("没有找到可用更新，请稍后再试")
                         pause_on_error()
                         sys.exit(0)
-                    update_handler = UpdateHandler(url, cfg.universe_path, "Auto_Simulated_Universe")
+                    update_handler = UpdateHandler(url, cfg.universe_path, "Auto_Simulated_Universe", tool_kind="universe")
                     update_handler.run()
                 else:
                     log.error(f"获取更新信息失败：{response.status_code}")
         elif cfg.universe_operation_mode == "source":
             cfg.set_value("universe_requirements", False)
             url = FastestMirror.get_github_mirror("https://github.com/CHNZYX/Auto_Simulated_Universe/archive/refs/heads/main.zip")
-            update_handler = UpdateHandler(url, cfg.universe_path, "Auto_Simulated_Universe-main")
+            update_handler = UpdateHandler(url, cfg.universe_path, "Auto_Simulated_Universe-main", tool_kind="universe")
             update_handler.run()
 
     @staticmethod
@@ -215,25 +216,25 @@ class Universe:
             return False
 
         if Universe.before_start():
+            with tool_settings("universe", cfg.universe_path, log):
+                if category == "divergent":
+                    asu_config.auto_config_divergent()
+                    screen.change_to('divergent_main')
+                elif category == "divergent_weekly":
+                    category = "divergent"
+                    asu_config.auto_config_divergent_weekly()
+                    screen.change_to('divergent_main')
+                else:
+                    asu_config.auto_config()
+                    screen.change_to('universe_main')
 
-            if category == "divergent":
-                asu_config.auto_config_divergent()
-                screen.change_to('divergent_main')
-            elif category == "divergent_weekly":
-                category = "divergent"
-                asu_config.auto_config_divergent_weekly()
-                screen.change_to('divergent_main')
-            else:
-                asu_config.auto_config()
-                screen.change_to('universe_main')
+                # 等待可能的周一弹窗
+                time.sleep(2)
+                # 进入主界面
+                screen.change_to('main')
 
-            # 等待可能的周一弹窗
-            time.sleep(2)
-            # 进入主界面
-            screen.change_to('main')
-
-            if Universe.start_calibration() and Universe.start_simulation(nums, save, category):
-                return True
+                if Universe.start_calibration() and Universe.start_simulation(nums, save, category):
+                    return True
 
         log.error("模拟宇宙失败")
         log_path = os.path.join(cfg.universe_path, "logs")
@@ -280,7 +281,8 @@ class Universe:
     @staticmethod
     def gui():
         if Universe.before_start():
-            if subprocess.run(["start", "gui.exe"], shell=True, check=True, cwd=cfg.universe_path, env=cfg.env):
+            with tool_settings("universe", cfg.universe_path, log, collect_on_exit=False):
+                subprocess.run(["start", "gui.exe"], shell=True, check=True, cwd=cfg.universe_path, env=cfg.env)
                 return True
         return False
 
