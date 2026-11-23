@@ -180,6 +180,13 @@ class TestTn:
 
 
 class TestLoadLanguage:
+    @pytest.fixture(autouse=True)
+    def _restore_language_state(self, monkeypatch):
+        """load_language() 直接改写模块状态；先登记原值，用例结束后还原，避免测试语言漏给后续用例。"""
+        for name in ("_current_lang", "_translation", "_fallback_translation", "_missing_logged",
+                     "_catalog_logged", "_pending_catalog_notices"):
+            monkeypatch.setattr(loc, name, getattr(loc, name))
+
     def test_load_from_locale_dir(self, tmp_path, monkeypatch, env):
         _build(tmp_path, "xx_XX", entries={"s1": "tX"})
         monkeypatch.setattr(loc, "_locale_dir", str(tmp_path))
@@ -194,6 +201,95 @@ class TestLoadLanguage:
         monkeypatch.setattr(loc, "_missing_logged", set())
         assert get_current_language() == "yy_YY"
         assert tr("any") == "any"
+
+    @staticmethod
+    def _rewrite_po(tmp_path, lang, entries, *, po_mtime, mo_mtime=None):
+        """改写 .po 并固定 .po/.mo 的修改时间（不依赖文件系统时间精度）。"""
+        import os
+        d = tmp_path / lang / "LC_MESSAGES"
+        po = polib.POFile()
+        po.metadata = {"Language": lang, "Content-Type": "text/plain; charset=UTF-8"}
+        for k, v in entries.items():
+            po.append(polib.POEntry(msgid=k, msgstr=v))
+        po.save(str(d / "march7th.po"))
+        os.utime(d / "march7th.po", (po_mtime, po_mtime))
+        if mo_mtime is not None:
+            os.utime(d / "march7th.mo", (mo_mtime, mo_mtime))
+
+    def _load(self, monkeypatch, tmp_path, lang):
+        monkeypatch.setattr(loc, "_locale_dir", str(tmp_path))
+        monkeypatch.setattr(loc, "_catalog_logged", set())
+        monkeypatch.setattr(loc, "_pending_catalog_notices", {})
+        loc.load_language(lang)
+        monkeypatch.setattr(loc, "_missing_logged", set())
+
+    @staticmethod
+    def _fake_logger(monkeypatch):
+        import sys
+        import types
+        from unittest.mock import Mock
+        fake = types.ModuleType("module.logger")
+        fake.log = Mock()
+        monkeypatch.setitem(sys.modules, "module.logger", fake)
+        return fake.log
+
+    def test_notice_before_logger_is_written_once_logger_is_ready(self, tmp_path, monkeypatch, env):
+        import sys
+        _build(tmp_path, "xx_XX", entries={"s1": "tX"})
+        (tmp_path / "xx_XX" / "LC_MESSAGES" / "march7th.mo").unlink()
+        monkeypatch.delitem(sys.modules, "module.logger", raising=False)  # app.py：先加载语言，后导入日志
+        self._load(monkeypatch, tmp_path, "xx_XX")
+        assert tr("s1") == "tX"
+        log = self._fake_logger(monkeypatch)
+        loc.flush_catalog_notices()
+        loc.load_language("xx_XX")
+        loc.flush_catalog_notices()
+        log.info.assert_called_once()
+        assert "xx_XX" in log.info.call_args.args[0]
+
+    def test_unreadable_po_is_reported_as_warning(self, tmp_path, monkeypatch, env):
+        _build(tmp_path, "xx_XX", entries={"s1": "old"})
+        self._rewrite_po(tmp_path, "xx_XX", {"s1": "new"}, po_mtime=2_000_000_000, mo_mtime=1_000_000_000)
+        monkeypatch.setattr(polib, "pofile", lambda *a, **k: (_ for _ in ()).throw(OSError("broken")))
+        log = self._fake_logger(monkeypatch)
+        self._load(monkeypatch, tmp_path, "xx_XX")
+        log.warning.assert_called_once()
+        assert "broken" in log.warning.call_args.args[0]
+        log.info.assert_not_called()
+
+    def test_source_run_reads_po_when_mo_missing(self, tmp_path, monkeypatch, env):
+        _build(tmp_path, "xx_XX", entries={"s1": "tX"})
+        (tmp_path / "xx_XX" / "LC_MESSAGES" / "march7th.mo").unlink()
+        self._load(monkeypatch, tmp_path, "xx_XX")
+        assert tr("s1") == "tX"
+
+    def test_source_run_prefers_newer_po_over_stale_mo(self, tmp_path, monkeypatch, env):
+        _build(tmp_path, "xx_XX", entries={"s1": "old"})
+        self._rewrite_po(tmp_path, "xx_XX", {"s1": "new"}, po_mtime=2_000_000_000, mo_mtime=1_000_000_000)
+        self._load(monkeypatch, tmp_path, "xx_XX")
+        assert tr("s1") == "new"
+
+    def test_up_to_date_mo_is_used_without_reading_po(self, tmp_path, monkeypatch, env):
+        _build(tmp_path, "xx_XX", entries={"s1": "compiled"})
+        self._rewrite_po(tmp_path, "xx_XX", {"s1": "unused"}, po_mtime=1_000_000_000, mo_mtime=2_000_000_000)
+        monkeypatch.setattr(polib, "pofile", lambda *a, **k: pytest.fail(".mo 未过期时不应解析 .po"))
+        self._load(monkeypatch, tmp_path, "xx_XX")
+        assert tr("s1") == "compiled"
+
+    def test_unreadable_po_falls_back_to_stale_mo(self, tmp_path, monkeypatch, env):
+        _build(tmp_path, "xx_XX", entries={"s1": "old"})
+        self._rewrite_po(tmp_path, "xx_XX", {"s1": "new"}, po_mtime=2_000_000_000, mo_mtime=1_000_000_000)
+        monkeypatch.setattr(polib, "pofile", lambda *a, **k: (_ for _ in ()).throw(OSError("broken")))
+        self._load(monkeypatch, tmp_path, "xx_XX")
+        assert tr("s1") == "old"
+
+    def test_frozen_build_never_reads_po(self, tmp_path, monkeypatch, env):
+        import sys
+        _build(tmp_path, "xx_XX", entries={"s1": "tX"})
+        (tmp_path / "xx_XX" / "LC_MESSAGES" / "march7th.mo").unlink()
+        monkeypatch.setattr(sys, "frozen", True, raising=False)
+        self._load(monkeypatch, tmp_path, "xx_XX")
+        assert tr("s1") == "s1"
 
     def test_auto_resolves_via_detect_lang(self, monkeypatch, env):
         import module.config as mcfg
