@@ -10,7 +10,8 @@ from module.screen import screen
 from tasks.base.base import Base
 from tasks.base.list_drag import drag_to_edge
 from tasks.base.task_steps import FATAL_GAME_ERRORS
-from utils.date import Date
+from module.overview.plan import EMBER_ITEMS, ember_due
+from utils.date import Date  # 与现有调用方共用的刷新时钟
 from utils.pause import pause_ctl
 from utils.wait import wait_until
 
@@ -56,11 +57,8 @@ class EmberExchange:
     AFTER_CLOSE_PAUSE = 1.2
     DIALOG_TIMEOUT = 8
     POLL_PAUSE = 0.6
-    ITEMS = (
-        EmberExchangeItem("星轨专票", "asset_ember_special_pass_enable", "asset_ember_special_pass_timestamp", 5),
-        EmberExchangeItem("星轨通票", "asset_ember_regular_pass_enable", "asset_ember_regular_pass_timestamp", 5),
-        EmberExchangeItem("命运的足迹", "asset_ember_tracks_of_destiny_enable", "asset_ember_tracks_of_destiny_timestamp", 2),
-    )
+    ITEMS = tuple(EmberExchangeItem(name, base + "_enable", base + "_timestamp", limit)
+                  for name, base, limit in EMBER_ITEMS)
 
     @classmethod
     def start(cls):
@@ -73,8 +71,7 @@ class EmberExchange:
                 continue
 
             enabled_count += 1
-            timestamp = float(cfg.get_value(item.timestamp_key, 0) or 0)
-            if Date.is_next_month_x_am(timestamp, cfg.refresh_hour):
+            if ember_due(cfg, item.timestamp_key):
                 pending_items.append(item)
             else:
                 log.info(f"「{item.display_name}」自动购买尚未刷新")

@@ -1,7 +1,7 @@
 from module.automation.automation import screenshot_retry_timeout
 from module.logger import log
 from tasks.base.task_steps import optional_reward
-from utils.date import Date
+from module.overview.plan import training_collect as can_collect, training_due as can_complete
 
 
 TARGET_ACTIVITY = 500
@@ -19,16 +19,8 @@ class TrainingCards(dict):
         self.pending_points = pending_points
 
 
-def can_complete(config, *, full_run=False):
-    return config.daily_enable and (not full_run or Date.is_next_x_am(config.last_run_timestamp, config.refresh_hour))
-
-
 def needs_action(activity, tasks):
     return activity + getattr(tasks, "pending_points", 0) < TARGET_ACTIVITY
-
-
-def can_collect(config):
-    return config.reward_enable and config.reward_quest_enable
 
 
 def full_activity_visible(lines):

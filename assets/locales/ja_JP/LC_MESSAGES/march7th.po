@@ -8579,3 +8579,175 @@ msgstr "ファイル名が既存フォルダーと重複しています：{path}
 #: utils/data_migration.py:33
 msgid "上次还原尚未完成，请在设置的「数据」标签重新选择备份文件或导入文件夹。"
 msgstr "前回の復元が完了していません。設定の「データ」タブでバックアップファイルまたはインポートするフォルダーをもう一度選んでください。"
+
+#: module/overview/plan.py:18
+msgid "三星光锥叠加"
+msgstr "星3光円錐の重畳"
+
+#: module/overview/cards.py:10
+msgid "仅检查奖励"
+msgstr "報酬のみ確認"
+
+#: module/overview/cards.py:10
+msgid "今日已完成"
+msgstr "本日完了"
+
+#: module/overview/cards.py
+msgid "体力计划 · {count} 项"
+msgstr "開拓力計画・{count} 件"
+
+#: module/overview/plan.py:18
+msgid "余烬兑换"
+msgstr "残り火交換"
+
+#: module/overview/cards.py:15
+msgid "叠加三星光锥"
+msgstr "星3光円錐を重畳"
+
+#: module/overview/plan.py:18
+msgid "合成自塑尘脂"
+msgstr "自塑樹脂を合成"
+
+#: module/overview/cards.py
+msgid "周{day}起执行"
+msgstr "週の{day}日目から実行"
+
+#: module/overview/plan.py:18
+msgid "培养目标"
+msgstr "育成目標"
+
+#: module/overview/cards.py:10
+msgid "将执行"
+msgstr "実行予定"
+
+#: module/overview/plan.py:18
+msgid "差分宇宙固定次数"
+msgstr "階差宇宙の指定回数周回"
+
+#: module/overview/plan.py:18
+msgid "差分宇宙积分奖励"
+msgstr "階差宇宙のポイント報酬"
+
+#: module/overview/cards.py:10
+msgid "当前环境不支持"
+msgstr "この環境では利用できません"
+
+#: module/overview/cards.py:15
+msgid "按配置路线运行"
+msgstr "設定したルートを巡回"
+
+#: module/overview/cards.py
+msgid "挑战第 {level} 层"
+msgstr "第 {level} 層に挑戦"
+
+#: module/overview/plan.py:18
+msgid "日常准备"
+msgstr "日課の準備"
+
+#: module/overview/plan.py:18
+msgid "日常领奖"
+msgstr "日課の報酬受取"
+
+#: module/overview/cards.py:10
+msgid "未到执行日"
+msgstr "実行日前"
+
+#: module/overview/cards.py:10
+msgid "未开启"
+msgstr "無効"
+
+#: module/overview/cards.py:10
+msgid "本周已完成"
+msgstr "今週完了"
+
+#: module/overview/cards.py:10
+msgid "本月已完成"
+msgstr "今月完了"
+
+#: module/overview/plan.py:18
+msgid "查询支援实训"
+msgstr "サポート訓練を確認"
+
+#: module/overview/cards.py:15
+msgid "检查实训活跃度"
+msgstr "訓練のアクティブ度を確認"
+
+#: module/overview/cards.py:15
+msgid "检查已开启的活动"
+msgstr "有効なイベントを確認"
+
+#: module/overview/cards.py:15
+msgid "检查支援角色需求"
+msgstr "サポートキャラの要否を確認"
+
+#: module/overview/cards.py:15
+msgid "检查新兑换码"
+msgstr "新しい交換コードを確認"
+
+#: module/overview/cards.py
+msgid "每周 {count} 次"
+msgstr "週 {count} 回"
+
+#: module/overview/cards.py
+msgid "每周积分奖励"
+msgstr "週間ポイント報酬"
+
+#: module/overview/plan.py:18
+msgid "每周遗器清理"
+msgstr "週間遺物整理"
+
+#: module/overview/cards.py
+msgid "每天 {count} 次"
+msgstr "1日 {count} 回"
+
+#: module/overview/cards.py:15
+msgid "每月合成"
+msgstr "毎月合成"
+
+#: module/overview/cards.py:15
+msgid "每月购买所选物品"
+msgstr "選択した品を毎月購入"
+
+#: module/overview/plan.py:18
+msgid "活动"
+msgstr "イベント"
+
+#: module/overview/cards.py:15
+msgid "读取培养目标"
+msgstr "育成目標を読み込む"
+
+#: module/overview/cards.py:10
+msgid "进行中"
+msgstr "進行中"
+
+#: module/overview/cards.py
+msgid "速通模式"
+msgstr "高速クリアモード"
+
+#: module/overview/cards.py
+msgid "难度 {level} · 周积分"
+msgstr "難易度 {level}・週間ポイント"
+
+#: module/overview/cards.py:15
+msgid "领取已开启的奖励"
+msgstr "有効な報酬を受け取る"
+
+#: module/overview/cards.py:24
+msgid "合成材料"
+msgstr "素材合成"
+
+#: module/overview/cards.py:24
+msgid "回忆一"
+msgstr "記憶・1"
+
+#: module/overview/cards.py:24
+msgid "支援礼盒"
+msgstr "サポートギフト"
+
+#: module/overview/cards.py:24
+msgid "试用姬子"
+msgstr "体験版の姫子"
+
+#: module/overview/cards.py
+msgid "计划次数为零"
+msgstr "予定回数は0回"

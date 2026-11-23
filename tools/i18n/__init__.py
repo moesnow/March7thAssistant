@@ -237,6 +237,8 @@ def collect_code_literals() -> tuple[set[str], set[str], int]:
 #   - 键为元组表示只取这些 dict 键对应的值，避免把图标路径、task_id 等一起登记；
 #   - 必须用 AST 读取、绝不 import —— 否则会把 PySide6 / qfluentwidgets 拖进工具链。
 TABLE_SOURCES = [
+    ("module/overview/plan.py", (("STEP_NAMES", None),)),
+    ("module/overview/cards.py", (("STATUS_TEXT", None), ("SUMMARY_TEXT", None), ("OPTIONS", None))),
     ("utils/data_migration.py", (("REASONS", None),)),
     ("module/workflow/__init__.py", (("STEP_TYPE_LABELS", None), ("CONDITION_TYPE_LABELS", None))),
     ("module/update/version_check.py", (("_CDK_ERROR_MESSAGES", None),)),

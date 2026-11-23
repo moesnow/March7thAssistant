@@ -8496,3 +8496,175 @@ msgstr "文件名与现有目录冲突：{path}"
 #: utils/data_migration.py:33
 msgid "上次还原尚未完成，请在设置的「数据」标签重新选择备份文件或导入文件夹。"
 msgstr "上次还原尚未完成，请在设置的「数据」标签重新选择备份文件或导入文件夹。"
+
+#: module/overview/plan.py:18
+msgid "三星光锥叠加"
+msgstr "三星光锥叠加"
+
+#: module/overview/cards.py:10
+msgid "仅检查奖励"
+msgstr "仅检查奖励"
+
+#: module/overview/cards.py:10
+msgid "今日已完成"
+msgstr "今日已完成"
+
+#: module/overview/cards.py
+msgid "体力计划 · {count} 项"
+msgstr "体力计划 · {count} 项"
+
+#: module/overview/plan.py:18
+msgid "余烬兑换"
+msgstr "余烬兑换"
+
+#: module/overview/cards.py:15
+msgid "叠加三星光锥"
+msgstr "叠加三星光锥"
+
+#: module/overview/plan.py:18
+msgid "合成自塑尘脂"
+msgstr "合成自塑尘脂"
+
+#: module/overview/cards.py
+msgid "周{day}起执行"
+msgstr "周{day}起执行"
+
+#: module/overview/plan.py:18
+msgid "培养目标"
+msgstr "培养目标"
+
+#: module/overview/cards.py:10
+msgid "将执行"
+msgstr "将执行"
+
+#: module/overview/plan.py:18
+msgid "差分宇宙固定次数"
+msgstr "差分宇宙固定次数"
+
+#: module/overview/plan.py:18
+msgid "差分宇宙积分奖励"
+msgstr "差分宇宙积分奖励"
+
+#: module/overview/cards.py:10
+msgid "当前环境不支持"
+msgstr "当前环境不支持"
+
+#: module/overview/cards.py:15
+msgid "按配置路线运行"
+msgstr "按配置路线运行"
+
+#: module/overview/cards.py
+msgid "挑战第 {level} 层"
+msgstr "挑战第 {level} 层"
+
+#: module/overview/plan.py:18
+msgid "日常准备"
+msgstr "日常准备"
+
+#: module/overview/plan.py:18
+msgid "日常领奖"
+msgstr "日常领奖"
+
+#: module/overview/cards.py:10
+msgid "未到执行日"
+msgstr "未到执行日"
+
+#: module/overview/cards.py:10
+msgid "未开启"
+msgstr "未开启"
+
+#: module/overview/cards.py:10
+msgid "本周已完成"
+msgstr "本周已完成"
+
+#: module/overview/cards.py:10
+msgid "本月已完成"
+msgstr "本月已完成"
+
+#: module/overview/plan.py:18
+msgid "查询支援实训"
+msgstr "查询支援实训"
+
+#: module/overview/cards.py:15
+msgid "检查实训活跃度"
+msgstr "检查实训活跃度"
+
+#: module/overview/cards.py:15
+msgid "检查已开启的活动"
+msgstr "检查已开启的活动"
+
+#: module/overview/cards.py:15
+msgid "检查支援角色需求"
+msgstr "检查支援角色需求"
+
+#: module/overview/cards.py:15
+msgid "检查新兑换码"
+msgstr "检查新兑换码"
+
+#: module/overview/cards.py
+msgid "每周 {count} 次"
+msgstr "每周 {count} 次"
+
+#: module/overview/cards.py
+msgid "每周积分奖励"
+msgstr "每周积分奖励"
+
+#: module/overview/plan.py:18
+msgid "每周遗器清理"
+msgstr "每周遗器清理"
+
+#: module/overview/cards.py
+msgid "每天 {count} 次"
+msgstr "每天 {count} 次"
+
+#: module/overview/cards.py:15
+msgid "每月合成"
+msgstr "每月合成"
+
+#: module/overview/cards.py:15
+msgid "每月购买所选物品"
+msgstr "每月购买所选物品"
+
+#: module/overview/plan.py:18
+msgid "活动"
+msgstr "活动"
+
+#: module/overview/cards.py:15
+msgid "读取培养目标"
+msgstr "读取培养目标"
+
+#: module/overview/cards.py:10
+msgid "进行中"
+msgstr "进行中"
+
+#: module/overview/cards.py
+msgid "速通模式"
+msgstr "速通模式"
+
+#: module/overview/cards.py
+msgid "难度 {level} · 周积分"
+msgstr "难度 {level} · 周积分"
+
+#: module/overview/cards.py:15
+msgid "领取已开启的奖励"
+msgstr "领取已开启的奖励"
+
+#: module/overview/cards.py:24
+msgid "合成材料"
+msgstr "合成材料"
+
+#: module/overview/cards.py:24
+msgid "回忆一"
+msgstr "回忆一"
+
+#: module/overview/cards.py:24
+msgid "支援礼盒"
+msgstr "支援礼盒"
+
+#: module/overview/cards.py:24
+msgid "试用姬子"
+msgstr "试用姬子"
+
+#: module/overview/cards.py
+msgid "计划次数为零"
+msgstr "计划次数为零"

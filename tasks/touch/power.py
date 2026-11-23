@@ -10,6 +10,7 @@ from module.automation import auto
 from module.automation.automation import screenshot_retry_timeout
 from module.automation.input_base import input_deadline, input_deadline_reached, limit_input_deadline
 from module.config import cfg
+from module.overview.plan import echo_day_due
 from module.game.adb_transport import AdbError
 from module.localization import get_raw_instance_names, tr
 from module.logger import log
@@ -694,7 +695,7 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
 
 
 def run_weekly_echo(*, borrow_for_daily=False):
-    if date.today().isoweekday() < cfg.echo_of_war_start_day_of_week:
+    if not echo_day_due(cfg, date.today()):
         log.info(f"历战余响设为周{cfg.echo_of_war_start_day_of_week}开始，跳过本次")
         return True
     name = cfg.instance_names.get(ECHO)

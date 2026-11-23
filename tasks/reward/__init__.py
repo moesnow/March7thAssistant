@@ -1,5 +1,6 @@
 from module.automation import auto
 from module.config import cfg
+from module.overview.plan import rewards_enabled
 from module.logger import log
 from module.screen import screen
 from tasks.base.task_steps import optional_reward
@@ -63,7 +64,7 @@ class RewardManager:
 
 
 def start():
-    if not cfg.reward_enable:
+    if not rewards_enabled(cfg):
         log.info("领取奖励未开启")
         return True
     return RewardManager().check_and_collect_rewards()

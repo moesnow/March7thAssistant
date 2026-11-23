@@ -3,6 +3,7 @@ from module.screen import screen
 from module.automation import auto
 from module.ocr import ocr
 from module.config import cfg
+from module.overview.plan import activity_enabled
 from tasks.base.task_steps import run_steps
 from .checkInactivity import CheckInActivity
 from .doubleactivity import DoubleActivity
@@ -65,7 +66,7 @@ class ActivityManager:
 
 
 def start(*, support=None):
-    if not cfg.activity_enable:
+    if not activity_enabled(cfg):
         log.info("活动未开启")
         return
 

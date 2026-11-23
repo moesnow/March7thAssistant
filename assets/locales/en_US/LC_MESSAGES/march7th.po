@@ -8924,3 +8924,175 @@ msgstr "A file name conflicts with an existing folder: {path}"
 #: utils/data_migration.py:33
 msgid "上次还原尚未完成，请在设置的「数据」标签重新选择备份文件或导入文件夹。"
 msgstr "The previous restore did not finish. In Settings, open the Data tab and select the backup file or import folder again."
+
+#: module/overview/plan.py:18
+msgid "三星光锥叠加"
+msgstr "Superimpose 3-star Light Cones"
+
+#: module/overview/cards.py:10
+msgid "仅检查奖励"
+msgstr "Check rewards only"
+
+#: module/overview/cards.py:10
+msgid "今日已完成"
+msgstr "Done today"
+
+#: module/overview/cards.py
+msgid "体力计划 · {count} 项"
+msgstr "Power plan · {count} entries"
+
+#: module/overview/plan.py:18
+msgid "余烬兑换"
+msgstr "Embers Exchange"
+
+#: module/overview/cards.py:15
+msgid "叠加三星光锥"
+msgstr "Superimpose 3-star Light Cones"
+
+#: module/overview/plan.py:18
+msgid "合成自塑尘脂"
+msgstr "Synthesize Self-Modeling Resin"
+
+#: module/overview/cards.py
+msgid "周{day}起执行"
+msgstr "From weekday {day}"
+
+#: module/overview/plan.py:18
+msgid "培养目标"
+msgstr "Training goals"
+
+#: module/overview/cards.py:10
+msgid "将执行"
+msgstr "Will run"
+
+#: module/overview/plan.py:18
+msgid "差分宇宙固定次数"
+msgstr "Divergent Universe run quota"
+
+#: module/overview/plan.py:18
+msgid "差分宇宙积分奖励"
+msgstr "Divergent Universe point rewards"
+
+#: module/overview/cards.py:10
+msgid "当前环境不支持"
+msgstr "Unsupported in this environment"
+
+#: module/overview/cards.py:15
+msgid "按配置路线运行"
+msgstr "Follow the configured routes"
+
+#: module/overview/cards.py
+msgid "挑战第 {level} 层"
+msgstr "Challenge stage {level}"
+
+#: module/overview/plan.py:18
+msgid "日常准备"
+msgstr "Daily preparation"
+
+#: module/overview/plan.py:18
+msgid "日常领奖"
+msgstr "Claim daily rewards"
+
+#: module/overview/cards.py:10
+msgid "未到执行日"
+msgstr "Not due yet"
+
+#: module/overview/cards.py:10
+msgid "未开启"
+msgstr "Disabled"
+
+#: module/overview/cards.py:10
+msgid "本周已完成"
+msgstr "Done this week"
+
+#: module/overview/cards.py:10
+msgid "本月已完成"
+msgstr "Done this month"
+
+#: module/overview/plan.py:18
+msgid "查询支援实训"
+msgstr "Check support training"
+
+#: module/overview/cards.py:15
+msgid "检查实训活跃度"
+msgstr "Check training activity"
+
+#: module/overview/cards.py:15
+msgid "检查已开启的活动"
+msgstr "Check enabled events"
+
+#: module/overview/cards.py:15
+msgid "检查支援角色需求"
+msgstr "Check support character needs"
+
+#: module/overview/cards.py:15
+msgid "检查新兑换码"
+msgstr "Check for new codes"
+
+#: module/overview/cards.py
+msgid "每周 {count} 次"
+msgstr "{count} runs per week"
+
+#: module/overview/cards.py
+msgid "每周积分奖励"
+msgstr "Weekly point rewards"
+
+#: module/overview/plan.py:18
+msgid "每周遗器清理"
+msgstr "Weekly relic cleanup"
+
+#: module/overview/cards.py
+msgid "每天 {count} 次"
+msgstr "{count} runs per day"
+
+#: module/overview/cards.py:15
+msgid "每月合成"
+msgstr "Monthly synthesis"
+
+#: module/overview/cards.py:15
+msgid "每月购买所选物品"
+msgstr "Buy selected items monthly"
+
+#: module/overview/plan.py:18
+msgid "活动"
+msgstr "Events"
+
+#: module/overview/cards.py:15
+msgid "读取培养目标"
+msgstr "Read training goals"
+
+#: module/overview/cards.py:10
+msgid "进行中"
+msgstr "In progress"
+
+#: module/overview/cards.py
+msgid "速通模式"
+msgstr "Speedrun mode"
+
+#: module/overview/cards.py
+msgid "难度 {level} · 周积分"
+msgstr "Difficulty {level} · Weekly points"
+
+#: module/overview/cards.py:15
+msgid "领取已开启的奖励"
+msgstr "Claim enabled rewards"
+
+#: module/overview/cards.py:24
+msgid "合成材料"
+msgstr "Synthesize materials"
+
+#: module/overview/cards.py:24
+msgid "回忆一"
+msgstr "Memory 1"
+
+#: module/overview/cards.py:24
+msgid "支援礼盒"
+msgstr "Support gift"
+
+#: module/overview/cards.py:24
+msgid "试用姬子"
+msgstr "Trial Himeko"
+
+#: module/overview/cards.py
+msgid "计划次数为零"
+msgstr "Zero runs scheduled"

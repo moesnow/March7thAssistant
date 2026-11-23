@@ -8579,3 +8579,175 @@ msgstr "파일 이름이 기존 폴더와 충돌합니다: {path}"
 #: utils/data_migration.py:33
 msgid "上次还原尚未完成，请在设置的「数据」标签重新选择备份文件或导入文件夹。"
 msgstr "이전 복원이 완료되지 않았습니다. 설정의 데이터 탭에서 백업 파일이나 가져올 폴더를 다시 선택하세요."
+
+#: module/overview/plan.py:18
+msgid "三星光锥叠加"
+msgstr "3성 광추 중첩"
+
+#: module/overview/cards.py:10
+msgid "仅检查奖励"
+msgstr "보상만 확인"
+
+#: module/overview/cards.py:10
+msgid "今日已完成"
+msgstr "오늘 완료"
+
+#: module/overview/cards.py
+msgid "体力计划 · {count} 项"
+msgstr "개척력 계획 · {count}개"
+
+#: module/overview/plan.py:18
+msgid "余烬兑换"
+msgstr "잔화 교환"
+
+#: module/overview/cards.py:15
+msgid "叠加三星光锥"
+msgstr "3성 광추 중첩"
+
+#: module/overview/plan.py:18
+msgid "合成自塑尘脂"
+msgstr "자가 변형성 레진 합성"
+
+#: module/overview/cards.py
+msgid "周{day}起执行"
+msgstr "주간 {day}일째부터 실행"
+
+#: module/overview/plan.py:18
+msgid "培养目标"
+msgstr "육성 목표"
+
+#: module/overview/cards.py:10
+msgid "将执行"
+msgstr "실행 예정"
+
+#: module/overview/plan.py:18
+msgid "差分宇宙固定次数"
+msgstr "차분화 우주 지정 횟수"
+
+#: module/overview/plan.py:18
+msgid "差分宇宙积分奖励"
+msgstr "차분화 우주 점수 보상"
+
+#: module/overview/cards.py:10
+msgid "当前环境不支持"
+msgstr "현재 환경에서 지원되지 않음"
+
+#: module/overview/cards.py:15
+msgid "按配置路线运行"
+msgstr "설정된 경로로 실행"
+
+#: module/overview/cards.py
+msgid "挑战第 {level} 层"
+msgstr "{level}층 도전"
+
+#: module/overview/plan.py:18
+msgid "日常准备"
+msgstr "일일 준비"
+
+#: module/overview/plan.py:18
+msgid "日常领奖"
+msgstr "일일 보상 수령"
+
+#: module/overview/cards.py:10
+msgid "未到执行日"
+msgstr "아직 실행일이 아님"
+
+#: module/overview/cards.py:10
+msgid "未开启"
+msgstr "꺼짐"
+
+#: module/overview/cards.py:10
+msgid "本周已完成"
+msgstr "이번 주 완료"
+
+#: module/overview/cards.py:10
+msgid "本月已完成"
+msgstr "이번 달 완료"
+
+#: module/overview/plan.py:18
+msgid "查询支援实训"
+msgstr "지원 훈련 확인"
+
+#: module/overview/cards.py:15
+msgid "检查实训活跃度"
+msgstr "훈련 활동 점수 확인"
+
+#: module/overview/cards.py:15
+msgid "检查已开启的活动"
+msgstr "활성화된 이벤트 확인"
+
+#: module/overview/cards.py:15
+msgid "检查支援角色需求"
+msgstr "지원 캐릭터 필요 여부 확인"
+
+#: module/overview/cards.py:15
+msgid "检查新兑换码"
+msgstr "새 교환 코드 확인"
+
+#: module/overview/cards.py
+msgid "每周 {count} 次"
+msgstr "주 {count}회"
+
+#: module/overview/cards.py
+msgid "每周积分奖励"
+msgstr "주간 점수 보상"
+
+#: module/overview/plan.py:18
+msgid "每周遗器清理"
+msgstr "주간 유물 정리"
+
+#: module/overview/cards.py
+msgid "每天 {count} 次"
+msgstr "하루 {count}회"
+
+#: module/overview/cards.py:15
+msgid "每月合成"
+msgstr "매월 합성"
+
+#: module/overview/cards.py:15
+msgid "每月购买所选物品"
+msgstr "선택한 아이템 매월 구매"
+
+#: module/overview/plan.py:18
+msgid "活动"
+msgstr "이벤트"
+
+#: module/overview/cards.py:15
+msgid "读取培养目标"
+msgstr "육성 목표 읽기"
+
+#: module/overview/cards.py:10
+msgid "进行中"
+msgstr "진행 중"
+
+#: module/overview/cards.py
+msgid "速通模式"
+msgstr "빠른 클리어 모드"
+
+#: module/overview/cards.py
+msgid "难度 {level} · 周积分"
+msgstr "난이도 {level} · 주간 점수"
+
+#: module/overview/cards.py:15
+msgid "领取已开启的奖励"
+msgstr "활성화된 보상 수령"
+
+#: module/overview/cards.py:24
+msgid "合成材料"
+msgstr "재료 합성"
+
+#: module/overview/cards.py:24
+msgid "回忆一"
+msgstr "기억 1"
+
+#: module/overview/cards.py:24
+msgid "支援礼盒"
+msgstr "지원 선물"
+
+#: module/overview/cards.py:24
+msgid "试用姬子"
+msgstr "체험 히메코"
+
+#: module/overview/cards.py
+msgid "计划次数为零"
+msgstr "계획 횟수 0회"

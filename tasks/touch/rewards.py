@@ -16,7 +16,7 @@ from tasks.reward.menu_alert import menu_alert
 from tasks.reward.receipt import RewardError, notify_reward
 from tasks.reward.sms import close_sms_receipt, find_thread_title, first_unblocked_thread
 from tasks.touch import daily
-from utils.date import Date
+from module.overview import plan
 from utils.image_utils import ImageUtils
 
 
@@ -365,7 +365,7 @@ def run_daily_training(*, on_summary=None):
     return daily.run(complete_training=True, on_summary=on_summary)
 
 
-def routine(*, on_summary=None, full_run=False, on_step=None):
+def routine(*, on_summary=None, full_run=False, on_step=None, only=None):
     """on_step(name, state, summary) 转发 run_steps 的步骤事件，summary 是该步的一行摘要。"""
     from tasks.touch import power
     from tasks.power.policy import SupportDemand
@@ -383,21 +383,21 @@ def routine(*, on_summary=None, full_run=False, on_step=None):
             step_summaries[name] = text
         return collect
 
-    steps = []
     demand = SupportDemand()
 
     def query_support():
         demand.pending = daily.support_demand(full_run=full_run).pending
 
-    if cfg.power_enable:
-        steps.append(("查询支援实训", query_support))
-        if cfg.echo_of_war_enable and (not full_run or Date.is_next_mon_x_am(cfg.echo_of_war_timestamp, cfg.refresh_hour)):
-            steps.append(("历战余响", lambda: power.run_weekly_echo(borrow_for_daily=demand)))
-        steps.append(("清体力", lambda: power.run(borrow_for_daily=demand, on_summary=collector("清体力"))))
-    if cfg.reward_enable:
-        steps.append(("日常领奖", claim))
-    steps.append(("每日实训", lambda: daily.run(complete_training=True, full_run=full_run,
-                                               on_summary=collector("每日实训"))))
+    actions = {
+        "support": query_support,
+        "echo": lambda: power.run_weekly_echo(borrow_for_daily=demand),
+        "power": lambda: power.run(borrow_for_daily=demand, on_summary=collector("清体力")),
+        "reward": claim,
+        "daily": lambda: daily.run(complete_training=True, full_run=full_run, on_summary=collector("每日实训")),
+    }
+    steps = plan.select_steps(plan.TOUCH, cfg, actions, touch=True, full_run=full_run, only=only)
+    if only is not None and not steps:
+        return False
 
     def report(name, state):
         on_step(name, state, step_summaries.get(name))

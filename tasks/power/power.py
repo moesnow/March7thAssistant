@@ -16,6 +16,7 @@ from tasks.power.supplement import supplement
 from tasks.power.team import restore_main
 from tasks.power.weekly_relic_cleanup import WeeklyRelicCleanup
 from utils.date import Date
+from module.overview.plan import relic_due
 
 
 MAP_POWER = (1588 / 1920, 35 / 1080, 198 / 1920, 56 / 1080)
@@ -63,12 +64,7 @@ class Power:
 
     @staticmethod
     def run_weekly_relic_cleanup():
-        if (cfg.get_value("break_down_level_four_relicset", False)
-                and Date.is_weekly_day_due(
-                    cfg.get_value("weekly_relic_cleanup_timestamp", 0),
-                    cfg.get_value("weekly_relic_cleanup_day_of_week", 1),
-                    cfg.refresh_hour,
-                )):
+        if relic_due(cfg):
             if not WeeklyRelicCleanup.run():
                 raise RuntimeError("每周遗器清理未完成")
             cfg.save_timestamp("weekly_relic_cleanup_timestamp")

@@ -6,6 +6,7 @@ from PIL import Image
 from module.automation import auto
 from module.automation.automation import screenshot_retry_timeout
 from module.config import cfg
+from module.overview.plan import support_query_enabled
 from module.localization import tr
 from module.logger import log
 from module.ocr import ocr
@@ -161,8 +162,7 @@ def needs_support():
 
 
 def support_demand(*, full_run=False):
-    pending = (can_complete(cfg, full_run=full_run) and cfg.borrow_enable and not cfg.borrow_character_enable
-               and needs_support())
+    pending = support_query_enabled(cfg, full_run=full_run) and needs_support()
     return SupportDemand(pending)
 
 

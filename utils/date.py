@@ -3,9 +3,9 @@ from datetime import datetime, timedelta
 
 class Date:
     @staticmethod
-    def is_next_x_am(timestamp, hour=4):
+    def is_next_x_am(timestamp, hour=4, *, now=None):
         dt_object = datetime.fromtimestamp(timestamp)
-        current_time = datetime.now()
+        current_time = now or datetime.now()
 
         if dt_object.hour < hour:
             next_x_am = dt_object.replace(hour=hour, minute=0, second=0, microsecond=0)
@@ -18,9 +18,9 @@ class Date:
         return False
 
     @staticmethod
-    def is_next_mon_x_am(timestamp, hour=4):
+    def is_next_mon_x_am(timestamp, hour=4, *, now=None):
         dt_object = datetime.fromtimestamp(timestamp)
-        current_time = datetime.now()
+        current_time = now or datetime.now()
 
         if dt_object.weekday() == 0 and dt_object.hour < hour:
             next_monday_x_am = dt_object.replace(hour=hour, minute=0, second=0, microsecond=0)
@@ -31,12 +31,12 @@ class Date:
         return current_time >= next_monday_x_am
 
     @staticmethod
-    def is_weekly_day_due(timestamp, day_of_week, hour=4):
+    def is_weekly_day_due(timestamp, day_of_week, hour=4, *, now=None):
         """Whether the chosen day has arrived in the current game week and has not run yet."""
         if not isinstance(day_of_week, int) or not 1 <= day_of_week <= 7:
             return False
 
-        current_time = datetime.now()
+        current_time = now or datetime.now()
         week_start = (current_time - timedelta(days=current_time.weekday())).replace(
             hour=hour, minute=0, second=0, microsecond=0
         )
@@ -48,9 +48,9 @@ class Date:
         return current_time >= scheduled_time and last_run < week_start
 
     @staticmethod
-    def is_next_month_x_am(timestamp, hour=4):
+    def is_next_month_x_am(timestamp, hour=4, *, now=None):
         dt_object = datetime.fromtimestamp(timestamp)
-        current_time = datetime.now()
+        current_time = now or datetime.now()
 
         if dt_object.day == 1 and dt_object.hour < hour:
             next_month_x_am = dt_object.replace(hour=hour, minute=0, second=0, microsecond=0)
