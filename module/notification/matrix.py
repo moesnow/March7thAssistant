@@ -91,11 +91,15 @@ class MatrixNotifier(Notifier):
             client.proxy = proxy
         # 构建消息文本
         message = title if not content else f'{title}\n{content}' if title else content
-        loop = asyncio.get_event_loop()
-        if image_io:
-            if separately_text_media:
-                loop.run_until_complete(send_text_msg(client, room_id, message))
-            loop.run_until_complete(send_text_image_msg(client, room_id, None if separately_text_media else message, image_io))
-        else:
-            # 只发送文本消息
-            loop.run_until_complete(send_text_msg(client, room_id, message))
+        async def deliver():
+            try:
+                if image_io:
+                    if separately_text_media:
+                        await send_text_msg(client, room_id, message)
+                    await send_text_image_msg(client, room_id, None if separately_text_media else message, image_io)
+                else:
+                    await send_text_msg(client, room_id, message)
+            finally:
+                await client.close()
+
+        asyncio.run(asyncio.wait_for(deliver(), timeout=60))

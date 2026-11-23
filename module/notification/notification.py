@@ -4,6 +4,7 @@ from typing import Optional
 from utils.logger.logger import Logger
 from utils.singleton import SingletonMeta
 from .notifier import Notifier
+from . import results
 
 
 class NotificationLevel:
@@ -305,14 +306,16 @@ class Notification(metaclass=SingletonMeta):
                     self.logger.info(
                         f"准备发送 {notifier_name} 通知（级别：{self._localize_level(level)}，图片：{'是' if will_send_image else '否'}）"
                     )
-                if processed_image and notifier.supports_image:
-                    if isinstance(processed_image, io.BytesIO):
-                        processed_image.seek(0)
-                    notifier.send(self.title, content, processed_image)
-                else:
-                    notifier.send(self.title, content)
+                image = processed_image if will_send_image else None
+                if isinstance(image, io.BytesIO):
+                    image.seek(0)
+                result = results.send_one(notifier, self.title, content, image)
+                results.record(notifier_name, result)
                 if self.logger:
-                    self.logger.info(f"{notifier_name} 通知发送完成")
-            except Exception as e:
+                    if result.success:
+                        self.logger.info(f"{notifier_name} 通知发送完成")
+                    else:
+                        self.logger.error(f"{notifier_name} 通知发送失败：{result.reason}")
+            except Exception as exc:
                 if self.logger:
-                    self.logger.error(f"{notifier_name} 通知发送失败: {e}")
+                    self.logger.error(f"{notifier_name} 通知处理失败：{type(exc).__name__}")

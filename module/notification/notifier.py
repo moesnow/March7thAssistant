@@ -28,6 +28,11 @@ class Notifier:
             return f"{title}\n\n{content}"
         return title or content or ""
 
+    @staticmethod
+    def failed(error):
+        from .results import SendFailure, failure_code
+        return SendFailure(failure_code(error))
+
     def _get_supports_image(self) -> bool:
         """
         确定该通知发送者是否支持发送图片。
@@ -46,3 +51,8 @@ class Notifier:
         :raises NotImplementedError: 如果子类没有实现这个方法，则抛出异常。
         """
         raise NotImplementedError("This method should be implemented by subclasses.")
+
+def accepted(response, field, expected):
+    """Some services report a rejected message in a successful HTTP response."""
+    payload = response.json()
+    return isinstance(payload, dict) and payload.get(field) == expected

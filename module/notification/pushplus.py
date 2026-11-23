@@ -2,7 +2,7 @@ import io
 from typing import Dict, Any, Optional
 import requests
 from utils.logger.logger import Logger
-from .notifier import Notifier
+from .notifier import Notifier, accepted
 
 
 class PushPlusNotifier(Notifier):
@@ -47,5 +47,7 @@ class PushPlusNotifier(Notifier):
         try:
             response = requests.post(self.BASE_URL, json=data, timeout=30)
             response.raise_for_status()
+            return accepted(response, "code", 200)
         except requests.RequestException as e:
-            self.logger.error(f"Pushplus 通知发送失败: {e}")
+            self.logger.error("Pushplus 通知发送失败")
+            return self.failed(e)

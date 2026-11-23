@@ -39,7 +39,7 @@ class KOOKNotifier(Notifier):
         }
 
         try:
-            response = requests.post(upload_url, headers=upload_headers, files=files)
+            response = requests.post(upload_url, headers=upload_headers, files=files, timeout=30)
             response.raise_for_status()
             response_data = response.json()
 
@@ -110,7 +110,7 @@ class KOOKNotifier(Notifier):
                 "content": message
             }
 
-            response = requests.post(api_url, json=payload, headers=headers)
+            response = requests.post(api_url, json=payload, headers=headers, timeout=30)
             response.raise_for_status()
             response_data = response.json()
 
@@ -131,7 +131,7 @@ class KOOKNotifier(Notifier):
                         "content": image_url
                     }
 
-                    image_response = requests.post(api_url, json=image_payload, headers=headers)
+                    image_response = requests.post(api_url, json=image_payload, headers=headers, timeout=30)
                     image_response.raise_for_status()
                     image_response_data = image_response.json()
 

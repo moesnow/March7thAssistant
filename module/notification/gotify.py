@@ -43,4 +43,5 @@ class GotifyNotifier(Notifier):
             response = requests.post(url, json=data, timeout=30)
             response.raise_for_status()
         except requests.RequestException as e:
-            self.logger.error(f"Gotify 通知发送失败: {e}")
+            self.logger.error("Gotify 通知发送失败")
+            return self.failed(e)

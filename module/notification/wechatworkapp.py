@@ -14,7 +14,7 @@ class WeChatworkappNotifier(Notifier):
         :return: 返回访问令牌字符串。
         """
         access_token_api = f"{self.base_url}/cgi-bin/gettoken?corpid={self.corpid}&corpsecret={self.corpsecret}"
-        response = requests.get(access_token_api)
+        response = requests.get(access_token_api, timeout=30)
         response.raise_for_status()
         response = response.json()
         if response['errcode'] == 0:
@@ -32,7 +32,7 @@ class WeChatworkappNotifier(Notifier):
         """
         headers = {"Content-Type": "multipart/form-data"}
         upload_api = f"{self.base_url}/cgi-bin/media/upload?access_token={self.access_token}&type={type}"
-        response = requests.post(upload_api, headers=headers, files={"media": upload_file})
+        response = requests.post(upload_api, headers=headers, files={"media": upload_file}, timeout=30)
         response.raise_for_status()
         response = response.json()
         if response['errcode'] == 0:
@@ -56,7 +56,7 @@ class WeChatworkappNotifier(Notifier):
             "safe": 0,
         }
         send_api = f"{self.base_url}/cgi-bin/message/send?access_token={self.access_token}"
-        response = requests.post(send_api, headers=headers, data=json.dumps(message))
+        response = requests.post(send_api, headers=headers, data=json.dumps(message), timeout=30)
         response.raise_for_status()
         response = response.json()
         if response['errcode'] != 0:
@@ -77,7 +77,7 @@ class WeChatworkappNotifier(Notifier):
             "safe": 0,
         }
         send_api = f"{self.base_url}/cgi-bin/message/send?access_token={self.access_token}"
-        response = requests.post(send_api, headers=headers, data=json.dumps(message))
+        response = requests.post(send_api, headers=headers, data=json.dumps(message), timeout=30)
         response.raise_for_status()
         response = response.json()
         if response['errcode'] != 0:

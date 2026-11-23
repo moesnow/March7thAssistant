@@ -2,7 +2,7 @@ import base64
 import io
 from typing import Optional
 import requests
-from .notifier import Notifier
+from .notifier import Notifier, accepted
 
 
 class GocqhttpNotifier(Notifier):
@@ -44,5 +44,7 @@ class GocqhttpNotifier(Notifier):
         try:
             response = requests.get(url, params=data, timeout=30)
             response.raise_for_status()
+            return accepted(response, "retcode", 0)
         except requests.RequestException as e:
-            self.logger.error(f"Go-cqhttp 通知发送失败: {e}")
+            self.logger.error("Go-cqhttp 通知发送失败")
+            return self.failed(e)

@@ -53,12 +53,12 @@ class SMTPNotifier(Notifier):
             msg.attach(MIMEText(body, "html", "utf-8"))
 
         if starttls:
-            smtp = smtplib.SMTP(host, port)
+            smtp = smtplib.SMTP(host, port, timeout=30)
             smtp.starttls(context=sslcontext(ssl_unverified))
         elif ssl:
-            smtp = smtplib.SMTP_SSL(host, port, context=sslcontext(ssl_unverified))
+            smtp = smtplib.SMTP_SSL(host, port, context=sslcontext(ssl_unverified), timeout=30)
         else:
-            smtp = smtplib.SMTP(host, port)
+            smtp = smtplib.SMTP(host, port, timeout=30)
         if user != '':
             smtp.login(user, password)
         smtp.sendmail(From, To, msg.as_string())

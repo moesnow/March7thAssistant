@@ -27,7 +27,7 @@ class TelegramNotifier(Notifier):
             }
             if thread_id:
                 files['message_thread_id'] = (None, thread_id)
-            response = requests.post(tgurl, files=files, proxies=proxies)
+            response = requests.post(tgurl, files=files, proxies=proxies, timeout=30)
             response.raise_for_status()
         else:
             # 只发送文本消息
@@ -38,5 +38,5 @@ class TelegramNotifier(Notifier):
             }
             if thread_id:
                 data['message_thread_id'] = thread_id
-            response = requests.post(tgurl, data=data, proxies=proxies)
+            response = requests.post(tgurl, data=data, proxies=proxies, timeout=30)
             response.raise_for_status()

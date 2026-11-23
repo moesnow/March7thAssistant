@@ -30,7 +30,7 @@ class WebhookNotifier(Notifier):
             try:
                 self.headers = json.loads(self.headers)
             except json.JSONDecodeError:
-                self.logger.warning(f"无法解析 headers JSON: {self.headers}，将使用空headers")
+                self.logger.warning("无法解析 headers JSON，将使用空 headers")
                 self.headers = {}
         
         # 解析 body_template，如果是字符串格式（支持JSON字符串）
@@ -135,8 +135,10 @@ class WebhookNotifier(Notifier):
                     response = requests.post(self.url, json=data, headers=self.headers, timeout=30)
             
             response.raise_for_status()  # 检查请求是否成功
-            self.logger.info(f"Webhook 通知发送成功: {self.url}")
-        except requests.Timeout:
-            self.logger.error(f"Webhook 通知发送超时 ({self.url})")
+            self.logger.info("Webhook 通知发送成功")
+        except requests.Timeout as e:
+            self.logger.error("Webhook 通知发送超时")
+            return self.failed(e)
         except requests.RequestException as e:
-            self.logger.error(f"Webhook 通知发送失败 ({self.url}): {e}")
+            self.logger.error("Webhook 通知发送失败")
+            return self.failed(e)

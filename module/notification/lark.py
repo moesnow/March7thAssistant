@@ -51,7 +51,7 @@ class LarkNotifier(Notifier):
             auth_response = requests.post(auth_endpoint, headers=auth_headers, json={
                 "app_id": self.params["appid"],
                 "app_secret": self.params["secret"]
-            })
+            }, timeout=30)
             auth_response.raise_for_status()
             tenant_access_token = auth_response.json()["tenant_access_token"]
 
@@ -65,7 +65,8 @@ class LarkNotifier(Notifier):
                 image_endpoint,
                 headers=image_headers,
                 data={"image_type": "message"},
-                files={"image": image_io}
+                files={"image": image_io},
+                timeout=30,
             )
             image_response.raise_for_status()
             image_key = image_response.json()["data"]["image_key"]
@@ -122,5 +123,7 @@ class LarkNotifier(Notifier):
                 "sign": self.gen_sign(timestamp, sign)
             })
         # 发送通知
-        send_response = requests.post(webhook, json=send_message)
+        send_response = requests.post(webhook, json=send_message, timeout=30)
         send_response.raise_for_status()
+        result = send_response.json()
+        return isinstance(result, dict) and result.get("code", result.get("StatusCode")) == 0

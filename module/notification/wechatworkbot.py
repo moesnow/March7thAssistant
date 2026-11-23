@@ -46,7 +46,7 @@ class WeChatWorkBotNotifier(Notifier):
         }
         
         # 发送请求
-        response = requests.post(webhook_url, json=payload)
+        response = requests.post(webhook_url, json=payload, timeout=30)
         response.raise_for_status()
         response_data = response.json()
         
@@ -72,7 +72,7 @@ class WeChatWorkBotNotifier(Notifier):
         }
         
         # 发送请求
-        response = requests.post(webhook_url, json=payload)
+        response = requests.post(webhook_url, json=payload, timeout=30)
         response.raise_for_status()
         response_data = response.json()
         

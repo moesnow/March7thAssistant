@@ -5,7 +5,7 @@ import secrets
 from typing import Dict, Any, Optional
 import requests
 from utils.logger.logger import Logger
-from .notifier import Notifier
+from .notifier import Notifier, accepted
 
 
 class BarkNotifier(Notifier):
@@ -65,8 +65,10 @@ class BarkNotifier(Notifier):
         try:
             response = requests.post(url, json=data, timeout=30)
             response.raise_for_status()
+            return accepted(response, "code", 200)
         except requests.RequestException as e:
-            self.logger.error(f"Bark 通知发送失败: {e}")
+            self.logger.error("Bark 通知发送失败")
+            return self.failed(e)
 
     def _encrypt_data(self, data: Dict[str, Any], key: str, method: str) -> Dict[str, Any]:
         """

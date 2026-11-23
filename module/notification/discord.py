@@ -61,4 +61,5 @@ class DiscordNotifier(Notifier):
             response = requests.post(self.webhook, json=data, timeout=30)
             response.raise_for_status()
         except requests.RequestException as e:
-            self.logger.error(f"Discord 通知发送失败: {e}")
+            self.logger.error("Discord 通知发送失败")
+            return self.failed(e)

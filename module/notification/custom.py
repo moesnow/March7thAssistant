@@ -66,4 +66,5 @@ class CustomNotifier(Notifier):
                 response = requests.request(method, url, data=data, timeout=30)
             response.raise_for_status()
         except requests.RequestException as e:
-            self.logger.error(f"自定义通知发送失败: {e}")
+            self.logger.error("自定义通知发送失败")
+            return self.failed(e)

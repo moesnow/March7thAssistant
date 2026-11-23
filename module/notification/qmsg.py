@@ -2,7 +2,7 @@ import io
 from typing import Dict, Any, Optional
 import requests
 from utils.logger.logger import Logger
-from .notifier import Notifier
+from .notifier import Notifier, accepted
 
 
 class QmsgNotifier(Notifier):
@@ -37,5 +37,7 @@ class QmsgNotifier(Notifier):
         try:
             response = requests.post(url, data=data, timeout=30)
             response.raise_for_status()
+            return accepted(response, "success", True)
         except requests.RequestException as e:
-            self.logger.error(f"Qmsg 通知发送失败: {e}")
+            self.logger.error("Qmsg 通知发送失败")
+            return self.failed(e)

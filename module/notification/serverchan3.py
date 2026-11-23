@@ -50,10 +50,12 @@ class ServerChanNotifier(Notifier):
 
         # 发送请求
         try:
-            response = requests.post(url, json=params, headers=headers)
+            response = requests.post(url, json=params, headers=headers, timeout=30)
             response.raise_for_status()  # 检查请求是否成功
             result = response.json()
             if result.get("code") != 0:
-                self.logger.error(f"ServerChan3 通知发送失败: {result.get('message')}")
+                self.logger.error("ServerChan3 通知发送失败")
+                return False
         except requests.RequestException as e:
-            self.logger.error(f"ServerChan3 通知发送失败: {e}")
+            self.logger.error("ServerChan3 通知发送失败")
+            return self.failed(e)

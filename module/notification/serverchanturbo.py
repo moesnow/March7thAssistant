@@ -42,6 +42,8 @@ class ServerChanTurboNotifier(Notifier):
             response.raise_for_status()
             result = response.json()
             if result.get("code") != 0:
-                self.logger.error(f"Server酱·Turbo 通知发送失败: {result.get('message')}")
+                self.logger.error("Server酱·Turbo 通知发送失败")
+                return False
         except requests.RequestException as e:
-            self.logger.error(f"Server酱·Turbo 通知发送失败: {e}")
+            self.logger.error("Server酱·Turbo 通知发送失败")
+            return self.failed(e)

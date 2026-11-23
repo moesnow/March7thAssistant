@@ -7,7 +7,7 @@ import urllib.parse
 from typing import Dict, Any, Optional
 import requests
 from utils.logger.logger import Logger
-from .notifier import Notifier
+from .notifier import Notifier, accepted
 
 
 class DingTalkNotifier(Notifier):
@@ -64,5 +64,7 @@ class DingTalkNotifier(Notifier):
         try:
             response = requests.post(url, json=data, timeout=30)
             response.raise_for_status()
+            return accepted(response, "errcode", 0)
         except requests.RequestException as e:
-            self.logger.error(f"钉钉通知发送失败: {e}")
+            self.logger.error("钉钉通知发送失败")
+            return self.failed(e)

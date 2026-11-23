@@ -2,7 +2,7 @@ import json
 import requests
 import base64
 from io import BytesIO
-from .notifier import Notifier
+from .notifier import Notifier, accepted
 
 
 class OnebotNotifier(Notifier):
@@ -55,21 +55,25 @@ class OnebotNotifier(Notifier):
                 payload_private = payload.copy()
                 payload_private["user_id"] = user_id
                 payload_private["message_type"] = message_type
-                response = requests.post(endpoint, data=json.dumps(payload_private), headers=headers)
+                response = requests.post(endpoint, data=json.dumps(payload_private), headers=headers, timeout=30)
                 response.raise_for_status()
+                return accepted(response, "retcode", 0)
             elif message_type == 'group':
                 payload_group = payload.copy()
                 payload_group["group_id"] = group_id
                 payload_group["message_type"] = message_type
-                response = requests.post(endpoint, data=json.dumps(payload_group), headers=headers)
+                response = requests.post(endpoint, data=json.dumps(payload_group), headers=headers, timeout=30)
                 response.raise_for_status()
+                return accepted(response, "retcode", 0)
             else:
                 raise ValueError("必须提供 user_id 与 group_id 其中之一")
         
         # 根据消息类型发送消息
+        deliveries = []
         if user_id:
-            post('private')
+            deliveries.append(post('private'))
         if group_id:
-            post('group')
-        if not user_id and not group_id:
-            post('error')
+            deliveries.append(post('group'))
+        if not deliveries:
+            raise ValueError("必须提供 user_id 与 group_id 其中之一")
+        return all(deliveries)
