@@ -1,13 +1,13 @@
 from utils.game_options import game_option_enabled
 from utils.desktop_twin import in_desktop_twin
 from PySide6.QtCore import Qt, QSize, QPoint, QFileSystemWatcher, Signal, QObject, QTimer, QThread, QSignalBlocker, QEvent, QVariantAnimation
-from PySide6.QtGui import QAction, QPainter
+from PySide6.QtGui import QAction, QKeySequence, QPainter, QShortcut
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsEffect, QWidget
 
 from .components.evey_decoration import EveyControlDecoration, EveyTitleDecoration
 from .common.accent import MARCH7TH_PINK, EVERNIGHT_RED, set_accent_color
 
-from qfluentwidgets import NavigationItemPosition, MSFluentWindow, SplashScreen, setThemeColor, NavigationBarPushButton, themeColor, qconfig
+from qfluentwidgets import NavigationItemPosition, FluentWindow, SplashScreen, setThemeColor, themeColor, qconfig
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import InfoBar, InfoBarIcon, InfoBarPosition, PrimaryPushButton, SystemTrayMenu, ToolTipFilter, ToolTipPosition
 from app.tools.game_starter import GameStartStatus, GameLaunchThread
@@ -20,6 +20,9 @@ from .warp_interface import WarpInterface
 from .tools_interface import ToolsInterface
 from .workflow_interface import WorkflowInterface
 from .setting_interface import SettingInterface
+from .task_interface import TaskInterface
+from .pages.accounts import AccountsInterface
+from .pages.nav_search import NavigationSearchBox
 from .log_interface import LogInterface
 from .common.signal_bus import signalBus
 from .common.evernight import EvernightEasterEgg
@@ -175,8 +178,8 @@ class EasterEggClickFilter(QObject):
         self._position_target()
 
     def _position_target(self):
-        self.hit_target.move(self.logo.x() - (self.hit_target.width() - self.logo.width()) // 2,
-                             self.logo.y() - (self.hit_target.height() - self.logo.height()) // 2)
+        self.hit_target.move(max(0, self.logo.x() - (self.hit_target.width() - self.logo.width()) // 2),
+                             max(0, self.logo.y() - (self.hit_target.height() - self.logo.height()) // 2))
         self.hit_target.raise_()
 
     def eventFilter(self, obj, event):
@@ -196,7 +199,21 @@ class EasterEggClickFilter(QObject):
         return super().eventFilter(obj, event)
 
 
-class MainWindow(MSFluentWindow):
+# 所有设置卡和任务卡都能完整显示的最小窗口尺寸，也是新安装的默认尺寸（见 config.example.yaml）。
+MIN_WINDOW_WIDTH = 1280
+MIN_WINDOW_HEIGHT = 640
+
+
+class NavIconDecoration(EveyControlDecoration):
+    """侧栏展开后按钮变宽，装饰只贴着图标那一格。"""
+
+    def _position(self):
+        rect = self._control.geometry()
+        rect.setWidth(min(rect.width(), 40))
+        self.setGeometry(rect.adjusted(*self._outsets))
+
+
+class MainWindow(FluentWindow):
     TASK_EXIT_DELAY_MS = 5000
 
     def __init__(self, task=None, exit_on_complete=False, start_minimized_to_tray=False):
@@ -281,9 +298,11 @@ class MainWindow(MSFluentWindow):
         # self.setWindowFlags(Qt.WindowCloseButtonHint)
         # self.setWindowFlags(Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint)
 
-        # 设置最小尺寸
-        min_width = 960
-        min_height = 640
+        # 设置最小尺寸：侧栏常驻展开后，这是所有设置卡和任务卡都能完整显示的最小宽度。
+        # 屏幕比它还窄时（如 1080p 屏幕 150% 缩放）以屏幕为准，卡片说明会省略显示，按钮不会溢出。
+        available = QApplication.primaryScreen().availableGeometry()
+        min_width = min(MIN_WINDOW_WIDTH, available.width())
+        min_height = min(MIN_WINDOW_HEIGHT, available.height())
         self.setMinimumWidth(min_width)
         self.setMinimumHeight(min_height)
 
@@ -298,6 +317,8 @@ class MainWindow(MSFluentWindow):
         else:
             self.resize(min_width, min_height)
 
+        # 标题栏从窗口最左边开始，给图标留出和侧栏一致的左边距。
+        self.titleBar.hBoxLayout.setContentsMargins(14, 0, 0, 0)
         easter_egg_click = EasterEggClickFilter(self.titleBar.iconLabel)
         easter_egg_click.clicked.connect(self._on_logo_clicked)
         set_application_icon(self, application_icon_path(), 'March7th Assistant')
@@ -385,10 +406,15 @@ class MainWindow(MSFluentWindow):
         badge.setStyleSheet(f"color: {themeColor().name()}; font-weight: 700;")
         badge.setCursor(Qt.CursorShape.PointingHandCursor)
         badge.clicked.connect(self._on_update_version_badge_clicked)
-        try:
-            self.titleBar.hBoxLayout.insertWidget(4, badge, 0, Qt.AlignmentFlag.AlignVCenter)
-        except Exception:
-            self.titleBar.hBoxLayout.addWidget(badge, 0, Qt.AlignmentFlag.AlignVCenter)
+        # 紧跟在标题后面。Fluent 标题栏把窗口按钮放在布局末尾，固定下标会排到关闭按钮右侧。
+        layout = self.titleBar.hBoxLayout
+        title = getattr(self.titleBar, 'titleLabel', None)
+        index = layout.indexOf(title) + 1 if title is not None else 0
+        if index > 0:
+            layout.insertSpacing(index, 12)
+            layout.insertWidget(index + 1, badge, 0, Qt.AlignmentFlag.AlignVCenter)
+        else:
+            layout.insertWidget(max(0, layout.count() - 1), badge, 0, Qt.AlignmentFlag.AlignVCenter)
         self.updateVersionBadge = badge
         return badge
 
@@ -536,8 +562,14 @@ class MainWindow(MSFluentWindow):
         self.toolsInterface = ToolsInterface(self)
         self.workflowInterface = WorkflowInterface(self)
         self.logInterface = LogInterface(self)
-        self.settingInterface = SettingInterface(self)
         self.homeInterface.attachModel(OverviewModel(self, config_changed=self.config_watcher.request_check))
+        from module.search import SearchIndex
+        self._search_popup = None
+        self.searchIndex = SearchIndex(cfg)
+        self.destroyed.connect(self.searchIndex.close)
+        self.taskInterface = TaskInterface(self)
+        self.accountsInterface = AccountsInterface(self)
+        self.settingInterface = SettingInterface(self)
 
         # 连接任务启动信号
         signalBus.startTaskSignal.connect(self._onStartTask)
@@ -552,20 +584,26 @@ class MainWindow(MSFluentWindow):
         self.logInterface.autoplotToggleRequested.connect(self._onAutoplotToggleRequested)
 
     def initNavigation(self):
+        navigation = self.navigationInterface
+        navigation.setReturnButtonVisible(False)
+        # 侧栏常驻展开：只看图标很难分辨页面。标题栏占满窗口宽度，侧栏从标题栏下方开始。
+        navigation.setMenuButtonVisible(False)
+        navigation.setExpandWidth(232)
+        navigation.panel.vBoxLayout.insertSpacing(0, 42)
+        self.searchBox = NavigationSearchBox(self)
+        navigation.addWidget('searchBox', self.searchBox, self.openSearch, NavigationItemPosition.TOP)
         self.addSubInterface(self.homeInterface, FIF.HOME, tr('总览'))
-        self.addSubInterface(self.helpInterface, FIF.BOOK_SHELF, tr('帮助'))
-        # self.addSubInterface(self.changelogInterface, FIF.UPDATE, '更新日志')
+        self.addSubInterface(self.taskInterface, FIF.CHECKBOX, tr('任务'))
+        self.addSubInterface(self.logInterface, FIF.COMMAND_PROMPT, tr('运行'))
         self.addSubInterface(self.warpInterface, FIF.SHARE, tr('抽卡记录'))
         self.addSubInterface(self.toolsInterface, FIF.DEVELOPER_TOOLS, tr('工具箱'))
         self.addSubInterface(self.workflowInterface, FIF.CODE, tr('流程编排'))
+        navigation.addSeparator()
+        self.addSubInterface(self.helpInterface, FIF.BOOK_SHELF, tr('帮助'))
+        # self.addSubInterface(self.changelogInterface, FIF.UPDATE, '更新日志')
 
-        self.navigationInterface.addWidget(
-            'startGameButton',
-            NavigationBarPushButton(FIF.PLAY, tr('启动游戏'), isSelectable=False),
-            self.startGame,
-            NavigationItemPosition.BOTTOM)
-
-        self.addSubInterface(self.logInterface, FIF.COMMAND_PROMPT, tr('日志'), position=NavigationItemPosition.BOTTOM)
+        navigation.addItem('startGameButton', FIF.PLAY, tr('启动游戏'), self.startGame, selectable=False,
+                           position=NavigationItemPosition.BOTTOM)
 
         # self.navigationInterface.addWidget(
         #     'refreshButton',
@@ -573,17 +611,18 @@ class MainWindow(MSFluentWindow):
         #     self._on_config_file_changed,
         #     NavigationItemPosition.BOTTOM)
 
-        self.navigationInterface.addWidget(
-            'avatar',
-            NavigationBarPushButton(FIF.HEART, tr('赞赏'), isSelectable=False),
+        navigation.addItem(
+            'avatar', FIF.HEART, tr('赞赏'),
             lambda: MessageBoxSupport(
                 tr('支持作者🥰'),
                 tr('此程序为免费开源项目，如果你付了钱请立刻退款\n如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕\n您的支持就是作者开发和维护项目的动力🚀'),
                 './assets/app/images/sponsor.jpg',
                 self
             ).exec(),
-            NavigationItemPosition.BOTTOM
+            selectable=False, position=NavigationItemPosition.BOTTOM
         )
+        self.addSubInterface(self.accountsInterface, FIF.PEOPLE, tr('账号'), position=NavigationItemPosition.BOTTOM)
+        self._refreshAccountNavigation()
 
         # 回调每次读取当前实例，替换设置页时不删除导航项或污染导航历史。
         self.settingInterface.setProperty('isStackedTransparent', False)
@@ -592,9 +631,12 @@ class MainWindow(MSFluentWindow):
             routeKey=self.settingInterface.objectName(), icon=FIF.SETTING, text=tr('设置'),
             onClick=lambda: self.switchTo(self.settingInterface), position=NavigationItemPosition.BOTTOM
         )
-        self._evey_settings_decoration = EveyControlDecoration(
+        self._evey_settings_decoration = NavIconDecoration(
             self.navigationInterface.widget('settingInterface'),
             'evey-decoration-upright.png', (-4, -9, 4, 3))
+        self._searchShortcut = QShortcut(QKeySequence('Ctrl+K'), self)
+        self._searchShortcut.activated.connect(self.openSearch)
+        navigation.setCollapsible(False)
 
         self.splashScreen.finish()
 
@@ -659,6 +701,18 @@ class MainWindow(MSFluentWindow):
     def navigate(self, link: str) -> bool:
         from app.navigation import navigate
         return navigate(self, link)
+
+    def resizeEvent(self, e):
+        super().resizeEvent(e)
+        # 侧栏常驻展开，标题栏从窗口最左边开始（FluentWindow 默认给收起按钮让出 46 像素）。
+        self.titleBar.move(0, 0)
+        self.titleBar.resize(self.width(), self.titleBar.height())
+
+    def openSearch(self, *_):
+        if self._search_popup is None:
+            from .search_popup import SearchPopup
+            self._search_popup = SearchPopup(self)
+        self._search_popup.open()
 
     def is_minimized_to_tray(self) -> bool:
         """是否处于最小化到托盘状态（主窗口隐藏且托盘图标可见）"""
@@ -762,6 +816,13 @@ class MainWindow(MSFluentWindow):
         from tasks.base.tasks import start_task
         start_task("main")
 
+    def _refreshAccountNavigation(self):
+        from app.content.visibility import page_visible
+        available = page_visible("accounts")
+        self.navigationInterface.widget("accountsInterface").setVisible(available)
+        if not available and self.stackedWidget.currentWidget() is self.accountsInterface:
+            self.switchTo(self.homeInterface)
+
     def refreshBackendTasks(self):
         connection = display_connection(cfg)
         changed = connection != self._backend_connection
@@ -771,6 +832,7 @@ class MainWindow(MSFluentWindow):
                 auto.reload_connection()
                 screen.reload_profile()
             self._backend_connection = connection
+        self._refreshAccountNavigation()
         self.homeInterface.refreshBackendTasks()
         self.toolsInterface.refreshBackendTasks(connection_changed=changed)
 
@@ -800,8 +862,8 @@ class MainWindow(MSFluentWindow):
         cfg.writes_suspended = active
         self._cancelTaskExit()
         self.logInterface.setDesktopTwinHosting(active)
-        for page in (self.homeInterface, self.settingInterface, self.workflowInterface,
-                     self.warpInterface, self.logInterface):
+        for page in (self.homeInterface, self.taskInterface, self.settingInterface, self.workflowInterface,
+                     self.warpInterface, self.logInterface, self.accountsInterface):
             page.setDisabled(active)
         start_game = self.navigationInterface.widget('startGameButton')
         if start_game is not None:
@@ -834,11 +896,11 @@ class MainWindow(MSFluentWindow):
         column = QVBoxLayout()
         column.setContentsMargins(0, 0, 0, 0)
         column.setSpacing(0)
-        index = self.hBoxLayout.indexOf(self.stackedWidget)
-        self.hBoxLayout.removeWidget(self.stackedWidget)
+        index = self.widgetLayout.indexOf(self.stackedWidget)
+        self.widgetLayout.removeWidget(self.stackedWidget)
         column.addLayout(noticeRow)
         column.addWidget(self.stackedWidget, 1)
-        self.hBoxLayout.insertLayout(index, column, 1)
+        self.widgetLayout.insertLayout(index, column, 1)
         self._desktop_twin_notice = notice
         self._refreshDesktopTwinIndicators()
         return notice
@@ -869,7 +931,7 @@ class MainWindow(MSFluentWindow):
             self._navigation_animation_running
             or QApplication.activeModalWidget()
             or QApplication.activePopupWidget()
-            or getattr(self.settingInterface, '_qqbotBindPending', False)
+            or getattr(getattr(self, 'notifyModel', None), 'binding_pending', False)
             or any(thread.isRunning() for thread in self.settingInterface.findChildren(QThread))
         )
 
@@ -879,6 +941,7 @@ class MainWindow(MSFluentWindow):
         was_current = self.stackedWidget.currentWidget() is old
         replacement.setProperty('isStackedTransparent', False)
         replacement.resize(old.size())
+        replacement.setDisabled(self._desktop_twin_hosting)
         animation_enabled = self.stackedWidget.isAnimationEnabled()
         try:
             with QSignalBlocker(self.stackedWidget):
@@ -909,13 +972,19 @@ class MainWindow(MSFluentWindow):
             interface.retranslateUi()
             interface.verticalScrollBar().setValue(position)
         labels = {
-            'homeInterface': tr('总览'), 'helpInterface': tr('帮助'),
+            'homeInterface': tr('总览'), 'taskInterface': tr('任务'), 'helpInterface': tr('帮助'),
             'warpInterface': tr('抽卡记录'), 'toolsInterface': tr('工具箱'),
-            'workflowInterface': tr('流程编排'), 'logInterface': tr('日志'),
+            'workflowInterface': tr('流程编排'), 'logInterface': tr('运行'), 'accountsInterface': tr('账号'),
             'settingInterface': tr('设置'), 'startGameButton': tr('启动游戏'), 'avatar': tr('赞赏'),
         }
         for route, text in labels.items():
             self.navigationInterface.widget(route).setText(text)
+        self.searchBox.setText(tr('搜索功能、设置、帮助'))
+        self.searchBox.setToolTip(tr('搜索（Ctrl+K）'))
+        if self._search_popup is not None:
+            self._search_popup.retranslateUi()
+        self.taskInterface.rebuild()
+        self.accountsInterface.retranslateUi()
         for action, text in zip(self._tray_actions, [tr('显示主界面'), tr('完整运行'), tr('设置'), tr('退出')]):
             action.setText(text)
         self._refreshDesktopTwinIndicators()
@@ -960,9 +1029,9 @@ class MainWindow(MSFluentWindow):
             # 任务/热键/配置回调不会在半替换状态下重入。
             replacement = SettingInterface(self)
             self._retranslate_persistent_interfaces()
+            self.refreshBackendTasks()
             self._replace_settings_interface(replacement, state)
             replacement = None
-            self.refreshBackendTasks()
             InfoBar.success(
                 title=tr('更新成功'), content='', orient=Qt.Horizontal,
                 isClosable=True, position=InfoBarPosition.TOP, duration=1500, parent=self
@@ -1090,8 +1159,11 @@ class MainWindow(MSFluentWindow):
 
             state = self.settingInterface.captureViewState()
             replacement = SettingInterface(self)
+            self.taskInterface.rebuild()
             self._replace_settings_interface(replacement, state)
             replacement = None
+            if self._search_popup is not None and self._search_popup.isVisible():
+                self._search_popup.open(self._search_popup.input.text())
             if display_connection(cfg) != self._backend_connection:
                 self.refreshBackendTasks()
 
@@ -1341,7 +1413,7 @@ class MainWindow(MSFluentWindow):
         elif result == GameStartStatus.LOCAL_LAUNCH_FAIL:
             InfoBar.warning(
                 title=tr('游戏路径配置错误(╥╯﹏╰╥)'),
-                content=tr("请在“设置”→“游戏连接”中配置正确的游戏路径"),
+                content=tr("请在「设置 → 运行方式 → 游戏路径」中选择正确的游戏文件"),
                 orient=Qt.Horizontal,
                 isClosable=True,
                 position=InfoBarPosition.TOP,
