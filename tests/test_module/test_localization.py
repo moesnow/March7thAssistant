@@ -195,6 +195,60 @@ class TestLoadLanguage:
         assert get_current_language() == "yy_YY"
         assert tr("any") == "any"
 
+    @staticmethod
+    def _rewrite_po(tmp_path, lang, entries, *, po_mtime, mo_mtime=None):
+        """改写 .po 并固定 .po/.mo 的修改时间（不依赖文件系统时间精度）。"""
+        import os
+        d = tmp_path / lang / "LC_MESSAGES"
+        po = polib.POFile()
+        po.metadata = {"Language": lang, "Content-Type": "text/plain; charset=UTF-8"}
+        for k, v in entries.items():
+            po.append(polib.POEntry(msgid=k, msgstr=v))
+        po.save(str(d / "march7th.po"))
+        os.utime(d / "march7th.po", (po_mtime, po_mtime))
+        if mo_mtime is not None:
+            os.utime(d / "march7th.mo", (mo_mtime, mo_mtime))
+
+    def _load(self, monkeypatch, tmp_path, lang):
+        monkeypatch.setattr(loc, "_locale_dir", str(tmp_path))
+        monkeypatch.setattr(loc, "_catalog_logged", set())
+        loc.load_language(lang)
+        monkeypatch.setattr(loc, "_missing_logged", set())
+
+    def test_source_run_reads_po_when_mo_missing(self, tmp_path, monkeypatch, env):
+        _build(tmp_path, "xx_XX", entries={"s1": "tX"})
+        (tmp_path / "xx_XX" / "LC_MESSAGES" / "march7th.mo").unlink()
+        self._load(monkeypatch, tmp_path, "xx_XX")
+        assert tr("s1") == "tX"
+
+    def test_source_run_prefers_newer_po_over_stale_mo(self, tmp_path, monkeypatch, env):
+        _build(tmp_path, "xx_XX", entries={"s1": "old"})
+        self._rewrite_po(tmp_path, "xx_XX", {"s1": "new"}, po_mtime=2_000_000_000, mo_mtime=1_000_000_000)
+        self._load(monkeypatch, tmp_path, "xx_XX")
+        assert tr("s1") == "new"
+
+    def test_up_to_date_mo_is_used_without_reading_po(self, tmp_path, monkeypatch, env):
+        _build(tmp_path, "xx_XX", entries={"s1": "compiled"})
+        self._rewrite_po(tmp_path, "xx_XX", {"s1": "unused"}, po_mtime=1_000_000_000, mo_mtime=2_000_000_000)
+        monkeypatch.setattr(polib, "pofile", lambda *a, **k: pytest.fail(".mo 未过期时不应解析 .po"))
+        self._load(monkeypatch, tmp_path, "xx_XX")
+        assert tr("s1") == "compiled"
+
+    def test_unreadable_po_falls_back_to_stale_mo(self, tmp_path, monkeypatch, env):
+        _build(tmp_path, "xx_XX", entries={"s1": "old"})
+        self._rewrite_po(tmp_path, "xx_XX", {"s1": "new"}, po_mtime=2_000_000_000, mo_mtime=1_000_000_000)
+        monkeypatch.setattr(polib, "pofile", lambda *a, **k: (_ for _ in ()).throw(OSError("broken")))
+        self._load(monkeypatch, tmp_path, "xx_XX")
+        assert tr("s1") == "old"
+
+    def test_frozen_build_never_reads_po(self, tmp_path, monkeypatch, env):
+        import sys
+        _build(tmp_path, "xx_XX", entries={"s1": "tX"})
+        (tmp_path / "xx_XX" / "LC_MESSAGES" / "march7th.mo").unlink()
+        monkeypatch.setattr(sys, "frozen", True, raising=False)
+        self._load(monkeypatch, tmp_path, "xx_XX")
+        assert tr("s1") == "s1"
+
     def test_auto_resolves_via_detect_lang(self, monkeypatch, env):
         import module.config as mcfg
         monkeypatch.setattr(mcfg.cfg, "get_value", lambda key, default=None: "auto")
