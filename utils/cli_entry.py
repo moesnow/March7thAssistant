@@ -352,10 +352,10 @@ def run_task_elevated(argv, json_output=False, detach=False, launcher=None, out=
     except OSError as e:
         if getattr(e, "winerror", None) == ERROR_CANCELLED:
             _say(out, "已取消管理员授权（UAC），任务未运行")
-            _say(out, "如需在无人确认时运行任务，可以在图形界面「设置 → 杂项」中开启「免 UAC 运行」")
+            _say(out, "如需在无人确认时运行任务，可以在图形界面「设置 → 高级」中开启「免 UAC 运行」")
         elif via_task:
             _say(out, f"免 UAC 运行未能启动任务：{e}")
-            _say(out, "可以在图形界面「设置 → 杂项」中关闭「免 UAC 运行」后重新开启；本次没有改用 UAC，避免无人确认时一直等待")
+            _say(out, "可以在图形界面「设置 → 高级」中关闭「免 UAC 运行」后重新开启；本次没有改用 UAC，避免无人确认时一直等待")
         else:
             _say(out, f"无法以管理员身份启动任务：{e}")
         if json_output:

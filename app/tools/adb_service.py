@@ -292,7 +292,7 @@ def error_guide(code, state=None):
         "ui_profile": tr("请在本页把设备后端重新选择为“Android 设备（ADB）”。"),
         "tap_duration": tr("请在“高级设置”里把点按时长改为 1 到 10000 毫秒之间的整数。"),
     }
-    return guides.get(code) or tr("请按提示处理后重试。仍然失败时，把日志页的内容发给开发者。")
+    return guides.get(code) or tr("请按提示处理后重试。仍然失败时，把运行页的日志发给开发者。")
 
 
 # ---------- 环境检查 ----------

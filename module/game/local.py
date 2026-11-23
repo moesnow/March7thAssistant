@@ -54,7 +54,7 @@ class LocalGameController(GameControllerBase):
 
         game_path = Path(self.game_path).resolve()
         if not game_path.is_file():
-            raise FileNotFoundError(tr("请在“设置”→“游戏连接”中配置正确的游戏路径"))
+            raise FileNotFoundError(tr("请在「设置 → 运行方式 → 游戏路径」中选择正确的游戏文件"))
         directory = Path(self._config.genshin_starRail_fps_unlocker_path).resolve()
         unlocker = directory / "unlocker.exe"
         if not unlocker.is_file():
@@ -62,7 +62,7 @@ class LocalGameController(GameControllerBase):
 
         registry_path = registry_path_for_game(str(game_path))
         if registry_path is None:
-            raise RuntimeError(tr("请在“设置”→“游戏连接”中配置正确的游戏路径"))
+            raise RuntimeError(tr("请在「设置 → 运行方式 → 游戏路径」中选择正确的游戏文件"))
         original = read_registry_value(winreg.HKEY_CURRENT_USER, registry_path, resolution_value_name)
         if parse_game_resolution(original) is None:
             raise RuntimeError(tr("未找到原始游戏分辨率，请先在游戏内保存分辨率设置"))

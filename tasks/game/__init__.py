@@ -740,7 +740,7 @@ def after_finish_is_loop(*, preserve_game=False):
 
     # 图形界面不支持循环模式，提前检查并退出
     if is_gui_started():
-        msg = "通过图形界面启动，程序不支持循环模式，请使用日志界面的定时运行功能"
+        msg = "图形界面启动的任务不支持循环模式。请到「运行」页配置「定时任务」。"
         log.error(msg)
         notif.flush_batch(extra_content=msg, level=NotificationLevel.ERROR)
         log.hr("完成", 2)
