@@ -33,14 +33,14 @@ def reload_config(config):
 
 def test_config_fixture_preserves_shared_instance(config):
     import module.config as config_module
-    from app import setting_interface
+    from app.content.settings import run_mode
     from app.card import comboboxsettingcard2
 
     assert config is cfg is config_module.cfg
-    assert setting_interface.cfg is cfg
+    assert run_mode.cfg is cfg
     assert comboboxsettingcard2.cfg is cfg
     config.set_value("ui_language", "ja_JP")
-    assert setting_interface.cfg.get_value("ui_language") == "ja_JP"
+    assert run_mode.cfg.get_value("ui_language") == "ja_JP"
     assert comboboxsettingcard2.cfg.get_value("ui_language") == "ja_JP"
 
 
@@ -127,24 +127,24 @@ def test_native_card_layout_and_persistence(qtbot, config, language, theme, tmp_
 @native_gui_test
 def test_settings_page_integrates_path_card(qtbot, config, monkeypatch):
     import app.setting_interface as settings
-    monkeypatch.setattr(settings, "cfg", config)
     interface = settings.SettingInterface()
     qtbot.addWidget(interface)
     interface.resize(1050, 800)
     interface.show()
-    interface.stackedWidget.setCurrentWidget(interface.GameConnectionGroup)
+    interface.showCategory("run_mode")
+    page = interface.pages["run_mode"]
     qtbot.wait(100)
-    card = interface.gamePathCard
-    assert card.parentWidget() is interface.GameConnectionGroup
+    card = page.host.gamePathCard
+    assert card.parentWidget() is page.views["local"].body
     assert card.launchMethodCard.parentWidget() is card.view
-    initial = interface.stackedWidget.height()
+    initial = card.height()
     card.setExpand(True)
     qtbot.wait(250)
     card.comboBox.setCurrentIndex(1)
     qtbot.wait(100)
-    assert interface.stackedWidget.height() > initial
-    assert interface.stackedWidget.height() >= interface.GameConnectionGroup.sizeHint().height()
+    assert card.height() > initial
+    assert page.view.height() >= page.viewport().height()
     card.setExpand(False)
     qtbot.wait(250)
     assert card.height() == card.card.height()
-    assert interface.stackedWidget.height() == initial
+    assert card.height() == initial

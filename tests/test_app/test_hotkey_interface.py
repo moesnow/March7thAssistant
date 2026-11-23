@@ -1,167 +1,77 @@
-# coding:utf-8
-"""按键设置弹窗布局测试：内容超高时必须可滚动，底部按钮保持可见可点。"""
-import sys
+"""Inline game-key and global hotkey editors, including template and detection behavior."""
+from unittest.mock import Mock
 
 import pytest
-
-pytestmark = pytest.mark.skipif(
-    sys.platform != "win32" or not hasattr(sys, 'getwindowsversion'),
-    reason="GUI 测试仅在 Windows 平台运行"
-)
+from PySide6.QtCore import Qt
+from qfluentwidgets import Theme, qconfig, setTheme
 
 
-@pytest.fixture(scope="session")
-def qapp():
+@pytest.fixture
+def settings(qtbot, page_config, content_window, monkeypatch):
+    from app.setting_interface import SettingInterface
+    monkeypatch.setattr("app.content.keys.detect_game_hotkeys", lambda _: {})
+    cfg = page_config("game_path: ''\nhotkey_message: p\n")
+    page = SettingInterface(content_window)
+    qtbot.addWidget(page)
+    page.resize(960, 640)
+    content_window.resize(page.size())
+    content_window.show()
+    page.show()
+    return page, cfg
+
+
+@pytest.mark.parametrize("theme", [Theme.LIGHT, Theme.DARK])
+def test_all_keys_accessible_in_their_scrollable_sections(settings, qtbot, theme):
+    from app.content.keys import KEY_ICONS
+    from app.card.pushsettingcard1 import PushSettingCardKey
+    from app.navigation import _CardHighlight
+    from module.settings_registry import find_setting
+    page, _ = settings
+    old = qconfig.theme
     try:
-        from PySide6.QtWidgets import QApplication
-        app = QApplication.instance()
-        if app is None:
-            app = QApplication(sys.argv)
-        return app
-    except ImportError:
-        pytest.skip("PySide6 未安装")
-
-
-@pytest.fixture
-def isolated_hotkey_config(tmp_path, monkeypatch):
-    from module.config import cfg
-
-    monkeypatch.setattr(cfg, "config", cfg.config.copy())
-    monkeypatch.setattr(cfg, "config_path", str(tmp_path / "config.yaml"))
-    monkeypatch.setattr(type(cfg), "_readonly", False)
-    monkeypatch.setitem(cfg.config, "game_path", "")
-    monkeypatch.setitem(cfg.config, "hotkey_message", "p")
-    cfg.save_config()
-    return cfg
-
-
-@pytest.fixture
-def dlg(qapp, isolated_hotkey_config):
-    # 注意：父窗口必须与弹窗同样保活，否则 GC 会连带销毁 C++ 对象
-    # 尺寸刻意贴近常见主窗口（较矮），复现「弹窗高于窗口被裁切」的场景
-    from PySide6.QtWidgets import QWidget
-    from app.sub_interfaces.hotkey_interface import HotkeyInterface
-
-    parent = QWidget()
-    parent.resize(952, 635)
-    parent.show()
-    dialog = HotkeyInterface(parent)
-    dialog.show()
-    qapp.processEvents()
-    yield dialog
-    dialog.deleteLater()
-    parent.deleteLater()
-
-
-class TestHotkeyInterfaceLayout:
-
-    def test_key_cards_are_in_scroll_area(self, dlg):
-        from PySide6.QtWidgets import QScrollArea
-        from app.card.pushsettingcard1 import PushSettingCardKey
-
-        scroll = dlg.findChild(QScrollArea)
-        assert scroll is not None
-        cards = set(scroll.widget().findChildren(PushSettingCardKey))
-        assert set(dlg.pushButton_dict.values()) <= cards
-
-    def test_dialog_fits_screen_and_buttons_visible(self, dlg):
-        from PySide6.QtWidgets import QScrollArea
-
-        scroll = dlg.findChild(QScrollArea)
-
-        # 滚动区高度有界，弹窗整体不会超出遮罩窗口（遮罩尺寸跟随父窗口）
-        assert 0 < scroll.maximumHeight() <= dlg.height()
-        assert dlg.widget.height() <= dlg.height()
-
-        # 底部确认/取消按钮必须完整落在遮罩窗口内（可点击）。
-        # 用布局算术而非 mapToGlobal：后者会被窗口实际摆放位置干扰而失真
-        widget_geo = dlg.widget.geometry()
-        buttons_geo = dlg.buttonGroup.geometry()
-        button_bottom = widget_geo.y() + buttons_geo.y() + buttons_geo.height()
-        assert button_bottom <= dlg.height()
-
-    def test_scroll_area_sized_to_content(self, dlg):
-        """滚动区必须按内容撑开：弹窗不能塌成一小条（回归：高度塌缩）。"""
-        from PySide6.QtWidgets import QScrollArea
-
-        scroll = dlg.findChild(QScrollArea)
-        # 至少同时看到两个条目（每张卡片约 70px 高）
-        assert scroll.height() >= 140
-        # 内容未超出上限时应完整可见
-        content_height = scroll.widget().minimumSizeHint().height()
-        assert scroll.height() >= min(content_height, scroll.maximumHeight())
-
-    def test_cards_not_clipped_horizontally(self, dlg):
-        """卡片不得被横向裁切（回归：滚动区宽度不足导致按钮被切掉）。"""
-        for card in dlg.pushButton_dict.values():
+        setTheme(theme, save=False)
+        for name in KEY_ICONS:
+            item = find_setting(name)
+            assert page.locate(item)
+            section = page.pages[item.page]
+            card = getattr(section.host, item.widget)
+            assert isinstance(card, PushSettingCardKey)
+            qtbot.waitUntil(lambda: card.findChild(_CardHighlight) is not None)
+            assert section.viewport().height() >= 140
+            assert card.button.isVisibleTo(page)
             assert card.width() >= card.minimumSizeHint().width()
-
-    def test_all_hotkeys_listed_including_message_and_pause(self, dlg):
-        assert set(dlg.pushButton_dict) == {
-            "hotkey_interact", "hotkey_character_details",
-            "hotkey_technique", "hotkey_map", "hotkey_warp", "hotkey_message",
-            "hotkey_auto_battle", "hotkey_stop_task", "hotkey_pause_task",
-            "hotkey_toggle_autoplot",
-        }
+            assert section.viewport().rect().contains(card.mapTo(section.viewport(), card.rect().center()))
+    finally:
+        setTheme(old, save=False)
 
 
-@pytest.mark.parametrize("confirm", [True, False])
-def test_detected_keys_preview_and_toggle_confirm_or_cancel(
-    qapp, qtbot, isolated_hotkey_config, monkeypatch, confirm,
-):
-    from unittest.mock import Mock
-
-    from PySide6.QtCore import Qt
-    from PySide6.QtWidgets import QWidget
-    from app.sub_interfaces import hotkey_interface as module
-
-    cfg = isolated_hotkey_config
-    flag = module.AUTO_DETECT_GAME_HOTKEYS
-    cfg.config.pop(flag, None)
+def test_detected_keys_show_source_and_release_manual_editor(settings, monkeypatch, qtbot):
+    from app.content import keys
+    page, cfg = settings
+    host = page.pages["game"].host
     cfg.set_value("hotkey_map", "n")
-    detect = Mock(return_value={"hotkey_map": "space"})
-    monkeypatch.setattr(module, "detect_game_hotkeys", detect)
-    parent = QWidget()
-    parent.resize(952, 635)
-    qtbot.addWidget(parent)
-    parent.show()
-    dialog = module.HotkeyInterface(parent)
-    qtbot.addWidget(dialog)
-    dialog.show()
-    qapp.processEvents()
-
-    switch = dialog.auto_detect_switch
-    map_card = dialog.pushButton_dict["hotkey_map"]
-    assert dialog._scroll.widget().layout().itemAt(0).widget() is switch.parentWidget()
-    assert switch.isChecked()
-    assert map_card.contentLabel.text() == "Space"
-    assert map_card.button.isHidden()
-    for name in ("hotkey_message", "hotkey_stop_task"):
-        assert not dialog.pushButton_dict[name].button.isHidden()
-    detect.assert_called_once_with(cfg)
-
-    qtbot.mouseClick(switch.indicator, Qt.MouseButton.LeftButton)
-    assert not switch.isChecked()
-    assert map_card.contentLabel.text() == "N"
-    assert not map_card.button.isHidden()
-    assert cfg.get_value(flag, True)
-
-    qtbot.mouseClick(dialog.yesButton if confirm else dialog.cancelButton, Qt.MouseButton.LeftButton)
-    qtbot.waitUntil(dialog.isHidden, timeout=2000)
-    cfg._load_config(save=False)
-    assert cfg.get_value(flag, True) is (not confirm)
-    assert cfg.get_value("hotkey_map") == "n"
+    monkeypatch.setattr(keys, "detect_game_hotkeys", lambda _: {"hotkey_map": "space"})
+    switch = host.auto_detect_game_hotkeys_enableCard.switchButton
+    switch.setChecked(True)
+    assert cfg.auto_detect_game_hotkeys_enable
+    assert host.hotkey_mapCard.contentLabel.text() == "Space"
+    assert host.hotkey_mapCard.button.isHidden()
+    assert not page.pages["hotkeys"].host.hotkey_stop_taskCard.button.isHidden()
+    switch.setChecked(False)
+    assert not cfg.auto_detect_game_hotkeys_enable
+    assert host.hotkey_mapCard.contentLabel.text() == "N"
+    assert not host.hotkey_mapCard.button.isHidden()
 
 
 @pytest.mark.parametrize("name, original", [
     ("hotkey_interact", "f"),
     ("hotkey_character_details", "c"),
 ])
-def test_prompt_hotkey_rejects_keys_without_templates(dlg, isolated_hotkey_config, qtbot, name, original):
+def test_prompt_hotkey_rejects_keys_without_templates(settings, qtbot, name, original):
     from PySide6.QtCore import Qt
 
-    card = dlg.pushButton_dict[name]
-    cfg = isolated_hotkey_config
+    page, cfg = settings
+    card = getattr(page.pages["game"].host, name + "Card")
     qtbot.mousePress(card.button, Qt.MouseButton.LeftButton)
     qtbot.keyClick(card, Qt.Key.Key_Left)
     assert cfg.get_value(name) == original
@@ -179,155 +89,22 @@ def test_prompt_hotkey_rejects_keys_without_templates(dlg, isolated_hotkey_confi
     qtbot.mouseRelease(card.button, Qt.MouseButton.LeftButton)
 
 
-class TestMessageHotkey:
-    @pytest.mark.parametrize("confirm, expected", [(True, "k"), (False, "p")])
-    def test_edit_confirm_or_cancel_and_reopen(
-        self, dlg, isolated_hotkey_config, qtbot, confirm, expected
-    ):
-        from PySide6.QtCore import Qt
-        from app.sub_interfaces.hotkey_interface import HotkeyInterface
-
-        cfg = isolated_hotkey_config
-        card = dlg.pushButton_dict["hotkey_message"]
-        assert card.contentLabel.text() == "P"
+def test_edit_is_saved_and_reopening_keeps_the_new_key(settings, qtbot, monkeypatch):
+    from app.setting_interface import SettingInterface
+    from app.common.signal_bus import signalBus
+    page, cfg = settings
+    page.showCategory("game")
+    card = page.pages["game"].host.hotkey_messageCard
+    assert card.contentLabel.text() == "P"
+    with qtbot.waitSignal(signalBus.hotkeyChangedSignal):
         qtbot.mousePress(card.button, Qt.MouseButton.LeftButton)
         qtbot.keyClick(card, Qt.Key.Key_K)
         qtbot.mouseRelease(card.button, Qt.MouseButton.LeftButton)
-        assert cfg.get_value("hotkey_message") == "k"
-        assert card.contentLabel.text() == "K"
-
-        qtbot.mouseClick(
-            dlg.yesButton if confirm else dlg.cancelButton,
-            Qt.MouseButton.LeftButton,
-        )
-        qtbot.waitUntil(dlg.isHidden, timeout=2000)
-
-        cfg._load_config()
-        assert cfg.get_value("hotkey_message") == expected
-        reopened = HotkeyInterface(dlg.parentWidget())
-        qtbot.addWidget(reopened)
-        reopened.show()
-        assert reopened.pushButton_dict["hotkey_message"].contentLabel.text() == expected.upper()
-
-
-class TestHotkeyCancelRestore:
-    """取消按钮的配置恢复：无改动不落盘，有改动批量一次落盘（回归：逐项保存导致取消卡顿）。"""
-
-    def test_cancel_without_changes_does_not_write_config(self, dlg, monkeypatch):
-        from module.config import cfg
-
-        saves = []
-        monkeypatch.setattr(cfg, 'save_config', lambda: saves.append(1))
-        dlg._onCancelClicked()
-        assert saves == []
-
-    def test_cancel_restores_changed_value_with_single_save(self, dlg, monkeypatch):
-        from module.config import cfg
-
-        saves = []
-        monkeypatch.setattr(cfg, 'save_config', lambda: saves.append(1))
-        original = dlg.backup_config['hotkey_pause_task']
-        cfg.config['hotkey_pause_task'] = 'f7'  # 模拟弹窗内改键（仅内存，未落盘）
-
-        dlg._onCancelClicked()
-
-        assert cfg.get_value('hotkey_pause_task') == original
-        assert len(saves) == 1  # 批量恢复，只落盘一次
-
-    def test_set_values_batches_into_one_save(self, monkeypatch):
-        from module.config import cfg
-
-        saves = []
-        monkeypatch.setattr(cfg, 'save_config', lambda: saves.append(1))
-        # 用原值回写，只验证「批量一次落盘」语义，不改变配置内容
-        cfg.set_values({
-            'hotkey_map': cfg.get_value('hotkey_map'),
-            'hotkey_warp': cfg.get_value('hotkey_warp'),
-        })
-        assert len(saves) == 1
-
-
-class TestHotkeyDialogAnimation:
-    """开关动画：效果分体挂载（回归：整窗挂效果导致列表内容动画结束时突兀闪现）。"""
-
-    def _pump(self, qapp, seconds):
-        import time
-        t0 = time.monotonic()
-        while time.monotonic() - t0 < seconds:
-            qapp.processEvents()
-            time.sleep(0.005)
-
-    def test_fade_uses_split_effects_not_window_wide(self, dlg, qapp):
-        # 钉住一个长动画，稳定断言效果挂载位置
-        dlg._start_fade(0.5, 0.5, 5000, None)
-        # 整窗挂效果是 bug 根源，绝不能出现
-        assert dlg.graphicsEffect() is None
-        # 外壳与列表内容各自带透明度效果
-        assert dlg.widget.graphicsEffect() is not None
-        assert dlg._scroll.widget().graphicsEffect() is not None
-
-        dlg._stop_fade()
-        # 动画收尾后效果清理、内容框投影恢复
-        assert dlg._scroll.widget().graphicsEffect() is None
-        assert dlg.widget.graphicsEffect() is not None
-
-    def test_done_fades_out_then_closes(self, dlg, qapp):
-        import time
-        self._pump(qapp, 0.5)  # 等淡入完成
-
-        t0 = time.monotonic()
-        dlg._onCancelClicked()
-        while not dlg.isHidden() and time.monotonic() - t0 < 2.0:
-            qapp.processEvents()
-            time.sleep(0.005)
-
-        assert dlg.isHidden()  # 动画结束后真正关闭
-        assert time.monotonic() - t0 < 2.0
-
-
-class TestHotkeyScrollBackground:
-    """滚动区底色必须与面板同色（回归：内容容器自填 #1e1e1e，与外框割裂）。"""
-
-    def _pump(self, qapp, seconds):
-        import time
-        t0 = time.monotonic()
-        while time.monotonic() - t0 < seconds:
-            qapp.processEvents()
-            time.sleep(0.01)
-
-    @pytest.mark.parametrize("theme_name", ["light", "dark"])
-    def test_scroll_bg_matches_panel(self, qapp, theme_name):
-        from PySide6.QtCore import QPoint
-        from PySide6.QtWidgets import QWidget
-        from qfluentwidgets import Theme, qconfig, setTheme
-
-        from app.sub_interfaces.hotkey_interface import HotkeyInterface
-
-        old_theme = qconfig.theme
-        setTheme(Theme.LIGHT if theme_name == "light" else Theme.DARK)
-        parent = QWidget()
-        try:
-            parent.resize(952, 635)
-            parent.show()
-            dlg = HotkeyInterface(parent)
-            dlg.show()
-            self._pump(qapp, 0.6)  # 等淡入动画结束（opacity 回到 1）再采样
-
-            img = dlg.grab().toImage()
-            cards = list(dlg.pushButton_dict.values())
-            # 卡片之间的缝隙（滚动区底色透出点）
-            p_gap = cards[1].mapTo(dlg, QPoint(20, -2))
-            # 滚动区之外的面板底色（按钮区上方）
-            p_panel = QPoint(dlg.widget.x() + dlg.widget.width() // 2,
-                             dlg.widget.y() + dlg.buttonGroup.y() - 12)
-            c_gap = img.pixelColor(p_gap)
-            c_panel = img.pixelColor(p_panel)
-            delta = max(abs(c_gap.red() - c_panel.red()),
-                        abs(c_gap.green() - c_panel.green()),
-                        abs(c_gap.blue() - c_panel.blue()))
-            assert delta <= 2, f"{theme_name} 主题下滚动区底色 {c_gap.name()} 与面板 {c_panel.name()} 不一致"
-
-            dlg.deleteLater()
-        finally:
-            parent.deleteLater()
-            setTheme(old_theme)
+    cfg._load_config(save=False)
+    assert cfg.hotkey_message == "k"
+    save = Mock()
+    monkeypatch.setattr(cfg, "save_config", save)
+    reopened = SettingInterface(page.window_)
+    qtbot.addWidget(reopened)
+    assert reopened.pages["game"].host.hotkey_messageCard.contentLabel.text() == "K"
+    save.assert_not_called()

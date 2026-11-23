@@ -8,6 +8,7 @@ import pytest
 from ruamel.yaml import YAML
 
 from module.navigation import parse_link
+from module.task_catalog import step_page
 from module.overview import cards, history, readings
 from module.overview.samples import sample_snapshot, _Config
 from module.overview.snapshot import build_snapshot, make_greeting, time_greeting
@@ -24,7 +25,7 @@ def test_every_sample_is_complete(state, pose):
     assert sample.greeting.state == state and sample.greeting.mascot == "chibi_" + pose
     assert len(sample.shortcuts) == 4
     for row in sample.plan:
-        assert len(row.summary) <= 16 and find_setting(parse_link(row.link)[1])
+        assert len(row.summary) <= 16 and parse_link(row.link) == ("task", step_page(row.id), "")
     for check in sample.checks:
         assert find_setting(parse_link(check.link)[1])
     if state == "running":

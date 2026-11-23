@@ -3,6 +3,8 @@ from copy import deepcopy
 from pathlib import Path
 from unittest.mock import Mock
 
+import sys
+
 import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon, QPixmap
@@ -224,18 +226,27 @@ def test_default_size_memory_and_navigation(window_size_case, window):
     assert window.height() == window_size_case
     assert window.minimumHeight() == 640
     navigation = window.navigationInterface
+    routes = ('searchBox', 'homeInterface', 'taskInterface', 'logInterface', 'warpInterface',
+              'toolsInterface', 'workflowInterface', 'helpInterface', 'startGameButton', 'avatar',
+              'accountsInterface', 'settingInterface')
+    assert tuple(navigation.panel.items) == routes
     rectangles = []
-    for route in ('homeInterface', 'helpInterface', 'warpInterface', 'toolsInterface', 'workflowInterface',
-                  'startGameButton', 'logInterface', 'avatar', 'settingInterface'):
+    for route in routes:
         widget = navigation.widget(route)
+        if route == 'accountsInterface' and sys.platform != 'win32':
+            assert widget.isHidden()
+            continue
+        assert widget.isVisible() and widget.visibleRegion().boundingRect() == widget.rect(), route
         rectangle = widget.rect().translated(widget.mapTo(navigation, widget.rect().topLeft()))
         assert navigation.rect().contains(rectangle), route
+        hit = navigation.childAt(rectangle.center())
+        assert hit is widget or widget.isAncestorOf(hit), route
         # Upstream's compact layout permits touching/overlapping button edges;
         # each entry must remain fully visible with an unobstructed click center.
         assert not any(rectangle.contains(other.center()) or other.contains(rectangle.center())
                        for other in rectangles), route
         rectangles.append(rectangle)
-    assert 'themeButton' not in navigation.items
+    assert 'themeButton' not in navigation.panel.items
 
 
 def test_overview_mascot_and_window_icon_follow_regular_themes(window):

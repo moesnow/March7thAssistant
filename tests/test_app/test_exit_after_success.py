@@ -118,7 +118,7 @@ def test_old_config_defaults_off_and_new_setting_persists_independently(tmp_path
 def test_setting_switch_does_not_replace_exit_game(exit_window):
     from module.config import cfg
 
-    card = exit_window.settingInterface.exitAppAfterSuccess
+    card = exit_window.settingInterface.pages["after_run"].host.exitAppAfterSuccess
     assert card.configname == "exit_app_after_success"
     assert card.switchButton.isChecked()
     card.switchButton.setChecked(False)

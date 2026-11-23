@@ -57,27 +57,21 @@ def test_desktop_twin_manual_launch_skips_battle_setting_write():
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="原生设置界面仅在 Windows 验证")
-def test_grouping_toggle_and_enable_dialog(qtbot, tmp_path, monkeypatch):
+def test_grouping_toggle_and_enable_dialog(qtbot, tmp_path, monkeypatch, page_config, content_window):
     import app.setting_interface as settings
-    import app.card.switchsettingcard1 as switches
-    path = tmp_path / "config.yaml"
-    path.write_text("auto_battle_detect_enable: false\nauto_set_resolution_enable: true\n", encoding="utf-8")
-    cfg = Config.__new__(Config)
-    Config.__init__(cfg, "assets/config/version.txt", "assets/config/config.example.yaml", str(path))
-    monkeypatch.setattr("module.config.cfg", cfg)
-    monkeypatch.setattr(settings, "cfg", cfg)
-    monkeypatch.setattr(switches, "cfg", cfg)
+    from app.content.settings import game
+    cfg = page_config("auto_battle_detect_enable: false\nauto_set_resolution_enable: true\n")
     dialog = Mock()
     dialog.exec.return_value = False
     factory = Mock(return_value=dialog)
-    monkeypatch.setattr(settings, "MessageBox", factory)
-    interface = settings.SettingInterface()
-    qtbot.addWidget(interface)
+    monkeypatch.setattr(game, "MessageBox", factory)
+    page = settings.SettingInterface(content_window)
+    page.showCategory("game")
+    interface = page.pages["game"].host
     master = interface.gameOptimizationCard
     children = [interface.autoBattleDetectEnableCard, interface.autoSetResolutionEnableCard,
                 interface.autoLowerGraphicsCard]
-    assert children[0].parentWidget() is interface.MiscGroup
-    assert all(child.parentWidget() is interface.GameConnectionGroup for child in children[1:])
+    assert all(page.pages["game"].views["optimization"].isAncestorOf(child) for child in children)
     assert [child.switchButton.isChecked() for child in children] == [False, True, False]
     master.switchButton.setChecked(False)
     assert all(not child.isEnabled() for child in children)
@@ -96,15 +90,14 @@ def test_grouping_toggle_and_enable_dialog(qtbot, tmp_path, monkeypatch):
     assert factory.call_count == 2  # 关闭不弹窗，取消也不产生重入。
 
     # 原生 Qt 布局与绘制，确认展开区域和说明弹窗不裁切。
-    from PySide6.QtWidgets import QWidget, QVBoxLayout
+    from PySide6.QtWidgets import QVBoxLayout
     from qfluentwidgets import MessageBox
-    preview = QWidget()
-    qtbot.addWidget(preview)
-    QVBoxLayout(preview).addWidget(interface.GameConnectionGroup)
+    preview = content_window
+    QVBoxLayout(preview).addWidget(page)
     preview.resize(1120, 680)
     preview.show()
     qtbot.wait(350)
-    assert interface.GameConnectionGroup.grab().save(str(tmp_path / "graphics-options.png"))
+    assert page.grab().save(str(tmp_path / "graphics-options.png"))
     actual = MessageBox(factory.call_args.args[0], factory.call_args.args[1], preview)
     actual.yesButton.setText(dialog.yesButton.setText.call_args.args[0])
     actual.cancelButton.setText(dialog.cancelButton.setText.call_args.args[0])

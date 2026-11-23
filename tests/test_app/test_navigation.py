@@ -1,54 +1,31 @@
 import sys
-from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 from PySide6.QtCore import QPoint, Qt
 from PySide6.QtWidgets import QApplication
-from qfluentwidgets import FluentIcon, MSFluentWindow, Theme, qconfig, setTheme, setThemeColor
-from ruamel.yaml import YAML
+from qfluentwidgets import Theme, qconfig, setTheme, setThemeColor
 
 from app.common.design_tokens import DARK, LIGHT, MARCH7TH_PINK
 
 from app.navigation import _CardHighlight, navigate
 
 
-@pytest.fixture
-def host(qtbot, monkeypatch, tmp_path):
-    from app.help_interface import HelpInterface
-    from app.setting_interface import SettingInterface, cfg
-    from module import localization
+from tests.test_app.test_language_switch import window
 
-    old_language = localization.get_current_language()
-    old_theme = qconfig.themeMode.value
-    old_accent = qconfig.get(qconfig.themeColor)
-    hints = QApplication.instance().styleHints()
-    old_scheme = hints.colorScheme()
-    hints.setColorScheme(Qt.ColorScheme.Light)
+
+@pytest.fixture
+def host(window, qtbot):
+    window.stackedWidget.setAnimationEnabled(False)
+    window.resize(1120, 740)
+    window.switchTo(window.helpInterface)
+    old = qconfig.theme
+    accent = qconfig.get(qconfig.themeColor)
     setThemeColor(MARCH7TH_PINK, save=False)
-    localization.load_language('zh_CN')
     setTheme(Theme.LIGHT, save=False)
-    example = YAML(typ='safe').load(Path('assets/config/config.example.yaml'))
-    example['control_backend'] = 'local' if sys.platform == 'win32' else 'cloud'
-    monkeypatch.setattr(cfg, 'config', example)
-    monkeypatch.setattr(cfg, 'config_path', str(tmp_path / 'config.yaml'))
-    window = MSFluentWindow()
-    window.setAttribute(Qt.WidgetAttribute.WA_DontShowOnScreen)
-    qtbot.addWidget(window)
-    window.setMicaEffectEnabled(False)
-    window.settingInterface = SettingInterface()
-    window.helpInterface = HelpInterface()
-    window.addSubInterface(window.helpInterface, FluentIcon.HELP, '帮助')
-    window.addSubInterface(window.settingInterface, FluentIcon.SETTING, '设置')
-    window.resize(1000, 660)
-    window.show()
-    try:
-        yield window
-    finally:
-        hints.setColorScheme(old_scheme)
-        setThemeColor(old_accent, save=False)
-        setTheme(old_theme, save=False)
-        localization.load_language(old_language)
+    yield window
+    setThemeColor(accent, save=False)
+    setTheme(old, save=False)
 
 
 def test_plain_card_and_expiring_outline(host, qtbot, tmp_path):
@@ -56,18 +33,19 @@ def test_plain_card_and_expiring_outline(host, qtbot, tmp_path):
 
     page = host.settingInterface
     key = 'local_control_mode' if sys.platform == 'win32' else 'browser_type'
-    card = page.localControlModeCard if sys.platform == 'win32' else page.browserTypeCard
+    mode = page.pages["run_mode"]
+    card = mode.host.localControlModeCard if sys.platform == "win32" else mode.host.browserTypeCard
     original_style = card.card.styleSheet()
     assert MainWindow.navigate(host, 'setting:play_audio')
-    assert page.stackedWidget.currentWidget() is page.ProgramGroup
-    assert page.playAudioCard.findChild(_CardHighlight).isVisible()
+    assert page.currentCategory() == "after_run"
+    qtbot.waitUntil(lambda: page.pages["after_run"].host.playAudioCard.findChild(_CardHighlight) is not None)
     assert navigate(host, 'setting:' + key)
     assert host.stackedWidget.currentWidget() is page
-    assert page.stackedWidget.currentWidget() is page.GameConnectionGroup
-    assert page.pivot.currentRouteKey() == page.GameConnectionGroup.objectName()
+    assert page.stack.currentWidget() is mode and page.currentCategory() == "run_mode"
+    qtbot.waitUntil(lambda: card.card.findChild(_CardHighlight) is not None)
     highlight = card.card.findChild(_CardHighlight)
     assert highlight and highlight.isVisible()
-    assert page.viewport().rect().contains(card.card.mapTo(page.viewport(), card.card.rect().center()))
+    assert mode.viewport().rect().contains(card.card.mapTo(mode.viewport(), card.card.rect().center()))
     qtbot.wait(330)  # Let the real Fluent page and pivot transitions settle.
     assert highlight.animation.duration() == 1200
     highlight.animation.pause()
@@ -87,17 +65,17 @@ def test_plain_card_and_expiring_outline(host, qtbot, tmp_path):
     assert card.card.styleSheet().rstrip() == original_style.rstrip()
 
 
-def test_nested_card_opens_both_parents_and_scrolls(host):
-    page = host.settingInterface
-    assert not page.instanceTypeCard.isExpand
-    assert not page.weeklyRelicCleanupEnableCard.isExpand
-    assert navigate(host, 'setting:weekly_relic_smart_discard_enable')
-    assert page.instanceTypeCard.isExpand and page.weeklyRelicCleanupEnableCard.isExpand
-    target = page.smartRelicDiscardEnableCard
-    assert target.findChild(_CardHighlight).isVisible()
+def test_nested_card_opens_section_and_parent_and_scrolls(host, qtbot):
+    page = host.taskInterface.pages["assets"]
+    section = page.views["relics"]
+    cards = page.host
+    assert not section.isExpanded() and not cards.weeklyRelicCleanupEnableCard.isExpand
+    assert navigate(host, "setting:weekly_relic_smart_discard_enable")
+    assert section.isExpanded() and cards.weeklyRelicCleanupEnableCard.isExpand
+    target = cards.smartRelicDiscardEnableCard
+    qtbot.waitUntil(lambda: target.findChild(_CardHighlight) is not None)
     assert target.visibleRegion().contains(target.rect().center())
     assert page.viewport().rect().contains(target.mapTo(page.viewport(), target.rect().center()))
-    assert page.verticalScrollBar().value() > 0
 
 
 def test_doc_links_dispatch_internally_and_navigate_to_heading(host, qtbot):
@@ -108,7 +86,7 @@ def test_doc_links_dispatch_internally_and_navigate_to_heading(host, qtbot):
     assert tutorial.anchorAt(pos) == 'setting:notify_telegram_token'
     qtbot.mouseClick(tutorial.viewport(), Qt.MouseButton.LeftButton, pos=pos)
     assert host.stackedWidget.currentWidget() is host.settingInterface
-    assert host.settingInterface.NotifyGroup.findChild(_CardHighlight) is not None
+    qtbot.waitUntil(lambda: host.settingInterface.pages["notify"].channels.findChild(_CardHighlight) is not None)
     assert navigate(host, 'doc:Background#windows-后台模式')
     page = host.helpInterface
     assert host.stackedWidget.currentWidget() is page
@@ -124,12 +102,97 @@ def test_doc_links_dispatch_internally_and_navigate_to_heading(host, qtbot):
 def test_missing_and_reserved_links_do_not_switch_pages(host, monkeypatch):
     warnings, info = [], []
     monkeypatch.setattr('app.navigation.log', SimpleNamespace(warning=warnings.append, info=info.append))
-    for link in ('setting:missing_key', 'doc:Unknown', 'setting:', 'task:power#instance_names'):
+    for link in ('setting:missing_key', 'doc:Unknown', 'setting:', 'task:nonexistent#instance_names'):
         assert navigate(host, link) is False
-    assert len(warnings) == 3 and '暂不支持' in info[0]
+    assert len(warnings) == 4
     assert host.stackedWidget.currentWidget() is host.helpInterface
 
-    backend = host.settingInterface.adbBackendCard.backend()
+    from app.content.backend import current
+    backend = current().control_backend
     hidden_key = 'local_control_mode' if backend == 'cloud' else 'browser_type'
     assert not navigate(host, f'setting:{hidden_key}')
-    assert host.settingInterface.adbBackendCard.backend() == backend
+    assert current().control_backend == backend
+
+
+def test_task_anchor_opens_task_page(host):
+    assert navigate(host, "task:power#instance_names")
+    assert host.stackedWidget.currentWidget() is host.taskInterface
+    assert host.taskInterface.currentTask() == "power"
+
+
+
+def test_new_window_protocol_for_all_targets(monkeypatch):
+    from unittest.mock import Mock
+    from module.navigation import DOCUMENTS, TOP_PAGES, resolve_link
+    from module.content_pages import PAGES
+    from module.settings_registry import SETTINGS
+    from module.tool_catalog import TOOLS
+    monkeypatch.setattr("app.navigation.highlight", Mock())
+    monkeypatch.setattr("app.content.visibility.page_visible", lambda _: True)
+    window = SimpleNamespace(switchTo=Mock(), **{attr: Mock() for _, attr, _ in TOP_PAGES.values()})
+    for item in SETTINGS:
+        for link in (item.link, "setting:" + item.id):
+            assert navigate(window, link)
+            attr = resolve_link(link).interface
+            window.switchTo.assert_called_with(getattr(window, attr))
+            if item.page != "run":
+                getattr(window, attr).locate.assert_called_with(item)
+    for page in PAGES:
+        if page.kind == "setting":
+            assert navigate(window, "category:" + page.id)
+            window.settingInterface.showCategory.assert_called_with(page.id)
+        elif page.kind == "task":
+            assert navigate(window, "task:" + page.id)
+            window.taskInterface.showTask.assert_called_with(page.id)
+    for key, (_, attr, _) in TOP_PAGES.items():
+        assert navigate(window, "page:" + key)
+        window.switchTo.assert_called_with(getattr(window, attr))
+    for tool in TOOLS:
+        assert navigate(window, "tool:" + tool.id)
+        window.toolsInterface.locate.assert_called_with(tool.id)
+    for name, (attr, _) in DOCUMENTS.items():
+        assert navigate(window, f"doc:{name}")
+        window.helpInterface.showDocument.assert_called_with(attr, "")
+    assert navigate(window, "setting:scheduled_time")
+    window.logInterface._openScheduleManager.assert_called()
+    for link in ("task:power#ui_theme", "page:no", "tool:missing", "category:power", "setting:game_path#bad"):
+        assert not navigate(window, link)
+
+def test_search_document_anchors_land_in_the_rendered_reader(host):
+    from module.navigation import DOCUMENTS
+    from module.search.documents import heading_pairs
+    page = host.helpInterface
+    for name, (attr, _) in DOCUMENTS.items():
+        for heading, _ in heading_pairs(name):
+            assert page.showDocument(attr, heading.anchor), (name, heading.title, heading.anchor)
+
+
+@pytest.mark.parametrize("backend, profile, strategy", [
+    ("local", "pc_1080", "retired"), ("cloud", "pc_1080", "default"), ("adb", "touch_720", "default"),
+])
+def test_every_settings_link_respects_visibility_and_highlights(host, qtbot, monkeypatch, backend, profile, strategy):
+    from app.content.visibility import setting_visible
+    from module.config import cfg
+    from module.settings_registry import SETTINGS
+    old = cfg.config.copy()
+    cfg.config.update(control_backend=backend, ui_profile=profile, currencywars_strategy=strategy)
+    cfg._notify_changes(old, reloaded=True)
+    host.taskInterface.refresh()
+    monkeypatch.setattr(host.logInterface, "_openScheduleManager", lambda: None)
+    for item in SETTINGS:
+        visible = setting_visible(item)
+        assert host.navigate("setting:" + item.id) == visible, item.id
+        if not visible:
+            continue
+        if item.page == "run":
+            target = host.logInterface.manageScheduleButton
+        elif item.page in host.settingInterface.pages:
+            page = host.settingInterface.pages[item.page]
+            target = page.target(item)
+        else:
+            page = host.taskInterface.pages[item.page]
+            target = host.taskInterface._target(page, item)
+        QApplication.processEvents()
+        target = getattr(target, "card", target)
+        assert any(mark.isVisibleTo(host) for mark in target.findChildren(
+            _CardHighlight, options=Qt.FindChildOption.FindDirectChildrenOnly)), item.id

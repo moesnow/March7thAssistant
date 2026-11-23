@@ -121,10 +121,16 @@ def window(qtbot, monkeypatch, tmp_path, request):
     original = localization.get_current_language()
     original_ui = getattr(cfg, 'ui_language_now', 'zh_CN')
     config = deepcopy(cfg.config)
+    config['auto_detect_game_hotkeys_enable'] = False
+    monkeypatch.setattr('app.card.autostart_setting_card.AutostartSettingCard.refreshState', lambda *_: None)
+    monkeypatch.setattr('utils.uac_free.is_enabled', lambda: False)
+    monkeypatch.setattr('app.tools.adb_service.list_devices', lambda *_: [])
     config['evernight_unlocked'] = False
     if config.get('ui_theme') == 'evernight':
         config['ui_theme'] = 'auto'
-    config.update(getattr(request, 'param', {}))
+    options = dict(getattr(request, 'param', {}))
+    real_tray = options.pop('test_tray', False)
+    config.update(options)
     monkeypatch.setattr(cfg, 'config', config)
     monkeypatch.setattr(cfg, 'config_path', str(tmp_path / 'config.yaml'))
     monkeypatch.setattr(cfg, 'set_value', Mock())
@@ -133,7 +139,10 @@ def window(qtbot, monkeypatch, tmp_path, request):
     monkeypatch.setattr(module, 'checkUpdate', lambda *a, **k: None)
     monkeypatch.setattr(module, 'checkAnnouncement', lambda *a, **k: None)
     monkeypatch.setattr(module, 'disclaimer', lambda *a, **k: None)
-    monkeypatch.setattr(module.MainWindow, 'initSystemTray', lambda self: setattr(self, '_tray_actions', [Mock() for _ in range(4)]))
+    if real_tray:
+        monkeypatch.setattr(module.QSystemTrayIcon, 'show', lambda _: None)
+    else:
+        monkeypatch.setattr(module.MainWindow, 'initSystemTray', lambda self: setattr(self, '_tray_actions', [Mock() for _ in range(4)]))
     monkeypatch.setattr(module.MainWindow, 'closeEvent', lambda self, event: event.accept())
     monkeypatch.setattr(module.LogInterface, '_LogInterface__initShortcut', lambda _: None)
     monkeypatch.setattr(module.LogInterface, '_migrate_legacy_schedule', lambda _: None)
@@ -168,7 +177,7 @@ def test_github_token_is_the_last_update_source_card_and_edits_as_password(windo
     from app.card.messagebox_custom import MessageBoxEdit
     from module.config import cfg
 
-    setting = window.settingInterface
+    setting = window.settingInterface.pages['update'].host
     card = setting.githubTokenCard
     children = setting.updateSourceCard.viewLayout
     assert children.itemAt(children.count() - 1).widget() is card
@@ -190,11 +199,12 @@ def test_actual_language_combo_keeps_settings_tab_scroll_and_expansion(window, q
     window.stackedWidget.setAnimationEnabled(False)
     window.switchTo(window.settingInterface)
     setting = window.settingInterface
-    setting.stackedWidget.setCurrentWidget(setting.AboutGroup)
-    setting.updateSourceCard.setExpand(True)
-    setting.updateSourceCard.expandAni.setCurrentTime(setting.updateSourceCard.expandAni.duration())
+    setting.showCategory("game")
+    setting.pages["game"].host.updateViaLauncherEnableCard.setExpand(True)
+    setting.pages["game"].host.updateViaLauncherEnableCard.expandAni.setCurrentTime(setting.pages["game"].host.updateViaLauncherEnableCard.expandAni.duration())
     qtbot.wait(20)
-    setting.verticalScrollBar().setValue(80)
+    setting.pages["game"].verticalScrollBar().setValue(80)
+    assert setting.pages["game"].verticalScrollBar().value() == 80
     history = Mock(wraps=qrouter.push)
     monkeypatch.setattr(qrouter, 'push', history)
     route_events = []
@@ -213,9 +223,9 @@ def test_actual_language_combo_keeps_settings_tab_scroll_and_expansion(window, q
             qtbot.waitUntil(lambda: window.settingInterface is not old, timeout=15000)
             qtbot.wait(10)
             assert window.stackedWidget.currentWidget() is window.settingInterface
-            assert window.settingInterface.stackedWidget.currentWidget().objectName() == 'AboutInterface'
-            assert window.settingInterface.verticalScrollBar().value() == 80
-            assert window.settingInterface.updateSourceCard.isExpand
+            assert window.settingInterface.currentCategory() == 'game'
+            assert window.settingInterface.pages["game"].verticalScrollBar().value() == 80
+            assert window.settingInterface.pages["game"].host.updateViaLauncherEnableCard.isExpand
             assert window.logInterface is log and log.process is process
             assert process.processId() == pid and process.state() == QProcess.Running
             assert log.logTextEdit.toPlainText() == 'do not discard this log'
@@ -237,7 +247,7 @@ def test_latest_language_and_navigation_win_during_animation(window, qtbot):
     assert window.stackedWidget.currentWidget() is window.workflowInterface
     assert window._pending_ui_language is None
     # Stable callback points to the new settings page, not the deleted instance.
-    window.navigationInterface.widget('settingInterface').click()
+    qtbot.mouseClick(window.navigationInterface.widget('settingInterface').itemWidget, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: not window._navigation_animation_running)
     assert window.stackedWidget.currentWidget() is window.settingInterface
 
@@ -374,7 +384,7 @@ def test_failed_state_restore_does_not_remove_old_settings(window, qtbot, monkey
     qtbot.waitUntil(lambda: warning.called, timeout=15000)
     assert window.settingInterface is old
     assert window.stackedWidget.currentWidget() is old
-    assert window.stackedWidget.count() == 7
+    assert window.stackedWidget.count() == 9
     assert localization.get_current_language() == 'zh_CN'
     assert QApplication.overrideCursor() is None
 
@@ -410,14 +420,14 @@ def test_failed_combo_change_restores_saved_preference_and_retries(
         with monkeypatch.context() as fault:
             # Fail inside the real constructor after widgets have been created,
             # rather than mocking the entire class before Qt can own the instance.
-            method = '_SettingInterface__connectSignalToSlot' if failure_stage == 'constructor' else 'restoreViewState'
+            method = '_refreshHints' if failure_stage == 'constructor' else 'restoreViewState'
             fault.setattr(module.SettingInterface, method, Mock(side_effect=RuntimeError('test failure')))
             combo.setCurrentIndex(combo.findData('en_US'))
             qtbot.waitUntil(lambda: warning.called, timeout=15000)
         QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
         assert window.settingInterface is old
         assert window.stackedWidget.currentWidget() is old
-        assert window.stackedWidget.count() == 7
+        assert window.stackedWidget.count() == 9
         assert len(window.findChildren(module.SettingInterface)) == 1
         assert localization.get_current_language() == 'zh_CN'
         assert cfg.ui_language_now == 'zh_CN'
@@ -452,7 +462,7 @@ def test_choosing_original_language_cancels_pending_choice(window, persisted_lan
     combo.blockSignals(True)
     combo.setCurrentIndex(combo.findData('zh_CN'))
     combo.blockSignals(False)
-    old._qqbotBindPending = True
+    window.notifyModel._thread = object()
     try:
         for language in ('en_US', 'ja_JP', 'zh_CN'):
             combo.setCurrentIndex(combo.findData(language))
@@ -461,7 +471,7 @@ def test_choosing_original_language_cancels_pending_choice(window, persisted_lan
         assert window._pending_ui_language == 'zh_CN'
         assert cfg.get_value('ui_language') == 'zh_CN'
     finally:
-        old._qqbotBindPending = False
+        window.notifyModel._thread = None
     qtbot.waitUntil(lambda: window.settingInterface is not old, timeout=15000)
     assert localization.get_current_language() == 'zh_CN'
     assert cfg.get_value('ui_language') == 'zh_CN'
@@ -479,7 +489,7 @@ def test_config_reload_failure_disposes_unused_settings(window, monkeypatch, fai
     monkeypatch.setattr(window.logInterface, 'reloadConfigState', Mock())
     warning = Mock()
     monkeypatch.setattr(module.InfoBar, 'warning', warning)
-    method = '_SettingInterface__connectSignalToSlot' if failure_stage == 'constructor' else 'restoreViewState'
+    method = '_refreshHints' if failure_stage == 'constructor' else 'restoreViewState'
     monkeypatch.setattr(module.SettingInterface, method, Mock(side_effect=RuntimeError('test failure')))
     old = window.settingInterface
     window.stackedWidget.setAnimationEnabled(False)
@@ -489,7 +499,7 @@ def test_config_reload_failure_disposes_unused_settings(window, monkeypatch, fai
         QApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
         assert window.settingInterface is old
         assert window.stackedWidget.currentWidget() is old
-        assert window.stackedWidget.count() == 7
+        assert window.stackedWidget.count() == 9
         assert len(window.findChildren(module.SettingInterface)) == 1
     assert warning.call_count == 2
 
@@ -514,7 +524,7 @@ def test_config_reload_refreshes_overview_and_tools_for_new_backend(window, monk
         control_backend="adb", ui_profile="touch_720"))
     window._on_config_file_changed()
 
-    assert window.settingInterface.adbBackendCard.backend() == "adb"
+    assert window.settingInterface.pages["run_mode"].chooser.cards["adb"].isSelected()
     qtbot.waitUntil(lambda: [s.id for s in page._snapshot.shortcuts] == ["screenshot"])
     assert [button.text() for button in page.shortcutsCard._buttons] == [module.tr("游戏截图")]
     assert window.toolsInterface.cloudTouchCard.isHidden()

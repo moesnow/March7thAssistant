@@ -1,5 +1,7 @@
 """设置页的 ADB 卡片：选择后端 → 选择设备 → 环境检查 → 运行状态，全部使用模拟数据。"""
 import sys
+from pathlib import Path
+from PySide6.QtCore import Qt
 from threading import Event
 
 import pytest
@@ -34,58 +36,24 @@ def wait_idle(qtbot, card):
 
 # ---------- 设备后端 ----------
 
-def test_backend_card_shows_derived_backend_without_writing(qtbot, config):
-    from app.card.adb_setting_cards import AdbBackendSettingCard
-    config.values["cloud_game_enable"] = True
-    card = AdbBackendSettingCard()
-    qtbot.addWidget(card)
-    assert card.comboBox.currentData() == "cloud"
-    assert [card.comboBox.itemData(index) for index in range(card.comboBox.count())] == ["local", "cloud", "adb"]
-    assert config.writes == []
+def test_chooser_updates_from_existing_cloud_config(settings_page):
+    interface, config, path = settings_page
+    config.set_values({"cloud_game_enable": True})
+    chooser = interface.pages["run_mode"].chooser
+    assert list(chooser.cards) == ["local", "cloud", "adb"]
+    assert chooser.cards["cloud"].isSelected()
+    before = path.read_bytes()
+    chooser.refresh()
+    assert path.read_bytes() == before
 
 
-def test_selecting_adb_writes_backend_and_touch_profile(qtbot, config):
-    from app.card.adb_setting_cards import AdbBackendSettingCard
-    card = AdbBackendSettingCard()
-    qtbot.addWidget(card)
-    changed = []
-    card.backendChanged.connect(changed.append)
-    card.comboBox.setCurrentIndex(card.comboBox.findData("adb"))
-    assert config.writes == [{"control_backend": "adb", "ui_profile": "touch_720"}]
-    assert changed == ["adb"]
-    card.comboBox.setCurrentIndex(card.comboBox.findData("local"))
-    assert config.writes[-1] == {"control_backend": None, "cloud_game_enable": False, "ui_profile": "pc_1080"}
-    assert changed == ["adb", "local"]
-
-
-def test_blocked_backend_change_restores_selection(qtbot, config):
-    from app.card.adb_setting_cards import AdbBackendSettingCard
-    asked = []
-    card = AdbBackendSettingCard(blocker=lambda backend: asked.append(backend) or True)
-    qtbot.addWidget(card)
-    card.comboBox.setCurrentIndex(card.comboBox.findData("adb"))
-    assert asked == ["adb"]
-    assert card.comboBox.currentData() == "local" and card.backend() == "local"
-    assert config.writes == []
-
-
-def test_set_backend_only_updates_display(qtbot, config):
-    from app.card.adb_setting_cards import AdbBackendSettingCard
-    card = AdbBackendSettingCard()
-    qtbot.addWidget(card)
-    changed = []
-    card.backendChanged.connect(changed.append)
-    card.setBackend("cloud")
-    assert card.comboBox.currentData() == "cloud"
-    assert config.writes == [] and changed == []
-
-
-def test_backend_card_is_read_only_in_desktop_twin(qtbot, config, monkeypatch):
-    from app.card import adb_setting_cards as cards
-    monkeypatch.setattr(cards, "in_desktop_twin", lambda: True)
-    card = cards.AdbBackendSettingCard()
-    qtbot.addWidget(card)
-    assert not card.comboBox.isEnabled()
+def test_chooser_read_only_in_desktop_twin(settings_page, monkeypatch, qtbot):
+    from app.pages.run_mode import RunModeChooser
+    monkeypatch.setattr("app.pages.run_mode.in_desktop_twin", lambda: True)
+    interface, _, _ = settings_page
+    chooser = RunModeChooser(interface.window_)
+    qtbot.addWidget(chooser)
+    assert not chooser.isEnabled()
 
 
 # ---------- 设备面板 ----------
@@ -471,30 +439,20 @@ def test_advanced_card_tolerates_invalid_tap_duration(qtbot, config):
 # ---------- 设置页 ----------
 
 @pytest.fixture
-def settings_page(qtbot, tmp_path, monkeypatch, adb):
-    import app.setting_interface as settings
-    from app.card import adb_setting_cards as cards
-    from app.tools import adb_service as service
-    from module.config.config import Config
-
-    path = tmp_path / "config.yaml"
-    path.write_text("cloud_game_enable: false\n", encoding="utf-8")
+def settings_page(qtbot, monkeypatch, adb, page_config, content_window):
+    from app.setting_interface import SettingInterface
     monkeypatch.delenv("MARCH7TH_CLOUD_GAME_ENABLE", raising=False)
-    config = Config.__new__(Config)
-    Config.__init__(config, "assets/config/version.txt", "assets/config/config.example.yaml", str(path))
-    import app.card.switchsettingcard1 as switch_card
-    for module in (settings, cards, service, switch_card):
-        monkeypatch.setattr(module, "cfg", config)
-    monkeypatch.setattr("module.config.cfg", config)
-    monkeypatch.setattr(settings, "read_active_run", lambda: None)
-    monkeypatch.setattr(cards, "read_adb_run_status", lambda: None)
-    interface = settings.SettingInterface()
+    config = page_config("cloud_game_enable: false\n")
+    monkeypatch.setattr("app.content.backend.read_active_run", lambda: None)
+    monkeypatch.setattr("app.card.adb_setting_cards.read_adb_run_status", lambda: None)
+    interface = SettingInterface(content_window)
     qtbot.addWidget(interface)
+    interface.setWindowFlag(Qt.WindowType.Window)
     interface.resize(1050, 800)
     interface.show()
-    interface.stackedWidget.setCurrentWidget(interface.GameConnectionGroup)
+    assert interface.showCategory("run_mode")
     qtbot.wait(100)
-    return interface, config, path
+    return interface, config, Path(config.config_path)
 
 
 def saved(path):
@@ -504,81 +462,79 @@ def saved(path):
 
 def test_settings_page_has_single_connection_tab(settings_page):
     interface, config, path = settings_page
-    assert interface.pivot.items["gameConnectionInterface"].text() == "游戏连接"
-    assert "adbInterface" not in interface.pivot.items and "cloudGameInterface" not in interface.pivot.items
-    for card in (interface.adbBackendCard, interface.adbDeviceCard, interface.adbEnvironmentCard,
-                 interface.adbStatusCard, interface.adbAdvancedCard):
-        assert card.parentWidget() is interface.GameConnectionGroup
-    assert interface.adbBackendCard.comboBox.currentData() == "local"
-    assert not interface.adbAdvancedCard.isExpand
-    assert interface.stackedWidget.height() >= interface.GameConnectionGroup.sizeHint().height()
+    page = interface.pages["run_mode"]
+    assert interface.categoryList.items["run_mode"].text() == "运行方式"
+    assert set(page.chooser.cards) == {"adb", "cloud", "local"}
+    assert page.chooser.cards["local"].isSelected()
+    assert page.views["adb"].isAncestorOf(page.host.adbDeviceCard)
+    assert not page.host.adbAdvancedCard.isExpand
     # 打开页面不改动没用过 ADB 的配置。
     assert saved(path)["control_backend"] is None and saved(path)["ui_profile"] == "pc_1080"
     # 没有使用 ADB 后端时不主动调用 adb。
-    assert [row.radio.property("serial") for row in interface.adbDeviceCard.deviceRows()] == [None]
+    assert [row.radio.property("serial") for row in interface.pages["run_mode"].host.adbDeviceCard.deviceRows()] == [None]
 
 
 def test_settings_page_walks_through_adb_setup(settings_page, qtbot, adb):
     """选择后端 → 选择设备 → 环境检查 → 显示状态。"""
     interface, config, path = settings_page
-    backend = interface.adbBackendCard
-    backend.comboBox.setCurrentIndex(backend.comboBox.findData("adb"))
+    interface.pages["run_mode"].chooser.cards["adb"].clicked.emit("adb")
     assert (saved(path)["control_backend"], saved(path)["ui_profile"]) == ("adb", "touch_720")
-    assert not interface.adbDeviceCard.isHidden()
-    assert interface.gamePathCard.isHidden() and interface.browserTypeCard.isHidden()
+    assert not interface.pages["run_mode"].host.adbDeviceCard.isHidden()
+    assert interface.pages["run_mode"].host.gamePathCard.isHidden() and interface.pages["run_mode"].host.browserTypeCard.isHidden()
 
-    devices = interface.adbDeviceCard
+    devices = interface.pages["run_mode"].host.adbDeviceCard
     # 切换后先排队启动扫描，不能把启动前的空闲当成扫描结束。
     qtbot.waitUntil(lambda: len(devices.deviceRows()) == 4, timeout=5000)
     devices.deviceRows()[1].radio.click()
     assert saved(path)["adb_serial"] == PHONE.serial
-    assert interface.adbAdvancedCard.serialCard.contentLabel.text() == PHONE.serial
+    assert interface.pages["run_mode"].host.adbAdvancedCard.serialCard.contentLabel.text() == PHONE.serial
 
-    checks = interface.adbEnvironmentCard
+    checks = interface.pages["run_mode"].host.adbEnvironmentCard
     checks.start()
     wait_idle(qtbot, checks)
     assert checks.card.contentLabel.text() == "全部通过，可以运行任务"
-    assert interface.stackedWidget.height() >= interface.GameConnectionGroup.sizeHint().height()
+    assert interface.pages["run_mode"].views["adb"].isVisible()
 
-    interface.adbStatusCard._reader = lambda: status(sdk_window=True, game_display_id=0)
-    interface.adbStatusCard.refresh()
-    assert interface.adbStatusCard.rows["game"].value.text() == "被登录界面带回了实体屏"
+    interface.pages["run_mode"].host.adbStatusCard._reader = lambda: status(sdk_window=True, game_display_id=0)
+    interface.pages["run_mode"].host.adbStatusCard.refresh()
+    assert interface.pages["run_mode"].host.adbStatusCard.rows["game"].value.text() == "被登录界面带回了实体屏"
 
 
 def test_connection_switch_preserves_legacy_cloud_config(settings_page, qtbot, adb):
     interface, config, path = settings_page
-    combo = interface.adbBackendCard.comboBox
+    chooser = interface.pages["run_mode"].chooser
     for mode in ("cloud", "adb", "local"):
-        combo.setCurrentIndex(combo.findData(mode))
-        for key, cards in interface._connectionCards.items():
-            assert all(card.isHidden() == (key != mode) for card in cards)
+        chooser.cards[mode].clicked.emit(mode)
+        for key in chooser.cards:
+            assert interface.pages["run_mode"].views[key].isHidden() == (key != mode)
         if mode == "cloud":
             assert saved(path)["cloud_game_enable"] is True
             assert saved(path)["control_backend"] is None
         elif mode == "adb":
             assert saved(path)["cloud_game_enable"] is True
-            wait_idle(qtbot, interface.adbDeviceCard)
+            wait_idle(qtbot, interface.pages["run_mode"].host.adbDeviceCard)
         else:
             assert saved(path)["cloud_game_enable"] is False
             assert saved(path)["ui_profile"] == "pc_1080"
 
 
 def test_connection_switch_restores_local_touch_settings(settings_page):
+    from app.content.visibility import page_visible
     from app.tools.adb_service import display_connection
 
     interface, config, path = settings_page
     config.set_values({"ui_profile": "touch_720"})
-    combo = interface.adbBackendCard.comboBox
+    chooser = interface.pages["run_mode"].chooser
 
-    combo.setCurrentIndex(combo.findData("cloud"))
+    chooser.cards["cloud"].clicked.emit("cloud")
     assert saved(path)["ui_profile"] == "touch_720"
     assert display_connection(config).ui_profile == "pc_1080"
-    assert not interface.activityEnableCard.isHidden()
+    assert page_visible("activity")
 
-    combo.setCurrentIndex(combo.findData("local"))
+    chooser.cards["local"].clicked.emit("local")
     assert saved(path)["ui_profile"] == "touch_720"
     assert display_connection(config).ui_profile == "touch_720"
-    assert interface.activityEnableCard.isHidden()
+    assert not page_visible("activity")
 
 
 def test_opening_old_echo_plan_does_not_change_instance_type(settings_page, qtbot):
@@ -598,25 +554,24 @@ def test_invalid_connection_can_be_repaired_in_settings(settings_page, qtbot, in
 
     _, config, path = settings_page
     config.set_values(invalid)
-    panel = SettingInterface()
+    panel = SettingInterface(settings_page[0].window_)
     qtbot.addWidget(panel)
-    backend = panel.adbBackendCard
-    assert backend.comboBox.currentIndex() == -1
+    backend = panel.pages["run_mode"].chooser
+    assert not any(card.isSelected() for card in backend.cards.values())
+    assert not backend.errorLabel.isHidden()
     assert all(saved(path)[key] == value for key, value in invalid.items())
-
-    backend.comboBox.setCurrentIndex(backend.comboBox.findData("local"))
-    assert backend.comboBox.currentData() == "local"
+    backend.cards["local"].clicked.emit("local")
+    assert backend.cards["local"].isSelected()
     assert saved(path)["control_backend"] is None
     assert saved(path)["ui_profile"] == "pc_1080"
 
 
 def test_backend_change_is_blocked_while_task_runs(settings_page):
-    from types import SimpleNamespace
-    interface, config, path = settings_page
-    interface.parent = SimpleNamespace(logInterface=SimpleNamespace(isTaskRunning=lambda: True))
-    backend = interface.adbBackendCard
-    backend.comboBox.setCurrentIndex(backend.comboBox.findData("adb"))
-    assert backend.comboBox.currentData() == "local"
+    interface, _, path = settings_page
+    interface.window_.logInterface.isTaskRunning = lambda: True
+    page = interface.pages["run_mode"]
+    page.chooser.cards["adb"].clicked.emit("adb")
+    assert page.chooser.cards["local"].isSelected()
     assert saved(path)["control_backend"] is None
-    interface.adbEnvironmentCard.checkButton.click()
-    assert not interface.adbEnvironmentCard.isBusy()
+    page.host.adbEnvironmentCard.checkButton.click()
+    assert not page.host.adbEnvironmentCard.isBusy()

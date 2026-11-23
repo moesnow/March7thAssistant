@@ -4,6 +4,7 @@ from pathlib import Path
 
 from ruamel.yaml import YAML
 
+from module.content_pages import GROUP_BY_ID
 from module.settings_registry import SETTINGS, Scope, find_setting
 
 
@@ -17,8 +18,10 @@ assert not {'PySide6', 'qfluentwidgets', 'module.config'} & sys.modules.keys()
 
 def test_keys_locations_and_scopes_are_consistent():
     example = YAML(typ='safe').load(Path('assets/config/config.example.yaml'))
+    assert len({item.id for item in SETTINGS}) == len(SETTINGS)
+    assert all((item.page, item.section) in GROUP_BY_ID for item in SETTINGS)
     keys = [key for setting in SETTINGS for key in setting.keys]
-    locations = [(s.tab, s.group, s.parents, s.title) for s in SETTINGS]
+    locations = [(s.page, s.widget) for s in SETTINGS if s.widget]
     assert len(keys) == len(set(keys))
     assert len(locations) == len(set(locations))
     assert set(keys) <= example.keys()

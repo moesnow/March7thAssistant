@@ -1,32 +1,27 @@
 import sys
 
 import pytest
-from PySide6.QtCore import QTime
 
-from module.config.config import Config
 
 pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="原生设置界面仅在 Windows 验证")
 
 
-def test_settings_load_migrated_loop_config(qtbot, tmp_path, monkeypatch):
-    import app.setting_interface as settings
-    import app.card.timepickersettingcard1 as time_card
+def test_settings_load_migrated_loop_config(qtbot, page_config, content_window, monkeypatch):
+    from unittest.mock import Mock
+    from app.navigation import navigate
+    from app.setting_interface import SettingInterface
+    from module.settings_registry import find_setting
 
-    path = tmp_path / "config.yaml"
-    path.write_text("loop_mode: power\nscheduled_time: '7:35'\nafter_finish: Loop\n", encoding="utf-8")
-    config = Config.__new__(Config)
-    Config.__init__(config, "assets/config/version.txt", "assets/config/config.example.yaml", str(path))
-    monkeypatch.setattr("module.config.cfg", config)
-    monkeypatch.setattr(settings, "cfg", config)
-    monkeypatch.setattr(time_card, "cfg", config)
-    interface = settings.SettingInterface()
-    qtbot.addWidget(interface)
-    assert not hasattr(interface, "loopModeCard")
-    assert not hasattr(interface, "powerLimitCard")
-    assert interface.scheduledCard.timePicker.time == QTime(7, 35)
-    assert interface.afterFinishCard.cfg.after_finish == "Loop"
-    assert interface.refreshHourEnableCard.configname == "refresh_hour"
-    interface.scheduledCard._onTimeChanged(QTime(8, 20))
-    config._load_config()
-    assert config.scheduled_time == "08:20"
-    assert config.loop_mode == "scheduled"
+    cfg = page_config("loop_mode: power\nscheduled_time: '7:35'\nafter_finish: Loop\n")
+    page = SettingInterface(content_window)
+    qtbot.addWidget(page)
+    assert cfg.loop_mode == "scheduled" and cfg.scheduled_time == "7:35"
+    assert page.pages["after_run"].host.afterFinishCard.comboBox.currentData() == "Loop"
+    assert page.pages["game"].host.refreshHourEnableCard.configname == "refresh_hour"
+    assert find_setting("loop_mode") is None
+    content_window.switchTo = Mock()
+    content_window.logInterface._openScheduleManager = Mock()
+    monkeypatch.setattr("app.navigation.highlight", Mock())
+    content_window.logInterface.manageScheduleButton = Mock()
+    assert navigate(content_window, "setting:scheduled_time")
+    content_window.logInterface._openScheduleManager.assert_called_once()

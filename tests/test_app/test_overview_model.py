@@ -79,6 +79,7 @@ def test_run_navigation(monkeypatch, tmp_path):
     from PySide6.QtGui import QDesktopServices
     monkeypatch.setattr(runs, "runs_dir", lambda: str(tmp_path))
     window = Mock()
+    monkeypatch.setattr("app.navigation.highlight", Mock())
     assert navigate(window, "run:current")
     window.switchTo.assert_called_once_with(window.logInterface)
     assert navigate(window, "run:schedule")
@@ -96,7 +97,8 @@ def test_run_navigation(monkeypatch, tmp_path):
 
 
 def test_appearance_controls_offscreen(qtbot, monkeypatch, tmp_path):
-    from app.setting_interface import SettingInterface, cfg, QFileDialog
+    from app.setting_interface import SettingInterface
+    from app.content.settings.appearance import cfg, QFileDialog
     from module.overview.cards import background_path
     example = YAML(typ="safe").load(Path("assets/config/config.example.yaml"))
     monkeypatch.setattr(cfg, "config", example)
@@ -107,11 +109,11 @@ def test_appearance_controls_offscreen(qtbot, monkeypatch, tmp_path):
     assert background_path(cfg) == ""
     chosen = str(tmp_path / "背景.png")
     monkeypatch.setattr(QFileDialog, "getOpenFileName", lambda *_: (chosen, "Images"))
-    page.overviewBackgroundCard.leftClicked.emit()
+    page.pages["appearance"].host.overviewBackgroundCard.leftClicked.emit()
     assert cfg.banner_path == background_path(cfg) == chosen
-    page.overviewBackgroundCard.rightClicked.emit()
+    page.pages["appearance"].host.overviewBackgroundCard.rightClicked.emit()
     assert cfg.banner_path == ""
-    page.overviewMascotCard.switchButton.setChecked(False)
+    page.pages["appearance"].host.overviewMascotCard.switchButton.setChecked(False)
     assert cfg.overview_show_mascot is False
 
 

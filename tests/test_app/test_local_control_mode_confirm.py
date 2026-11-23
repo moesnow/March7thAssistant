@@ -84,9 +84,11 @@ def test_card_without_confirm_saves_immediately(qapp):
 
 
 @pytest.fixture
-def confirm_mode(qapp, monkeypatch):
+def confirm_mode(qapp, monkeypatch, content_window):
     """调用设置页的确认逻辑，MessageBox 换成替身；answer 为对话框 exec() 的返回值。"""
-    import app.setting_interface as module
+    from app.content.settings import run_mode as module
+    from app.content import PageHost
+    from PySide6.QtWidgets import QWidget
     state = SimpleNamespace(boxes=[], answer=1)
 
     def make_box(title, content, parent):
@@ -97,9 +99,10 @@ def confirm_mode(qapp, monkeypatch):
         return box
 
     monkeypatch.setattr(module, 'MessageBox', make_box)
-    host = SimpleNamespace(window=lambda: 'main-window')
-    confirm = module.SettingInterface._SettingInterface__confirmLocalControlMode
-    state.call = lambda value: confirm(host, value)
+    host = PageHost(content_window, QWidget(content_window))
+    module.build(host)
+    state.parent = content_window
+    state.call = host.localControlModeCard._confirm
     return state
 
 
@@ -113,7 +116,7 @@ def test_switching_to_background_explains_limits_and_follows_choice(confirm_mode
     confirm_mode.answer = answer
     assert confirm_mode.call('background') is bool(answer)
     box = confirm_mode.boxes[0]
-    assert box.parent == 'main-window'
+    assert box.parent is confirm_mode.parent
     for limit in ('借用鼠标', '不能最小化', '保持系统解锁', '独立程序'):
         assert limit in box.content
     assert '需要滚轮时会临时把游戏切到前台' not in box.content

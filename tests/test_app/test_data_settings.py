@@ -5,7 +5,7 @@ from types import SimpleNamespace
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
-from qfluentwidgets import FluentIcon, MSFluentWindow, Theme, qconfig, setTheme, setThemeColor
+from qfluentwidgets import FluentIcon, FluentWindow, Theme, qconfig, setTheme, setThemeColor
 
 from app.common.design_tokens import MARCH7TH_PINK
 
@@ -15,7 +15,8 @@ from utils import data_migration, paths
 def test_settings_and_migration_notices(qtbot, tmp_path, monkeypatch):
     from app.data_settings import show_migration
     from app.common.theme_assets import application_icon_path
-    from app.setting_interface import SettingInterface, cfg
+    from app.setting_interface import SettingInterface
+    from module.config import cfg
     from module import localization
 
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "local"))
@@ -42,25 +43,26 @@ def test_settings_and_migration_notices(qtbot, tmp_path, monkeypatch):
         hints.setColorScheme(Qt.ColorScheme.Light)
         setTheme(Theme.LIGHT, save=False)
         localization.load_language("zh_CN")
-        window = MSFluentWindow()
+        window = FluentWindow()
         window.setAttribute(Qt.WidgetAttribute.WA_DontShowOnScreen)
         qtbot.addWidget(window)
         window.setMicaEffectEnabled(False)
         window.setWindowIcon(QIcon(application_icon_path()))
         window.setWindowTitle("三月七小助手")
         setThemeColor(MARCH7TH_PINK, save=False)
-        page = SettingInterface()
+        page = SettingInterface(window)
         window.addSubInterface(page, FluentIcon.SETTING, "设置")
         window.resize(1080, 660)
         window.show()
-        page.stackedWidget.setCurrentWidget(page.DataGroup)
+        page.showCategory("data")
+        data = page.pages["data"]
         for theme, label in [(Theme.LIGHT, "浅色"), (Theme.DARK, "深色")]:
             hints.setColorScheme(Qt.ColorScheme.Light if theme == Theme.LIGHT else Qt.ColorScheme.Dark)
             setTheme(theme, save=False)
             qtbot.wait(750)
-            assert page.DataGroup.isVisible() and page.DataGroup.titleLabel.isVisible()
-            assert page.DataGroup.folderCard.contentLabel.text() == paths.data_dir()
-            assert page.DataGroup.diagnosticCard.button.isVisibleTo(page)
+            assert data.isVisible() and data.titleLabel.isVisible()
+            assert data.host.folderCard.contentLabel.text() == paths.data_dir()
+            assert data.host.diagnosticCard.button.isVisibleTo(page)
             assert window.grab().save(str(output / f"数据与备份_{label}.png"))
         hints.setColorScheme(Qt.ColorScheme.Light)
         setTheme(Theme.LIGHT, save=False)
@@ -75,7 +77,7 @@ def test_settings_and_migration_notices(qtbot, tmp_path, monkeypatch):
         monkeypatch.delenv(paths.SESSION_ENV)
         failure = data_migration.initialize(failed)
         assert failure["status"] == "failed"
-        page.DataGroup.folderCard.setContent(paths.data_dir())
+        data.host.folderCard.setContent(paths.data_dir())
         bar = show_migration(window, failure)
         qtbot.wait(400)
         assert bar.isVisible()
@@ -104,7 +106,8 @@ def test_data_card_buttons_use_selected_files(qtbot, tmp_path, monkeypatch):
     window.quitApp = Mock()
     window.logInterface = Mock()
     window.logInterface.isTaskRunning.return_value = False
-    page = data_settings.DataSettings(window)
+    page = SimpleNamespace()
+    data_settings.build_data_cards(page, window)
     out = tmp_path / "backup.zip"
     monkeypatch.setattr(data_settings.QFileDialog, "getSaveFileName", lambda *a: (str(out), ""))
     page.backupCard.button.click()

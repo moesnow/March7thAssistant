@@ -91,8 +91,8 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
     start_task = Mock()
     monkeypatch.setattr(window, 'startFullTask', start_task)
     setTheme(Theme.LIGHT)
-    accounts = window.settingInterface.findChild(AccountsCard)
-    assert (accounts is not None) == (sys.platform == 'win32')
+    accounts = window.accountsInterface.findChild(AccountsCard)
+    assert accounts is not None
     tips = (accounts.tipsText, accounts.tipsText2) if accounts is not None else ()
     for label in tips:
         label.ensurePolished()
@@ -397,7 +397,7 @@ def test_evey_artwork_positions_preserve_controls(window, qtbot, monkeypatch, tm
     monkeypatch.setattr(window, 'setMicaEffectEnabled', lambda _: None)
     window.stackedWidget.setAnimationEnabled(False)
     window.switchTo(settings)
-    settings.stackedWidget.setCurrentWidget(settings.ProgramGroup)
+    settings.showCategory("appearance")
     qtbot.wait(20)
     title_art = window._evey_title_decoration
     card_art = settings.themeCard.eveyDecoration
@@ -442,10 +442,13 @@ def test_evey_artwork_positions_preserve_controls(window, qtbot, monkeypatch, tm
                 assert window.titleBar.childAt(button.geometry().center()) is button
         assert card_art.geometry().contains(combo.geometry())
         assert settings.themeCard.childAt(combo.geometry().center()) is combo
-        assert nav_art.geometry().contains(nav_settings.geometry())
+        icon_rect = QRect(nav_settings.geometry())
+        icon_rect.setWidth(40)
+        assert nav_art.geometry().contains(icon_rect)
         assert nav_art.y() < nav_settings.y()
-        assert nav_settings.parentWidget().childAt(nav_settings.geometry().center()) is nav_settings
-        settings.ensureWidgetVisible(settings.themeCard, 0, 20)
+        hit = nav_settings.parentWidget().childAt(icon_rect.center())
+        assert hit is nav_settings or nav_settings.isAncestorOf(hit)
+        settings.pages["appearance"].ensureWidgetVisible(settings.themeCard, 0, 20)
         qtbot.wait(20)
         title_region = QRect(window.titleBar.mapTo(window, QPoint()), window.titleBar.size())
         card_region = QRect(settings.themeCard.mapTo(window, QPoint()), settings.themeCard.size())
@@ -461,7 +464,7 @@ def test_evey_artwork_positions_preserve_controls(window, qtbot, monkeypatch, tm
     combo.dropMenu.close()
 
     window.switchTo(window.homeInterface)
-    qtbot.mouseClick(nav_settings, Qt.MouseButton.LeftButton)
+    qtbot.mouseClick(nav_settings.itemWidget, Qt.MouseButton.LeftButton)
     assert window.stackedWidget.currentWidget() is settings
     if window.titleBar.maxBtn.isVisible():
         qtbot.mouseClick(window.titleBar.maxBtn, Qt.MouseButton.LeftButton)
@@ -632,7 +635,7 @@ def test_logo_hit_target_covers_padding_without_maximizing(window, qtbot):
     title_position = window.titleBar.titleLabel.pos()
     state = window.windowState()
     for point in (QPoint(1, 1), QPoint(46, 1), QPoint(1, 46), QPoint(46, 46)):
-        assert not logo.rect().contains(target.mapTo(logo, point))
+        assert not logo.rect().contains(logo.mapFromGlobal(target.mapToGlobal(point)))
         assert window.titleBar.childAt(target.mapTo(window.titleBar, point)) is target
         qtbot.mouseClick(target, Qt.MouseButton.LeftButton, pos=point)
         qtbot.mouseDClick(target, Qt.MouseButton.LeftButton, pos=point)

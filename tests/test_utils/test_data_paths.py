@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 from utils import paths
 
 
@@ -82,6 +84,7 @@ EXCLUDED_FILES = {
 }
 # Match the expression, not the entire file. A new open("temp") in main.py must still fail.
 OTHER_MEANINGS = {
+    ('app/content/__init__.py', '{"setting": "settings", "task": "tasks"}'),  # Python package under app.content.
     ('app/tools/warp_export.py', "os.getenv('userprofile')"),  # Windows account home for Player.log.
     ('tasks/game/__init__.py', 'cloud_click_element("Settings", "text", 0.9, take_screenshot=False)'),  # Game button.
     ('main.py', 'mode == "temp"'),              # Currency wars / universe resume mode.
@@ -91,6 +94,9 @@ OTHER_MEANINGS = {
     ('tasks/weekly/universe.py', 'os.path.join(cfg.universe_path, "logs")'),
     ('utils/temporary_graphics.py', 'os.environ.get("LOCALAPPDATA", "settings")'),  # OS fallback.
 }
+
+# Only the dictionary keys identify a desktop page. Values and file operations are checked normally.
+PAGE_ID_TABLES = {('module/navigation.py', 'TOP_PAGES'), ('module/search/setting_text.py', 'PAGE_DESCRIPTIONS')}
 
 DATA_DIRS = {
     'settings', 'config/workflows', 'logs', 'screenshots', 'temp', '3rdparty/webbrowser/userprofile',
@@ -123,6 +129,36 @@ def _is_data_path(value):
             any(name == folder or name.startswith(folder + '/') for folder in DATA_DIRS))
 
 
+def _unmanaged_paths(source, relative):
+    tree = ast.parse(source)
+    parents = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
+    for node, parent in parents.items():
+        value = _literal_path(node)
+        if not value or not _is_data_path(value) or isinstance(parent, ast.Expr):
+            continue
+        if value == 'settings' and isinstance(parent, ast.Dict) and node in parent.keys:
+            owner = parents.get(parent)
+            if isinstance(owner, ast.Assign) and any(isinstance(target, ast.Name) and
+                    (relative, target.id) in PAGE_ID_TABLES for target in owner.targets):
+                continue
+        if any((relative, ast.get_source_segment(source, item)) in OTHER_MEANINGS for item in (node, parent)):
+            continue
+        yield f'{relative}:{node.lineno}: {value}'
+
+
+@pytest.mark.parametrize('relative, declaration', [
+    ('module/navigation.py', 'TOP_PAGES = {"settings": ("设置", "settingInterface", "FIF.SETTING")}'),
+    ('module/search/setting_text.py', 'PAGE_DESCRIPTIONS = {"settings": "调整程序设置"}'),
+    ('app/content/__init__.py', 'package = {"setting": "settings", "task": "tasks"}[kind]'),
+])
+def test_page_ids_do_not_exempt_file_access(relative, declaration):
+    source = declaration + '\nopen("settings")\nfolder = Path("settings") / "accounts"'
+    errors = list(_unmanaged_paths(source, relative))
+    assert f'{relative}:2: settings' in errors
+    assert f'{relative}:3: settings/accounts' in errors
+    assert not any(error.startswith(f'{relative}:1:') for error in errors)
+
+
 def test_runtime_uses_central_paths():
     errors = []
     for directory, folders, files in os.walk(ROOT):
@@ -137,14 +173,5 @@ def test_runtime_uses_central_paths():
             if relative in EXCLUDED_FILES:
                 continue
             source = path.read_text(encoding='utf-8-sig')
-            tree = ast.parse(source)
-            parents = {child: node for node in ast.walk(tree) for child in ast.iter_child_nodes(node)}
-            for node, parent in parents.items():
-                value = _literal_path(node)
-                if not value or not _is_data_path(value) or isinstance(parent, ast.Expr):
-                    continue
-                if any((relative, ast.get_source_segment(source, item)) in OTHER_MEANINGS
-                       for item in (node, parent)):
-                    continue
-                errors.append(f'{relative}:{node.lineno}: {value}')
+            errors.extend(_unmanaged_paths(source, relative))
     assert not errors, '\n' + '\n'.join(errors)

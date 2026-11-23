@@ -23,7 +23,8 @@ class TestStyleSheetEnum:
     def test_has_expected_members(self, qapp):
         from app.common.style_sheet import StyleSheet
         assert hasattr(StyleSheet, 'LOG_INTERFACE')
-        assert hasattr(StyleSheet, 'SETTING_INTERFACE')
+        assert hasattr(StyleSheet, 'WORKFLOW_INTERFACE')
+        assert 'SETTING_INTERFACE' not in StyleSheet.__members__
         assert hasattr(StyleSheet, 'LINK_CARD')
 
     def test_path_returns_string(self, qapp):

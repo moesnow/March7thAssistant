@@ -158,9 +158,7 @@ class TestStartValidation:
 class TestValidationResult:
     def _card_with_source_combo(self, qapp):
         combo = FakeComboBox([("GitHub", "GitHub"), ("Mirror 酱", "MirrorChyan")])
-        update_callback = SimpleNamespace(
-            settingInterface=SimpleNamespace(updateSourceCard=SimpleNamespace(comboBox=combo))
-        )
+        update_callback = SimpleNamespace(comboBox=combo)
         return make_card(qapp, update_callback=update_callback), combo
 
     def test_success_shows_days_and_switches_source(self, qapp, fake_infobar):
