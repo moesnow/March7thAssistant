@@ -237,6 +237,7 @@ def collect_code_literals() -> tuple[set[str], set[str], int]:
 #   - 键为元组表示只取这些 dict 键对应的值，避免把图标路径、task_id 等一起登记；
 #   - 必须用 AST 读取、绝不 import —— 否则会把 PySide6 / qfluentwidgets 拖进工具链。
 TABLE_SOURCES = [
+    ("app/content/gacha_model.py", (("_HEADERS", None),)),
     ("app/search_popup.py", (("GROUP_LABELS", None),)),
     ("app/setting_interface.py", (("DESCRIPTIONS", None),)),
     ("app/pages/run_mode.py", (("TAGS", None), ("DETAILS", None))),
@@ -331,6 +332,7 @@ def collect_table_literals() -> tuple[set[str], dict[str, str]]:
     constructors = {
         "module/content_pages.py": {"Page": (1, 4), "Group": (1,)},
         "module/docs/catalog.py": {"Manual": (1,)},
+        "module/gacha/pools.py": {"Pool": (1, 2)},
         "module/channel_catalog.py": {"Channel": (1, 3), "Field": (1, 3)},
         "module/task_catalog.py": {"Task": (1,)},
         "module/tool_catalog.py": {"Tool": (1, 2)},

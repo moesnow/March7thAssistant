@@ -1427,34 +1427,6 @@ msgid "已配置 {count} 项计划"
 msgid_plural "已配置 {count} 项计划|plural"
 msgstr[0] "已設定 {count} 項計畫"
 
-#: app/warp_interface.py:24
-msgid "更新数据"
-msgstr "更新資料"
-
-#: app/warp_interface.py:25
-msgid "更新完整数据"
-msgstr "更新完整資料"
-
-#: app/warp_interface.py:26
-msgid "导入数据"
-msgstr "匯入資料"
-
-#: app/warp_interface.py:27
-msgid "导出数据"
-msgstr "匯出資料"
-
-#: app/warp_interface.py:28
-msgid "导出Excel"
-msgstr "匯出 Excel"
-
-#: app/warp_interface.py:29
-msgid "复制链接"
-msgstr "複製連結"
-
-#: app/warp_interface.py:30
-msgid "清空"
-msgstr "清空"
-
 #: app/warp_interface.py:117
 msgid "导入抽卡记录"
 msgstr "匯入抽卡紀錄"
@@ -1463,33 +1435,13 @@ msgstr "匯入抽卡紀錄"
 msgid "UIGF / SRGF 格式 (*.json)"
 msgstr "UIGF / SRGF 格式 (*.json)"
 
-#: app/warp_interface.py:144
-msgid "导入成功(＾∀＾●)"
-msgstr "匯入成功(＾∀＾●)"
-
-#: app/warp_interface.py:154
-msgid "导入失败(╥╯﹏╰╥)"
-msgstr "匯入失敗(╥╯﹏╰╥)"
-
 #: app/warp_interface.py:173
 msgid "导出抽卡记录"
 msgstr "匯出抽卡紀錄"
 
-#: app/warp_interface.py:175
-msgid "UIGF 格式 (*.json);;SRGF 格式 (*.srgf.json)"
-msgstr "UIGF 格式 (*.json);;SRGF 格式 (*.srgf.json)"
-
 #: app/warp_interface.py:182
 msgid "UIGF 格式 (*.json)"
 msgstr "UIGF 格式 (*.json)"
-
-#: app/warp_interface.py:201
-msgid "导出成功(＾∀＾●)"
-msgstr "匯出成功(＾∀＾●)"
-
-#: app/warp_interface.py:212
-msgid "导出失败(╥╯﹏╰╥)"
-msgstr "匯出失敗(╥╯﹏╰╥)"
 
 #: app/warp_interface.py:228
 msgid "导出为 Excel 文件"
@@ -1550,28 +1502,6 @@ msgstr "清空抽卡紀錄"
 #: app/warp_interface.py:351
 msgid "确定要清空抽卡记录吗？此操作不可撤销。"
 msgstr "確定要清空抽卡紀錄嗎？此操作不可還原。"
-
-#: app/warp_interface.py:361
-msgid "清空完成(＾∀＾●)"
-msgstr "清空完成(＾∀＾●)"
-
-#: app/warp_interface.py:372
-msgid "清空失败(╥╯﹏╰╥)"
-msgstr "清空失敗(╥╯﹏╰╥)"
-
-#: app/warp_interface.py:403
-msgid ""
-"抽卡记录为空，请先打开游戏内抽卡记录，再点击更新数据即可。\n"
-"\n"
-"你也可以从其他支持 UIGF/SRGF 数据格式的应用导入数据，例如 StarRail Warp Export 或 Starward 等。\n"
-"\n"
-"复制链接功能可用于小程序或其他软件。"
-msgstr ""
-"抽卡紀錄為空，請先打開遊戲內抽卡紀錄，再點擊更新資料即可。\n"
-"\n"
-"你也可以從其他支援 UIGF/SRGF 資料格式的應用程式匯入資料，例如 StarRail Warp Export 或 Starward 等。\n"
-"\n"
-"複製連結功能可用於小程式或其他軟體。"
 
 #: app/sub_interfaces/hotkey_interface.py:20
 msgid "秘技（只对清体力和逐光捡金场景生效）"
@@ -2112,26 +2042,6 @@ msgstr "腳本或程式路徑"
 msgid "抽"
 msgstr "抽"
 
-#: app/tools/warp_export.py:193
-msgid "已累计"
-msgstr "已累積"
-
-#: app/tools/warp_export.py:193
-msgid "抽未出5星"
-msgstr "抽未出 5 星"
-
-#: app/tools/warp_export.py:197
-msgid "星"
-msgstr "星"
-
-#: app/tools/warp_export.py:203
-msgid "5星历史记录"
-msgstr "5 星歷史紀錄"
-
-#: app/tools/warp_export.py:204
-msgid "五星平均出货次数为"
-msgstr "五星平均出貨次數為"
-
 #: app/tools/warp_export.py:318
 msgid "请重新打开游戏抽卡记录"
 msgstr "請重新打開遊戲抽卡紀錄"
@@ -2171,14 +2081,6 @@ msgstr "未找到 URL"
 #: app/tools/warp_export.py:499
 msgid "跃迁数据获取失败(´▔∀▔`)"
 msgstr "躍遷資料獲取失敗(´▔∀▔`)"
-
-#: app/tools/warp_export.py:504
-msgid "正在获取跃迁数据..."
-msgstr "正在獲取躍遷資料..."
-
-#: app/tools/warp_export.py:513
-msgid "跃迁数据获取完成(＾∀＾●)"
-msgstr "躍遷資料獲取完成(＾∀＾●)"
 
 #: module/update/version_check.py:194
 msgid "Mirror酱 CDK 已过期"
@@ -3258,10 +3160,6 @@ msgstr "爻光"
 #: assets/config/character_names.json
 msgid "火花"
 msgstr "火花"
-
-#: app/tools/warp_export.py:193
-msgid "一共"
-msgstr "一共"
 
 #: assets/config/character_names.json
 msgid "阮·梅「雪绽梅笺」"
@@ -7961,26 +7859,6 @@ msgstr "備份校驗失敗，原記錄未修改。"
 msgid "确认导入抽卡记录"
 msgstr "確認匯入抽卡記錄"
 
-#: app/warp_interface.py:144
-msgid ""
-"账号 UID：{uid}\n"
-"导入方式：保留已有记录，补充新记录，自动跳过重复内容。\n"
-"\n"
-"现有记录：{existing} 条\n"
-"文件记录：{incoming} 条\n"
-"新增记录：{added} 条\n"
-"重复记录：{duplicates} 条\n"
-"合并后：{total} 条"
-msgstr ""
-"賬號 UID：{uid}\n"
-"匯入方式：保留已有記錄，補充新記錄，自動跳過重複內容。\n"
-"\n"
-"現有記錄：{existing} 條\n"
-"檔案記錄：{incoming} 條\n"
-"新增記錄：{added} 條\n"
-"重複記錄：{duplicates} 條\n"
-"合併後：{total} 條"
-
 #: app/warp_interface.py:150
 msgid "确认合并"
 msgstr "確認合併"
@@ -8009,30 +7887,6 @@ msgstr "下一步"
 msgid "警告：替换现有抽卡记录"
 msgstr "警告：替換現有抽卡記錄"
 
-#: app/warp_interface.py:168
-msgid ""
-"当前账号：{existing_uid}\n"
-"导入账号：{uid}\n"
-"导入方式：替换现有记录。\n"
-"\n"
-"现有记录数量：{existing}\n"
-"替换后记录数量：{total}\n"
-"\n"
-"此操作会用导入文件中的记录替换目前保存的全部记录。原有记录不会保留在当前列表中。\n"
-"\n"
-"确定要替换吗？"
-msgstr ""
-"當前賬號：{existing_uid}\n"
-"匯入賬號：{uid}\n"
-"匯入方式：替換現有記錄。\n"
-"\n"
-"現有記錄數量：{existing}\n"
-"替換後記錄數量：{total}\n"
-"\n"
-"此操作會用匯入檔案中的記錄替換目前儲存的全部記錄。原有記錄不會保留在當前列表中。\n"
-"\n"
-"確定要替換嗎？"
-
 #: app/warp_interface.py:173
 msgid "确认替换"
 msgstr "確認替換"
@@ -8040,10 +7894,6 @@ msgstr "確認替換"
 #: app/tools/warp_import.py:105
 msgid "现有记录无法读取，不能合并。请重新导入并选择替换现有记录。"
 msgstr "現有記錄無法讀取，不能合併。請重新匯入並選擇替換現有記錄。"
-
-#: app/warp_interface.py:173
-msgid "无法读取"
-msgstr "無法讀取"
 
 #: app/warp_interface.py:174
 msgid "无法统计"
@@ -10594,3 +10444,539 @@ msgstr "啟用 Webhook 通知"
 #: module/channel_catalog.py:171
 msgid "启用 自定义通知 通知"
 msgstr "啟用自訂通知"
+
+#: module/gacha/pools.py
+msgid "角色池"
+msgstr "角色池"
+
+#: module/gacha/pools.py
+msgid "光锥池"
+msgstr "光錐池"
+
+#: module/gacha/pools.py
+msgid "常驻池"
+msgstr "常駐池"
+
+#: module/gacha/pools.py
+msgid "新手池"
+msgstr "新手池"
+
+#: app/content/gacha_model.py
+msgid "类型"
+msgstr "類型"
+
+#: app/content/gacha_model.py
+msgid "第几抽（保底内）"
+msgstr "第幾抽（保底內）"
+
+#: app/content/gacha_dialogs.py:90
+msgid "SRGF 格式 (*.srgf.json)"
+msgstr "SRGF 格式 (*.srgf.json)"
+
+#: module/gacha/store.py:44
+msgid "{date} 更新"
+msgstr "{date} 更新"
+
+#: module/gacha/store.py:41
+msgid "今天 {time} 更新"
+msgstr "今天 {time} 更新"
+
+#: module/gacha/store.py:41
+msgid "昨天 {time} 更新"
+msgstr "昨天 {time} 更新"
+
+#: module/gacha/update.py:22
+msgid "从游戏更新抽卡记录仅支持 Windows。"
+msgstr "從遊戲更新躍遷紀錄僅支援 Windows。"
+
+#: utils/gacha_transaction.py:33
+msgid "导入中断后文件又发生了变化，请核对原件与备份：{path}"
+msgstr "匯入中斷後檔案又有變更，請核對原始檔與備份：{path}"
+
+#: module/gacha/transfer.py:31
+msgid "导入文件中有重复的星铁 UID，请核对文件。"
+msgstr "匯入檔案有重複的星穹鐵道 UID，請檢查檔案。"
+
+#: app/content/gacha_dialogs.py:45
+msgid "导入方式：保留已有记录，补充新记录，自动跳过重复内容。"
+msgstr "匯入方式：保留現有紀錄，加入新紀錄，自動略過重複項目。"
+
+#: module/gacha/store.py:102
+msgid "当前以只读方式运行，无法修改抽卡记录。"
+msgstr "目前以唯讀模式執行，無法修改躍遷紀錄。"
+
+#: utils/gacha_transaction.py:39
+msgid "抽卡导入备份名称无效：{path}"
+msgstr "躍遷紀錄的匯入備份名稱無效：{path}"
+
+#: module/gacha/store.py:115
+msgid "抽卡导入尚未完成，请在正常启动小助手后重试。"
+msgstr "躍遷紀錄尚未匯入完成，請正常啟動小助手後再試。"
+
+#: utils/gacha_transaction.py:28
+msgid "抽卡导入恢复记录无效：{path}"
+msgstr "躍遷紀錄的匯入復原檔無效：{path}"
+
+#: utils/gacha_transaction.py:43
+msgid "抽卡记录备份校验失败：{path}"
+msgstr "躍遷紀錄備份驗證失敗：{path}"
+
+#: module/gacha/transfer.py:25
+msgid "文件中没有可导入的星铁账号。"
+msgstr "檔案中沒有可匯入的星穹鐵道帳號。"
+
+#: module/gacha/store.py:66
+msgid "文件名中的 UID 与记录中的 UID 不一致。"
+msgstr "檔名中的 UID 與紀錄中的 UID 不一致。"
+
+#: app/content/gacha_dialogs.py:99
+msgid "文件已导出，无法打开所在文件夹。"
+msgstr "已匯出檔案，但無法開啟所在資料夾。"
+
+#: module/gacha/store.py:131
+msgid "旧抽卡记录尚未合并，请先在抽卡页查看文件：{path}"
+msgstr "舊躍遷紀錄尚未合併，請先在躍遷紀錄頁檢查檔案：{path}"
+
+#: module/gacha/update.py:50
+msgid "未知的更新方式。"
+msgstr "未知的更新方式。"
+
+#: module/gacha/fetch.py:220
+msgid "本页记录的账号、语言或卡池不一致，已停止更新。"
+msgstr "此頁紀錄的帳號、語言或躍遷類型不一致，已停止更新。"
+
+#: app/content/gacha_dialogs.py:44
+msgid "此操作会用导入文件中的记录替换目前保存的全部记录。原有记录不会保留在当前列表中。"
+msgstr "這會用匯入檔案中的紀錄取代目前儲存的全部紀錄。原有紀錄將從目前的清單移除。"
+
+#: module/gacha/transfer.py:155
+msgid "没有可导出的抽卡记录。"
+msgstr "沒有可匯出的躍遷紀錄。"
+
+#: module/gacha/update.py:58
+msgid "游戏未返回含 UID 的抽卡记录。"
+msgstr "遊戲未傳回含有 UID 的躍遷紀錄。"
+
+#: module/gacha/fetch.py:214
+msgid "记录分页没有前进，请重新打开游戏抽卡记录后重试。"
+msgstr "無法取得下一頁紀錄，請重新開啟遊戲內的躍遷紀錄後再試。"
+
+#: module/gacha/transfer.py:28
+msgid "请选择 UIGF v4 格式的文件。"
+msgstr "請選擇 UIGF v4 格式的檔案。"
+
+#: module/gacha/transfer.py:143
+msgid "请选择抽卡记录数据目录以外的位置导出。"
+msgstr "請選擇躍遷紀錄資料夾以外的位置匯出。"
+
+#: module/gacha/transfer.py:145
+msgid "请选择要导出的格式和 UID。"
+msgstr "請選擇要匯出的格式和 UID。"
+
+#: module/gacha/store.py:97
+msgid "请选择要操作的 UID。"
+msgstr "請選擇要操作的 UID。"
+
+#: app/content/gacha_dialogs.py:109
+msgid "账号 UID：{uid}"
+msgstr "帳號 UID：{uid}"
+
+#: app/content/gacha_dialogs.py:36
+msgid "账号 UID：{uid}\n现有记录：{existing} 条\n文件记录：{incoming} 条\n新增记录：{added} 条\n重复记录：{duplicates} 条\n导入后：{total} 条"
+msgstr "帳號 UID：{uid}\n現有紀錄：{existing} 筆\n檔案紀錄：{incoming} 筆\n新增紀錄：{added} 筆\n重複紀錄：{duplicates} 筆\n匯入後：{total} 筆"
+
+#: app/content/gacha_update.py:71
+msgid "还没有成功更新过抽卡记录。"
+msgstr "尚未成功更新過躍遷紀錄。"
+
+#: module/gacha/store.py:83
+msgid "抽卡记录文件无法解析，请检查文件或从备份恢复。"
+msgstr "無法解析躍遷紀錄檔案，請檢查檔案或從備份還原。"
+
+#: module/gacha/update.py:70
+msgid "游戏返回的抽卡记录不完整，请重新打开跃迁记录后重试。"
+msgstr "遊戲傳回的躍遷紀錄不完整，請重新開啟躍遷紀錄後再試。"
+
+#: utils/data_backup.py:151
+msgid "所选目录的抽卡导入尚未完成，请先在原安装中打开抽卡页。"
+msgstr "所選資料夾的躍遷紀錄尚未匯入完成，請先在原安裝中開啟躍遷紀錄頁。"
+
+#: app/gacha/cards.py:135
+msgid "当前保底"
+msgstr "目前保底進度"
+
+#: app/gacha/cards.py:136
+msgid "{category} · {limit} 抽保底"
+msgstr "{category} · {limit} 抽保底"
+
+#: app/gacha/cards.py:137
+msgid "四星 {count} / {limit}"
+msgstr "四星 {count} / {limit}"
+
+#: app/gacha/cards.py:140
+msgid "抽 · 已结束"
+msgstr "抽 · 已結束"
+
+#: app/gacha/cards.py:142
+msgid "新手跃迁最多 {limit} 抽，已经抽完"
+msgstr "新手躍遷的 {limit} 抽已全部完成"
+
+#: app/gacha/cards.py:146
+msgid "抽 · 已获得五星"
+msgstr "抽 · 已獲得五星"
+
+#: app/gacha/cards.py:148
+msgid "还能再抽 {pulls} 抽"
+msgstr "還能再抽 {pulls} 抽"
+
+#: app/gacha/cards.py:150
+msgid "抽未出五星"
+msgstr "抽未出五星"
+
+#: app/gacha/cards.py:152
+msgid "距离保底 {pulls} 抽（约 {jade} 星琼）"
+msgstr "距離保底 {pulls} 抽（約 {jade} 星瓊）"
+
+#: app/gacha/cards.py:183
+msgid "五星出货分布"
+msgstr "五星出現分布"
+
+#: app/gacha/cards.py:184
+msgid "按出金时的抽数分段"
+msgstr "依取得五星的抽數分組"
+
+#: app/gacha/cards.py:189
+msgid "另有 {count} 个五星超过 {limit} 抽，可能是记录不完整"
+msgstr "另有 {count} 個五星超過 {limit} 抽，紀錄可能不完整"
+
+#: app/gacha/cards.py:218
+msgid "五星记录"
+msgstr "五星紀錄"
+
+#: app/gacha/cards.py:218
+msgid "最近在前"
+msgstr "最新在前"
+
+#: app/gacha/cards.py:219
+msgid "打开明细表 ›"
+msgstr "開啟明細表 ›"
+
+#: app/gacha/cards.py:230
+msgid "这个卡池还没有记录"
+msgstr "這個卡池還沒有紀錄"
+
+#: app/gacha/cards.py:232
+msgid "还没有五星，表格中可按星级、名称筛选"
+msgstr "還沒有五星，可在明細表依星級或名稱篩選"
+
+#: app/gacha/cards.py:234
+msgid "共 {count} 个五星，这里显示最近 {shown} 个"
+msgstr "共 {count} 個五星，這裡顯示最近 {shown} 個"
+
+#: app/gacha/cards.py:236
+msgid "共 {count} 个五星 · 表格中可按星级、名称筛选"
+msgstr "共 {count} 個五星 · 可在明細表依星級或名稱篩選"
+
+#: app/gacha/cards.py:282
+msgid "还没有记录"
+msgstr "還沒有紀錄"
+
+#: app/gacha/cards.py:283
+msgid "{start} 至 {end}"
+msgstr "{start} 至 {end}"
+
+#: app/gacha/cards.py:285
+msgid "总抽数"
+msgstr "總抽數"
+
+#: app/gacha/cards.py:287
+msgid "最近一次：{date}"
+msgstr "最近一次：{date}"
+
+#: app/gacha/cards.py:289
+msgid "还没有五星"
+msgstr "還沒有五星"
+
+#: app/gacha/cards.py:290
+msgid "五星"
+msgstr "五星"
+
+#: app/gacha/cards.py:291
+msgid "出率 {rate}"
+msgstr "出現率 {rate}"
+
+#: app/gacha/cards.py:293
+msgid "平均出金"
+msgstr "平均出五星抽數"
+
+#: app/gacha/cards.py:294
+msgid "最快 {fast} 抽 · 最慢 {slow} 抽"
+msgstr "最快 {fast} 抽 · 最慢 {slow} 抽"
+
+#: app/gacha/cards.py:296
+msgid "出过五星后显示"
+msgstr "取得五星後顯示"
+
+#: app/gacha/cards.py:298
+msgid "平均每 {pulls} 抽一个四星"
+msgstr "平均每 {pulls} 抽出現一個四星"
+
+#: app/gacha/cards.py:300
+msgid "还没有四星"
+msgstr "還沒有四星"
+
+#: app/gacha/cards.py:301
+msgid "四星"
+msgstr "四星"
+
+#: app/gacha/charts.py:123
+msgid "{pulls} 概率提升"
+msgstr "{pulls} 抽起機率提升"
+
+#: app/gacha/charts.py:147
+msgid "{first}～{last} 抽：{count} 个五星"
+msgstr "第 {first}～{last} 抽：{count} 個五星"
+
+#: app/gacha/charts.py:296
+msgid "日期"
+msgstr "日期"
+
+#: app/gacha/charts.py:297
+msgid "抽数"
+msgstr "抽數"
+
+#: app/gacha/charts.py:320
+msgid "用了多少抽（竖线为 {pulls} 抽）"
+msgstr "用了多少抽（直線代表 {pulls} 抽）"
+
+#: app/gacha/charts.py:320
+msgid "用了多少抽"
+msgstr "用了多少抽"
+
+#: app/gacha/charts.py:380
+msgid "{name}：用了 {pulls} 抽，{time}"
+msgstr "{name}：用了 {pulls} 抽，{time}"
+
+#: app/gacha/charts.py:91
+msgid "第 {soft} 抽起五星概率提升，第 {limit} 抽必定获得五星"
+msgstr "第 {soft} 抽起五星機率提升，最遲第 {limit} 抽必定獲得五星"
+
+#: app/gacha/charts.py:93
+msgid "{limit} 抽内必定获得一个五星"
+msgstr "{limit} 抽內必定獲得一個五星"
+
+#: app/gacha/chips.py:135
+msgid "{count} · 已结束"
+msgstr "{count} · 已結束"
+
+#: app/gacha/detail.py:111
+msgid "返回统计"
+msgstr "返回統計"
+
+#: app/gacha/detail.py:112
+msgid "三星"
+msgstr "三星"
+
+#: app/gacha/detail.py:114
+msgid "搜索名称"
+msgstr "搜尋名稱"
+
+#: app/gacha/detail.py:118
+msgid "全部时间"
+msgstr "全部時間"
+
+#: app/gacha/detail.py:118
+msgid "最近 30 天"
+msgstr "最近 30 天"
+
+#: app/gacha/detail.py:118
+msgid "最近 90 天"
+msgstr "最近 90 天"
+
+#: app/gacha/detail.py:118
+msgid "最近一年"
+msgstr "最近一年"
+
+#: app/gacha/detail.py:121
+msgid "全部卡池"
+msgstr "全部卡池"
+
+#: app/gacha/detail.py:122
+msgid "没有符合条件的记录"
+msgstr "沒有符合條件的紀錄"
+
+#: app/gacha/detail.py:153
+msgid "共 {count} 条"
+msgstr "共 {count} 筆"
+
+#: app/gacha/detail.py:155
+msgid "筛选出 {count} 条，共 {total} 条"
+msgstr "顯示 {count} 筆，共 {total} 筆"
+
+#: app/gacha/empty.py:111
+msgid "还没有抽卡记录"
+msgstr "還沒有躍遷紀錄"
+
+#: app/gacha/empty.py:113
+msgid "小助手读取的是游戏里的跃迁记录页，不会改动游戏数据。三步就好："
+msgstr "小助手只會讀取遊戲內的躍遷紀錄。取得紀錄只需三個步驟："
+
+#: app/gacha/empty.py:115
+msgid "这台电脑上不能从游戏更新抽卡记录，可以导入其他工具导出的文件。"
+msgstr "這台電腦無法從遊戲更新躍遷紀錄，可匯入其他工具匯出的檔案。"
+
+#: app/gacha/empty.py:116
+msgid "在游戏里打开「跃迁」→「查看详情」→「跃迁记录」，等记录页加载出来"
+msgstr "在遊戲中開啟「躍遷」→「查看詳情」→「躍遷紀錄」，等紀錄頁載入完成"
+
+#: app/gacha/empty.py:117
+msgid "回到这里点「更新记录」，第一次会读取全部历史，可能需要一两分钟"
+msgstr "回到這裡點選「更新紀錄」。第一次會讀取全部歷史，可能需要一兩分鐘"
+
+#: app/gacha/empty.py:118
+msgid "换过电脑？也可以导入其他工具导出的 UIGF / SRGF 文件"
+msgstr "換過電腦？也可以匯入其他工具匯出的 UIGF / SRGF 檔案"
+
+#: app/gacha/empty.py:122
+msgid "更新记录"
+msgstr "更新紀錄"
+
+#: app/gacha/empty.py:124
+msgid "导入 UIGF / SRGF 文件"
+msgstr "匯入 UIGF / SRGF 檔案"
+
+#: app/warp_interface.py:114
+msgid "导入 / 导出"
+msgstr "匯入 / 匯出"
+
+#: app/warp_interface.py:115
+msgid "更多操作"
+msgstr "更多操作"
+
+#: app/warp_interface.py:177
+msgid "UID {uid}"
+msgstr "UID {uid}"
+
+#: app/warp_interface.py:179
+msgid "还没有数据"
+msgstr "還沒有資料"
+
+#: app/warp_interface.py:199
+msgid "有 {count} 个抽卡记录文件没能读取，记录暂时不会显示："
+msgstr "有 {count} 個躍遷紀錄檔案無法讀取，暫時無法顯示這些紀錄："
+
+#: app/warp_interface.py:202
+msgid "还有 {count} 个"
+msgstr "還有 {count} 個"
+
+#: app/warp_interface.py:204
+msgid "打开所在文件夹"
+msgstr "開啟所在資料夾"
+
+#: app/warp_interface.py:225
+msgid "只获取新记录"
+msgstr "只取得新紀錄"
+
+#: app/warp_interface.py:226
+msgid "重新获取全部记录"
+msgstr "重新取得全部紀錄"
+
+#: app/warp_interface.py:229
+msgid "导入 UIGF / SRGF 文件…"
+msgstr "匯入 UIGF / SRGF 檔案…"
+
+#: app/warp_interface.py:232
+msgid "导出 UIGF"
+msgstr "匯出 UIGF"
+
+#: app/warp_interface.py:234
+msgid "导出全部 {count} 个 UID（UIGF）"
+msgstr "匯出全部 {count} 個 UID（UIGF）"
+
+#: app/warp_interface.py:235
+msgid "导出 SRGF"
+msgstr "匯出 SRGF"
+
+#: app/warp_interface.py:235
+msgid "导出 Excel"
+msgstr "匯出 Excel"
+
+#: app/warp_interface.py:242
+msgid "复制抽卡链接"
+msgstr "複製躍遷紀錄連結"
+
+#: app/warp_interface.py:245
+msgid "更新一次记录后可以复制"
+msgstr "更新一次紀錄後即可複製"
+
+#: app/warp_interface.py:248
+msgid "打开数据文件夹"
+msgstr "開啟資料存放位置"
+
+#: app/warp_interface.py:250
+msgid "清空这个 UID 的记录…"
+msgstr "清空這個 UID 的紀錄…"
+
+#: app/warp_interface.py:255
+msgid "UID {uid} · {count} 抽"
+msgstr "UID {uid} · {count} 抽"
+
+#: app/warp_interface.py:276
+msgid "不能从游戏更新"
+msgstr "無法從遊戲更新"
+
+#: app/warp_interface.py:284
+msgid "正在更新…"
+msgstr "正在更新…"
+
+#: app/warp_interface.py:289
+msgid "正在获取跃迁记录…"
+msgstr "正在取得躍遷紀錄…"
+
+#: app/warp_interface.py:295
+msgid "{title}：{text}"
+msgstr "{title}：{text}"
+
+#: app/warp_interface.py:302
+msgid "UID {uid} 新增 {count} 条记录"
+msgstr "UID {uid} 新增 {count} 筆紀錄"
+
+#: app/warp_interface.py:303
+msgid "UID {uid} 没有新记录"
+msgstr "UID {uid} 沒有新紀錄"
+
+#: app/warp_interface.py:304
+msgid "抽卡记录已更新"
+msgstr "躍遷紀錄已更新"
+
+#: app/warp_interface.py:315
+msgid "导入成功"
+msgstr "匯入成功"
+
+#: app/warp_interface.py:315
+msgid "UID {uids}"
+msgstr "UID {uids}"
+
+#: app/warp_interface.py:340
+msgid "已清空"
+msgstr "已清空"
+
+#: app/warp_interface.py:340
+msgid "UID {uid} 的记录已清空，原文件的备份留在数据文件夹里"
+msgstr "已清空 UID {uid} 的紀錄，原始檔案的備份保存在資料目錄中"
+
+#: app/warp_interface.py:342
+msgid "清空失败"
+msgstr "清空失敗"
+
+#: app/warp_interface.py:348
+msgid "复制失败"
+msgstr "複製失敗"
+
+#: app/warp_interface.py:350
+msgid "已复制抽卡链接"
+msgstr "已複製躍遷紀錄連結"
+
+#: app/warp_interface.py:350
+msgid "链接里有临时登录凭据，只发给你信任的工具"
+msgstr "連結含有臨時登入憑證，請只提供給信任的工具"

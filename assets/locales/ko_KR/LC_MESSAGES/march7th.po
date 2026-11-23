@@ -1433,34 +1433,6 @@ msgid "已配置 {count} 项计划"
 msgid_plural "已配置 {count} 项计划|plural"
 msgstr[0] "{count} 개의 계획이 설정됨"
 
-#: app/warp_interface.py:24
-msgid "更新数据"
-msgstr "데이터 업데이트"
-
-#: app/warp_interface.py:25
-msgid "更新完整数据"
-msgstr "전체 데이터 업데이트"
-
-#: app/warp_interface.py:26
-msgid "导入数据"
-msgstr "데이터 가져오기"
-
-#: app/warp_interface.py:27
-msgid "导出数据"
-msgstr "데이터 내보내기"
-
-#: app/warp_interface.py:28
-msgid "导出Excel"
-msgstr "Excel로 내보내기"
-
-#: app/warp_interface.py:29
-msgid "复制链接"
-msgstr "링크 복사"
-
-#: app/warp_interface.py:30
-msgid "清空"
-msgstr "비우기"
-
 #: app/warp_interface.py:117
 msgid "导入抽卡记录"
 msgstr "가챠 기록 가져오기"
@@ -1469,33 +1441,13 @@ msgstr "가챠 기록 가져오기"
 msgid "UIGF / SRGF 格式 (*.json)"
 msgstr "UIGF / SRGF 형식 (*.json)"
 
-#: app/warp_interface.py:144
-msgid "导入成功(＾∀＾●)"
-msgstr "가져오기 성공(＾∀＾●)"
-
-#: app/warp_interface.py:154
-msgid "导入失败(╥╯﹏╰╥)"
-msgstr "가져오기 실패(╥╯﹏╰╥)"
-
 #: app/warp_interface.py:173
 msgid "导出抽卡记录"
 msgstr "가챠 기록 내보내기"
 
-#: app/warp_interface.py:175
-msgid "UIGF 格式 (*.json);;SRGF 格式 (*.srgf.json)"
-msgstr "UIGF 형식 (*.json);;SRGF 형식 (*.srgf.json)"
-
 #: app/warp_interface.py:182
 msgid "UIGF 格式 (*.json)"
 msgstr "UIGF 형식 (*.json)"
-
-#: app/warp_interface.py:201
-msgid "导出成功(＾∀＾●)"
-msgstr "내보내기 성공(＾∀＾●)"
-
-#: app/warp_interface.py:212
-msgid "导出失败(╥╯﹏╰╥)"
-msgstr "내보내기 실패(╥╯﹏╰╥)"
 
 #: app/warp_interface.py:228
 msgid "导出为 Excel 文件"
@@ -1556,28 +1508,6 @@ msgstr "가챠 기록 비우기"
 #: app/warp_interface.py:351
 msgid "确定要清空抽卡记录吗？此操作不可撤销。"
 msgstr "가챠 기록을 비우시겠습니까? 이 작업은 취소할 수 없습니다."
-
-#: app/warp_interface.py:361
-msgid "清空完成(＾∀＾●)"
-msgstr "비우기 완료(＾∀＾●)"
-
-#: app/warp_interface.py:372
-msgid "清空失败(╥╯﹏╰╥)"
-msgstr "비우기 실패(╥╯﹏╰╥)"
-
-#: app/warp_interface.py:403
-msgid ""
-"抽卡记录为空，请先打开游戏内抽卡记录，再点击更新数据即可。\n"
-"\n"
-"你也可以从其他支持 UIGF/SRGF 数据格式的应用导入数据，例如 StarRail Warp Export 或 Starward 等。\n"
-"\n"
-"复制链接功能可用于小程序或其他软件。"
-msgstr ""
-"가챠 기록이 비어 있습니다. 먼저 게임 내 가챠 기록을 열고 데이터 업데이트를 클릭하세요.\n"
-"\n"
-"StarRail Warp Export 또는 Starward와 같은 UIGF/SRGF 데이터 형식을 지원하는 다른 앱에서 데이터를 가져올 수도 있습니다.\n"
-"\n"
-"링크 복사 기능은 미니 프로그램이나 다른 소프트웨어에 사용할 수 있습니다."
 
 #: app/sub_interfaces/hotkey_interface.py:20
 msgid "秘技（只对清体力和逐光捡金场景生效）"
@@ -2121,26 +2051,6 @@ msgstr "스크립트 또는 프로그램 경로"
 msgid "抽"
 msgstr "뽑기"
 
-#: app/tools/warp_export.py:193
-msgid "已累计"
-msgstr "누적"
-
-#: app/tools/warp_export.py:193
-msgid "抽未出5星"
-msgstr "회 5성 미획득"
-
-#: app/tools/warp_export.py:197
-msgid "星"
-msgstr "성"
-
-#: app/tools/warp_export.py:203
-msgid "5星历史记录"
-msgstr "5성 히스토리"
-
-#: app/tools/warp_export.py:204
-msgid "五星平均出货次数为"
-msgstr "5성 평균 획득 횟수:"
-
 #: app/tools/warp_export.py:318
 msgid "请重新打开游戏抽卡记录"
 msgstr "게임 내 가챠 기록을 다시 열어주세요"
@@ -2180,14 +2090,6 @@ msgstr "URL을 찾을 수 없습니다"
 #: app/tools/warp_export.py:499
 msgid "跃迁数据获取失败(´▔∀▔`)"
 msgstr "워프 데이터 가져오기 실패(´▔∀▔`)"
-
-#: app/tools/warp_export.py:504
-msgid "正在获取跃迁数据..."
-msgstr "워프 데이터 가져오는 중..."
-
-#: app/tools/warp_export.py:513
-msgid "跃迁数据获取完成(＾∀＾●)"
-msgstr "워프 데이터 가져오기 완료(＾∀＾●)"
 
 #: module/update/version_check.py:194
 msgid "Mirror酱 CDK 已过期"
@@ -3267,10 +3169,6 @@ msgstr "효광"
 #: assets/config/character_names.json
 msgid "火花"
 msgstr "스파키"
-
-#: app/tools/warp_export.py:193
-msgid "一共"
-msgstr "총"
 
 #: assets/config/character_names.json
 msgid "阮·梅「雪绽梅笺」"
@@ -8043,26 +7941,6 @@ msgstr "백업 검증에 실패했습니다. 기존 기록은 변경되지 않�
 msgid "确认导入抽卡记录"
 msgstr "워프 기록 가져오기 확인"
 
-#: app/warp_interface.py:144
-msgid ""
-"账号 UID：{uid}\n"
-"导入方式：保留已有记录，补充新记录，自动跳过重复内容。\n"
-"\n"
-"现有记录：{existing} 条\n"
-"文件记录：{incoming} 条\n"
-"新增记录：{added} 条\n"
-"重复记录：{duplicates} 条\n"
-"合并后：{total} 条"
-msgstr ""
-"계정 UID: {uid}\n"
-"방식: 기존 기록을 유지하고 새 기록을 추가하며 중복은 건너뜁니다.\n"
-"\n"
-"기존 기록: {existing}개\n"
-"파일 내 기록: {incoming}개\n"
-"새 기록: {added}개\n"
-"중복 기록: {duplicates}개\n"
-"병합 후: {total}개"
-
 #: app/warp_interface.py:150
 msgid "确认合并"
 msgstr "병합 확인"
@@ -8091,30 +7969,6 @@ msgstr "다음"
 msgid "警告：替换现有抽卡记录"
 msgstr "경고: 기존 워프 기록 교체"
 
-#: app/warp_interface.py:168
-msgid ""
-"当前账号：{existing_uid}\n"
-"导入账号：{uid}\n"
-"导入方式：替换现有记录。\n"
-"\n"
-"现有记录数量：{existing}\n"
-"替换后记录数量：{total}\n"
-"\n"
-"此操作会用导入文件中的记录替换目前保存的全部记录。原有记录不会保留在当前列表中。\n"
-"\n"
-"确定要替换吗？"
-msgstr ""
-"현재 계정: {existing_uid}\n"
-"가져올 계정: {uid}\n"
-"방식: 기존 기록을 교체합니다.\n"
-"\n"
-"기존 기록 수: {existing}\n"
-"교체 후 기록 수: {total}\n"
-"\n"
-"현재 저장된 모든 기록을 가져올 파일의 기록으로 교체합니다. 기존 기록은 현재 목록에 남지 않습니다.\n"
-"\n"
-"교체하시겠습니까?"
-
 #: app/warp_interface.py:173
 msgid "确认替换"
 msgstr "교체 확인"
@@ -8122,10 +7976,6 @@ msgstr "교체 확인"
 #: app/tools/warp_import.py:105
 msgid "现有记录无法读取，不能合并。请重新导入并选择替换现有记录。"
 msgstr "기존 기록을 읽을 수 없어 병합할 수 없습니다. 다시 가져와서 기존 기록 교체를 선택하세요."
-
-#: app/warp_interface.py:173
-msgid "无法读取"
-msgstr "읽을 수 없음"
 
 #: app/warp_interface.py:174
 msgid "无法统计"
@@ -10680,3 +10530,539 @@ msgstr "Webhook 알림 활성화"
 #: module/channel_catalog.py:171
 msgid "启用 自定义通知 通知"
 msgstr "사용자 지정 알림 활성화"
+
+#: module/gacha/pools.py
+msgid "角色池"
+msgstr "캐릭터 워프"
+
+#: module/gacha/pools.py
+msgid "光锥池"
+msgstr "광추 워프"
+
+#: module/gacha/pools.py
+msgid "常驻池"
+msgstr "상시 워프"
+
+#: module/gacha/pools.py
+msgid "新手池"
+msgstr "초행길 워프"
+
+#: app/content/gacha_model.py
+msgid "类型"
+msgstr "유형"
+
+#: app/content/gacha_model.py
+msgid "第几抽（保底内）"
+msgstr "천장 내 워프 횟수"
+
+#: app/content/gacha_dialogs.py:90
+msgid "SRGF 格式 (*.srgf.json)"
+msgstr "SRGF 형식 (*.srgf.json)"
+
+#: module/gacha/store.py:44
+msgid "{date} 更新"
+msgstr "{date} 업데이트"
+
+#: module/gacha/store.py:41
+msgid "今天 {time} 更新"
+msgstr "오늘 {time} 업데이트"
+
+#: module/gacha/store.py:41
+msgid "昨天 {time} 更新"
+msgstr "어제 {time} 업데이트"
+
+#: module/gacha/update.py:22
+msgid "从游戏更新抽卡记录仅支持 Windows。"
+msgstr "게임에서 워프 기록을 업데이트하는 기능은 Windows에서만 사용할 수 있습니다."
+
+#: utils/gacha_transaction.py:33
+msgid "导入中断后文件又发生了变化，请核对原件与备份：{path}"
+msgstr "가져오기가 중단된 후 파일이 변경되었습니다. 원본과 백업을 확인하세요: {path}"
+
+#: module/gacha/transfer.py:31
+msgid "导入文件中有重复的星铁 UID，请核对文件。"
+msgstr "파일에 중복된 스타레일 UID가 있습니다. 파일을 확인하세요."
+
+#: app/content/gacha_dialogs.py:45
+msgid "导入方式：保留已有记录，补充新记录，自动跳过重复内容。"
+msgstr "기존 기록을 유지하고 새 기록을 추가하며 중복 기록은 자동으로 건너뜁니다."
+
+#: module/gacha/store.py:102
+msgid "当前以只读方式运行，无法修改抽卡记录。"
+msgstr "읽기 전용 모드에서는 워프 기록을 변경할 수 없습니다."
+
+#: utils/gacha_transaction.py:39
+msgid "抽卡导入备份名称无效：{path}"
+msgstr "워프 기록 가져오기 백업 이름이 올바르지 않습니다: {path}"
+
+#: module/gacha/store.py:115
+msgid "抽卡导入尚未完成，请在正常启动小助手后重试。"
+msgstr "워프 기록 가져오기가 끝나지 않았습니다. 도우미를 일반 모드로 실행한 후 다시 시도하세요."
+
+#: utils/gacha_transaction.py:28
+msgid "抽卡导入恢复记录无效：{path}"
+msgstr "워프 기록 가져오기 복구 파일이 올바르지 않습니다: {path}"
+
+#: utils/gacha_transaction.py:43
+msgid "抽卡记录备份校验失败：{path}"
+msgstr "워프 기록 백업을 확인하지 못했습니다: {path}"
+
+#: module/gacha/transfer.py:25
+msgid "文件中没有可导入的星铁账号。"
+msgstr "파일에 가져올 스타레일 계정이 없습니다."
+
+#: module/gacha/store.py:66
+msgid "文件名中的 UID 与记录中的 UID 不一致。"
+msgstr "파일 이름의 UID가 기록의 UID와 일치하지 않습니다."
+
+#: app/content/gacha_dialogs.py:99
+msgid "文件已导出，无法打开所在文件夹。"
+msgstr "파일을 내보냈지만 저장된 폴더를 열 수 없습니다."
+
+#: module/gacha/store.py:131
+msgid "旧抽卡记录尚未合并，请先在抽卡页查看文件：{path}"
+msgstr "이전 워프 기록이 병합되지 않았습니다. 워프 기록 페이지에서 파일을 확인하세요: {path}"
+
+#: module/gacha/update.py:50
+msgid "未知的更新方式。"
+msgstr "알 수 없는 업데이트 방식입니다."
+
+#: module/gacha/fetch.py:220
+msgid "本页记录的账号、语言或卡池不一致，已停止更新。"
+msgstr "페이지의 계정, 언어 또는 워프 종류가 일치하지 않아 업데이트를 중단했습니다."
+
+#: app/content/gacha_dialogs.py:44
+msgid "此操作会用导入文件中的记录替换目前保存的全部记录。原有记录不会保留在当前列表中。"
+msgstr "표시된 계정에 저장된 모든 기록을 가져온 파일의 기록으로 교체합니다. 이전 기록은 현재 목록에서 제거됩니다."
+
+#: module/gacha/transfer.py:155
+msgid "没有可导出的抽卡记录。"
+msgstr "내보낼 워프 기록이 없습니다."
+
+#: module/gacha/update.py:58
+msgid "游戏未返回含 UID 的抽卡记录。"
+msgstr "게임에서 UID가 포함된 워프 기록을 받지 못했습니다."
+
+#: module/gacha/fetch.py:214
+msgid "记录分页没有前进，请重新打开游戏抽卡记录后重试。"
+msgstr "기록의 다음 페이지를 불러오지 못했습니다. 게임에서 워프 기록을 다시 연 후 시도하세요."
+
+#: module/gacha/transfer.py:28
+msgid "请选择 UIGF v4 格式的文件。"
+msgstr "UIGF v4 형식 파일을 선택하세요."
+
+#: module/gacha/transfer.py:143
+msgid "请选择抽卡记录数据目录以外的位置导出。"
+msgstr "워프 기록 데이터 폴더 밖의 위치를 선택해 내보내세요."
+
+#: module/gacha/transfer.py:145
+msgid "请选择要导出的格式和 UID。"
+msgstr "내보낼 형식과 UID를 선택하세요."
+
+#: module/gacha/store.py:97
+msgid "请选择要操作的 UID。"
+msgstr "작업할 UID를 선택하세요."
+
+#: app/content/gacha_dialogs.py:109
+msgid "账号 UID：{uid}"
+msgstr "계정 UID: {uid}"
+
+#: app/content/gacha_dialogs.py:36
+msgid "账号 UID：{uid}\n现有记录：{existing} 条\n文件记录：{incoming} 条\n新增记录：{added} 条\n重复记录：{duplicates} 条\n导入后：{total} 条"
+msgstr "계정 UID: {uid}\n기존 기록: {existing}개\n파일 내 기록: {incoming}개\n새 기록: {added}개\n중복 기록: {duplicates}개\n가져온 후 합계: {total}개"
+
+#: app/content/gacha_update.py:71
+msgid "还没有成功更新过抽卡记录。"
+msgstr "아직 워프 기록 업데이트가 완료된 적이 없습니다."
+
+#: module/gacha/store.py:83
+msgid "抽卡记录文件无法解析，请检查文件或从备份恢复。"
+msgstr "워프 기록 파일을 읽을 수 없습니다. 파일을 확인하거나 백업에서 복원하세요."
+
+#: module/gacha/update.py:70
+msgid "游戏返回的抽卡记录不完整，请重新打开跃迁记录后重试。"
+msgstr "게임에서 받은 워프 기록이 불완전합니다. 게임에서 워프 기록을 다시 연 후 시도하세요."
+
+#: utils/data_backup.py:151
+msgid "所选目录的抽卡导入尚未完成，请先在原安装中打开抽卡页。"
+msgstr "선택한 폴더에서 워프 기록 가져오기가 완료되지 않았습니다. 기존 설치에서 워프 기록 페이지를 먼저 여세요."
+
+#: app/gacha/cards.py:135
+msgid "当前保底"
+msgstr "현재 천장 카운트"
+
+#: app/gacha/cards.py:136
+msgid "{category} · {limit} 抽保底"
+msgstr "{category} · {limit}회 확정"
+
+#: app/gacha/cards.py:137
+msgid "四星 {count} / {limit}"
+msgstr "4성 {count} / {limit}"
+
+#: app/gacha/cards.py:140
+msgid "抽 · 已结束"
+msgstr "회 · 종료"
+
+#: app/gacha/cards.py:142
+msgid "新手跃迁最多 {limit} 抽，已经抽完"
+msgstr "초행길 워프 {limit}회를 모두 사용했습니다"
+
+#: app/gacha/cards.py:146
+msgid "抽 · 已获得五星"
+msgstr "회 · 5성 획득"
+
+#: app/gacha/cards.py:148
+msgid "还能再抽 {pulls} 抽"
+msgstr "남은 워프: {pulls}회"
+
+#: app/gacha/cards.py:150
+msgid "抽未出五星"
+msgstr "회 연속 5성 없음"
+
+#: app/gacha/cards.py:152
+msgid "距离保底 {pulls} 抽（约 {jade} 星琼）"
+msgstr "천장까지 {pulls}회 (성옥 약 {jade}개)"
+
+#: app/gacha/cards.py:183
+msgid "五星出货分布"
+msgstr "5성 획득 시점 분포"
+
+#: app/gacha/cards.py:184
+msgid "按出金时的抽数分段"
+msgstr "5성 획득까지의 워프 횟수별"
+
+#: app/gacha/cards.py:189
+msgid "另有 {count} 个五星超过 {limit} 抽，可能是记录不完整"
+msgstr "{limit}회를 넘겨 획득한 5성이 {count}개 더 있습니다. 일부 기록이 누락되었을 수 있습니다."
+
+#: app/gacha/cards.py:218
+msgid "五星记录"
+msgstr "5성 획득 기록"
+
+#: app/gacha/cards.py:218
+msgid "最近在前"
+msgstr "최신순"
+
+#: app/gacha/cards.py:219
+msgid "打开明细表 ›"
+msgstr "상세 기록 보기 ›"
+
+#: app/gacha/cards.py:230
+msgid "这个卡池还没有记录"
+msgstr "이 워프의 기록이 아직 없습니다"
+
+#: app/gacha/cards.py:232
+msgid "还没有五星，表格中可按星级、名称筛选"
+msgstr "아직 5성이 없습니다. 상세 기록에서 등급이나 이름으로 검색할 수 있습니다"
+
+#: app/gacha/cards.py:234
+msgid "共 {count} 个五星，这里显示最近 {shown} 个"
+msgstr "5성 {count}개 중 최근 {shown}개 표시"
+
+#: app/gacha/cards.py:236
+msgid "共 {count} 个五星 · 表格中可按星级、名称筛选"
+msgstr "5성 총 {count}개 · 상세 기록에서 등급과 이름으로 검색"
+
+#: app/gacha/cards.py:282
+msgid "还没有记录"
+msgstr "아직 기록이 없습니다"
+
+#: app/gacha/cards.py:283
+msgid "{start} 至 {end}"
+msgstr "{start}~{end}"
+
+#: app/gacha/cards.py:285
+msgid "总抽数"
+msgstr "총 워프 횟수"
+
+#: app/gacha/cards.py:287
+msgid "最近一次：{date}"
+msgstr "최근: {date}"
+
+#: app/gacha/cards.py:289
+msgid "还没有五星"
+msgstr "아직 5성이 없습니다"
+
+#: app/gacha/cards.py:290
+msgid "五星"
+msgstr "5성"
+
+#: app/gacha/cards.py:291
+msgid "出率 {rate}"
+msgstr "획득률 {rate}"
+
+#: app/gacha/cards.py:293
+msgid "平均出金"
+msgstr "5성까지 평균 횟수"
+
+#: app/gacha/cards.py:294
+msgid "最快 {fast} 抽 · 最慢 {slow} 抽"
+msgstr "최소 {fast}회 · 최대 {slow}회"
+
+#: app/gacha/cards.py:296
+msgid "出过五星后显示"
+msgstr "첫 5성 획득 후 표시"
+
+#: app/gacha/cards.py:298
+msgid "平均每 {pulls} 抽一个四星"
+msgstr "평균 {pulls}회마다 4성 획득"
+
+#: app/gacha/cards.py:300
+msgid "还没有四星"
+msgstr "아직 4성이 없습니다"
+
+#: app/gacha/cards.py:301
+msgid "四星"
+msgstr "4성"
+
+#: app/gacha/charts.py:123
+msgid "{pulls} 概率提升"
+msgstr "{pulls}회부터 확률 상승"
+
+#: app/gacha/charts.py:147
+msgid "{first}～{last} 抽：{count} 个五星"
+msgstr "{first}~{last}회: 5성 {count}개"
+
+#: app/gacha/charts.py:296
+msgid "日期"
+msgstr "날짜"
+
+#: app/gacha/charts.py:297
+msgid "抽数"
+msgstr "횟수"
+
+#: app/gacha/charts.py:320
+msgid "用了多少抽（竖线为 {pulls} 抽）"
+msgstr "획득까지의 횟수 (세로선: {pulls}회)"
+
+#: app/gacha/charts.py:320
+msgid "用了多少抽"
+msgstr "획득까지의 횟수"
+
+#: app/gacha/charts.py:380
+msgid "{name}：用了 {pulls} 抽，{time}"
+msgstr "{name}: {pulls}회째, {time}"
+
+#: app/gacha/charts.py:91
+msgid "第 {soft} 抽起五星概率提升，第 {limit} 抽必定获得五星"
+msgstr "{soft}회부터 5성 확률이 오르며 {limit}회 이내에 5성을 확정 획득합니다."
+
+#: app/gacha/charts.py:93
+msgid "{limit} 抽内必定获得一个五星"
+msgstr "{limit}회 이내에 5성을 확정 획득합니다"
+
+#: app/gacha/chips.py:135
+msgid "{count} · 已结束"
+msgstr "{count} · 종료"
+
+#: app/gacha/detail.py:111
+msgid "返回统计"
+msgstr "통계로 돌아가기"
+
+#: app/gacha/detail.py:112
+msgid "三星"
+msgstr "3성"
+
+#: app/gacha/detail.py:114
+msgid "搜索名称"
+msgstr "이름 검색"
+
+#: app/gacha/detail.py:118
+msgid "全部时间"
+msgstr "전체 기간"
+
+#: app/gacha/detail.py:118
+msgid "最近 30 天"
+msgstr "최근 30일"
+
+#: app/gacha/detail.py:118
+msgid "最近 90 天"
+msgstr "최근 90일"
+
+#: app/gacha/detail.py:118
+msgid "最近一年"
+msgstr "최근 1년"
+
+#: app/gacha/detail.py:121
+msgid "全部卡池"
+msgstr "모든 워프"
+
+#: app/gacha/detail.py:122
+msgid "没有符合条件的记录"
+msgstr "조건에 맞는 기록이 없습니다"
+
+#: app/gacha/detail.py:153
+msgid "共 {count} 条"
+msgstr "총 {count}건"
+
+#: app/gacha/detail.py:155
+msgid "筛选出 {count} 条，共 {total} 条"
+msgstr "전체 {total}건 중 {count}건"
+
+#: app/gacha/empty.py:111
+msgid "还没有抽卡记录"
+msgstr "아직 워프 기록이 없습니다"
+
+#: app/gacha/empty.py:113
+msgid "小助手读取的是游戏里的跃迁记录页，不会改动游戏数据。三步就好："
+msgstr "도우미는 게임 데이터를 변경하지 않고 워프 기록만 읽습니다. 다음 세 단계를 따라 주세요."
+
+#: app/gacha/empty.py:115
+msgid "这台电脑上不能从游戏更新抽卡记录，可以导入其他工具导出的文件。"
+msgstr "이 컴퓨터에서는 게임에서 워프 기록을 업데이트할 수 없습니다. 다른 도구에서 내보낸 파일을 가져올 수 있습니다."
+
+#: app/gacha/empty.py:116
+msgid "在游戏里打开「跃迁」→「查看详情」→「跃迁记录」，等记录页加载出来"
+msgstr "게임에서 워프 → 상세 보기 → 워프 기록을 열고 기록이 표시될 때까지 기다리세요."
+
+#: app/gacha/empty.py:117
+msgid "回到这里点「更新记录」，第一次会读取全部历史，可能需要一两分钟"
+msgstr "여기로 돌아와 ‘기록 업데이트’를 누르세요. 처음에는 전체 기록을 읽으므로 1~2분 정도 걸릴 수 있습니다."
+
+#: app/gacha/empty.py:118
+msgid "换过电脑？也可以导入其他工具导出的 UIGF / SRGF 文件"
+msgstr "컴퓨터를 바꾸셨나요? 다른 도구에서 내보낸 UIGF / SRGF 파일도 가져올 수 있습니다."
+
+#: app/gacha/empty.py:122
+msgid "更新记录"
+msgstr "기록 업데이트"
+
+#: app/gacha/empty.py:124
+msgid "导入 UIGF / SRGF 文件"
+msgstr "UIGF / SRGF 파일 가져오기"
+
+#: app/warp_interface.py:114
+msgid "导入 / 导出"
+msgstr "가져오기 / 내보내기"
+
+#: app/warp_interface.py:115
+msgid "更多操作"
+msgstr "추가 작업"
+
+#: app/warp_interface.py:177
+msgid "UID {uid}"
+msgstr "UID {uid}"
+
+#: app/warp_interface.py:179
+msgid "还没有数据"
+msgstr "아직 데이터가 없습니다"
+
+#: app/warp_interface.py:199
+msgid "有 {count} 个抽卡记录文件没能读取，记录暂时不会显示："
+msgstr "워프 기록 파일 {count}개를 읽을 수 없어 해당 기록이 표시되지 않습니다."
+
+#: app/warp_interface.py:202
+msgid "还有 {count} 个"
+msgstr "그 외 {count}개"
+
+#: app/warp_interface.py:204
+msgid "打开所在文件夹"
+msgstr "파일이 있는 폴더 열기"
+
+#: app/warp_interface.py:225
+msgid "只获取新记录"
+msgstr "새 기록만 가져오기"
+
+#: app/warp_interface.py:226
+msgid "重新获取全部记录"
+msgstr "전체 기록 다시 가져오기"
+
+#: app/warp_interface.py:229
+msgid "导入 UIGF / SRGF 文件…"
+msgstr "UIGF / SRGF 파일 가져오기…"
+
+#: app/warp_interface.py:232
+msgid "导出 UIGF"
+msgstr "UIGF 내보내기"
+
+#: app/warp_interface.py:234
+msgid "导出全部 {count} 个 UID（UIGF）"
+msgstr "전체 UID {count}개 내보내기 (UIGF)"
+
+#: app/warp_interface.py:235
+msgid "导出 SRGF"
+msgstr "SRGF 내보내기"
+
+#: app/warp_interface.py:235
+msgid "导出 Excel"
+msgstr "Excel로 내보내기"
+
+#: app/warp_interface.py:242
+msgid "复制抽卡链接"
+msgstr "워프 기록 링크 복사"
+
+#: app/warp_interface.py:245
+msgid "更新一次记录后可以复制"
+msgstr "기록을 한 번 업데이트하면 복사할 수 있습니다"
+
+#: app/warp_interface.py:248
+msgid "打开数据文件夹"
+msgstr "데이터 폴더 열기"
+
+#: app/warp_interface.py:250
+msgid "清空这个 UID 的记录…"
+msgstr "이 UID의 기록 비우기…"
+
+#: app/warp_interface.py:255
+msgid "UID {uid} · {count} 抽"
+msgstr "UID {uid} · {count}회"
+
+#: app/warp_interface.py:276
+msgid "不能从游戏更新"
+msgstr "게임에서 업데이트할 수 없습니다"
+
+#: app/warp_interface.py:284
+msgid "正在更新…"
+msgstr "업데이트 중…"
+
+#: app/warp_interface.py:289
+msgid "正在获取跃迁记录…"
+msgstr "워프 기록을 가져오는 중…"
+
+#: app/warp_interface.py:295
+msgid "{title}：{text}"
+msgstr "{title}: {text}"
+
+#: app/warp_interface.py:302
+msgid "UID {uid} 新增 {count} 条记录"
+msgstr "UID {uid}에 기록 {count}건을 추가했습니다"
+
+#: app/warp_interface.py:303
+msgid "UID {uid} 没有新记录"
+msgstr "UID {uid}의 새 기록이 없습니다"
+
+#: app/warp_interface.py:304
+msgid "抽卡记录已更新"
+msgstr "워프 기록을 업데이트했습니다"
+
+#: app/warp_interface.py:315
+msgid "导入成功"
+msgstr "가져오기 완료"
+
+#: app/warp_interface.py:315
+msgid "UID {uids}"
+msgstr "UID {uids}"
+
+#: app/warp_interface.py:340
+msgid "已清空"
+msgstr "기록을 비웠습니다"
+
+#: app/warp_interface.py:340
+msgid "UID {uid} 的记录已清空，原文件的备份留在数据文件夹里"
+msgstr "UID {uid}의 기록을 비웠습니다. 원본 파일의 백업은 데이터 폴더에 있습니다."
+
+#: app/warp_interface.py:342
+msgid "清空失败"
+msgstr "기록을 비우지 못했습니다"
+
+#: app/warp_interface.py:348
+msgid "复制失败"
+msgstr "복사하지 못했습니다"
+
+#: app/warp_interface.py:350
+msgid "已复制抽卡链接"
+msgstr "워프 기록 링크를 복사했습니다"
+
+#: app/warp_interface.py:350
+msgid "链接里有临时登录凭据，只发给你信任的工具"
+msgstr "링크에는 임시 로그인 인증 정보가 들어 있습니다. 신뢰할 수 있는 도구에만 공유하세요."
