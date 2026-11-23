@@ -564,7 +564,8 @@ def test_redemption_keeps_confirmed_success_when_mail_fails(monkeypatch):
 
 
 def test_headless_desktop_extra_is_skipped_in_full_run(monkeypatch):
-    monkeypatch.setattr(pc_daily, "sys", SimpleNamespace(platform="win32"))
+    # 平台判断在完整运行计划里（module.overview.plan），这里固定为 Windows。
+    monkeypatch.setattr(pc_daily.plan, "sys", SimpleNamespace(platform="win32"))
     monkeypatch.setattr(pc_daily, "cfg", SimpleNamespace(control_backend="cloud"))
     monkeypatch.setattr(pc_daily, "cloud_game", Mock(is_headless=Mock(return_value=True)))
     action = Mock()
