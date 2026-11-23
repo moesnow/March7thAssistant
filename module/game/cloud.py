@@ -703,6 +703,8 @@ class CloudGameController(GameControllerBase):
     def _abort_login_timeout(self, timeout_seconds: int) -> None:
         timeout_minutes = timeout_seconds // 60
         message = f"等待云游戏登录超时（{timeout_minutes} 分钟），停止运行"
+        from utils.runs import publish_progress
+        publish_progress(login_required="cloud")
         self.log_error(message)
         self.stop_game()
         raise CloudGameLoginTimeoutError(message)

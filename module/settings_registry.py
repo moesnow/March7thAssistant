@@ -66,7 +66,8 @@ _BUILD_TARGET = '任务 › 清体力 › 刷什么 ›「按培养目标选择�
 
 SETTINGS = (
     # 体力
-    _power('powerEnableCard', '启用清体力', '任务 › 清体力 › 页头「加入完整运行」', ('power_enable',)),
+    _power('powerEnableCard', '启用清体力', '任务 › 清体力 › 页头「加入完整运行」', ('power_enable', 'overview_power'),
+        state_keys=('overview_power',)),
     _power('powerPlanCard', '体力计划', '任务 › 清体力 › 战斗与高级', ('power_plan', 'power_plan_keep', 'power_plan_continue')),
     _power('instanceTypeCard', '副本类型', '任务 › 清体力 › 刷什么', ('instance_type',)),
     _power('instanceTeamEnableCard', '自动切换队伍', '任务 › 清体力 › 战斗与高级',
@@ -99,8 +100,8 @@ SETTINGS = (
         scope=Scope.STATE),
 
     # 日常
-    _daily('dailyEnableCard', '启用每日实训', '任务 › 每日实训', ('daily_enable', 'last_run_timestamp'),
-        state_keys=('last_run_timestamp',)),
+    _daily('dailyEnableCard', '启用每日实训', '任务 › 每日实训', ('daily_enable', 'last_run_timestamp', 'overview_daily_activity'),
+        state_keys=('last_run_timestamp', 'overview_daily_activity')),
     _daily('dailyMaterialEnableCard', '通过 “合成材料” 完成任务', '任务 › 每日实训', ('daily_material_enable',), ('启用每日实训',)),
     _daily('dailyMemoryOneEnableCard', '通过 “回忆一” 完成任务', '任务 › 每日实训', ('daily_memory_one_enable',), ('启用每日实训',)),
     _daily('dailyMemoryOneTeamCard', '回忆一队伍', '任务 › 每日实训', ('daily_memory_one_team',), ('启用每日实训',)),

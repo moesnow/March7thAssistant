@@ -1,6 +1,7 @@
 from module.automation.automation import screenshot_retry_timeout
 from module.logger import log
 from tasks.base.task_steps import optional_reward
+from module.overview.readings import save_reading
 from module.overview.plan import training_collect as can_collect, training_due as can_complete
 
 
@@ -47,4 +48,5 @@ def claimable_milestones(automation, template, crop):
 def record_progress(config, activity):
     if activity == TARGET_ACTIVITY:
         config.save_timestamp("last_run_timestamp")
+    save_reading(config, "overview_daily_activity", activity)
     log.info(f"每日实训活跃度 {activity}/{TARGET_ACTIVITY}")

@@ -324,13 +324,16 @@ def test_delayed_replacement_rechecks_backend_before_dispatch(schedule_runtime, 
 ])
 def test_scheduled_cli_completion_uses_run_record(schedule_runtime, qtbot, monkeypatch, tmp_path, program, reason, status):
     monkeypatch.chdir(tmp_path)
+    from utils import runs
+    record_dir = tmp_path / 'userdata' / 'logs' / 'runs'
+    monkeypatch.setattr(runs, 'runs_dir', lambda: str(record_dir))
     monkeypatch.setattr(log_interface, 'is_user_admin', lambda: True)
     monkeypatch.setattr(schedule_runtime, '_injectPauseControlEnv', Mock())
     (tmp_path / 'main.py').write_text(
         'import json, sys\n'
         'from pathlib import Path\n'
         'run_id = sys.argv[sys.argv.index("--run-id") + 1]\n'
-        'runs = Path(__file__).parent / "logs" / "runs"\n'
+        f'runs = Path({str(record_dir)!r})\n'
         'runs.mkdir(parents=True)\n'
         f'data = {{"status": {status!r}, "reason": {reason!r}, "error": "child report"}}\n'
         '(runs / (run_id + ".json")).write_text(json.dumps(data), encoding="utf-8")\n'
@@ -350,6 +353,17 @@ def test_scheduled_cli_completion_uses_run_record(schedule_runtime, qtbot, monke
     assert any('child report' in line for line in schedule_runtime.logs) == (status == 'blocked')
     message = '未执行' if status == 'blocked' else '任务已停止'
     assert schedule_runtime.statusLabel.setText.call_args.args[0] == log_interface.tr(message)
+
+
+@pytest.mark.parametrize("manual", [False, True])
+def test_schedule_origin_reaches_worker_without_changing_elevation(schedule_runtime, monkeypatch, manual):
+    monkeypatch.setattr(log_interface, 'is_user_admin', lambda: False)
+    task = scheduled_task()
+    assert schedule_runtime.runScheduledTask(task, [task], manual=manual)
+    args = ['daily']
+    schedule_runtime._linkScheduledRun(SimpleNamespace(), args)
+    assert ('--scheduled' in args) == (not manual)
+    assert '--run-id' not in args
 
 
 def test_scheduled_run_id_does_not_bypass_windows_elevation(schedule_runtime, monkeypatch):

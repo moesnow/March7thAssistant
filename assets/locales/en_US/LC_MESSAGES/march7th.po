@@ -8949,6 +8949,10 @@ msgstr "Embers Exchange"
 msgid "叠加三星光锥"
 msgstr "Superimpose 3-star Light Cones"
 
+#: module/overview/cards.py
+msgid "可以设置自动启动任务的时间。"
+msgstr "Choose when tasks should start automatically."
+
 #: module/overview/plan.py:18
 msgid "合成自塑尘脂"
 msgstr "Synthesize Self-Modeling Resin"
@@ -8965,6 +8969,10 @@ msgstr "Training goals"
 msgid "将执行"
 msgstr "Will run"
 
+#: module/overview/cards.py
+msgid "尚未设置远程推送"
+msgstr "Remote notifications are not configured"
+
 #: module/overview/plan.py:18
 msgid "差分宇宙固定次数"
 msgstr "Divergent Universe run quota"
@@ -8973,9 +8981,17 @@ msgstr "Divergent Universe run quota"
 msgid "差分宇宙积分奖励"
 msgstr "Divergent Universe point rewards"
 
+#: module/overview/snapshot.py
+msgid "已停止"
+msgstr "Stopped"
+
 #: module/overview/cards.py:10
 msgid "当前环境不支持"
 msgstr "Unsupported in this environment"
+
+#: module/overview/cards.py
+msgid "找不到本地游戏"
+msgstr "Local game not found"
 
 #: module/overview/cards.py:15
 msgid "按配置路线运行"
@@ -9053,17 +9069,37 @@ msgstr "Monthly synthesis"
 msgid "每月购买所选物品"
 msgstr "Buy selected items monthly"
 
+#: module/overview/cards.py
+msgid "没有可运行的定时计划"
+msgstr "No upcoming scheduled runs"
+
 #: module/overview/plan.py:18
 msgid "活动"
 msgstr "Events"
+
+#: module/overview/cards.py
+msgid "游戏连接设置需要调整"
+msgstr "Game connection needs attention"
+
+#: module/overview/cards.py
+msgid "要在其他设备收到任务通知，请开启推送并设置渠道。"
+msgstr "Enable notifications and set up a channel to receive task updates on another device."
 
 #: module/overview/cards.py:15
 msgid "读取培养目标"
 msgstr "Read training goals"
 
+#: module/overview/snapshot.py
+msgid "运行中"
+msgstr "Running"
+
 #: module/overview/cards.py:10
 msgid "进行中"
 msgstr "In progress"
+
+#: module/overview/cards.py
+msgid "选择游戏的可执行文件后即可开始。"
+msgstr "Select the game executable to get started."
 
 #: module/overview/cards.py
 msgid "速通模式"
@@ -9077,13 +9113,57 @@ msgstr "Difficulty {level} · Weekly points"
 msgid "领取已开启的奖励"
 msgstr "Claim enabled rewards"
 
+#: module/overview/cards.py
+msgid "上次启动时游戏要求重新登录，请打开本地客户端登录。"
+msgstr "The game requested sign-in on its last launch. Open the local client and sign in."
+
+#: module/overview/cards.py
+msgid "上次运行需要登录"
+msgstr "Sign-in was required on the last run"
+
+#: module/overview/cards.py
+msgid "云游戏等待登录超时，请打开云游戏完成登录。"
+msgstr "Cloud gaming timed out waiting for sign-in. Open the cloud client and sign in."
+
 #: module/overview/cards.py:24
 msgid "合成材料"
 msgstr "Synthesize materials"
 
+#: module/overview/labels.py:4
+msgid "命令行"
+msgstr "Command line"
+
 #: module/overview/cards.py:24
 msgid "回忆一"
 msgstr "Memory 1"
+
+#: module/overview/labels.py:4
+msgid "图形界面"
+msgstr "Desktop interface"
+
+#: module/overview/labels.py:4
+msgid "定时"
+msgstr "Scheduled"
+
+#: module/overview/labels.py:4
+msgid "容器"
+msgstr "Container"
+
+#: module/overview/labels.py:8
+msgid "已中断"
+msgstr "Interrupted"
+
+#: module/overview/labels.py:8
+msgid "已跳过"
+msgstr "Skipped"
+
+#: module/overview/labels.py:8
+msgid "异常结束"
+msgstr "Exited unexpectedly"
+
+#: module/overview/labels.py:4
+msgid "手动"
+msgstr "Manual"
 
 #: module/overview/cards.py:24
 msgid "支援礼盒"
@@ -9092,6 +9172,14 @@ msgstr "Support gift"
 #: module/overview/cards.py:24
 msgid "试用姬子"
 msgstr "Trial Himeko"
+
+#: module/overview/labels.py:8
+msgid "部分失败"
+msgstr "Partially failed"
+
+#: module/overview/labels.py:4
+msgid "非交互运行"
+msgstr "Non-interactive run"
 
 #: module/overview/cards.py
 msgid "计划次数为零"

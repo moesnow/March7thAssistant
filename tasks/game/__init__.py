@@ -280,6 +280,8 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None, pres
             # 凭据输入前失败时复核原登录页，再决定是否重试。
             return True
         if not found_credentials:
+            from utils.runs import publish_progress
+            publish_progress(login_required="local")
             raise GameStartupUnavailable("本地游戏账号登录过期，未找到保存的登录凭据，已保留游戏现场")
         login_error = None
         return True
@@ -923,10 +925,7 @@ def notify_after_finish_not_loop():
         notif.flush_batch()
         return
 
-    def get_wait_time(current_power):
-        # 距离体力到达300上限剩余秒数
-        wait_time_power_full = max(0, 300 - current_power) * 6 * 60
-        return wait_time_power_full
+    from module.overview.readings import seconds_until_full
 
     try:
         current_power = Power.get(use_supplement=False)
@@ -935,7 +934,7 @@ def notify_after_finish_not_loop():
         notif.flush_batch()
         return
 
-    wait_time = get_wait_time(current_power)
+    wait_time = seconds_until_full(current_power)
     future_time = Date.calculate_future_time(wait_time)
     final_content = cfg.notify_template['FullTime'].format(power=current_power, time=future_time)
     log.info(final_content)

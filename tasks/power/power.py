@@ -17,6 +17,7 @@ from tasks.power.team import restore_main
 from tasks.power.weekly_relic_cleanup import WeeklyRelicCleanup
 from utils.date import Date
 from module.overview.plan import relic_due
+from module.overview.readings import save_reading
 
 
 MAP_POWER = (1588 / 1920, 35 / 1080, 198 / 1920, 56 / 1080)
@@ -320,5 +321,6 @@ class Power:
             balance = supplement(auto, screen, cfg, balance, lambda: auto.find_element(
                 "./assets/images/share/power/trailblaze_power/trailblaze_power.png", "image", 0.9, crop=MAP_POWER,
             ), read, return_screen="map", desktop=True)
+        save_reading(cfg, "overview_power", balance)
         log.info(f"开拓力：{balance}/300")
         return balance

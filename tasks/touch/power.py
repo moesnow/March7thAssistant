@@ -11,6 +11,7 @@ from module.automation.automation import screenshot_retry_timeout
 from module.automation.input_base import input_deadline, input_deadline_reached, limit_input_deadline
 from module.config import cfg
 from module.overview.plan import echo_day_due
+from module.overview.readings import save_reading
 from module.game.adb_transport import AdbError
 from module.localization import get_raw_instance_names, tr
 from module.logger import log
@@ -69,7 +70,9 @@ def _read_number(crop, parse, error):
 
 
 def read_power(crop=POWER_VALUE):
-    return _read_number(crop, parse_power, "未能确认当前开拓力")
+    value = _read_number(crop, parse_power, "未能确认当前开拓力")
+    save_reading(cfg, "overview_power", value)
+    return value
 
 
 def _read_echo_rewards():

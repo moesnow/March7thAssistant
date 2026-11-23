@@ -8604,6 +8604,10 @@ msgstr "残り火交換"
 msgid "叠加三星光锥"
 msgstr "星3光円錐を重畳"
 
+#: module/overview/cards.py
+msgid "可以设置自动启动任务的时间。"
+msgstr "任務を自動で開始する時刻を設定できます。"
+
 #: module/overview/plan.py:18
 msgid "合成自塑尘脂"
 msgstr "自塑樹脂を合成"
@@ -8620,6 +8624,10 @@ msgstr "育成目標"
 msgid "将执行"
 msgstr "実行予定"
 
+#: module/overview/cards.py
+msgid "尚未设置远程推送"
+msgstr "外部通知が未設定です"
+
 #: module/overview/plan.py:18
 msgid "差分宇宙固定次数"
 msgstr "階差宇宙の指定回数周回"
@@ -8628,9 +8636,17 @@ msgstr "階差宇宙の指定回数周回"
 msgid "差分宇宙积分奖励"
 msgstr "階差宇宙のポイント報酬"
 
+#: module/overview/snapshot.py
+msgid "已停止"
+msgstr "停止済み"
+
 #: module/overview/cards.py:10
 msgid "当前环境不支持"
 msgstr "この環境では利用できません"
+
+#: module/overview/cards.py
+msgid "找不到本地游戏"
+msgstr "ローカルのゲームが見つかりません"
 
 #: module/overview/cards.py:15
 msgid "按配置路线运行"
@@ -8708,17 +8724,37 @@ msgstr "毎月合成"
 msgid "每月购买所选物品"
 msgstr "選択した品を毎月購入"
 
+#: module/overview/cards.py
+msgid "没有可运行的定时计划"
+msgstr "実行可能なスケジュールがありません"
+
 #: module/overview/plan.py:18
 msgid "活动"
 msgstr "イベント"
+
+#: module/overview/cards.py
+msgid "游戏连接设置需要调整"
+msgstr "ゲーム接続設定を確認してください"
+
+#: module/overview/cards.py
+msgid "要在其他设备收到任务通知，请开启推送并设置渠道。"
+msgstr "ほかの端末で任務の通知を受け取るには、通知を有効にして送信先を設定してください。"
 
 #: module/overview/cards.py:15
 msgid "读取培养目标"
 msgstr "育成目標を読み込む"
 
+#: module/overview/snapshot.py
+msgid "运行中"
+msgstr "実行中"
+
 #: module/overview/cards.py:10
 msgid "进行中"
 msgstr "進行中"
+
+#: module/overview/cards.py
+msgid "选择游戏的可执行文件后即可开始。"
+msgstr "ゲームの実行ファイルを選択すると開始できます。"
 
 #: module/overview/cards.py
 msgid "速通模式"
@@ -8732,13 +8768,57 @@ msgstr "難易度 {level}・週間ポイント"
 msgid "领取已开启的奖励"
 msgstr "有効な報酬を受け取る"
 
+#: module/overview/cards.py
+msgid "上次启动时游戏要求重新登录，请打开本地客户端登录。"
+msgstr "前回の起動時に再ログインが必要でした。ローカル版を開いてログインしてください。"
+
+#: module/overview/cards.py
+msgid "上次运行需要登录"
+msgstr "前回の実行時にログインが必要でした"
+
+#: module/overview/cards.py
+msgid "云游戏等待登录超时，请打开云游戏完成登录。"
+msgstr "クラウドゲームのログイン待ちがタイムアウトしました。クラウド版を開いてログインしてください。"
+
 #: module/overview/cards.py:24
 msgid "合成材料"
 msgstr "素材合成"
 
+#: module/overview/labels.py:4
+msgid "命令行"
+msgstr "コマンドライン"
+
 #: module/overview/cards.py:24
 msgid "回忆一"
 msgstr "記憶・1"
+
+#: module/overview/labels.py:4
+msgid "图形界面"
+msgstr "デスクトップ画面"
+
+#: module/overview/labels.py:4
+msgid "定时"
+msgstr "スケジュール"
+
+#: module/overview/labels.py:4
+msgid "容器"
+msgstr "コンテナ"
+
+#: module/overview/labels.py:8
+msgid "已中断"
+msgstr "中断"
+
+#: module/overview/labels.py:8
+msgid "已跳过"
+msgstr "スキップ済み"
+
+#: module/overview/labels.py:8
+msgid "异常结束"
+msgstr "異常終了"
+
+#: module/overview/labels.py:4
+msgid "手动"
+msgstr "手動"
 
 #: module/overview/cards.py:24
 msgid "支援礼盒"
@@ -8747,6 +8827,14 @@ msgstr "サポートギフト"
 #: module/overview/cards.py:24
 msgid "试用姬子"
 msgstr "体験版の姫子"
+
+#: module/overview/labels.py:8
+msgid "部分失败"
+msgstr "一部失敗"
+
+#: module/overview/labels.py:4
+msgid "非交互运行"
+msgstr "非対話実行"
 
 #: module/overview/cards.py
 msgid "计划次数为零"

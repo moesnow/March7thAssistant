@@ -7,19 +7,8 @@ import sys
 
 from PySide6.QtCore import QDateTime, QTime
 
-
-def task_trigger_mode(task) -> str:
-    mode = str((task or {}).get('trigger_mode', 'time')).strip().lower()
-    return 'chain' if mode == 'chain' else 'time'
-
-
-def task_weekdays(task) -> tuple[int, ...]:
-    weekdays = task.get('weekdays')
-    if weekdays is None:
-        return tuple(range(1, 8))
-    if not isinstance(weekdays, (list, tuple, set)):
-        return ()
-    return tuple(sorted({day for day in weekdays if isinstance(day, int) and not isinstance(day, bool) and 1 <= day <= 7}))
+from module.overview.schedule import (find_scheduled_task, following_tasks, next_occurrence,
+                                      schedule_time, task_trigger_mode, task_weekdays)
 
 
 def schedule_weekday_labels() -> tuple[str, ...]:
@@ -41,11 +30,8 @@ def format_task_weekdays(task) -> str:
 
 
 def parse_schedule_time(value) -> QTime | None:
-    try:
-        scheduled_time = QTime(*map(int, value.split(':')))
-    except (AttributeError, TypeError, ValueError, OverflowError):
-        return None
-    return scheduled_time if scheduled_time.isValid() else None
+    clock = schedule_time(value)
+    return QTime(clock.hour, clock.minute, clock.second, clock.microsecond // 1000) if clock else None
 
 
 def milliseconds_to_next_minute(now: QDateTime) -> int:
@@ -71,20 +57,14 @@ def scheduled_task_slot(task, now: QDateTime) -> int | None:
 
 
 def next_scheduled_datetime(task, now: QDateTime) -> QDateTime | None:
-    scheduled_time = parse_schedule_time(task.get('time', '00:00'))
-    weekdays = task_weekdays(task)
-    if scheduled_time is None or not weekdays:
-        return None
-    for offset in range(8):
-        scheduled_date = now.date().addDays(offset)
-        if scheduled_date.dayOfWeek() not in weekdays:
-            continue
-        scheduled_at = QDateTime(now)
-        scheduled_at.setDate(scheduled_date)
-        scheduled_at.setTime(scheduled_time)
-        if scheduled_at.isValid() and scheduled_at > now:
-            return scheduled_at
-    return None
+    def candidate(offset, clock):
+        day = now.date().addDays(offset)
+        at = QDateTime(now)
+        at.setDate(day)
+        at.setTime(QTime(clock.hour, clock.minute, clock.second, clock.microsecond // 1000))
+        return day.dayOfWeek(), at if at.isValid() else None
+
+    return next_occurrence(task, now, candidate)
 
 
 def task_timeout_seconds(task) -> int:
@@ -145,34 +125,8 @@ def task_launch_block_reason(command_or_task, config, *, check_saved_config=Fals
     return f"{tr(UNSUPPORTED_TASK)}（{name}）"
 
 
-def find_scheduled_task(task, tasks) -> int:
-    task_id = task.get('id')
-    if task_id:
-        for index, candidate in enumerate(tasks):
-            if candidate.get('id') == task_id:
-                return index
-    for index, candidate in enumerate(tasks):
-        if candidate is task:
-            return index
-    fields = ('name', 'time', 'program', 'args')
-    for index, candidate in enumerate(tasks):
-        if all(candidate.get(field) == task.get(field) for field in fields):
-            return index
-    return -1
-
-
 def scheduled_task_chain(task, tasks) -> list:
-    start_index = find_scheduled_task(task, tasks)
-    if start_index < 0:
-        return []
-    chain = []
-    for candidate in tasks[start_index + 1:]:
-        if task_trigger_mode(candidate) != 'chain':
-            break
-        if candidate.get('enabled', True):
-            metadata = deepcopy(candidate)
-            chain.append((metadata, scheduled_task_payload(metadata)))
-    return chain
+    return [(deepcopy(candidate), scheduled_task_payload(candidate)) for candidate in following_tasks(task, tasks)]
 
 
 def split_task_arguments(arguments: str, *, posix=False) -> list[str]:

@@ -8271,6 +8271,10 @@ msgstr ""
 msgid "叠加三星光锥"
 msgstr ""
 
+#: module/overview/cards.py
+msgid "可以设置自动启动任务的时间。"
+msgstr ""
+
 #: module/overview/plan.py:18
 msgid "合成自塑尘脂"
 msgstr ""
@@ -8287,6 +8291,10 @@ msgstr ""
 msgid "将执行"
 msgstr ""
 
+#: module/overview/cards.py
+msgid "尚未设置远程推送"
+msgstr ""
+
 #: module/overview/plan.py:18
 msgid "差分宇宙固定次数"
 msgstr ""
@@ -8295,8 +8303,16 @@ msgstr ""
 msgid "差分宇宙积分奖励"
 msgstr ""
 
+#: module/overview/snapshot.py
+msgid "已停止"
+msgstr ""
+
 #: module/overview/cards.py:10
 msgid "当前环境不支持"
+msgstr ""
+
+#: module/overview/cards.py
+msgid "找不到本地游戏"
 msgstr ""
 
 #: module/overview/cards.py:15
@@ -8375,16 +8391,36 @@ msgstr ""
 msgid "每月购买所选物品"
 msgstr ""
 
+#: module/overview/cards.py
+msgid "没有可运行的定时计划"
+msgstr ""
+
 #: module/overview/plan.py:18
 msgid "活动"
+msgstr ""
+
+#: module/overview/cards.py
+msgid "游戏连接设置需要调整"
+msgstr ""
+
+#: module/overview/cards.py
+msgid "要在其他设备收到任务通知，请开启推送并设置渠道。"
 msgstr ""
 
 #: module/overview/cards.py:15
 msgid "读取培养目标"
 msgstr ""
 
+#: module/overview/snapshot.py
+msgid "运行中"
+msgstr ""
+
 #: module/overview/cards.py:10
 msgid "进行中"
+msgstr ""
+
+#: module/overview/cards.py
+msgid "选择游戏的可执行文件后即可开始。"
 msgstr ""
 
 #: module/overview/cards.py
@@ -8399,12 +8435,56 @@ msgstr ""
 msgid "领取已开启的奖励"
 msgstr ""
 
+#: module/overview/cards.py
+msgid "上次启动时游戏要求重新登录，请打开本地客户端登录。"
+msgstr ""
+
+#: module/overview/cards.py
+msgid "上次运行需要登录"
+msgstr ""
+
+#: module/overview/cards.py
+msgid "云游戏等待登录超时，请打开云游戏完成登录。"
+msgstr ""
+
 #: module/overview/cards.py:24
 msgid "合成材料"
 msgstr ""
 
+#: module/overview/labels.py:4
+msgid "命令行"
+msgstr ""
+
 #: module/overview/cards.py:24
 msgid "回忆一"
+msgstr ""
+
+#: module/overview/labels.py:4
+msgid "图形界面"
+msgstr ""
+
+#: module/overview/labels.py:4
+msgid "定时"
+msgstr ""
+
+#: module/overview/labels.py:4
+msgid "容器"
+msgstr ""
+
+#: module/overview/labels.py:8
+msgid "已中断"
+msgstr ""
+
+#: module/overview/labels.py:8
+msgid "已跳过"
+msgstr ""
+
+#: module/overview/labels.py:8
+msgid "异常结束"
+msgstr ""
+
+#: module/overview/labels.py:4
+msgid "手动"
 msgstr ""
 
 #: module/overview/cards.py:24
@@ -8413,6 +8493,14 @@ msgstr ""
 
 #: module/overview/cards.py:24
 msgid "试用姬子"
+msgstr ""
+
+#: module/overview/labels.py:8
+msgid "部分失败"
+msgstr ""
+
+#: module/overview/labels.py:4
+msgid "非交互运行"
 msgstr ""
 
 #: module/overview/cards.py

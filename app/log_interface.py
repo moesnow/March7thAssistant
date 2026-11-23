@@ -22,6 +22,7 @@ from utils import paths
 from .common.style_sheet import StyleSheet
 from .common.accent import accent_html
 from .common.icon import UiIcon
+from module.overview.schedule import next_schedule
 from .common.schedule import (task_trigger_mode, scheduled_task_slot,
                               scheduled_task_payload, find_scheduled_task, scheduled_task_chain,
                               split_task_arguments, milliseconds_to_next_minute,
@@ -338,6 +339,7 @@ class LogInterface(ScrollArea):
     # 信号：任务完成
     taskFinished = Signal(int)  # 单个任务的 exit_code，保留原有通知语义
     taskSequenceFinished = Signal(int)  # 整条任务链结束，只有全部成功才为 0
+    pauseStateChanged = Signal()
     taskStarted = Signal()
     # 信号：请求停止任务（用于从全局热键线程安全调用）
     stopTaskRequested = Signal()
@@ -1034,6 +1036,8 @@ class LogInterface(ScrollArea):
 
     def _linkScheduledRun(self, process, arguments):
         # Windows 的未提权入口会在转交时自行分配编号。
+        if self._pending_task_meta and self._pending_task_meta.get('_scheduled'):
+            arguments.append('--scheduled')
         if self._pending_task_meta and (sys.platform != 'win32' or is_user_admin()):
             process._scheduled_run_id = new_run_id()
             arguments.extend(['--run-id', process._scheduled_run_id])
@@ -1052,7 +1056,9 @@ class LogInterface(ScrollArea):
             if slot is not None:
                 self._last_triggered_ts[task['id']] = slot
 
-        self._pending_task_meta = deepcopy(task)
+        self._pending_task_meta = dict(task, _scheduled=not manual)
+        for meta, _ in chain:
+            meta['_scheduled'] = not manual
         self._active_task_chain = chain
         self.startTask(task_dict)
 
@@ -1070,19 +1076,12 @@ class LogInterface(ScrollArea):
         """更新定时状态标签：展示启用的定时任务数量和下次运行时间（若有）"""
         if tasks is None:
             tasks = cfg.get_value('scheduled_tasks', []) or []
-        enabled = [t for t in tasks if t.get('enabled', True) and self._getScheduledTaskTriggerMode(t) == 'time']
-        button_text = tr('定时任务({count})').format(count=len(enabled)) if enabled else tr('定时任务')
-        self.manageScheduleButton.setText(button_text)
-        self.manageScheduleButton.setToolTip(tr('已启用 {count} 个按时任务，点击配置').format(count=len(enabled)))
         if now is None:
             now = QDateTime.currentDateTime()
-        next_time = None
-        for t in enabled:
-            scheduled_at = next_scheduled_datetime(t, now)
-            if scheduled_at is None:
-                continue
-            if next_time is None or scheduled_at < next_time:
-                next_time = scheduled_at
+        count, next_time, _ = next_schedule(tasks, now, next_scheduled_datetime)
+        button_text = tr('定时任务({count})').format(count=count) if count else tr('定时任务')
+        self.manageScheduleButton.setText(button_text)
+        self.manageScheduleButton.setToolTip(tr('已启用 {count} 个按时任务，点击配置').format(count=count))
 
         if next_time is not None:
             time_str = tr('{date}（{weekday}）{time}').format(
@@ -1218,10 +1217,11 @@ class LogInterface(ScrollArea):
                         continue
                     self.appendLog("已有任务在运行，按配置停止当前任务并在其结束后启动: {}".format(task.get('name')) + "\n")
                     try:
-                        metadata = deepcopy(task)
-                        self._pending_start_task_after_stop = (
-                            metadata, task_dict, scheduled_task_chain(metadata, tasks)
-                        )
+                        metadata = dict(task, _scheduled=True)
+                        chain = scheduled_task_chain(metadata, tasks)
+                        for meta, _ in chain:
+                            meta['_scheduled'] = True
+                        self._pending_start_task_after_stop = (metadata, task_dict, chain)
                         self._suppress_chain_continuation_once = True
                         self.stopTask(user_initiated=False)
                     except Exception as error:
@@ -1325,7 +1325,10 @@ class LogInterface(ScrollArea):
                 program, args = self._resolveWorkflowLaunch(task)
             timeout = int(task.get('timeout', 0) or 0)
             if program.lower() == 'self':
-                self._startTask(args, timeout)
+                if task.get('retry_step') and args == 'routine':
+                    self._startTask(args, timeout, retry_step=task['retry_step'])
+                else:
+                    self._startTask(args, timeout)
                 return
             name = task.get('name') or os.path.basename(program) or program
 
@@ -1459,7 +1462,7 @@ class LogInterface(ScrollArea):
         self.taskFinished.emit(effective_exit_code)
         self._finishTaskSequence(sequence)
 
-    def _startTask(self, task, timeout=0):
+    def _startTask(self, task, timeout=0, *, retry_step=None):
         self.current_task = task
         command = str(task)
         # 内置任务按白名单启用暂停（workflow 与外部任务的判定见 _resolvePauseSupport）
@@ -1542,6 +1545,8 @@ class LogInterface(ScrollArea):
                 pass
             arguments = [main_script, command]
 
+        if retry_step:
+            arguments.extend(['--retry-step', retry_step])
         self._linkScheduledRun(proc, arguments)
         self.appendLog(f"命令: {executable_path} {' '.join(arguments)}\n")
         self._armTaskTimeout(proc, timeout)
@@ -1870,6 +1875,10 @@ class LogInterface(ScrollArea):
     def _syncPauseUi(self):
         """按当前暂停状态刷新按钮文本、状态栏与悬浮窗暂停徽章。"""
         paused = self._pause_state == STATE_PAUSED
+        try:
+            self.pauseStateChanged.emit()
+        except RuntimeError:
+            pass  # Qt 正在销毁运行页。
         try:
             self.pauseButton.setEnabled(bool(self._pause_supported))
             self._refreshTaskButtonText()
@@ -2477,16 +2486,8 @@ class LogInterface(ScrollArea):
 
     def _post_action_label(self, action: str) -> str:
         """返回 post_action 的本地化标签"""
-        mapping = {
-            'None': tr('无操作'),
-            'Shutdown': tr('关机'),
-            'Sleep': tr('睡眠'),
-            'Hibernate': tr('休眠'),
-            'Restart': tr('重启'),
-            'Logoff': tr('注销'),
-            'TurnOffDisplay': tr('关闭显示器'),
-        }
-        return mapping.get(action, str(action))
+        from module.overview.labels import post_action_label
+        return post_action_label(action)
 
     def _perform_post_action(self, action: str) -> None:
         """执行任务完成后的系统操作：Shutdown, Sleep, Hibernate, Restart, Logoff, TurnOffDisplay"""

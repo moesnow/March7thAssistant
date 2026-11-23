@@ -202,6 +202,8 @@ def detail_state(key, cfg, *, now=None, backend="local", headless=lambda: False)
 
 
 def select_steps(order, cfg, actions, *, full_run=True, touch=False, only=None):
+    from utils.runs import observe_step
+
     steps = []
     # 单项重试仅附带该项本来需要的准备工作，不启动同组的其他任务。
     prerequisites = set()
@@ -216,5 +218,15 @@ def select_steps(order, cfg, actions, *, full_run=True, touch=False, only=None):
             continue
         if entry_state(key, cfg, full_run=full_run, touch=touch) == "pending":
             action = actions[key]
+            if key != "prepare":
+                def skipped(key=key):
+                    if not full_run:
+                        return False
+                    from module.config.platform import get_control_backend
+                    state = detail_state(key, cfg, backend=get_control_backend(cfg),
+                                         headless=lambda: cfg.browser_headless_enable)
+                    return state not in ("pending", "claim_only")
+
+                action = observe_step(key, action, skipped)
             steps.append((STEP_NAMES[key], action))
     return steps

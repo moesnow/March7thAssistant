@@ -108,6 +108,8 @@ browser_mirror_urls:
 # 副本设置
 # 体力计划列表，每项包含副本类型、副本名称和剩余次数，例如：[["拟造花萼（金）", "回忆之蕾", 10], ["侵蚀隧洞", "睿治之径", 5]]
 power_enable: true # 是否启用清体力总开关。false 时完整运行和“日常”中的历战余响与清体力都会跳过，但单独执行“清体力”任务不受影响。
+overview_power: null # 上次读取的开拓力和时间戳。
+overview_daily_activity: null # 上次读取的每日实训活跃度和时间戳。
 power_plan: []
 power_plan_keep: false # 是否在执行后保留整份体力计划。true 保留，false 按剩余次数更新并删除已完成计划。
 power_plan_continue: true # 完成整份体力计划后，使用剩余资源刷默认副本。

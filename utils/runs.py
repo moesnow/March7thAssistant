@@ -385,6 +385,47 @@ def exit_code_of(exc: SystemExit) -> int:
 _current_session = None
 
 
+def publish_progress(**fields):
+    """进度记录只供旁观界面使用，写入失败不改变自动化结果。"""
+    if _current_session is not None:
+        try:
+            _current_session.update_record(**fields)
+        except Exception:
+            logging.getLogger("March7thAssistant").warning("本次运行进度未能保存", exc_info=True)
+
+
+def observe_step(key, action, skipped=None):
+    session = _current_session
+    if session is None:
+        return action
+
+    def observed():
+        started = time.monotonic()
+        item = {"id": key, "status": "running"}
+        items = list(session.record.get("steps", ()))
+        items.append(item)
+        publish_progress(phase="execute", current_step=key, steps=items)
+        state = "interrupted"
+        try:
+            skip = False
+            if skipped is not None:
+                try:
+                    skip = skipped()
+                except Exception:
+                    logging.getLogger("March7thAssistant").debug("无法判断步骤跳过原因", exc_info=True)
+            result = action()
+            state = "failed" if result is False else "skipped" if skip else "success"
+            return result
+        except Exception:
+            state = "failed"
+            raise
+        finally:
+            item.update(status=state, seconds=round(time.monotonic() - started, 2))
+            publish_progress(current_step=None, steps=items)
+
+    return observed
+
+
 class LockResult(NamedTuple):
     """RunSession.acquire_lock 的结果。"""
     status: str                     # LOCK_ACQUIRED / LOCK_FORCED / LOCK_BUSY / LOCK_UNAVAILABLE
@@ -400,6 +441,7 @@ class RunSession:
         self.run_id = record["run_id"]
         self._pending = {}
         self._finished = False
+        self._record_write_failed = False
         self.lock_held = False
         self.print_json = False
         # 最后一条错误日志：任务失败但调用方没有显式登记错误时，写入运行记录的 error
@@ -407,7 +449,7 @@ class RunSession:
 
     @classmethod
     def begin(cls, *, run_id=None, task=None, workflow=None, workflow_step_path=None,
-              argv=None, invoker="cli", version=None, capture=True):
+              argv=None, invoker="cli", version=None, capture=True, retry_step=None, trigger=None):
         """开始一次运行：分配编号、捕获输出、准备控制文件并写入初始记录。"""
         if not is_valid_run_id(run_id):
             run_id = new_run_id()
@@ -453,6 +495,11 @@ class RunSession:
             "log_file": log_path,
             "control_file": os.path.abspath(control_path),
         }
+        if trigger:
+            record["trigger"] = trigger
+        if retry_step:
+            record["retry_step"] = retry_step
+        record["phase"] = "prepare"
         session = cls(record)
         # Publish under the restore lock so a new task and an import cannot pass each other's idle check.
         from utils.data_files import data_lock
@@ -478,8 +525,11 @@ class RunSession:
     def _save(self):
         try:
             _atomic_write_json(run_file(self.run_id, ".json"), self.record)
+            self._record_write_failed = False
         except Exception:
-            pass
+            if not self._record_write_failed:
+                logging.getLogger("March7thAssistant").warning("本次运行记录未能写入，任务继续", exc_info=True)
+                self._record_write_failed = True
 
     def update_record(self, **fields):
         """登记本次运行的元数据，供其他进程立即读取。"""
@@ -554,6 +604,8 @@ class RunSession:
         if error is None and status != STATUS_SUCCESS:
             error = self.last_error
         self.record.update({
+            "phase": "finish",
+            "current_step": None,
             "status": status,
             "reason": self._pending.get("reason", reason),
             "error": error,

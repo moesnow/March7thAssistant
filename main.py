@@ -134,7 +134,12 @@ def parse_args():
 
     optional.add_argument("--data-dir", help="指定数据文件夹（直接使用，不迁移）")
     optional.add_argument("--data-session", help=argparse.SUPPRESS)
+    from module.overview.plan import STEPS
+    optional.add_argument('--retry-step', choices=sorted(STEPS.keys() - {'prepare'}), help=argparse.SUPPRESS)
+    optional.add_argument('--scheduled', action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
+    if args.retry_step and (args.task != "routine" or args.workflow_name):
+        parser.error("--retry-step 只能与 routine 一起使用")
     from utils.data_migration import initialize
     initialize(override=args.data_dir, session=args.data_session)
 
@@ -317,6 +322,8 @@ run_session = RunSession.begin(
     workflow_step_path=args.workflow_step_path,
     argv=sys.argv[1:],
     invoker=_run_invoker(),
+    retry_step=args.retry_step,
+    trigger='scheduled' if args.scheduled else 'manual' if is_gui_started() else None,
     version=read_version(),
 )
 run_session.print_json = args.json
@@ -481,6 +488,7 @@ def _game_connection(task_id):
 
 
 def run_main_actions(no_run_immediately=False):
+    from utils.runs import publish_progress
     is_first_run = no_run_immediately
     while True:
         if is_first_run:
@@ -493,14 +501,18 @@ def run_main_actions(no_run_immediately=False):
         main_start_time = time.time()
         with _game_connection("main"):
             try:
+                publish_progress(phase="prepare", current_step=None, steps=[], login_required=None)
                 version.start()
+                publish_progress(phase="launch")
                 game.start()
+                publish_progress(phase="execute")
                 if get_ui_profile(cfg).name == "touch_720":
                     from tasks.touch import rewards
 
                     success = rewards.routine(full_run=True)
                 else:
                     success = Daily.start()
+                publish_progress(phase="finish")
                 telemetry.track_task_complete("main", success is not False, time.time() - main_start_time)
                 if success is False:
                     if cfg.after_finish == "Loop" and not is_gui_started():
@@ -537,6 +549,9 @@ def run_main_actions(no_run_immediately=False):
 
 
 def run_sub_task(action, task_override=None):
+    from utils.runs import observe_step, publish_progress
+
+    publish_progress(phase="launch")
     # 不兼容无窗口模式的任务仅覆盖本次启动方式，不修改用户配置。
     visible_cloud_tasks = {"fight", "universe"}
     success = True
@@ -604,8 +619,11 @@ def run_sub_task(action, task_override=None):
         "apocalyptic": lambda: challenge.start("apocalyptic"),
         "redemption": Redemption.start
     }
+    publish_progress(phase="execute")
     task = task_override or sub_tasks.get(action)
     if task:
+        if action != "routine":
+            task = observe_step(action, task)
         if action in ("currencywarsloop", "divergentloop"):
             task()
         else:
@@ -618,6 +636,7 @@ def run_sub_task(action, task_override=None):
             except Exception:
                 telemetry.track_task_complete(action, False, time.time() - task_start_time)
                 raise
+    publish_progress(phase="finish")
     if action not in ("screen_test", "character_export"):
         if success:
             game.stop(False)
@@ -652,7 +671,7 @@ def run_sub_task_update(action):
 
 
 def run_notify_action():
-    notif.notify(content=cfg.notify_template['TestMessage'], image="./assets/app/images/March7th.jpg", level=NotificationLevel.ALL)
+    notif.notify(content=cfg.notify_template['TestMessage'], image="./assets/screenshot/March7th.png", level=NotificationLevel.ALL)
     pause_always()
     sys.exit(0)
 
@@ -703,6 +722,8 @@ def main(action=None, no_run_immediately=False, workflow_name=None, workflow_ste
 
 
 def _run_action(action=None, no_run_immediately=False, workflow_name=None, workflow_step_path=None):
+    from utils.runs import publish_progress
+
     touch = get_ui_profile(cfg).name == "touch_720"
     touch_tasks = {"routine", "daily", "power"}
     backend = get_control_backend(cfg)
@@ -712,6 +733,7 @@ def _run_action(action=None, no_run_immediately=False, workflow_name=None, workf
     telemetry.track_startup(backend)
 
     if workflow_name:
+        publish_progress(phase="execute")
         return run_workflow_action(workflow_name, workflow_step_path)
 
     if (action or "main") in EXCLUSIVE_ACTIONS:
@@ -720,6 +742,7 @@ def _run_action(action=None, no_run_immediately=False, workflow_name=None, workf
     if action == "adb_check":
         if backend != "adb":
             raise AdbError("backend_required", tr("ADB 自检需要设置 control_backend: adb"))
+        publish_progress(phase="execute")
         task_power_request.acquire(log)
         return adb_check.run(game.get_game_controller("adb"))
 
@@ -729,6 +752,13 @@ def _run_action(action=None, no_run_immediately=False, workflow_name=None, workf
 
     # 子任务
     elif action in ["routine", "daily", "power", "currencywars", "currencywarsloop", "currencywarstemp", "divergent", "divergentloop", "divergenttemp", "fight", "universe", "forgottenhall", "purefiction", "apocalyptic", "redemption", "screen_test", "character_export"]:
+        retry_step = run_session.record.get("retry_step")
+        if action == "routine" and isinstance(retry_step, str):
+            if touch:
+                from tasks.touch import rewards
+
+                return run_sub_task(action, task_override=lambda: rewards.routine(full_run=True, only=retry_step))
+            return run_sub_task(action, task_override=lambda: Daily.start(only=retry_step))
         if touch and action in touch_tasks:
             from tasks.touch import power, rewards
 
@@ -740,8 +770,9 @@ def _run_action(action=None, no_run_immediately=False, workflow_name=None, workf
             return run_sub_task(action, task_override=touch_actions[action])
         return run_sub_task(action)
 
+    publish_progress(phase="launch" if action == "game" else "execute")
     # 子任务 原生图形界面
-    elif action in ["universe_gui", "fight_gui"]:
+    if action in ["universe_gui", "fight_gui"]:
         run_sub_task_gui(action)
 
     # 子任务 更新项目
