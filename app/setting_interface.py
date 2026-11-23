@@ -1163,6 +1163,18 @@ class SettingInterface(ScrollArea):
             "play_audio"
         )
         self.themeCard = ComboBoxSettingCardTheme(self.parent)
+        from module.overview.cards import background_path
+        self.overviewBackgroundCard = DualPushSettingCard(
+            tr('选择图片'), tr('恢复默认'), FIF.PHOTO, tr('问候区背景图'),
+            background_path(cfg) or tr('星轨背景'),
+        )
+        self.overviewBackgroundCard.leftClicked.connect(self._chooseOverviewBackground)
+        self.overviewBackgroundCard.rightClicked.connect(lambda: self._setOverviewBackground(''))
+        self.overviewMascotCard = SwitchSettingCard1(
+            UiIcon.PERSON, tr('显示 Q 版小人'), None, 'overview_show_mascot'
+        )
+        self.scheduleManagerCard = PushSettingCard(tr('管理'), FIF.DATE_TIME, tr('定时计划'))
+        self.scheduleManagerCard.clicked.connect(lambda: self.window().navigate('run:schedule'))
         self.closeWindowActionCard = ComboBoxSettingCard2(
             "close_window_action",
             FIF.CLOSE,
@@ -2904,7 +2916,10 @@ class SettingInterface(ScrollArea):
         ])
         self.ProgramGroup.addSettingCard(self.exitAppAfterSuccess)
         self.ProgramGroup.addSettingCard(self.playAudioCard)
+        self.ProgramGroup.addSettingCard(self.scheduleManagerCard)
         self.ProgramGroup.addSettingCard(self.themeCard)
+        self.ProgramGroup.addSettingCard(self.overviewBackgroundCard)
+        self.ProgramGroup.addSettingCard(self.overviewMascotCard)
         self.ProgramGroup.addSettingCard(self.closeWindowActionCard)
         self.ProgramGroup.addSettingCard(self.windowMemoryCard)
 
@@ -3369,6 +3384,15 @@ class SettingInterface(ScrollArea):
         bind_card.leftClicked.connect(lambda: self.__onQqBotBindClicked("user"))
         bind_card.rightClicked.connect(lambda: self.__onQqBotBindClicked("group"))
         return bind_card
+
+    def _chooseOverviewBackground(self):
+        path, _ = QFileDialog.getOpenFileName(self, tr('选择图片'), '', 'Images (*.png *.jpg *.jpeg *.webp *.bmp)')
+        if path:
+            self._setOverviewBackground(path)
+
+    def _setOverviewBackground(self, path):
+        cfg.set_value('banner_path', path)
+        self.overviewBackgroundCard.setContent(path or tr('星轨背景'))
 
     def __onQqBotBindClicked(self, mode: str):
         if self._qqbotBindThread is not None and self._qqbotBindThread.isRunning():

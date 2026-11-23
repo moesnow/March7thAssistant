@@ -241,6 +241,7 @@ TABLE_SOURCES = [
     ("module/overview/shortcuts.py", (("TOOLS", None),)),
     ("module/overview/plan.py", (("STEP_NAMES", None),)),
     ("module/overview/cards.py", (("STATUS_TEXT", None), ("SUMMARY_TEXT", None), ("OPTIONS", None))),
+    ("module/overview/snapshot.py", (("PHASE_NAMES", None),)),
     ("utils/data_migration.py", (("REASONS", None),)),
     ("module/workflow/__init__.py", (("STEP_TYPE_LABELS", None), ("CONDITION_TYPE_LABELS", None))),
     ("module/update/version_check.py", (("_CDK_ERROR_MESSAGES", None),)),

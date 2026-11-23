@@ -12,7 +12,8 @@ from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import InfoBar, InfoBarIcon, InfoBarPosition, PrimaryPushButton, SystemTrayMenu, ToolTipFilter, ToolTipPosition
 from app.tools.game_starter import GameStartStatus, GameLaunchThread
 
-from .home_interface import HomeInterface
+from .overview_interface import OverviewInterface
+from .overview_model import OverviewModel
 from .help_interface import HelpInterface
 # from .changelog_interface import ChangelogInterface
 from .warp_interface import WarpInterface
@@ -73,9 +74,9 @@ class ConfigWatcher(QObject):
         # 监视配置
         if os.path.exists(self.config_path):
             self.watcher.addPath(self.config_path)
-            self.watcher.fileChanged.connect(self._on_config_changed)
+            self.watcher.fileChanged.connect(self.request_check)
 
-    def _on_config_changed(self, path):
+    def request_check(self, path):
         """检测到文件变化，延迟处理避免频繁触发"""
 
         log.debug(f"[config-watch] 文件变化事件: {path}")
@@ -233,6 +234,8 @@ class MainWindow(MSFluentWindow):
 
         self.initWindow()
 
+        self.config_watcher = ConfigWatcher(os.path.abspath(cfg.config_path), self)
+        self.config_watcher.config_changed.connect(self._on_config_file_changed)
         self.initInterface()
         self.initNavigation()
         self.initSystemTray()
@@ -242,10 +245,6 @@ class MainWindow(MSFluentWindow):
 
         if self.start_minimized_to_tray:
             self.hide()
-
-        # 初始化配置文件监视器
-        self.config_watcher = ConfigWatcher(os.path.abspath(cfg.config_path), self)
-        self.config_watcher.config_changed.connect(self._on_config_file_changed)
 
         # 如果有启动任务，延迟执行
         if self.startup_task:
@@ -496,11 +495,11 @@ class MainWindow(MSFluentWindow):
     def _on_logo_clicked(self):
         result = self._evernight.record_click()
         if result == 'warning':
-            self.homeInterface.banner.logoHint.play()
+            self.homeInterface.playLogoHint()
             return
         if result != 'unlocked':
             return
-        self.homeInterface.banner.logoHint.dismiss()
+        self.homeInterface.dismissLogoHint()
         if not self.set_ui_theme('evernight', unlock_evernight=True):
             self._evernight.unlocked = False
             return
@@ -530,7 +529,7 @@ class MainWindow(MSFluentWindow):
             checkUpdate(self)
 
     def initInterface(self):
-        self.homeInterface = HomeInterface(self)
+        self.homeInterface = OverviewInterface(self)
         self.helpInterface = HelpInterface(self)
         # self.changelogInterface = ChangelogInterface(self)
         self.warpInterface = WarpInterface(self)
@@ -538,6 +537,7 @@ class MainWindow(MSFluentWindow):
         self.workflowInterface = WorkflowInterface(self)
         self.logInterface = LogInterface(self)
         self.settingInterface = SettingInterface(self)
+        self.homeInterface.attachModel(OverviewModel(self, config_changed=self.config_watcher.request_check))
 
         # 连接任务启动信号
         signalBus.startTaskSignal.connect(self._onStartTask)
@@ -552,7 +552,7 @@ class MainWindow(MSFluentWindow):
         self.logInterface.autoplotToggleRequested.connect(self._onAutoplotToggleRequested)
 
     def initNavigation(self):
-        self.addSubInterface(self.homeInterface, FIF.HOME, tr('主页'))
+        self.addSubInterface(self.homeInterface, FIF.HOME, tr('总览'))
         self.addSubInterface(self.helpInterface, FIF.BOOK_SHELF, tr('帮助'))
         # self.addSubInterface(self.changelogInterface, FIF.UPDATE, '更新日志')
         self.addSubInterface(self.warpInterface, FIF.SHARE, tr('抽卡记录'))
@@ -909,7 +909,7 @@ class MainWindow(MSFluentWindow):
             interface.retranslateUi()
             interface.verticalScrollBar().setValue(position)
         labels = {
-            'homeInterface': tr('主页'), 'helpInterface': tr('帮助'),
+            'homeInterface': tr('总览'), 'helpInterface': tr('帮助'),
             'warpInterface': tr('抽卡记录'), 'toolsInterface': tr('工具箱'),
             'workflowInterface': tr('流程编排'), 'logInterface': tr('日志'),
             'settingInterface': tr('设置'), 'startGameButton': tr('启动游戏'), 'avatar': tr('赞赏'),
@@ -1074,6 +1074,7 @@ class MainWindow(MSFluentWindow):
             # 重新加载配置
             log.info("[config-watch] 重新加载配置文件并刷新界面")
             cfg._load_config(None, save=False)
+            self.homeInterface.model.request_refresh()
             self._apply_ui_theme(self._load_evernight_selection())
 
             # 重新初始化通知器

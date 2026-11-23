@@ -22,7 +22,7 @@ class EveyDecoration(QWidget):
     def setActive(self, active):
         self._active = active
         if active and self._sprite is None:
-            self._sprite = evernight_artwork().decorations[self._image_name]
+            self._sprite = evernight_artwork()[self._image_name]
         self.setVisible(active)
         self.update()
 

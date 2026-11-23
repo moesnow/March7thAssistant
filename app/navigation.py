@@ -104,6 +104,24 @@ def navigate(window, link: str) -> bool:
             log.warning(f'无法识别的界面链接：{link}')
             return False
         kind, name, anchor = route
+        if kind == 'run':
+            page = window.logInterface
+            window.switchTo(page)
+            if name == 'current':
+                return True
+            if name == 'schedule':
+                page._openScheduleManager()
+                return True
+            from pathlib import Path
+            from PySide6.QtCore import QUrl
+            from PySide6.QtGui import QDesktopServices
+            from utils.runs import run_file
+
+            path = Path(run_file(name, '.log'))
+            if path.is_file():
+                return QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
+            log.warning(f'该次运行的日志文件不存在：{name}')
+            return False
         if kind == 'task':
             log.info(f'任务页暂不支持深链接：{link}')
             return False

@@ -514,7 +514,8 @@ window_height: 640 # 窗口高度
 window_x: null # 窗口左上角 X 坐标
 window_y: null # 窗口左上角 Y 坐标
 window_maximized: false # 窗口是否最大化
-banner_path: ./assets/app/images/bg37.jpg # 背景图片路径
+banner_path: "" # 问候区自选背景；留空时使用当前主题的星轨。
+overview_show_mascot: true # 在总览问候区显示 Q 版小人。
 
 # 更新配置
 redemption_code: [] # 兑换码列表

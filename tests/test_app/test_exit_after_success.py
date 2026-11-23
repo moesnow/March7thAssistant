@@ -45,10 +45,9 @@ def exit_window(qtbot, monkeypatch, tmp_path, request):
     localization.load_language("zh_CN")
     if getattr(request, "param", "focused") != "full":
         # 每个用例仍新建真实 MainWindow、LogInterface、QProcess 和 QTimer，
-        # 走原有初始化与信号连接；只省去与退出规则无关的六个完整页面。
+        # 走原有初始化与信号连接；只省去与退出规则无关的五个完整页面。
         # 设置开关和成功退出另用 full 参数覆盖完整窗口，避免状态共享。
         for name, object_name in (
-            ("HomeInterface", "homeInterface"),
             ("HelpInterface", "helpInterface"),
             ("WarpInterface", "warpInterface"),
             ("ToolsInterface", "toolsInterface"),

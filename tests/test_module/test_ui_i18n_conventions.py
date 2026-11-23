@@ -41,7 +41,6 @@ UI_INFO_KW = {"text", "title", "content", "caption", "label", "placeholder",
 
 # ---- 约定 2 的允许例外 ----
 WRAPPER_ALLOWLIST = {
-    ("app/card/card_edit_dialog.py", "display_label"),
     ("module/overview/legacy_cards.py", "display_label"),      # 入参是 msgid，本就是由它解析
     ("module/localization/__init__.py", "trc"),              # 无 msgctxt 条目时回退 tr()
 }

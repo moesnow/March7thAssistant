@@ -1,4 +1,4 @@
-"""Verify theme preferences, portrait rendering and unchanged application icons."""
+"""Verify theme preferences, overview artwork and application icons."""
 from copy import deepcopy
 from pathlib import Path
 from unittest.mock import Mock
@@ -8,7 +8,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon, QPixmap
 from qfluentwidgets import Theme, isDarkTheme, setTheme
 
-from app.common.theme_assets import portrait_artwork
+from app.common.mascot import Mascot
 from module.config import cfg
 from tests.test_app.test_language_switch import window, switch_language
 
@@ -120,6 +120,30 @@ def test_external_config_reload_applies_theme_and_updates_setting(window, monkey
     assert window.settingInterface.themeCard.comboBox.currentData() == 'dark'
 
 
+def test_overview_refresh_allows_window_to_apply_external_settings(qtbot, tmp_path, request, monkeypatch):
+    from module import notification
+
+    # Arm the real window's file watcher before replacing a complete settings file.
+    path = tmp_path / "config.yaml"
+    config = dict(cfg.config, ui_theme="light", evernight_unlocked=False, overview_show_mascot=True)
+    with path.open("w", encoding="utf-8") as stream:
+        cfg.yaml.dump(config, stream)
+    monkeypatch.setattr(cfg, "config", config.copy())
+    monkeypatch.setattr(notification, "init_notifiers", lambda: None)
+    window = request.getfixturevalue("window")
+    window.hide()
+    original = window.settingInterface
+    replacement = dict(cfg.config, ui_theme="dark", overview_show_mascot=False)
+    external = tmp_path / "external.yaml"
+    with external.open("w", encoding="utf-8") as stream:
+        cfg.yaml.dump(replacement, stream)
+    external.replace(path)
+    window.homeInterface.model.refresh()  # The overview's debounce fires before the main window's.
+    qtbot.waitUntil(lambda: window.settingInterface is not original, timeout=7000)
+    assert window.settingInterface.themeCard.comboBox.currentData() == "dark" and isDarkTheme()
+    qtbot.waitUntil(lambda: window.homeInterface.greeting.mascot.isHidden(), timeout=2500)
+
+
 def test_unrelated_config_reload_in_tray_does_not_reapply_theme(window, monkeypatch):
     from app.tools import check_theme_change
     from module import notification
@@ -148,43 +172,34 @@ def test_unrelated_config_reload_in_tray_does_not_reapply_theme(window, monkeypa
     timer.singleShot.assert_not_called()
 
 
-def test_theme_setting_preserves_custom_assets_and_does_not_start_tasks(window, qtbot, monkeypatch):
-    from app import home_interface
-    custom_cards = [{'icon': './assets/app/images/bg37.jpg', 'title': '自定义卡片',
-                     'action_type': 'single', 'task_id': 'main', 'menu_items': []}]
-    cfg.config['home_cards'] = deepcopy(custom_cards)
-    page = window.homeInterface
-    page.refreshBackendTasks()
-    custom_banner = str(Path('assets/app/images/March7th.jpg').resolve())
-    monkeypatch.setattr(home_interface.QFileDialog, 'getOpenFileName', lambda *a: (custom_banner, ''))
-    page.banner.menu.actions()[0].trigger()
-    banner = page.banner.banner_image
-    foreground = page._task_cards[0][0].iconWidget.pixmap().toImage()
-    start_task = Mock()
-    monkeypatch.setattr(home_interface, 'start_task', start_task)
-    cfg.set_value.reset_mock()
+def test_theme_setting_preserves_custom_assets_and_does_not_start_tasks(window, qtbot, monkeypatch, tmp_path):
+    image = QPixmap(32, 32)
+    image.fill(Qt.GlobalColor.red)
+    path = str(tmp_path / "custom.png")
+    assert image.save(path)
+    shortcuts = [{"id": "main", "name": "自定义快捷启动", "icon": "FIF.PLAY", "image": path}]
+    cfg.config.update(banner_path=path, overview_shortcuts=shortcuts)
     monkeypatch.setattr(cfg, 'set_value', Mock(side_effect=lambda key, value: cfg.config.__setitem__(key, value)))
-    combo = window.settingInterface.themeCard.comboBox
-    combo.setCurrentIndex(combo.findData('light'))
-    setTheme(Theme.LIGHT)
-    for expected_dark in (True, False):
+    page = window.homeInterface
+    launch = Mock()
+    monkeypatch.setattr(page.model, 'launch_shortcut', launch)
+    page.model.refresh()
+    for key in ('dark', 'light'):
         combo = window.settingInterface.themeCard.comboBox
-        combo.setCurrentIndex(combo.findData('dark' if expected_dark else 'light'))
-        qtbot.wait(10)
-        assert isDarkTheme() is expected_dark
-        assert page.banner.banner_image is banner
-        assert page._task_cards[0][0].iconWidget.pixmap().toImage() == foreground
+        combo.setCurrentIndex(combo.findData(key))
+        assert isDarkTheme() is (key == 'dark')
+        assert page.greeting._background.pixelColor(0, 0).red() == 255
+        button, = page.shortcutsCard._buttons
+        assert button.icon().pixmap(16, 16).toImage().pixelColor(8, 8).red() == 255
         assert window.windowTitle() == 'March7th Assistant'
     switch_language(qtbot, window, 'en_US')
     combo = window.settingInterface.themeCard.comboBox
     assert [combo.itemText(i) for i in range(combo.count())] == ['Follow system', 'Light', 'Dark']
     assert combo.currentData() == 'light'
-    assert window.titleBar.iconLabel.toolTip() == ''
-    assert page.banner.banner_image is banner
-    assert page._task_cards[0][0].titleLabel.text() == '自定义卡片'
-    assert cfg.config['home_cards'] == custom_cards
-    assert not any(call.args[0] in ('banner_path', 'home_cards') for call in cfg.set_value.call_args_list)
-    start_task.assert_not_called()
+    assert page.shortcutsCard._buttons[0].text() == '自定义快捷启动'
+    assert page._snapshot.background == path and cfg.config['overview_shortcuts'] == shortcuts
+    assert not any(c.args[0] in ('banner_path', 'overview_shortcuts') for c in cfg.set_value.call_args_list)
+    launch.assert_not_called()
 
 
 @pytest.fixture
@@ -223,60 +238,17 @@ def test_default_size_memory_and_navigation(window_size_case, window):
     assert 'themeButton' not in navigation.items
 
 
-def test_every_task_portrait_and_window_icon_follow_dark_theme(window, qtbot):
-    setTheme(Theme.LIGHT)
+def test_overview_mascot_and_window_icon_follow_regular_themes(window):
+    from module.overview.samples import sample_snapshot
+
     page = window.homeInterface
-    assert len(page._task_cards) == 6
-    originals = [widget.iconWidget.pixmap().toImage() for widget, *_ in page._task_cards]
-    actions = [widget.action for widget, *_ in page._task_cards]
-    setTheme(Theme.DARK)
-    for (widget, *_), original, action in zip(page._task_cards, originals, actions):
-        dark = widget.iconWidget.pixmap().toImage()
-        assert dark != original
-        assert dark.hasAlphaChannel() and dark.pixelColor(0, 0).alpha() < 40
-        assert widget.action is action
-    assert window.windowIcon().pixmap(32, 32).toImage().pixelColor(0, 0).alpha() == 0
-    assert window.windowIcon().pixmap(32, 32).toImage() == QIcon('./assets/logo/March7th.ico').pixmap(32, 32).toImage()
-    assert window.titleBar.iconLabel.pixmap().toImage() == QIcon(
-        './assets/logo/March7th.ico').pixmap(window.titleBar.iconLabel.size()).toImage()
-    page.refreshBackendTasks()
-    for widget, *_ in page._task_cards:
-        assert widget.iconWidget.pixmap().toImage().pixelColor(0, 0).alpha() < 40
-    setTheme(Theme.LIGHT)
-    assert [widget.iconWidget.pixmap().toImage() for widget, *_ in page._task_cards] == originals
-    assert window.titleBar.iconLabel.pixmap().toImage() == QIcon(
-        './assets/logo/March7th.ico').pixmap(window.titleBar.iconLabel.size()).toImage()
-
-
-def test_bundled_artwork_is_loadable_and_baked_backgrounds_are_translucent(qtbot):
-    portraits = [f'./assets/app/images/{name}.jpg' for name in (
-        'March7th', 'JingYuan', 'Yanqing', 'Herta', 'SilverWolf', 'Bronya',
-    )]
-    for source in portraits:
-        original = QPixmap(source)
-        dark = portrait_artwork(source, True)
-        assert not original.isNull(), source
-        assert not dark.isNull() and dark.hasAlphaChannel(), source
-        assert 0 < dark.toImage().pixelColor(0, 0).alpha() < 40, source
-    icon = QIcon('./assets/logo/March7th.ico')
-    assert not icon.isNull()
-    assert not icon.pixmap(32, 32).isNull()
-
-
-
-def test_custom_portrait_with_builtin_filename_is_not_replaced(qtbot, tmp_path):
-    import os
-
-    custom_path = str(tmp_path / 'March7th.jpg')
-    custom = QPixmap(32, 32)
-    custom.fill(Qt.GlobalColor.red)
-    assert custom.save(custom_path)
-    assert portrait_artwork(custom_path, False).toImage().pixelColor(0, 0).red() > 250
-    foreground = portrait_artwork(custom_path, True)
-    assert foreground.toImage().pixelColor(0, 0).red() > 250
-    custom.fill(Qt.GlobalColor.blue)
-    assert custom.save(custom_path)
-    timestamp = Path(custom_path).stat()
-    os.utime(custom_path, (timestamp.st_atime, timestamp.st_mtime + 2))
-    reloaded = portrait_artwork(custom_path, True)
-    assert reloaded.toImage().pixelColor(0, 0).blue() > 250
+    for theme in (Theme.LIGHT, Theme.DARK, Theme.LIGHT):
+        setTheme(theme, save=False)
+        page.render(sample_snapshot("running"))
+        assert page.greeting._mode() == theme.value.lower()
+        assert page.greeting.mascot.pose() == Mascot.TYPING
+        assert not page.greeting.mascot._pixmap.isNull()
+        assert page.greeting.mascot._pixmap.hasAlphaChannel()
+        icon = QIcon('./assets/logo/March7th.ico')
+        assert window.windowIcon().pixmap(32, 32).toImage() == icon.pixmap(32, 32).toImage()
+        assert window.titleBar.iconLabel.pixmap().toImage() == icon.pixmap(window.titleBar.iconLabel.size()).toImage()

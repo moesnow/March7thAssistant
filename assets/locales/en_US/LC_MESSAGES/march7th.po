@@ -8925,17 +8925,37 @@ msgstr "A file name conflicts with an existing folder: {path}"
 msgid "上次还原尚未完成，请在设置的「数据」标签重新选择备份文件或导入文件夹。"
 msgstr "The previous restore did not finish. In Settings, open the Data tab and select the backup file or import folder again."
 
+#: module/overview/snapshot.py
+msgid "{name}没有完成"
+msgstr "{name} did not finish"
+
 #: module/overview/plan.py:18
 msgid "三星光锥叠加"
 msgstr "Superimpose 3-star Light Cones"
+
+#: module/overview/snapshot.py
+msgid "下午好，开拓者"
+msgstr "Good afternoon, Trailblazer"
+
+#: module/overview/snapshot.py
+msgid "中午好，开拓者"
+msgstr "Good afternoon, Trailblazer"
 
 #: module/overview/cards.py:10
 msgid "仅检查奖励"
 msgstr "Check rewards only"
 
+#: module/overview/snapshot.py
+msgid "今天的任务都做完了"
+msgstr "All of today's tasks are complete"
+
 #: module/overview/cards.py:10
 msgid "今日已完成"
 msgstr "Done today"
+
+#: module/overview/snapshot.py
+msgid "任务已暂停"
+msgstr "Task paused"
 
 #: module/overview/cards.py
 msgid "体力计划 · {count} 项"
@@ -8944,6 +8964,14 @@ msgstr "Power plan · {count} entries"
 #: module/overview/plan.py:18
 msgid "余烬兑换"
 msgstr "Embers Exchange"
+
+#: module/overview/snapshot.py
+msgid "停止"
+msgstr "Stop"
+
+#: module/overview/snapshot.py:11
+msgid "准备"
+msgstr "Prepare"
 
 #: module/overview/cards.py:15
 msgid "叠加三星光锥"
@@ -8965,6 +8993,14 @@ msgstr "From weekday {day}"
 msgid "培养目标"
 msgstr "Training goals"
 
+#: module/overview/samples.py
+msgid "完整运行后检查每周积分奖励与日常领取情况"
+msgstr "Check weekly points rewards and daily claims after the full run"
+
+#: app/setting_interface.py
+msgid "定时计划"
+msgstr "Schedule"
+
 #: module/overview/cards.py:10
 msgid "将执行"
 msgstr "Will run"
@@ -8972,6 +9008,10 @@ msgstr "Will run"
 #: module/overview/cards.py
 msgid "尚未设置远程推送"
 msgstr "Remote notifications are not configured"
+
+#: module/overview/snapshot.py
+msgid "就绪"
+msgstr "Ready"
 
 #: module/overview/plan.py:18
 msgid "差分宇宙固定次数"
@@ -8985,9 +9025,25 @@ msgstr "Divergent Universe point rewards"
 msgid "已停止"
 msgstr "Stopped"
 
+#: module/overview/snapshot.py
+msgid "已完成"
+msgstr "Completed"
+
+#: module/overview/snapshot.py
+msgid "开始完整运行"
+msgstr "Start full run"
+
 #: module/overview/cards.py:10
 msgid "当前环境不支持"
 msgstr "Unsupported in this environment"
+
+#: module/overview/snapshot.py
+msgid "待设置"
+msgstr "Setup needed"
+
+#: module/overview/snapshot.py:11
+msgid "执行任务"
+msgstr "Run tasks"
 
 #: module/overview/cards.py
 msgid "找不到本地游戏"
@@ -9001,6 +9057,10 @@ msgstr "Follow the configured routes"
 msgid "挑战第 {level} 层"
 msgstr "Challenge stage {level}"
 
+#: module/overview/snapshot.py:11
+msgid "收尾"
+msgstr "Finish up"
+
 #: module/overview/plan.py:18
 msgid "日常准备"
 msgstr "Daily preparation"
@@ -9008,6 +9068,26 @@ msgstr "Daily preparation"
 #: module/overview/plan.py:18
 msgid "日常领奖"
 msgstr "Claim daily rewards"
+
+#: module/overview/snapshot.py
+msgid "早上好，开拓者"
+msgstr "Good morning, Trailblazer"
+
+#: app/setting_interface.py
+msgid "星轨背景"
+msgstr "Star trail background"
+
+#: app/setting_interface.py
+msgid "显示 Q 版小人"
+msgstr "Show chibi mascot"
+
+#: module/overview/snapshot.py
+msgid "晚上好，开拓者"
+msgstr "Good evening, Trailblazer"
+
+#: module/overview/snapshot.py
+msgid "暂停"
+msgstr "Pause"
 
 #: module/overview/cards.py:10
 msgid "未到执行日"
@@ -9024,6 +9104,30 @@ msgstr "Done this week"
 #: module/overview/cards.py:10
 msgid "本月已完成"
 msgstr "Done this month"
+
+#: module/overview/snapshot.py
+msgid "本次完整运行有 {count} 项待执行。"
+msgstr "The full run has {count} pending tasks."
+
+#: module/overview/snapshot.py
+msgid "本次完整运行的结果已保存。"
+msgstr "The full run results have been saved."
+
+#: module/overview/snapshot.py
+msgid "查看原因"
+msgstr "View cause"
+
+#: module/overview/snapshot.py
+msgid "查看本次结果"
+msgstr "View run results"
+
+#: module/overview/snapshot.py
+msgid "查看运行"
+msgstr "View run"
+
+#: module/overview/snapshot.py
+msgid "查看运行日志了解原因。"
+msgstr "Check the run log for the cause."
 
 #: module/overview/plan.py:18
 msgid "查询支援实训"
@@ -9081,6 +9185,22 @@ msgstr "Events"
 msgid "游戏连接设置需要调整"
 msgstr "Game connection needs attention"
 
+#: app/setting_interface.py
+msgid "管理"
+msgstr "Manage"
+
+#: module/overview/snapshot.py
+msgid "继续设置"
+msgstr "Continue setup"
+
+#: module/overview/snapshot.py
+msgid "继续运行"
+msgstr "Continue run"
+
+#: module/overview/snapshot.py
+msgid "继续运行时会重新检查已完成的项目。"
+msgstr "Completed tasks will be checked again when the run starts."
+
 #: module/overview/cards.py
 msgid "要在其他设备收到任务通知，请开启推送并设置渠道。"
 msgstr "Enable notifications and set up a channel to receive task updates on another device."
@@ -9093,9 +9213,21 @@ msgstr "Read training goals"
 msgid "运行中"
 msgstr "Running"
 
+#: module/overview/snapshot.py
+msgid "运行单项"
+msgstr "Run one task"
+
+#: module/overview/snapshot.py
+msgid "还差一步就能开始"
+msgstr "One more step before starting"
+
 #: module/overview/cards.py:10
 msgid "进行中"
 msgstr "In progress"
+
+#: module/overview/samples.py
+msgid "连续几次未能识别副本结算画面，已保存日志供检查。"
+msgstr "The challenge results screen could not be recognized after several attempts. The log is available for review."
 
 #: module/overview/cards.py
 msgid "选择游戏的可执行文件后即可开始。"
@@ -9105,9 +9237,25 @@ msgstr "Select the game executable to get started."
 msgid "速通模式"
 msgstr "Speedrun mode"
 
+#: module/overview/snapshot.py
+msgid "重新运行"
+msgstr "Run again"
+
+#: module/overview/snapshot.py
+msgid "重试这一项"
+msgstr "Retry this task"
+
+#: app/setting_interface.py
+msgid "问候区背景图"
+msgstr "Greeting background"
+
 #: module/overview/cards.py
 msgid "难度 {level} · 周积分"
 msgstr "Difficulty {level} · Weekly points"
+
+#: module/overview/snapshot.py
+msgid "需要处理"
+msgstr "Needs attention"
 
 #: module/overview/cards.py:15
 msgid "领取已开启的奖励"
@@ -9189,9 +9337,109 @@ msgstr "Partially failed"
 msgid "非交互运行"
 msgstr "Non-interactive run"
 
+#: module/overview/snapshot.py
+msgid "{phase} · 已运行 {minutes} 分钟"
+msgstr "{phase} · {minutes} min elapsed"
+
+#: module/overview/snapshot.py
+msgid "暂时无法读取运行计划。"
+msgstr "The run plan is temporarily unavailable."
+
 #: module/overview/cards.py
 msgid "计划次数为零"
 msgstr "Zero runs scheduled"
+
+#: app/overview/cards.py:213
+msgid "完整运行将执行"
+msgstr "Full Run checklist"
+
+#: app/overview/cards.py:214
+msgid "按当前设置，已完成和未开启的会自动跳过"
+msgstr "Completed and disabled tasks are skipped automatically."
+
+#: app/overview/cards.py:321
+msgid "上次运行"
+msgstr "Last run"
+
+#: app/overview/cards.py:392
+msgid "快捷启动"
+msgstr "Shortcuts"
+
+#: app/overview/cards.py:450
+msgid "去设置"
+msgstr "Open settings"
+
+#: app/overview/cards.py:489
+msgid "建议检查"
+msgstr "Settings to check"
+
+#: app/overview/cards.py:502
+msgid "暂时无法检查设置"
+msgstr "Settings are temporarily unavailable"
+
+#: app/overview/cards.py:244
+msgid "暂时读不到完整运行清单"
+msgstr "The Full Run checklist is temporarily unavailable"
+
+#: app/overview/cards.py:244
+msgid "完整运行没有要执行的项目"
+msgstr "No tasks to run in Full Run"
+
+#: app/overview/cards.py:248
+msgid "收起未开启的项目"
+msgstr "Hide disabled tasks"
+
+#: app/overview/cards.py:322
+msgid "查看日志"
+msgstr "View log"
+
+#: app/overview/cards.py:409
+msgid "暂时读不到快捷启动"
+msgstr "Shortcuts are temporarily unavailable"
+
+#: app/overview/cards.py:335
+msgid "暂时读不到运行记录"
+msgstr "Run history is temporarily unavailable"
+
+#: app/overview/cards.py:335
+msgid "还没有运行记录，完成一次运行后会显示每一项的结果"
+msgstr "After the first run, each task’s result will appear here."
+
+#: app/overview/cards.py:357
+msgid "以及另外 {count} 项"
+msgstr "and {count} more"
+
+#: app/overview/cards.py:411
+msgid "还没有快捷启动，点「编辑」添加常用操作"
+msgstr "Select Edit to add your first shortcut."
+
+#: app/overview/cards.py:411
+msgid "还没有快捷启动"
+msgstr "No shortcuts yet"
+
+#: app/overview/cards.py:250
+msgid "显示未开启的 {count} 项"
+msgstr "Show disabled tasks ({count})"
+
+#: app/overview/cards.py:348
+msgid "用时 {duration}"
+msgstr "Took {duration}"
+
+#: app/overview/cards.py:350
+msgid "{trigger}触发"
+msgstr "Trigger: {trigger}"
+
+#: app/main_window.py:555 app/main_window.py:912 app/overview/greeting.py:270
+msgid "总览"
+msgstr "Overview"
+
+#: app/overview/greeting.py:270
+msgid "暂时读不到运行状态"
+msgstr "Run status is temporarily unavailable"
+
+#: app/overview/greeting.py:270
+msgid "稍后会自动重试。"
+msgstr "Trying again shortly."
 
 #: app/overview/shortcut_dialog.py:23
 msgid "相机"
@@ -9280,6 +9528,102 @@ msgstr "{minutes} min"
 #: app/overview/style.py:110
 msgid "{hours} 小时"
 msgstr "{hours} hr"
+
+#: app/overview_interface.py:115
+msgid "本周周常"
+msgstr "Weekly tasks"
+
+#: app/overview_interface.py:116
+msgid "下次定时运行"
+msgstr "Next scheduled run"
+
+#: app/overview_interface.py:216
+msgid "管理定时"
+msgstr "Manage schedule"
+
+#: app/overview_interface.py:170
+msgid "暂时读不到每日实训"
+msgstr "Daily Training is temporarily unavailable"
+
+#: app/overview_interface.py:189
+msgid "暂时读不到周常进度"
+msgstr "Weekly progress is temporarily unavailable"
+
+#: app/overview_interface.py:206
+msgid "暂时读不到定时计划"
+msgstr "The schedule is temporarily unavailable"
+
+#: app/overview_interface.py:209
+msgid "未安排"
+msgstr "Unscheduled"
+
+#: app/overview_interface.py:210
+msgid "还没有定时运行"
+msgstr "No runs scheduled"
+
+#: app/overview_interface.py:210
+msgid "添加定时"
+msgstr "Add schedule"
+
+#: app/overview_interface.py:303
+msgid "更换问候区背景"
+msgstr "Change greeting background"
+
+#: app/overview_interface.py:153
+msgid "暂时读不到开拓力"
+msgstr "Trailblaze Power is temporarily unavailable"
+
+#: app/overview_interface.py:153
+msgid "运行一次清体力后显示"
+msgstr "Run Spend Power once to see your balance"
+
+#: app/overview_interface.py:157
+msgid "{time} 读取"
+msgstr "Read at {time}"
+
+#: app/overview_interface.py:160
+msgid "现在应该已经回满"
+msgstr "Estimated to be full now"
+
+#: app/overview_interface.py:182
+msgid "今天还没有完成"
+msgstr "Not completed today"
+
+#: app/overview_interface.py:193
+msgid "/ {count} 项"
+msgstr "/ {count}"
+
+#: app/overview_interface.py:199
+msgid "本周的都完成了"
+msgstr "All done this week"
+
+#: app/overview_interface.py:199
+msgid "没有开启每周任务"
+msgstr "No weekly tasks enabled"
+
+#: app/overview_interface.py:305
+msgid "恢复默认背景"
+msgstr "Restore default background"
+
+#: app/overview_interface.py:308
+msgid "隐藏 Q 版小人"
+msgstr "Hide chibi mascot"
+
+#: app/overview_interface.py:178
+msgid "{time} 完成"
+msgstr "Completed at {time}"
+
+#: app/overview_interface.py:197
+msgid "剩余：{names}"
+msgstr "Remaining: {names}"
+
+#: app/overview_interface.py:162
+msgid "约{time} 回满"
+msgstr "Full around {time}"
+
+#: app/overview_interface.py:180
+msgid "今天还差 {points} 活跃度"
+msgstr "{points} Activity points to go today"
 
 #: module/overview/shortcuts.py:231
 msgid "配置写入已暂停，请恢复后再保存。"

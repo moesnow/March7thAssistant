@@ -315,6 +315,8 @@ def test_persistent_pages_keep_models_workers_tabs_and_user_state(window, qtbot,
     cfg.set_values.reset_mock()
     start = Mock()
     monkeypatch.setattr(tools_module.tool, 'start', start)
+    overview = window.homeInterface
+    overview_model = overview.model
     tools = window.toolsInterface
     automatic = tools.automaticPlotCard
     automatic.switchButton.blockSignals(True)
@@ -338,6 +340,8 @@ def test_persistent_pages_keep_models_workers_tabs_and_user_state(window, qtbot,
     window.switchTo(workflow)
     switch_language(qtbot, window, 'en_US')
     assert window.stackedWidget.currentWidget() is workflow
+    assert window.homeInterface is overview and overview.model is overview_model
+    assert overview.shortcutsCard.titleLabel.text() == localization.tr("快捷启动")
     assert window.toolsInterface is tools and tools.automaticPlotCard is automatic
     assert automatic.getSwitchState()
     start.assert_not_called()
@@ -490,7 +494,7 @@ def test_config_reload_failure_disposes_unused_settings(window, monkeypatch, fai
     assert warning.call_count == 2
 
 
-def test_config_reload_refreshes_home_and_tools_for_new_backend(window, monkeypatch):
+def test_config_reload_refreshes_overview_and_tools_for_new_backend(window, monkeypatch, qtbot):
     from app import main_window as module
     from app import tools_interface as tools
     from module import notification
@@ -499,10 +503,11 @@ def test_config_reload_refreshes_home_and_tools_for_new_backend(window, monkeypa
     runtime_calls = Mock()
     monkeypatch.setattr(module.auto, "reload_connection", runtime_calls.bind_input)
     monkeypatch.setattr(module.screen, "reload_profile", runtime_calls.reload_screen)
-    config.config.update(control_backend="local", ui_profile="pc_1080", home_cards=None)
+    config.config.update(control_backend="local", ui_profile="pc_1080", home_cards=None, overview_shortcuts=None)
     window.refreshBackendTasks()
-    initial = window.homeInterface.basicInputView.flowLayout.count()
-    assert initial > 2
+    page = window.homeInterface
+    qtbot.waitUntil(lambda: len(page.shortcutsCard._buttons) == 4)
+    assert [s.id for s in page._snapshot.shortcuts] == ["currencywarsloop", "divergentloop", "autoplot", "screenshot"]
     runtime_calls.reset_mock()
     monkeypatch.setattr(notification, "init_notifiers", Mock())
     monkeypatch.setattr(config, "_load_config", lambda *_a, **_kw: config.config.update(
@@ -510,7 +515,8 @@ def test_config_reload_refreshes_home_and_tools_for_new_backend(window, monkeypa
     window._on_config_file_changed()
 
     assert window.settingInterface.adbBackendCard.backend() == "adb"
-    assert window.homeInterface.basicInputView.flowLayout.count() == 2
+    qtbot.waitUntil(lambda: [s.id for s in page._snapshot.shortcuts] == ["screenshot"])
+    assert [button.text() for button in page.shortcutsCard._buttons] == [module.tr("游戏截图")]
     assert window.toolsInterface.cloudTouchCard.isHidden()
     assert not window.toolsInterface.gameScreenshotCard.isHidden()
     assert runtime_calls.method_calls == [call.bind_input(), call.reload_screen()]

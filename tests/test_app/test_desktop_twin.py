@@ -806,6 +806,11 @@ def test_host_window_explains_why_pages_are_disabled(main_window):
     window.setDesktopTwinHosting(True)
     notice = window._desktop_twin_notice
     assert notice.isVisible() and not window.homeInterface.isEnabled()
+    save = window.homeInterface.model.config.save_config
+    save.reset_mock()
+    window.homeInterface.model.refresh()
+    assert not window.homeInterface.shortcutsCard.editLink.isEnabled()
+    save.assert_not_called()
     assert notice.titleLabel.text() == ui.tr("桌面分身运行中")
     assert notice.iconWidget.accent  # 与主按钮统一用主题色，而不是 InfoBar 默认的青色
     assert notice.geometry().bottom() < window.stackedWidget.geometry().top()

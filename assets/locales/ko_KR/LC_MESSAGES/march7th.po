@@ -8580,17 +8580,37 @@ msgstr "파일 이름이 기존 폴더와 충돌합니다: {path}"
 msgid "上次还原尚未完成，请在设置的「数据」标签重新选择备份文件或导入文件夹。"
 msgstr "이전 복원이 완료되지 않았습니다. 설정의 데이터 탭에서 백업 파일이나 가져올 폴더를 다시 선택하세요."
 
+#: module/overview/snapshot.py
+msgid "{name}没有完成"
+msgstr "{name} 작업을 완료하지 못했습니다"
+
 #: module/overview/plan.py:18
 msgid "三星光锥叠加"
 msgstr "3성 광추 중첩"
+
+#: module/overview/snapshot.py
+msgid "下午好，开拓者"
+msgstr "좋은 오후예요, 개척자"
+
+#: module/overview/snapshot.py
+msgid "中午好，开拓者"
+msgstr "좋은 점심이에요, 개척자"
 
 #: module/overview/cards.py:10
 msgid "仅检查奖励"
 msgstr "보상만 확인"
 
+#: module/overview/snapshot.py
+msgid "今天的任务都做完了"
+msgstr "오늘의 임무를 모두 마쳤습니다"
+
 #: module/overview/cards.py:10
 msgid "今日已完成"
 msgstr "오늘 완료"
+
+#: module/overview/snapshot.py
+msgid "任务已暂停"
+msgstr "임무 일시 정지됨"
 
 #: module/overview/cards.py
 msgid "体力计划 · {count} 项"
@@ -8599,6 +8619,14 @@ msgstr "개척력 계획 · {count}개"
 #: module/overview/plan.py:18
 msgid "余烬兑换"
 msgstr "잔화 교환"
+
+#: module/overview/snapshot.py
+msgid "停止"
+msgstr "중지"
+
+#: module/overview/snapshot.py:11
+msgid "准备"
+msgstr "준비"
 
 #: module/overview/cards.py:15
 msgid "叠加三星光锥"
@@ -8620,6 +8648,14 @@ msgstr "주간 {day}일째부터 실행"
 msgid "培养目标"
 msgstr "육성 목표"
 
+#: module/overview/samples.py
+msgid "完整运行后检查每周积分奖励与日常领取情况"
+msgstr "전체 실행 후 주간 점수 보상 및 일일 보상 수령 확인"
+
+#: app/setting_interface.py
+msgid "定时计划"
+msgstr "일정"
+
 #: module/overview/cards.py:10
 msgid "将执行"
 msgstr "실행 예정"
@@ -8627,6 +8663,10 @@ msgstr "실행 예정"
 #: module/overview/cards.py
 msgid "尚未设置远程推送"
 msgstr "원격 알림이 설정되지 않았습니다"
+
+#: module/overview/snapshot.py
+msgid "就绪"
+msgstr "준비됨"
 
 #: module/overview/plan.py:18
 msgid "差分宇宙固定次数"
@@ -8640,9 +8680,25 @@ msgstr "차분화 우주 점수 보상"
 msgid "已停止"
 msgstr "중지됨"
 
+#: module/overview/snapshot.py
+msgid "已完成"
+msgstr "완료됨"
+
+#: module/overview/snapshot.py
+msgid "开始完整运行"
+msgstr "전체 실행 시작"
+
 #: module/overview/cards.py:10
 msgid "当前环境不支持"
 msgstr "현재 환경에서 지원되지 않음"
+
+#: module/overview/snapshot.py
+msgid "待设置"
+msgstr "설정 필요"
+
+#: module/overview/snapshot.py:11
+msgid "执行任务"
+msgstr "임무 실행"
 
 #: module/overview/cards.py
 msgid "找不到本地游戏"
@@ -8656,6 +8712,10 @@ msgstr "설정된 경로로 실행"
 msgid "挑战第 {level} 层"
 msgstr "{level}층 도전"
 
+#: module/overview/snapshot.py:11
+msgid "收尾"
+msgstr "마무리"
+
 #: module/overview/plan.py:18
 msgid "日常准备"
 msgstr "일일 준비"
@@ -8663,6 +8723,26 @@ msgstr "일일 준비"
 #: module/overview/plan.py:18
 msgid "日常领奖"
 msgstr "일일 보상 수령"
+
+#: module/overview/snapshot.py
+msgid "早上好，开拓者"
+msgstr "좋은 아침이에요, 개척자"
+
+#: app/setting_interface.py
+msgid "星轨背景"
+msgstr "별 궤적 배경"
+
+#: app/setting_interface.py
+msgid "显示 Q 版小人"
+msgstr "SD 캐릭터 표시"
+
+#: module/overview/snapshot.py
+msgid "晚上好，开拓者"
+msgstr "좋은 저녁이에요, 개척자"
+
+#: module/overview/snapshot.py
+msgid "暂停"
+msgstr "일시 정지"
 
 #: module/overview/cards.py:10
 msgid "未到执行日"
@@ -8679,6 +8759,30 @@ msgstr "이번 주 완료"
 #: module/overview/cards.py:10
 msgid "本月已完成"
 msgstr "이번 달 완료"
+
+#: module/overview/snapshot.py
+msgid "本次完整运行有 {count} 项待执行。"
+msgstr "전체 실행에서 {count}개 항목을 실행할 예정입니다."
+
+#: module/overview/snapshot.py
+msgid "本次完整运行的结果已保存。"
+msgstr "전체 실행 결과를 저장했습니다."
+
+#: module/overview/snapshot.py
+msgid "查看原因"
+msgstr "원인 보기"
+
+#: module/overview/snapshot.py
+msgid "查看本次结果"
+msgstr "이번 실행 결과 보기"
+
+#: module/overview/snapshot.py
+msgid "查看运行"
+msgstr "실행 상태 보기"
+
+#: module/overview/snapshot.py
+msgid "查看运行日志了解原因。"
+msgstr "실행 로그에서 원인을 확인하세요."
 
 #: module/overview/plan.py:18
 msgid "查询支援实训"
@@ -8736,6 +8840,22 @@ msgstr "이벤트"
 msgid "游戏连接设置需要调整"
 msgstr "게임 연결 설정을 확인하세요"
 
+#: app/setting_interface.py
+msgid "管理"
+msgstr "관리"
+
+#: module/overview/snapshot.py
+msgid "继续设置"
+msgstr "설정 계속"
+
+#: module/overview/snapshot.py
+msgid "继续运行"
+msgstr "실행 계속"
+
+#: module/overview/snapshot.py
+msgid "继续运行时会重新检查已完成的项目。"
+msgstr "다시 실행할 때 완료한 항목을 재확인합니다."
+
 #: module/overview/cards.py
 msgid "要在其他设备收到任务通知，请开启推送并设置渠道。"
 msgstr "다른 기기에서 임무 알림을 받으려면 알림을 켜고 채널을 설정하세요."
@@ -8748,9 +8868,21 @@ msgstr "육성 목표 읽기"
 msgid "运行中"
 msgstr "실행 중"
 
+#: module/overview/snapshot.py
+msgid "运行单项"
+msgstr "단일 작업 실행"
+
+#: module/overview/snapshot.py
+msgid "还差一步就能开始"
+msgstr "한 단계만 더 설정하면 시작할 수 있어요"
+
 #: module/overview/cards.py:10
 msgid "进行中"
 msgstr "진행 중"
+
+#: module/overview/samples.py
+msgid "连续几次未能识别副本结算画面，已保存日志供检查。"
+msgstr "도전 결과 화면을 여러 번 인식하지 못해 확인용 로그를 저장했습니다."
 
 #: module/overview/cards.py
 msgid "选择游戏的可执行文件后即可开始。"
@@ -8760,9 +8892,25 @@ msgstr "게임 실행 파일을 선택하면 시작할 수 있습니다."
 msgid "速通模式"
 msgstr "빠른 클리어 모드"
 
+#: module/overview/snapshot.py
+msgid "重新运行"
+msgstr "다시 실행"
+
+#: module/overview/snapshot.py
+msgid "重试这一项"
+msgstr "이 항목 다시 시도"
+
+#: app/setting_interface.py
+msgid "问候区背景图"
+msgstr "인사 영역 배경"
+
 #: module/overview/cards.py
 msgid "难度 {level} · 周积分"
 msgstr "난이도 {level} · 주간 점수"
+
+#: module/overview/snapshot.py
+msgid "需要处理"
+msgstr "확인 필요"
 
 #: module/overview/cards.py:15
 msgid "领取已开启的奖励"
@@ -8844,9 +8992,109 @@ msgstr "일부 실패"
 msgid "非交互运行"
 msgstr "비대화형 실행"
 
+#: module/overview/snapshot.py
+msgid "{phase} · 已运行 {minutes} 分钟"
+msgstr "{phase} · {minutes}분 경과"
+
+#: module/overview/snapshot.py
+msgid "暂时无法读取运行计划。"
+msgstr "현재 실행 계획을 읽을 수 없습니다."
+
 #: module/overview/cards.py
 msgid "计划次数为零"
 msgstr "계획 횟수 0회"
+
+#: app/overview/cards.py:213
+msgid "完整运行将执行"
+msgstr "전체 실행 목록"
+
+#: app/overview/cards.py:214
+msgid "按当前设置，已完成和未开启的会自动跳过"
+msgstr "현재 설정에 따라 완료했거나 꺼 둔 항목은 자동으로 건너뜁니다"
+
+#: app/overview/cards.py:321
+msgid "上次运行"
+msgstr "최근 실행"
+
+#: app/overview/cards.py:392
+msgid "快捷启动"
+msgstr "바로가기"
+
+#: app/overview/cards.py:450
+msgid "去设置"
+msgstr "설정 열기"
+
+#: app/overview/cards.py:489
+msgid "建议检查"
+msgstr "확인할 설정"
+
+#: app/overview/cards.py:502
+msgid "暂时无法检查设置"
+msgstr "지금은 설정을 확인할 수 없습니다"
+
+#: app/overview/cards.py:244
+msgid "暂时读不到完整运行清单"
+msgstr "지금은 전체 실행 목록을 불러올 수 없습니다"
+
+#: app/overview/cards.py:244
+msgid "完整运行没有要执行的项目"
+msgstr "전체 실행에 포함된 항목이 없습니다"
+
+#: app/overview/cards.py:248
+msgid "收起未开启的项目"
+msgstr "꺼 둔 항목 접기"
+
+#: app/overview/cards.py:322
+msgid "查看日志"
+msgstr "로그 보기"
+
+#: app/overview/cards.py:409
+msgid "暂时读不到快捷启动"
+msgstr "지금은 바로가기를 불러올 수 없습니다"
+
+#: app/overview/cards.py:335
+msgid "暂时读不到运行记录"
+msgstr "지금은 실행 기록을 불러올 수 없습니다"
+
+#: app/overview/cards.py:335
+msgid "还没有运行记录，完成一次运行后会显示每一项的结果"
+msgstr "한 번 실행을 마치면 여기에 각 항목의 결과가 표시됩니다"
+
+#: app/overview/cards.py:357
+msgid "以及另外 {count} 项"
+msgstr "외 {count}개"
+
+#: app/overview/cards.py:411
+msgid "还没有快捷启动，点「编辑」添加常用操作"
+msgstr "편집을 눌러 자주 쓰는 작업을 추가하세요"
+
+#: app/overview/cards.py:411
+msgid "还没有快捷启动"
+msgstr "아직 바로가기가 없습니다"
+
+#: app/overview/cards.py:250
+msgid "显示未开启的 {count} 项"
+msgstr "꺼 둔 항목 {count}개 표시"
+
+#: app/overview/cards.py:348
+msgid "用时 {duration}"
+msgstr "소요 시간 {duration}"
+
+#: app/overview/cards.py:350
+msgid "{trigger}触发"
+msgstr "실행 방식: {trigger}"
+
+#: app/main_window.py:555 app/main_window.py:912 app/overview/greeting.py:270
+msgid "总览"
+msgstr "개요"
+
+#: app/overview/greeting.py:270
+msgid "暂时读不到运行状态"
+msgstr "지금은 실행 상태를 불러올 수 없습니다"
+
+#: app/overview/greeting.py:270
+msgid "稍后会自动重试。"
+msgstr "잠시 후 자동으로 다시 시도합니다."
 
 #: app/overview/shortcut_dialog.py:23
 msgid "相机"
@@ -8935,6 +9183,102 @@ msgstr "{minutes}분"
 #: app/overview/style.py:110
 msgid "{hours} 小时"
 msgstr "{hours}시간"
+
+#: app/overview_interface.py:115
+msgid "本周周常"
+msgstr "이번 주 주간 임무"
+
+#: app/overview_interface.py:116
+msgid "下次定时运行"
+msgstr "다음 예약 실행"
+
+#: app/overview_interface.py:216
+msgid "管理定时"
+msgstr "예약 관리"
+
+#: app/overview_interface.py:170
+msgid "暂时读不到每日实训"
+msgstr "지금은 일일 훈련을 불러올 수 없습니다"
+
+#: app/overview_interface.py:189
+msgid "暂时读不到周常进度"
+msgstr "지금은 주간 진행 상황을 불러올 수 없습니다"
+
+#: app/overview_interface.py:206
+msgid "暂时读不到定时计划"
+msgstr "지금은 예약 일정을 불러올 수 없습니다"
+
+#: app/overview_interface.py:209
+msgid "未安排"
+msgstr "예약 없음"
+
+#: app/overview_interface.py:210
+msgid "还没有定时运行"
+msgstr "예약된 실행이 없습니다"
+
+#: app/overview_interface.py:210
+msgid "添加定时"
+msgstr "예약 추가"
+
+#: app/overview_interface.py:303
+msgid "更换问候区背景"
+msgstr "인사말 배경 변경"
+
+#: app/overview_interface.py:153
+msgid "暂时读不到开拓力"
+msgstr "지금은 개척력을 불러올 수 없습니다"
+
+#: app/overview_interface.py:153
+msgid "运行一次清体力后显示"
+msgstr "개척력 소모를 한 번 실행하면 표시됩니다"
+
+#: app/overview_interface.py:157
+msgid "{time} 读取"
+msgstr "{time}에 확인"
+
+#: app/overview_interface.py:160
+msgid "现在应该已经回满"
+msgstr "지금은 모두 회복되었을 것으로 예상됩니다"
+
+#: app/overview_interface.py:182
+msgid "今天还没有完成"
+msgstr "오늘은 아직 완료하지 않았습니다"
+
+#: app/overview_interface.py:193
+msgid "/ {count} 项"
+msgstr "/ {count}개"
+
+#: app/overview_interface.py:199
+msgid "本周的都完成了"
+msgstr "이번 주 항목을 모두 완료했습니다"
+
+#: app/overview_interface.py:199
+msgid "没有开启每周任务"
+msgstr "켜 둔 주간 임무가 없습니다"
+
+#: app/overview_interface.py:305
+msgid "恢复默认背景"
+msgstr "기본 배경 복원"
+
+#: app/overview_interface.py:308
+msgid "隐藏 Q 版小人"
+msgstr "SD 캐릭터 숨기기"
+
+#: app/overview_interface.py:178
+msgid "{time} 完成"
+msgstr "{time}에 완료"
+
+#: app/overview_interface.py:197
+msgid "剩余：{names}"
+msgstr "남은 항목: {names}"
+
+#: app/overview_interface.py:162
+msgid "约{time} 回满"
+msgstr "{time}쯤 완전 회복"
+
+#: app/overview_interface.py:180
+msgid "今天还差 {points} 活跃度"
+msgstr "오늘 남은 활약도 {points}점"
 
 #: module/overview/shortcuts.py:231
 msgid "配置写入已暂停，请恢复后再保存。"

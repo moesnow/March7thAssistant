@@ -3,8 +3,6 @@ from collections import deque
 from time import monotonic
 
 
-EVERNIGHT_BANNER = './assets/app/images/evernight/banner.png'
-EVERNIGHT_AVATAR = './assets/app/images/dark/Evernight.png'
 EVEY_ANIMATION = './assets/app/images/evernight/evey-floating.png'
 
 
