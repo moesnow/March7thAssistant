@@ -197,6 +197,9 @@ internal fun errorInfo(
     "root_unavailable" -> ErrorInfo(R.string.error_root_title, R.string.error_root_advice, ErrorFix.GUIDE)
     "game_not_installed" -> ErrorInfo(R.string.error_game_title, R.string.error_game_advice, ErrorFix.NONE)
     "game_exited" -> ErrorInfo(R.string.error_game_exited_title, R.string.error_game_exited_advice, ErrorFix.LOGS)
+    "display_failed" -> ErrorInfo(R.string.error_display_failed_title, R.string.error_display_failed_advice, ErrorFix.LOGS)
+    "frame_timeout" -> ErrorInfo(R.string.error_frame_timeout_title, R.string.error_frame_timeout_advice, ErrorFix.LOGS)
+    "virtual_display_black" -> ErrorInfo(R.string.error_virtual_display_black_title, R.string.error_virtual_display_black_advice, ErrorFix.LOGS)
     "game_start_timeout" -> ErrorInfo(
         R.string.error_game_start_timeout_title, R.string.error_game_start_timeout_advice, ErrorFix.LOGS,
         additionalAdvice = R.string.error_honor_smart_resolution_advice.takeIf {

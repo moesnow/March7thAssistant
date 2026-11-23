@@ -443,6 +443,12 @@
     <string name="error_game_title">没有找到游戏</string>
     <string name="error_game_advice">请先安装国服《崩坏：星穹铁道》，手动打开一次，完成登录和资源下载后再开始。</string>
     <string name="error_game_exited_title">游戏已退出</string>
+    <string name="error_display_failed_title">无法创建后台虚拟屏</string>
+    <string name="error_display_failed_advice">系统未能创建游戏使用的虚拟屏。请在「日志」页导出本轮日志反馈。</string>
+    <string name="error_frame_timeout_title">虚拟屏没有新画面</string>
+    <string name="error_frame_timeout_advice">后台虚拟屏长时间没有收到新帧。请在「日志」页导出本轮日志反馈。</string>
+    <string name="error_virtual_display_black_title">虚拟屏画面异常</string>
+    <string name="error_virtual_display_black_advice">游戏已经启动，但后台虚拟屏一直只有黑画面。当前系统可能不兼容后台虚拟屏，请在「日志」页导出本轮日志反馈，也可以先在手机上直接打开游戏。</string>
     <string name="error_game_exited_advice">需要反馈时，请先到「日志」页点「导出」，保存本轮日志。然后可以从小助手重新启动游戏。</string>
     <string name="error_game_start_timeout_title">等待游戏就绪超时</string>
     <string name="error_game_start_timeout_advice">打开游戏确认是否需要登录或更新。需要反馈时，请在重试前到「日志」页点「导出」，保存本轮日志。</string>

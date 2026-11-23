@@ -7,6 +7,21 @@ import top.m7a.R
 
 class ErrorInfoTest {
     @Test
+    fun displayFailuresExplainWhichStageFailedAndOpenTheLog() {
+        for ((code, title, advice) in listOf(
+            Triple("display_failed", R.string.error_display_failed_title, R.string.error_display_failed_advice),
+            Triple("frame_timeout", R.string.error_frame_timeout_title, R.string.error_frame_timeout_advice),
+            Triple("virtual_display_black", R.string.error_virtual_display_black_title, R.string.error_virtual_display_black_advice),
+        )) {
+            val info = checkNotNull(errorInfo(code, "HONOR", "HUAWEI"))
+            assertEquals(title, info.title)
+            assertEquals(advice, info.advice)
+            assertEquals(ErrorFix.LOGS, info.fix)
+            assertNull(info.additionalAdvice)
+        }
+    }
+
+    @Test
     fun honorStartupTimeoutAddsSmartResolutionAdviceAndKeepsExistingAdvice() {
         val cases = listOf(" Honor " to "HUAWEI", "unknown" to "HONOR")
         for ((brand, manufacturer) in cases) {

@@ -398,6 +398,141 @@ def monthly_startup_frames():
     return frames
 
 
+@pytest.mark.parametrize(("scenario", "expected"), [
+    ("black", "virtual_display_black"), ("no_first_frame", "frame_timeout"),
+    ("cached_black", "frame_timeout"), ("issue_stall", "frame_timeout"),
+    ("slow_new_frames", "virtual_display_black"), ("missing_evidence", "virtual_display_black"),
+    ("short_black", "success"), ("late_receipt", "success"), ("sdk_loading", "success"),
+    ("content_between_black", "success"), ("snapshot_error", "success"), ("sample_error", "success"),
+    ("unavailable_capture", "game_start_timeout"),
+    ("manual_login", "manual_action_required"), ("locked_then_ready", "success"),
+    ("task_moved", "success"), ("stale_watchdog", "game_start_timeout"),
+    ("static_text", "game_start_timeout"), ("no_snapshot", "game_start_timeout"),
+    ("old_service", "game_start_timeout"), ("old_service_ready", "success"),
+    ("game_exited", "game_exited"), ("stop", "stopped"),
+])
+def test_virtual_display_startup_health(entry, device, monkeypatch, monthly_startup_frames, scenario, expected):
+    from module.game import adb, adb_ready
+
+    started = 200.0
+    now = started
+
+    def sleep(seconds):
+        nonlocal now
+        now += seconds
+
+    clock = SimpleNamespace(monotonic=lambda: now, sleep=sleep, time=lambda: now)
+    for owner in (adb, adb_ready, entry):
+        monkeypatch.setattr(owner, "time", clock)
+    monkeypatch.setattr(adb_ready, "wait_for_game", wait_for_game_frames)
+    controller = AdbGameController(SimpleNamespace(ui_profile="touch_720", adb_tap_ms=None), logger=log)
+    monkeypatch.setattr(module.game, "get_game_controller", lambda backend: controller)
+    bridge = Bridge()
+    task = Mock(return_value=True)
+    monkeypatch.setattr(rewards, "run_daily_training", task)
+    client = module.game.adb_transport.ServiceClient.return_value
+    legacy = scenario in ("old_service", "old_service_ready")
+    client.hello = {"features": ["keep_awake"] + ([] if legacy else ["startup_snapshot"])}
+    client.closed = False
+    client.close.side_effect = lambda: setattr(client, "closed", True)
+    events = []
+    commands = []
+    last_seq = 0
+    last_image_at = None
+    black = bytes(1280 * 720 * 3)
+    # 一个极小的亮点也可能是静止 SDK 页的文字。缩略图可能完全漏掉它。
+    static = bytearray(black)
+    static[3:6] = b'\xff\xff\xff'
+    main = monthly_startup_frames["main"]
+    watch_task = dict(task_id=355, stack_id=355, display_id=65, visible=True,
+                      top_activity="com.miHoYo.hkrpg/com.mihoyo.combosdk.ComboSDKActivity")
+
+    def emit(name, **fields):
+        events.append(dict(event=name, event_seq=len(events) + 1, **fields))
+
+    def respond(command, **params):
+        nonlocal last_seq, last_image_at
+        elapsed = now - started
+        commands.append(command)
+        if command == "create_display":
+            return {"display_id": 65}, None
+        if command == "launch":
+            emit("task_display_changed", to=65)
+        off_target = scenario == "task_moved" and 25 <= elapsed < 55
+        locked = scenario == "locked_then_ready" and 25 <= elapsed < 55
+        sdk = scenario in ("sdk_loading", "manual_login") and 5 <= elapsed < 20
+        if command == "events":
+            if len(events) == 1 and (off_target or sdk):
+                emit("task_display_changed" if off_target else "sdk_window_shown", to=0)
+            if len(events) == 2 and scenario == "manual_login" and elapsed >= 15:
+                emit("manual_action_required")
+            if len(events) == 2 and scenario in ("task_moved", "sdk_loading") and not (off_target or sdk):
+                emit("task_display_changed" if scenario == "task_moved" else "sdk_window_gone", to=65)
+            if scenario == "game_exited" and elapsed >= 15 and len(events) == 1:
+                emit("task_display_changed", to=None)
+                emit("game_exited", pid=123)
+            result = {"events": events[params["after"]:], "event_seq": len(events)}
+            if params.get("startup") and not legacy and scenario != "no_snapshot":
+                if scenario == "snapshot_error":
+                    raise module.game.adb_transport.AdbError("internal", "设备诊断不可用")
+                checked = int(now * 1000) if scenario != "stale_watchdog" else int(started * 1000)
+                result["startup"] = {
+                    "device_ms": int(now * 1000), "display_id": 65,
+                    "watchdog": {"task": dict(watch_task, display_id=0 if off_target else 65),
+                                 "pid": 123, "target_display_id": 65, "task_checked_ms": checked,
+                                 "interactive": not locked, "keyguard_locked": locked,
+                                 "sdk_window": "sdk/Login" if sdk else None},
+                    "frame": {"seq": last_seq, "capturing": True,
+                              "age_ms": -1 if last_image_at is None else round((now - last_image_at) * 1000)},
+                }
+            return result, None
+        if command == "startup_evidence" and scenario == "missing_evidence":
+            raise module.game.adb_transport.AdbError("unsupported", "ROM 无此诊断")
+        if command == "status":
+            return {"watchdog": {"task": None, "task_checked_ms": int(now * 1000),
+                                 "interactive": True, "keyguard_locked": False}}, None
+        if command == "launch_if_missing":
+            if scenario == "game_exited":
+                emit("game_exited", pid=124)
+            return {"launched": True, "seq": last_seq}, None
+        if command == "frame":
+            sleep(.65)
+            if scenario == "stop" and elapsed >= 15:
+                bridge.cancelled = True
+            if scenario == "no_first_frame" or (scenario == "late_receipt" and 12 <= elapsed < 24):
+                raise module.game.adb_transport.AdbError("timeout", "暂时无新帧")
+            frozen = scenario in ("cached_black", "static_text") or (scenario == "issue_stall" and 10 <= elapsed < 113)
+            if scenario == "slow_new_frames" and last_image_at is not None:
+                frozen = now - last_image_at < 8
+            if not frozen or last_image_at is None:
+                last_seq += 1
+                last_image_at = now
+            if scenario == "unavailable_capture":
+                raise module.game.adb_transport.AdbError("timeout", "输入后的截图不可用，生产端仍在出帧")
+            ready_at = {"short_black": 22, "late_receipt": 32, "sdk_loading": 25, "old_service_ready": 25,
+                        "content_between_black": 64, "snapshot_error": 59, "sample_error": 59,
+                        "task_moved": 62, "locked_then_ready": 62}.get(scenario, 999)
+            visible = scenario == "static_text" or (scenario == "content_between_black" and 26 <= elapsed <= 36)
+            pixels = main if elapsed >= ready_at else static if visible else black
+            return {"seq": last_seq, "display_id": 65, "crop": params["crop"], "encoding": "rgb"}, pixels
+        return {"original_mode": "allowed"}, None
+
+    if scenario == "sample_error":
+        monkeypatch.setattr(Image.Image, "getextrema", Mock(side_effect=ValueError("像素统计不可用")))
+    client.request.side_effect = respond
+    assert start(entry, "DAILY", bridge) == expected
+    assert task.call_count == int(expected == "success")
+    assert not {"tap", "focus", "touch", "swipe"}.intersection(commands)
+    assert commands.count("launch") == 1 and commands.count("shutdown") == 1
+    if expected in {"frame_timeout", "virtual_display_black"}:
+        assert 30 <= now - started < 80
+        assert commands.count("startup_evidence") == 1
+    elif expected == "game_start_timeout":
+        assert 180 <= now - started < 182
+    if legacy:
+        assert all(not call.kwargs.get("startup") for call in client.request.call_args_list)
+
+
 @pytest.mark.parametrize(("scenario", "outcome", "expected"), [
     ("animated", "success", ["claim", "reward"]),
     ("late_receipt", "success", ["claim", "reward"]),

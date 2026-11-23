@@ -8,7 +8,9 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
 import android.os.Handler;
+import android.os.Process;
 import android.os.SystemClock;
+import android.view.Display;
 import android.view.Surface;
 
 import org.json.JSONException;
@@ -18,6 +20,8 @@ import org.march7th.deviceservice.protocol.FrameSequencer;
 import org.march7th.deviceservice.protocol.Protocol;
 
 import java.lang.reflect.Constructor;
+import java.util.Arrays;
+import java.util.StringJoiner;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -66,7 +70,7 @@ final class VirtualScreen {
         this.dpi = dpi;
         this.destroyContent = destroyContent;
         this.sequencer = sequencer;
-        this.flags = flagsFor(destroyContent);
+        this.flags = flagsFor(destroyContent, Build.VERSION.SDK_INT);
         String stage = "ShellContext";
         ShellContext context = null;
         try {
@@ -111,6 +115,8 @@ final class VirtualScreen {
             String device = "sdk=" + Build.VERSION.SDK_INT + " release=" + Build.VERSION.RELEASE
                     + " incremental=" + Build.VERSION.INCREMENTAL + " manufacturer=" + Build.MANUFACTURER
                     + " model=" + Build.MODEL + " device=" + Build.DEVICE
+                    + " pid=" + Process.myPid() + " uid=" + Process.myUid() + " package=" + ShellContext.PACKAGE
+                    + " flags=" + flagDescription(flags)
                     + " base=" + (context != null && context.getBaseContext() != null);
             Logger.e(message + " (" + device + ")", e);
             String diagnostic = stage + " " + device + "\n" + ShellContext.initializationTrace() + "\n" + Logger.stackTrace(e);
@@ -123,7 +129,7 @@ final class VirtualScreen {
      * 标志位沿用原型：公开、独立内容、支持触摸、移除时销毁内容。
      * Android 13、14 追加的几项照 scrcpy 的新建虚拟屏写法补上（未在实机验证）。
      */
-    private static int flagsFor(boolean destroyContent) {
+    static int flagsFor(boolean destroyContent, int sdk) {
         int flags = DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC
                 | DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION
                 | DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY
@@ -132,13 +138,48 @@ final class VirtualScreen {
         if (destroyContent) {
             flags |= FLAG_DESTROY_CONTENT_ON_REMOVAL;
         }
-        if (Build.VERSION.SDK_INT >= 33) {
+        if (sdk >= 33) {
             flags |= FLAG_TRUSTED | FLAG_OWN_DISPLAY_GROUP | FLAG_ALWAYS_UNLOCKED | FLAG_TOUCH_FEEDBACK_DISABLED;
         }
-        if (Build.VERSION.SDK_INT >= 34) {
+        if (sdk >= 34) {
             flags |= FLAG_OWN_FOCUS | FLAG_DEVICE_DISPLAY_GROUP;
         }
         return flags;
+    }
+
+    static String flagDescription(int flags) {
+        String[] names = {"PUBLIC", "PRESENTATION", "SECURE", "OWN_CONTENT_ONLY", "AUTO_MIRROR",
+                "CAN_SHOW_WITH_INSECURE_KEYGUARD", "SUPPORTS_TOUCH", "ROTATES_WITH_CONTENT",
+                "DESTROY_CONTENT_ON_REMOVAL", "SHOULD_SHOW_SYSTEM_DECORATIONS", "TRUSTED", "OWN_DISPLAY_GROUP",
+                "ALWAYS_UNLOCKED", "TOUCH_FEEDBACK_DISABLED", "OWN_FOCUS", "DEVICE_DISPLAY_GROUP"};
+        StringJoiner enabled = new StringJoiner("|");
+        for (int i = 0; i < names.length; i++) {
+            if ((flags & (1 << i)) != 0) enabled.add(names[i]);
+        }
+        return "0x" + Integer.toHexString(flags) + " " + enabled;
+    }
+
+    /** 在建屏和启动失败时采样。ROM 缺失的字段单独记录，已创建的屏可以继续使用。 */
+    JSONObject diagnostics() {
+        JSONObject info = new JSONObject();
+        try {
+            info.put("creation_flags", flagDescription(flags));
+            info.put("service_pid", Process.myPid());
+            info.put("service_uid", Process.myUid());
+            info.put("service_package", ShellContext.PACKAGE);
+            info.put("display_info", SystemApis.displayInfo(displayId));
+        } catch (Exception | LinkageError e) {
+            Logger.w("cannot read virtual DisplayInfo", e);
+        }
+        try {
+            Display screen = display.getDisplay();
+            info.put("supported_modes", Arrays.toString(screen.getSupportedModes()));
+            info.put("mode", String.valueOf(screen.getMode()));
+            info.put("refresh_rate", screen.getRefreshRate());
+        } catch (Exception | LinkageError e) {
+            Logger.w("cannot read virtual display modes", e);
+        }
+        return info;
     }
 
     /**
