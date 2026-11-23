@@ -1,174 +1,153 @@
-"""Exercise real Qt import dialogs with fixture paths and button clicks."""
-import json
-import os
-from pathlib import Path
-from shutil import copytree
+"""Click through the page and its real confirmation dialogs using isolated files."""
+from unittest.mock import Mock
 
 import pytest
-from PySide6.QtCore import QTimer
-from qfluentwidgets import MessageBox, ComboBox
+from qfluentwidgets import InfoBar, MessageBox
+
+from app.content import gacha_dialogs as dialogs
 from app.warp_interface import WarpInterface
-from utils import paths
+from tests.test_app.test_gacha_adapters import answer
 from tests.test_app.test_warp_import import data, put
+from tests.test_module.test_gacha_transfer import uigf
+from utils import paths
 
 
 @pytest.fixture
 def page(qtbot, tmp_path, monkeypatch):
-    root = Path(__file__).resolve().parents[2]
-    assets = tmp_path / 'assets'
-    copytree(root / 'assets' / 'app', assets / 'app')
-    copytree(root / 'assets' / 'config', assets / 'config')
-    monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(paths, '_layout', paths.select(tmp_path, tmp_path))
-    (tmp_path / 'gacha').mkdir()
+    monkeypatch.setattr(paths, "_layout", paths.select(tmp_path, tmp_path / "profile"))
     page = WarpInterface()
-    page.resize(1100, 850)
     qtbot.addWidget(page)
+    page.resize(1100, 720)
     page.show()
-    qtbot.wait(30)
     return page
 
 
-def run_import(page, source, monkeypatch, qtbot, accept, shot=None, mode=0, cancel_mode=False):
-    monkeypatch.setattr('app.warp_interface.QFileDialog.getOpenFileName', lambda *a: (str(source), ''))
-    observed = []
-    exec_dialog = MessageBox.exec
-
-    def answer_dialog(dialog):
-        if dialog.titleLabel.text() == '选择导入方式':
-            combo = dialog.findChild(ComboBox)
-            assert combo.currentIndex() == 0
-            combo.setCurrentIndex(mode)
-            screenshot = '04-import-mode'
-            button = dialog.cancelButton if cancel_mode else dialog.yesButton
-            if cancel_mode:
-                observed.append('cancelled mode')
-        else:
-            observed.append(dialog.titleLabel.text() + '\n' + dialog.contentLabel.text())
-            screenshot = shot
-            button = dialog.yesButton if accept else dialog.cancelButton
-
-        def click_button():
-            try:
-                if screenshot and os.environ.get('WARP_SCREENSHOT_DIR'):
-                    directory = Path(os.environ['WARP_SCREENSHOT_DIR'])
-                    directory.mkdir(parents=True, exist_ok=True)
-                    dialog.widget.grab().save(str(directory / f'{screenshot}.png'))
-            finally:
-                button.click()
-
-        QTimer.singleShot(0, click_button)
-        return exec_dialog(dialog)
-
-    with monkeypatch.context() as context:
-        context.setattr(MessageBox, 'exec', answer_dialog)
-        page.importBtn.click()
-    qtbot.wait(30)
-    assert observed
-    return observed[0]
+def choose_file(monkeypatch, path):
+    monkeypatch.setattr(dialogs.QFileDialog, "getOpenFileName", lambda *args: (str(path), ""))
 
 
-def test_cancel_confirmation(page, tmp_path, monkeypatch, qtbot):
-    source = put(tmp_path / 'input.json', data((2, 3)))
-    target = put(tmp_path / 'gacha' / 'warp.json', data())
-    page.setContent()
-    before = target.read_bytes()
-    text = run_import(page, source, monkeypatch, qtbot, False, '01-merge-preview')
-    assert '新增记录：1 条' in text and '合并后：3 条' in text
-    assert '首次导入' not in text and '备份' not in text
-    assert target.read_bytes() == before
-    assert not list((tmp_path / 'gacha').glob('*.bak'))
-
-
-def test_confirm_merge_and_repeat(page, tmp_path, monkeypatch, qtbot):
-    source = put(tmp_path / 'input.json', data((2, 3)))
-    target = put(tmp_path / 'gacha' / 'warp.json', data())
-    page.setContent()
-    run_import(page, source, monkeypatch, qtbot, True)
-    assert len(json.loads(target.read_bytes())['list']) == 3
-    assert len(list((tmp_path / 'gacha').glob('*.bak'))) == 1
-    text = run_import(page, source, monkeypatch, qtbot, False, '03-repeat-preview')
-    assert '新增记录：0 条' in text
-    assert page.exportBtn.isEnabled()
-
-
-def test_account_mismatch_dialog(page, tmp_path, monkeypatch, qtbot):
-    source = put(tmp_path / 'input.json', data(uid='100000002'))
-    target = put(tmp_path / 'gacha' / 'warp.json', data())
-    before = target.read_bytes()
-    page.setContent()
-    text = run_import(page, source, monkeypatch, qtbot, True, '02-account-mismatch')
-    assert '账号不一致' in text
-    assert target.read_bytes() == before
-    assert not list((tmp_path / 'gacha').glob('*.bak'))
-
-
-def test_file_dialog_cancel(page, tmp_path, monkeypatch):
-    monkeypatch.setattr('app.warp_interface.QFileDialog.getOpenFileName', lambda *a: ('', ''))
-    page.importBtn.click()
-    assert not (tmp_path / 'gacha' / 'warp.json').exists()
-
-
-@pytest.mark.parametrize('accept', [False, True])
-def test_replace_confirmation(page, tmp_path, monkeypatch, qtbot, accept):
-    source = put(tmp_path / 'input.json', data((2, 3)))
-    target = put(tmp_path / 'gacha' / 'warp.json', data())
-    before = target.read_bytes()
-    page.setContent()
-    text = run_import(page, source, monkeypatch, qtbot, accept, '05-replace-warning', mode=1)
-    assert '替换现有记录' in text and '替换后记录数量：2' in text
-    assert '.bak' not in text and '备份' not in text
-    if accept:
-        assert [r['id'] for r in json.loads(target.read_bytes())['list']] == ['2', '3']
-        assert next((tmp_path / 'gacha').glob('*.bak')).read_bytes() == before
+def click_import(page):
+    if page.emptyState.isVisible():
+        page.emptyState.importButton.click()
     else:
-        assert target.read_bytes() == before
-        assert not list((tmp_path / 'gacha').glob('*.bak'))
+        next(action for action in page.transferMenu.actions() if action.text().startswith("导入 ")).trigger()
 
 
-def test_cancel_mode(page, tmp_path, monkeypatch, qtbot):
-    source = put(tmp_path / 'input.json', data())
-    target = put(tmp_path / 'gacha' / 'warp.json', data())
-    before = target.read_bytes()
-    run_import(page, source, monkeypatch, qtbot, True, cancel_mode=True)
-    assert target.read_bytes() == before
-
-
-@pytest.mark.parametrize('accept', [False, True])
-def test_replace_other_account_requires_confirmation(page, tmp_path, monkeypatch, qtbot, accept):
-    source = put(tmp_path / 'input.json', data(uid='100000002'))
-    target = put(tmp_path / 'gacha' / 'warp.json', data())
-    before = target.read_bytes()
-    text = run_import(page, source, monkeypatch, qtbot, accept, '06-replace-account-warning', mode=1)
-    assert '当前账号：100000001' in text and '导入账号：100000002' in text
-    assert '替换目前保存的全部记录' in text
-    if accept:
-        assert json.loads(target.read_bytes())['info']['uid'] == '100000002'
-        assert next((tmp_path / 'gacha').glob('*.bak')).read_bytes() == before
-    else:
-        assert target.read_bytes() == before
-        assert not list((tmp_path / 'gacha').glob('*.bak'))
-
-
-@pytest.mark.parametrize('empty_file', [False, True])
-def test_first_import_without_dialog(page, tmp_path, monkeypatch, empty_file):
-    source = put(tmp_path / 'input.json', data())
-    target = tmp_path / 'gacha' / 'warp.json'
+@pytest.mark.parametrize("empty_file", [False, True])
+def test_first_import_without_confirmation(page, tmp_path, monkeypatch, empty_file):
+    uid = "100000001"
     if empty_file:
-        put(target, data(()))
-    monkeypatch.setattr('app.warp_interface.QFileDialog.getOpenFileName', lambda *a: (str(source), ''))
-    def unexpected_dialog(*args):
-        pytest.fail('First import must not open a dialog')
-    monkeypatch.setattr(MessageBox, 'exec', unexpected_dialog)
-    page.importBtn.click()
-    assert len(json.loads(target.read_bytes())['list']) == 2
+        page.store.write(uid, data(()))
+        page.reload()
+    choose_file(monkeypatch, put(tmp_path / "input.json", data()))
+    monkeypatch.setattr(MessageBox, "exec", lambda *_: pytest.fail("unexpected confirmation"))
+    click_import(page)
+    assert page.summary.selected.uid == uid and page.summary.selected.count == 2
+    assert page.stack.currentWidget() is page.dashboard
+    assert page.store.read(uid)["list"] == data()["list"]
 
 
-def test_replace_unreadable_file_from_gui(page, tmp_path, monkeypatch, qtbot):
-    source = put(tmp_path / 'input.json', data())
-    target = tmp_path / 'gacha' / 'warp.json'
-    target.write_bytes(b'{broken')
-    text = run_import(page, source, monkeypatch, qtbot, True, mode=1)
-    assert '无法读取' in text and '无法统计' in text
-    assert len(json.loads(target.read_bytes())['list']) == 2
-    assert next((tmp_path / 'gacha').glob('*.bak')).read_bytes() == b'{broken'
+def test_file_dialog_cancel(page, monkeypatch):
+    choose_file(monkeypatch, "")
+    click_import(page)
+    assert page.stack.currentWidget() is page.emptyState
+    assert not page.findChildren(InfoBar)
+    assert not page.store.path("100000001").exists()
+
+
+@pytest.mark.parametrize("mode,clicks", [(0, [False]), (0, [True, False]), (0, [True, True]),
+                                         (1, [True, False]), (1, [True, True])])
+def test_merge_or_replace_after_preview(page, tmp_path, monkeypatch, mode, clicks):
+    uid = "100000001"
+    page.store.write(uid, data())
+    page.reload()
+    target = page.store.path(uid)
+    before = target.read_bytes()
+    choose_file(monkeypatch, put(tmp_path / "in.json", data((2, 3))))
+    seen = answer(monkeypatch, clicks, mode)
+    click_import(page)
+    assert len(seen) == len(clicks) and seen[0][0] == "选择导入方式"
+    if len(clicks) == 2:
+        title, counts, cancel_default = seen[1]
+        assert ("替换" in title) == bool(mode)
+        assert all(s in counts for s in ("UID：100000001", "现有记录：2", "文件记录：2", "新增记录：1", "重复记录：1"))
+        assert f"导入后：{2 if mode else 3} 条" in counts
+        if mode:
+            assert cancel_default and "原有记录不会保留在当前列表中" in counts
+    if all(clicks):
+        expected = ["2", "3"] if mode else ["1", "2", "3"]
+        assert [r["id"] for r in page.store.read(uid)["list"]] == expected
+        assert page.summary.selected.count == len(expected)
+        assert next(target.parent.glob("*.bak")).read_bytes() == before
+    else:
+        assert target.read_bytes() == before and not list(target.parent.glob("*.bak"))
+        assert not page.findChildren(InfoBar)
+
+
+def test_repeat_import_marks_only_duplicates(page, tmp_path, monkeypatch):
+    uid = "100000001"
+    page.store.write(uid, data())
+    page.reload()
+    choose_file(monkeypatch, put(tmp_path / "in.json", data()))
+    seen = answer(monkeypatch, [True, False])
+    click_import(page)
+    assert "新增记录：0 条" in seen[1][1] and "重复记录：2 条" in seen[1][1]
+
+
+def test_two_accounts_in_one_file(page, tmp_path, monkeypatch):
+    first, second = "100000001", "100000002"
+    page.store.write(first, data())
+    page.reload()
+    choose_file(monkeypatch, put(tmp_path / "in.json", uigf(data((2, 3)), data((9,), second))))
+    seen = answer(monkeypatch, [True, True])
+    click_import(page)
+    assert all(f"UID：{uid}" in seen[1][1] for uid in (first, second))
+    assert {a.uid: a.count for a in page.summary.accounts} == {first: 3, second: 1}
+    assert page.summary.selected.uid == first
+
+
+def test_other_uid_does_not_replace_current_account(page, tmp_path, monkeypatch):
+    first, second = "100000001", "100000002"
+    page.store.write(first, data())
+    page.reload()
+    before = page.store.path(first).read_bytes()
+    choose_file(monkeypatch, put(tmp_path / "in.json", data((3,), second)))
+    monkeypatch.setattr(MessageBox, "exec", lambda *_: pytest.fail("unexpected confirmation"))
+    click_import(page)
+    assert page.summary.selected.uid == second and page.store.read(second)["list"][0]["id"] == "3"
+    assert page.store.path(first).read_bytes() == before
+
+
+def test_replace_unreadable_file_from_gui(page, tmp_path, monkeypatch):
+    uid = "100000001"
+    target = page.store.path(uid)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(b"{broken")
+    page.reload()
+    assert page.notice.isVisible()
+    choose_file(monkeypatch, put(tmp_path / "in.json", data()))
+    seen = answer(monkeypatch, [True, True], mode=1)
+    click_import(page)
+    assert "无法统计" in seen[1][1] and seen[1][2]
+    assert not page.notice.isVisible() and page.summary.selected.count == 2
+    assert next(target.parent.glob("*.bak")).read_bytes() == b"{broken"
+
+
+def test_export_then_clear_through_page(page, tmp_path, monkeypatch):
+    uid = "100000001"
+    page.store.write(uid, data())
+    page.reload()
+    original = page.store.path(uid).read_bytes()
+    destination = tmp_path / "records.srgf.json"
+    monkeypatch.setattr(dialogs.QFileDialog, "getSaveFileName", lambda *args: (str(destination), ""))
+    opened = Mock(return_value=True)
+    monkeypatch.setattr(dialogs.QDesktopServices, "openUrl", opened)
+    next(a for a in page.transferMenu.actions() if a.text() == "导出 SRGF").trigger()
+    assert destination.is_file() and opened.call_args.args[0].toLocalFile() == tmp_path.as_posix()
+    seen = answer(monkeypatch, [False, True])
+    for accepted in (False, True):
+        next(a for a in page.moreMenu.actions() if a.text().startswith("清空")).trigger()
+        assert page.store.path(uid).exists() != accepted
+    assert [s[0] for s in seen] == ["清空抽卡记录"] * 2 and uid in seen[0][1]
+    assert page.stack.currentWidget() is page.emptyState
+    assert next(page.store.directory.glob("*.bak")).read_bytes() == original

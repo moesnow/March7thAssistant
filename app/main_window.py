@@ -964,13 +964,14 @@ class MainWindow(FluentWindow):
         old.deleteLater()
 
     def _retranslate_persistent_interfaces(self):
-        for interface in (self.homeInterface, self.warpInterface,
-                          self.toolsInterface, self.workflowInterface, self.logInterface):
+        for interface in (self.homeInterface, self.toolsInterface, self.workflowInterface, self.logInterface):
             position = interface.verticalScrollBar().value()
             interface.retranslateUi()
             interface.verticalScrollBar().setValue(position)
         # 帮助页按小节保存和恢复阅读位置：换语言后文档长度不同，不能沿用像素位置。
         self.helpInterface.retranslateUi()
+        # 抽卡记录页的页头固定，统计和明细各自滚动、保留位置。
+        self.warpInterface.retranslateUi()
         labels = {
             'homeInterface': tr('总览'), 'taskInterface': tr('任务'), 'helpInterface': tr('帮助'),
             'warpInterface': tr('抽卡记录'), 'toolsInterface': tr('工具箱'),

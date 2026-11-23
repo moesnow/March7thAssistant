@@ -102,13 +102,15 @@ def test_tray_opens_current_settings_and_twin_disables_new_pages(window, monkeyp
     action = next(a for a in window.tray_icon.contextMenu().actions() if a.text() == localization.tr("设置"))
     window.setDesktopTwinHosting(True)
     try:
-        assert all(not w.isEnabled() for w in (window.settingInterface, window.taskInterface, window.accountsInterface))
+        assert all(not w.isEnabled() for w in (window.settingInterface, window.taskInterface,
+                                                window.accountsInterface, window.warpInterface))
+        assert not window.warpInterface.transferButton.isEnabled()
         assert not action.isEnabled() and window._desktop_twin_notice.isVisible()
     finally:
         window.setDesktopTwinHosting(False)
     action.trigger()
     assert window.stackedWidget.currentWidget() is window.settingInterface
-    assert all(w.isEnabled() for w in (window.taskInterface, window.accountsInterface))
+    assert all(w.isEnabled() for w in (window.taskInterface, window.accountsInterface, window.warpInterface))
 
 
 @pytest.mark.parametrize("window", [{"evernight_unlocked": True, "ui_theme": "light"}], indirect=True)

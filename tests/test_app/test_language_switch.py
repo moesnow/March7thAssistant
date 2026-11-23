@@ -344,11 +344,10 @@ def test_persistent_pages_keep_models_workers_tabs_and_user_state(window, qtbot,
     assert help_page.showDocument('Background', '窗口状态变化')
     qtbot.waitUntil(lambda: help_page.toc.current() == '窗口状态变化')
     warp = window.warpInterface
+    updater = warp.updater
     worker = object()
-    warp.warp_thread = worker
-    warp.warplink = 'user-owned-url'
-    warp.updateBtn.setEnabled(False)
-    warp.copyLinkBtn.setEnabled(True)
+    monkeypatch.setattr(updater, '_task', worker)
+    monkeypatch.setattr(type(updater), '_last_successful_link', 'fixture-link')
     window.switchTo(workflow)
     switch_language(qtbot, window, 'en_US')
     assert window.stackedWidget.currentWidget() is workflow
@@ -370,9 +369,10 @@ def test_persistent_pages_keep_models_workers_tabs_and_user_state(window, qtbot,
     window.switchTo(help_page)
     qtbot.waitUntil(lambda: help_page.toc.current() == 'window-state-changes'
                     and help_page.currentPage().currentAnchor() == 'window-state-changes')
-    assert window.warpInterface is warp and warp.warp_thread is worker
-    assert warp.warplink == 'user-owned-url'
-    assert not warp.updateBtn.isEnabled() and warp.copyLinkBtn.isEnabled()
+    assert window.warpInterface is warp and warp.store is window.gachaStore
+    assert warp.updater is window.gachaUpdater is updater and updater._task is worker
+    assert updater.last_link == 'fixture-link'
+    assert not warp.updateButton.isEnabled() and warp.copyAction.isEnabled()
     assert tools.redemptionCodeCard.contentLabel.text() == localization.tr('批量使用兑换码，每行一个，自动过滤空格等无效字符')
     cfg.set_value.assert_called_once_with('ui_language', 'en_US')
     cfg.set_values.assert_not_called()

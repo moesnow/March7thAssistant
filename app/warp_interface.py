@@ -1,455 +1,364 @@
 # coding:utf-8
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QScroller, QScrollerProperties
-from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import qconfig, ScrollArea, PrimaryPushButton, InfoBar, InfoBarPosition, PushButton, MessageBox, ComboBox
-from utils import paths
-from .common.style_sheet import StyleSheet
-from .common.icon import UiIcon
-from .tools.warp_export import warpExport, WarpExport, srgf_to_uigf_hkrpg
-from .tools.warp_import import prepare_import, save_import
-from utils import clipboard
-import json
-import os
+"""抽卡记录：按 UID 和卡池查看统计、保底、出货分布和明细，从游戏更新或导入导出记录。"""
+from PySide6.QtCore import QPoint
+from PySide6.QtGui import QActionGroup
+from PySide6.QtWidgets import QHBoxLayout, QStackedWidget, QVBoxLayout, QWidget
+from qfluentwidgets import (Action, DropDownPushButton, FluentIcon as FIF, IndeterminateProgressRing, InfoBar,
+                            InfoBarPosition, MenuAnimationType, MessageBox, PrimarySplitPushButton, RoundMenu,
+                            TitleLabel, ToolButton, qconfig)
+
+from app.common.design_tokens import PAGE_MARGIN
+from app.common.icon import UiIcon
+from app.content.gacha_dialogs import clear_dialog, export_dialog, import_dialog
+from app.content.gacha_update import GachaUpdater
+from app.gacha import style
+from app.gacha.cards import Dashboard
+from app.gacha.chips import PoolBar
+from app.gacha.detail import DetailView
+from app.gacha.empty import EmptyState
+from app.overview.widgets import ElidedLabel
+from app.pages.common import NoticeStrip, is_evernight, secondary, shared, style_primary
+from module.gacha.store import GachaStore
+from module.gacha.summary import load_summary
 from module.localization import tr
-import time
-import sys
+from utils.desktop import open_path
 
 
-class WarpInterface(ScrollArea):
+class WarpInterface(QWidget):
+    """页头固定；下面是空状态、统计和明细三种视图之一。数据在第一次显示时才读取。"""
+
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.view = QWidget(self)
-        self.vBoxLayout = QVBoxLayout(self.view)
-        self.titleLabel = QLabel(tr("抽卡记录"), self)
+        self.setObjectName("warpInterface")
+        self.store = shared(parent, "gachaStore", GachaStore)
+        self.updater = shared(parent, "gachaUpdater", lambda: GachaUpdater(parent, store=self.store))
+        self.summary = None
+        self.pool = None
+        self.mode = "stats"
+        self._dirty = True
+        self._issueFolder = None
+        self._build()
+        self.updater.progress.connect(self._onProgress)
+        self.updater.finished.connect(self._onFinished)
+        qconfig.themeChanged.connect(self._restyle)
+        qconfig.themeColorChanged.connect(self._restyle)
+        self.retranslateUi()
+        self._setRunning(self.updater.running)
+        self._restyle()
 
-        self.updateBtn = PrimaryPushButton(FIF.SYNC, tr("更新数据"), self)
-        self.updateFullBtn = PushButton(FIF.SYNC, tr("更新完整数据"), self)
-        self.importBtn = PushButton(UiIcon.IMPORT, tr("导入数据"), self)
-        self.exportBtn = PushButton(UiIcon.EXPORT, tr("导出数据"), self)
-        self.exportExcelBtn = PushButton(UiIcon.EXPORT, tr("导出Excel"), self)
-        self.copyLinkBtn = PushButton(UiIcon.LINK, tr("复制链接"), self)
-        self.clearBtn = PushButton(FIF.DELETE, tr("清空"), self)
-        if sys.platform != 'win32':
-            self.updateBtn.setEnabled(False)
-            self.updateFullBtn.setEnabled(False)
-            self.copyLinkBtn.setEnabled(False)
+    def _build(self):
+        self.titleLabel = TitleLabel(self)
+        self.uidButton = DropDownPushButton(FIF.PEOPLE, "", self)
+        self.uidMenu = RoundMenu(parent=self)
+        self.uidGroup = QActionGroup(self.uidMenu)
+        self.uidButton.setMenu(self.uidMenu)
+        self.spinner = IndeterminateProgressRing(self)
+        self.spinner.setFixedSize(16, 16)
+        self.spinner.setStrokeWidth(2)
+        self.spinner.hide()
+        self.statusLabel = secondary(ElidedLabel(self, size=13))
+        self.updateButton = PrimarySplitPushButton(FIF.SYNC, "", self)
+        self.updateButton.clicked.connect(self.startUpdate)
+        self.updateMenu = RoundMenu(parent=self)
+        self.updateButton.setFlyout(self.updateMenu)
+        self.transferButton = DropDownPushButton(UiIcon.IMPORT, "", self)
+        self.transferMenu = RoundMenu(parent=self)
+        self.transferButton.setMenu(self.transferMenu)
+        self.moreButton = ToolButton(FIF.MORE, self)
+        self.moreMenu = RoundMenu(parent=self)
+        self.moreButton.clicked.connect(self._showMoreMenu)
+        self.poolBar = PoolBar(self)
+        self.poolBar.poolChanged.connect(self.selectPool)
+        self.notice = NoticeStrip(self, kind="warning")
+        self.notice.actionClicked.connect(self._openIssueFolder)
+        self.notice.hide()
+        self.emptyState = EmptyState(self)
+        self.emptyState.updateRequested.connect(self.startUpdate)
+        self.emptyState.importRequested.connect(self.importRecords)
+        self.dashboard = Dashboard(self)
+        self.dashboard.openDetails.connect(lambda: self.setMode("details"))
+        self.detail = DetailView(self)
+        self.detail.back.connect(lambda: self.setMode("stats"))
+        self.stack = QStackedWidget(self)
+        for widget in (self.emptyState, self.dashboard, self.detail):
+            self.stack.addWidget(widget)
 
-        self.warplink = None
+        top = QHBoxLayout()
+        top.setSpacing(8)
+        top.addWidget(self.titleLabel)
+        top.addSpacing(12)
+        top.addWidget(self.uidButton)
+        top.addSpacing(6)
+        top.addWidget(self.spinner)
+        top.addWidget(self.statusLabel, 1)
+        top.addSpacing(8)
+        top.addWidget(self.updateButton)
+        top.addWidget(self.transferButton)
+        top.addWidget(self.moreButton)
+        header = QVBoxLayout()
+        header.setContentsMargins(PAGE_MARGIN, 18, PAGE_MARGIN, 14)
+        header.setSpacing(14)
+        header.addLayout(top)
+        header.addWidget(self.poolBar)
+        header.addWidget(self.notice)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addLayout(header)
+        layout.addWidget(self.stack, 1)
 
-        self.stateTooltip = None
-
-        self.contentLabel = QLabel(parent)
-
-        qconfig.themeChanged.connect(self.setContent)
-
-        self.setContent()
-
-        self.__initWidget()
-        self.__connectSignalToSlot()
+    # ---- 文字与样式 ----
 
     def retranslateUi(self):
-        StyleSheet.WARP_INTERFACE.apply(self)
-        self.titleLabel.setText(tr('抽卡记录'))
-        self.titleLabel.adjustSize()
-        self.updateBtn.setText(tr('更新数据'))
-        self.updateFullBtn.setText(tr('更新完整数据'))
-        self.importBtn.setText(tr('导入数据'))
-        self.exportBtn.setText(tr('导出数据'))
-        self.exportExcelBtn.setText(tr('导出Excel'))
-        self.copyLinkBtn.setText(tr('复制链接'))
-        self.clearBtn.setText(tr('清空'))
-        self.buttonWidget.adjustSize()
-        # 保留 warp_thread、链接与按钮的运行状态，只刷新统计内容。
-        buttons = self.buttonWidget.findChildren(PushButton)
-        states = [(button, button.isEnabled()) for button in buttons]
-        self.setContent()
-        for button, enabled in states:
-            button.setEnabled(enabled)
-
-    def __initWidget(self):
-        self.titleLabel.move(36, 30)
-        
-        # Create button container widget for horizontal layout
-        self.buttonWidget = QWidget(self)
-        self.buttonWidget.move(35, 80)
-        self.buttonLayout = QHBoxLayout(self.buttonWidget)
-        self.buttonLayout.setContentsMargins(0, 0, 0, 0)
-        self.buttonLayout.setSpacing(8)
-        
-        # Add buttons to horizontal layout
-        self.buttonLayout.addWidget(self.updateBtn)
-        self.buttonLayout.addWidget(self.updateFullBtn)
-        self.buttonLayout.addWidget(self.importBtn)
-        self.buttonLayout.addWidget(self.exportBtn)
-        self.buttonLayout.addWidget(self.exportExcelBtn)
-        self.buttonLayout.addWidget(self.copyLinkBtn)
-        self.buttonLayout.addWidget(self.clearBtn)
-        self.buttonWidget.adjustSize()
-        
-        self.copyLinkBtn.setEnabled(False)
-
-        self.view.setObjectName('view')
-        self.setViewportMargins(0, 120, 0, 20)
-        self.setObjectName('warpInterface')
-        self.contentLabel.setObjectName('contentLabel')
-        self.titleLabel.setObjectName('warpLabel')
-        StyleSheet.WARP_INTERFACE.apply(self)
-
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setWidget(self.view)
-        self.setWidgetResizable(True)
-        self.contentLabel.setWordWrap(True)
-        self.contentLabel.setMaximumWidth(800)
-
-        # self.vBoxLayout.setSpacing(8)
-        # self.vBoxLayout.setAlignment(Qt.AlignTop)
-        # self.vBoxLayout.addWidget(self.titleLabel, 0, Qt.AlignTop)
-
-        # self.vBoxLayout.setSpacing(28)
-        self.vBoxLayout.setContentsMargins(36, 0, 36, 0)
-        self.vBoxLayout.addWidget(self.contentLabel, 0, Qt.AlignmentFlag.AlignTop)
-
-        QScroller.grabGesture(self.viewport(), QScroller.ScrollerGestureType.LeftMouseButtonGesture)
-        scroller = QScroller.scroller(self.viewport())
-        scroller_props = scroller.scrollerProperties()
-        scroller_props.setScrollMetric(QScrollerProperties.ScrollMetric.OvershootDragDistanceFactor, 0.05)
-        scroller_props.setScrollMetric(QScrollerProperties.ScrollMetric.OvershootScrollDistanceFactor, 0.05)
-        scroller_props.setScrollMetric(QScrollerProperties.ScrollMetric.DecelerationFactor, 0.5)
-        scroller.setScrollerProperties(scroller_props)
-
-    def __connectSignalToSlot(self):
-        self.updateBtn.clicked.connect(self.__onUpdateBtnClicked)
-        self.updateFullBtn.clicked.connect(self.__onUpdateFullBtnClicked)
-        self.importBtn.clicked.connect(self.__onImportBtnClicked)
-        self.exportBtn.clicked.connect(self.__onExportBtnClicked)
-        self.exportExcelBtn.clicked.connect(self.__onExportExcelBtnClicked)
-        self.copyLinkBtn.clicked.connect(self.__onCopyLinkBtnClicked)
-        self.clearBtn.clicked.connect(self.__onClearBtnClicked)
-
-    def __onUpdateBtnClicked(self):
-        warpExport(self)
-
-    def __onUpdateFullBtnClicked(self):
-        warpExport(self, "full")
-
-    def __onImportBtnClicked(self):
-        try:
-            path, _ = QFileDialog.getOpenFileName(self, tr("导入抽卡记录"), "", tr("UIGF / SRGF 格式 (*.json)"))
-            if not path:
-                return
-
-            # Preview validates the single account first. With no existing records,
-            # there is nothing to merge or overwrite, so do not interrupt the import.
-            plan = prepare_import(path, mode='replace')
-            if plan.existing_count or plan.existing_unreadable:
-                mode_dialog = MessageBox(
-                    tr('选择导入方式'),
-                    tr('默认合并会保留现有记录。只有希望用文件内容覆盖现有记录时，才选择强制替换。'),
-                    self.window()
-                )
-                mode_box = ComboBox(mode_dialog.widget)
-                mode_box.addItems([tr('安全合并（推荐）'), tr('强制替换现有记录')])
-                mode_dialog.textLayout.addWidget(mode_box)
-                mode_dialog.widget.setFixedHeight(mode_dialog.widget.height() + mode_box.sizeHint().height() + 12)
-                mode_dialog.yesButton.setText(tr('下一步'))
-                mode_dialog.cancelButton.setText(tr('取消'))
-                if not mode_dialog.exec():
-                    return
-                mode = 'replace' if mode_box.currentIndex() == 1 else 'merge'
-                plan = prepare_import(path, mode=mode)
-                if mode == 'merge':
-                    message_box = MessageBox(
-                        tr("确认导入抽卡记录"),
-                        tr("账号 UID：{uid}\n导入方式：保留已有记录，补充新记录，自动跳过重复内容。\n\n现有记录：{existing} 条\n文件记录：{incoming} 条\n新增记录：{added} 条\n重复记录：{duplicates} 条\n合并后：{total} 条")
-                        .format(uid=plan.data['info']['uid'], existing=plan.existing_count,
-                                incoming=plan.incoming_count, added=plan.added_count,
-                                duplicates=plan.duplicate_count, total=len(plan.data['list'])),
-                        self.window()
-                    )
-                else:
-                    message_box = MessageBox(
-                        tr('警告：替换现有抽卡记录'),
-                        tr('当前账号：{existing_uid}\n导入账号：{uid}\n导入方式：替换现有记录。\n\n现有记录数量：{existing}\n替换后记录数量：{total}\n\n此操作会用导入文件中的记录替换目前保存的全部记录。原有记录不会保留在当前列表中。\n\n确定要替换吗？')
-                        .format(uid=plan.data['info']['uid'], existing_uid=plan.existing_uid or tr('无法读取'),
-                                existing=tr('无法统计') if plan.existing_unreadable else plan.existing_count,
-                                total=len(plan.data['list'])),
-                        self.window()
-                    )
-                message_box.yesButton.setText(tr('确认替换') if mode == 'replace' else tr('确认合并'))
-                message_box.cancelButton.setText(tr('取消'))
-                if mode == 'replace':
-                    message_box.cancelButton.setFocus()
-                if not message_box.exec():
-                    return
-            plan.data['info']['export_timestamp'] = int(time.time())
-            plan.data['info']['export_app'] = "March7thAssistant"
-            try:
-                with open("./assets/config/version.txt", 'r', encoding='utf-8') as file:
-                    plan.data['info']['export_app_version'] = file.read().strip()
-            except OSError:
-                plan.data['info']['export_app_version'] = ""
-            save_import(plan)
-        except Exception as exc:
-            message_box = MessageBox(tr('导入失败'), str(exc), self.window())
-            message_box.cancelButton.hide()
-            message_box.yesButton.setText(tr('确定'))
-            message_box.exec()
-            return
-
-        self.setContent()
-        InfoBar.success(
-            title=tr('导入成功(＾∀＾●)'),
-            content="",
-            orient=Qt.Orientation.Horizontal,
-            isClosable=True,
-            position=InfoBarPosition.TOP,
-            duration=5000,
-            parent=self
-        )
-
-    def __onExportBtnClicked(self):
-        try:
-            with open(paths.gacha_path(), 'r', encoding='utf-8') as file:
-                config = json.load(file)
-            warp = WarpExport(config)
-            default_name = f"UIGF_{warp.get_uid()}"
-
-            if sys.platform == 'win32':
-                path, _ = QFileDialog.getSaveFileName(
-                    self,
-                    tr("导出抽卡记录"),
-                    f"{default_name}",
-                    tr("UIGF 格式 (*.json);;SRGF 格式 (*.srgf.json)")
-                )
-            else:
-                path, _ = QFileDialog.getSaveFileName(
-                    self,
-                    tr("导出抽卡记录"),
-                    f"{default_name}.json",
-                    tr("UIGF 格式 (*.json)")
-                )
-            if not path:
-                return
-
-            is_srgf = path.lower().endswith(".srgf.json")
-
-            if is_srgf:
-                data_to_save = config
-            else:
-                # SRGF → UIGF
-                data_to_save = srgf_to_uigf_hkrpg(config)
-
-            with open(path, 'w', encoding='utf-8') as file:
-                json.dump(data_to_save, file, ensure_ascii=False, indent=4)
-
-            self._start_file(os.path.dirname(path))
-
-            InfoBar.success(
-                title=tr('导出成功(＾∀＾●)'),
-                content="",
-                orient=Qt.Orientation.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=1000,
-                parent=self
-            )
-
-        except Exception:
-            InfoBar.warning(
-                title=tr('导出失败(╥╯﹏╰╥)'),
-                content="",
-                orient=Qt.Orientation.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=1000,
-                parent=self
-            )
-
-    def __onExportExcelBtnClicked(self):
-        try:
-            with open(paths.gacha_path(), 'r', encoding='utf-8') as file:
-                config = json.load(file)
-
-            path, _ = QFileDialog.getSaveFileName(
-                self,
-                tr("导出为 Excel 文件"),
-                f"{tr('抽卡记录')}_{config['info'].get('uid', tr('未知'))}.xlsx",
-                tr("Excel 文件 (*.xlsx)")
-            )
-            if not path:
-                return
-
-            # 延迟导入，避免启动时加载 openpyxl
-            from openpyxl.styles import Font
-            from openpyxl import Workbook
-            from openpyxl.utils import get_column_letter
-
-            records = config.get("list", [])
-            gacha_map = {
-                "11": tr("角色活动跃迁"),
-                "12": tr("光锥活动跃迁"),
-                "21": tr("Fate[UBW]角色联动跃迁"),
-                "22": tr("Fate[UBW]光锥联动跃迁"),
-                "1": tr("常驻跃迁"),
-                "2": tr("新手跃迁"),
-            }
-
-            wb = Workbook()
-            ws = wb.active
-            ws.append([tr("时间"), tr("名称"), tr("类别"), tr("星级"), tr("卡池"), tr("总次数"), tr("保底内")])
-            pity_counters = {}
-            for total, record in enumerate(records, start=1):
-                pool = gacha_map.get(record.get("gacha_type"), tr("未知"))
-                star = record.get("rank_type")
-                pity_counters[pool] = pity_counters.get(pool, 0) + 1
-                pity = pity_counters[pool]
-                if star == "5":
-                    pity_counters[pool] = 0
-                ws.append([
-                    record.get("time"),
-                    record.get("name"),
-                    record.get("item_type"),
-                    star,
-                    pool,
-                    total,
-                    pity,
-                ])
-            for row in range(2, ws.max_row + 1):
-                star_cell = ws[f"D{row}"]
-                try:
-                    star = star_cell.value
-                    if star == "5":
-                        for col in ws[row]:
-                            col.font = Font(color="FFA500")
-                    elif star == "4":
-                        for col in ws[row]:
-                            col.font = Font(color="800080")
-                except:
-                    continue
-
-            for column_cells in ws.columns:
-                max_width = 0
-                col_letter = get_column_letter(column_cells[0].column)
-                for cell in column_cells:
-                    try:
-                        value = str(cell.value) if cell.value else ""
-                        width = 0
-                        for ch in value:
-                            if u'\u4e00' <= ch <= u'\u9fff':
-                                width += 2
-                            else:
-                                width += 1
-                        if width > max_width:
-                            max_width = width
-                    except:
-                        pass
-                ws.column_dimensions[col_letter].width = max_width + 2
-
-            wb.save(path)
-            self._start_file(os.path.dirname(path))
-
-            InfoBar.success(
-                title=tr('导出成功(＾∀＾●)'),
-                content="",
-                orient=Qt.Orientation.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=1000,
-                parent=self
-            )
-
-        except Exception:
-            InfoBar.warning(
-                title=tr('导出失败(╥╯﹏╰╥)'),
-                content="",
-                orient=Qt.Orientation.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=1000,
-                parent=self
-            )
-
-    def __onCopyLinkBtnClicked(self):
-        try:
-            clipboard.copy(self.warplink)
-            InfoBar.success(
-                title=tr('复制成功(＾∀＾●)'),
-                content="",
-                orient=Qt.Orientation.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=1000,
-                parent=self
-            )
-        except Exception:
-            InfoBar.warning(
-                title=tr('复制失败(╥╯﹏╰╥)'),
-                content="",
-                orient=Qt.Orientation.Horizontal,
-                isClosable=True,
-                position=InfoBarPosition.TOP,
-                duration=1000,
-                parent=self
-            )
-
-    def __onClearBtnClicked(self):
-        message_box = MessageBox(
-            tr("清空抽卡记录"),
-            tr("确定要清空抽卡记录吗？此操作不可撤销。"),
-            self.window()
-        )
-        message_box.yesButton.setText(tr('确认'))
-        message_box.cancelButton.setText(tr('取消'))
-        if message_box.exec():
-            try:
-                os.remove(paths.gacha_path())
-                self.setContent()
-                InfoBar.success(
-                    title=tr('清空完成(＾∀＾●)'),
-                    content="",
-                    orient=Qt.Orientation.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=1000,
-                    parent=self
-                )
-            except Exception as e:
-                print(e)
-                InfoBar.warning(
-                    title=tr('清空失败(╥╯﹏╰╥)'),
-                    content="",
-                    orient=Qt.Orientation.Horizontal,
-                    isClosable=True,
-                    position=InfoBarPosition.TOP,
-                    duration=1000,
-                    parent=self
-                )
-
-    def _start_file(self, path):
-        if sys.platform == 'win32':
-            os.startfile(path)
-        elif sys.platform == 'darwin':
-            os.system(f'open "{path}"')
+        self.titleLabel.setText(tr("抽卡记录"))
+        self.transferButton.setText(tr("导入 / 导出"))
+        self.moreButton.setToolTip(tr("更多操作"))
+        self.emptyState.retranslateUi(self.updater.available, self.updater.unavailable_reason)
+        self.detail.retranslateUi()
+        self._setRunning(self.updater.running)
+        self._dirty = True
+        if self.isVisible():
+            self.reload()
         else:
-            os.system(f'xdg-open "{path}"')
+            self._buildMenus()
 
-    def setContent(self):
+    def _restyle(self, *args):
+        evernight = is_evernight()
+        style_primary(self.updateButton, evernight)
+        self.notice.setKind("warning", evernight)
+        self.emptyState.restyle()
+        self.dashboard.refresh()
+        self.detail.restyle()
+        for chip in self.poolBar.chips.values():
+            chip.update()
+
+    # ---- 数据 ----
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if self._dirty:
+            self.reload()
+
+    def reload(self, uid=None):
+        if uid is None and self.summary is not None and self.summary.selected is not None:
+            uid = self.summary.selected.uid
+        self.summary = load_summary(uid, store=self.store)
+        self._dirty = False
+        self._buildMenus()
+        self._render()
+
+    def selectAccount(self, uid):
+        if self.summary is not None and self.summary.selected is not None and self.summary.selected.uid == uid:
+            return
+        self.reload(uid)
+
+    def selectPool(self, pool_id):
+        self.pool = pool_id
+        self._render()
+
+    def setMode(self, mode):
+        self.mode = mode
+        self._render()
+
+    def currentPool(self):
+        pools = self.summary.pools
+        if self.pool in pools:
+            return self.pool
+        return next((key for key, stats in pools.items() if stats.total), next(iter(pools)))
+
+    def _render(self):
+        summary = self.summary
+        if summary is None:
+            return
+        selected = summary.selected
+        for widget in (self.uidButton, self.moreButton, self.poolBar):
+            widget.setVisible(selected is not None)
+        if selected is not None:
+            self.uidButton.setText(tr("UID {uid}").format(uid=selected.uid))
+        if not self.updater.running:
+            self.statusLabel.setFullText(summary.updated_label if selected is not None else tr("还没有数据"))
+        self._renderIssues(summary.issues)
+        if selected is None:
+            self.mode = "stats"
+            self.stack.setCurrentWidget(self.emptyState)
+            return
+        key = self.currentPool()
+        self.poolBar.setPools(summary.pools, key)
+        if self.mode == "details":
+            self.detail.setData(summary.pools, key)
+            self.stack.setCurrentWidget(self.detail)
+        else:
+            self.dashboard.setStats(summary.pools[key])
+            self.stack.setCurrentWidget(self.dashboard)
+
+    def _renderIssues(self, issues):
+        self.notice.setVisible(bool(issues))
+        if not issues:
+            self._issueFolder = None
+            return
+        lines = [tr("有 {count} 个抽卡记录文件没能读取，记录暂时不会显示：").format(count=len(issues))]
+        for issue in issues[:3]:
+            # 原因一行、路径一行：路径很长时也不会和原因挤在一起。
+            lines += [issue.reason, str(issue.path)]
+        if len(issues) > 3:
+            lines.append(tr("还有 {count} 个").format(count=len(issues) - 3))
+        self.notice.setText("\n".join(lines))
+        self.notice.setAction(tr("打开所在文件夹"))
+        path = issues[0].path
+        self._issueFolder = path if path.is_dir() else path.parent
+
+    # ---- 菜单 ----
+
+    def _buildMenus(self):
+        summary = self.summary
+        accounts = summary.accounts if summary is not None else ()
+        selected = summary.selected if summary is not None else None
+
+        # RoundMenu.clear() leaves separator rows and menu-owned actions behind.
+        for menu in (self.updateMenu, self.transferMenu, self.moreMenu, self.uidMenu):
+            for action in menu.actions():
+                if menu is self.uidMenu:
+                    self.uidGroup.removeAction(action)
+                action.deleteLater()
+            menu.clear()
+            menu.view.clear()
+
+        self.updateMenu.addActions([
+            Action(FIF.SYNC, tr("只获取新记录"), self.updateMenu, triggered=lambda: self.startUpdate("normal")),
+            Action(FIF.HISTORY, tr("重新获取全部记录"), self.updateMenu, triggered=lambda: self.startUpdate("full")),
+        ])
+
+        self.transferMenu.addAction(Action(UiIcon.IMPORT, tr("导入 UIGF / SRGF 文件…"), self.transferMenu,
+                                           triggered=self.importRecords))
+        self.transferMenu.addSeparator()
+        exports = [("uigf", tr("导出 UIGF"), False)]
+        if len(accounts) > 1:
+            exports.append(("uigf", tr("导出全部 {count} 个 UID（UIGF）").format(count=len(accounts)), True))
+        exports += [("srgf", tr("导出 SRGF"), False), ("excel", tr("导出 Excel"), False)]
+        for fmt, text, every in exports:
+            action = Action(UiIcon.EXPORT, text, self.transferMenu,
+                            triggered=lambda checked=False, fmt=fmt, every=every: self.exportRecords(fmt, every))
+            action.setEnabled(selected is not None)
+            self.transferMenu.addAction(action)
+        self.transferMenu.addSeparator()
+        self.copyAction = Action(UiIcon.LINK, tr("复制抽卡链接"), self.transferMenu, triggered=self.copyLink)
+        self.copyAction.setEnabled(bool(self.updater.last_link))
+        if not self.updater.last_link:
+            self.copyAction.setToolTip(tr("更新一次记录后可以复制"))
+        self.transferMenu.addAction(self.copyAction)
+
+        self.moreMenu.addAction(Action(FIF.FOLDER, tr("打开数据文件夹"), self.moreMenu, triggered=self.openFolder))
+        self.moreMenu.addSeparator()
+        clear = Action(FIF.DELETE, tr("清空这个 UID 的记录…"), self.moreMenu, triggered=self.clearRecords)
+        clear.setEnabled(selected is not None)
+        self.moreMenu.addAction(clear)
+
+        for account in accounts:
+            action = Action(tr("UID {uid} · {count} 抽").format(uid=account.uid, count=style.number(account.count)),
+                            self.uidMenu, triggered=lambda checked=False, uid=account.uid: self.selectAccount(uid))
+            action.setCheckable(True)
+            self.uidGroup.addAction(action)
+            action.setChecked(selected is not None and account.uid == selected.uid)
+            self.uidMenu.addAction(action)
+
+    def _showMoreMenu(self):
+        menu = self.moreMenu
+        menu.adjustSize()
+        x = self.moreButton.width() - menu.sizeHint().width() + menu.layout().contentsMargins().right()
+        menu.exec(self.moreButton.mapToGlobal(QPoint(x, self.moreButton.height())), aniType=MenuAnimationType.DROP_DOWN)
+
+    # ---- 更新 ----
+
+    def startUpdate(self, mode="normal"):
+        if mode not in ("normal", "full"):
+            mode = "normal"
+        if self.updater.running:
+            return
+        if not self.updater.available:
+            self._info("warning", tr("不能从游戏更新"), self.updater.unavailable_reason)
+            return
+        if self.updater.start(mode):
+            self._setRunning(True)
+
+    def _setRunning(self, running):
+        available = self.updater.available
+        self.updateButton.setEnabled(available and not running)
+        self.updateButton.setText(tr("正在更新…") if running else tr("更新记录"))
+        self.updateButton.setToolTip("" if available else self.updater.unavailable_reason)
+        self.emptyState.setUpdateEnabled(available and not running)
+        self.spinner.setVisible(running)
+        if running:
+            self.statusLabel.setFullText(tr("正在获取跃迁记录…"))
+        elif self.summary is not None:
+            self.statusLabel.setFullText(self.summary.updated_label if self.summary.selected is not None
+                                         else tr("还没有数据"))
+
+    def _onProgress(self, text, title=None):
+        self.statusLabel.setFullText(tr("{title}：{text}").format(title=title, text=text) if title else text)
+
+    def _onFinished(self, result):
+        self._setRunning(False)
+        if result.success:
+            self.reload(result.uid)
+            added = sum(result.added.values())
+            text = (tr("UID {uid} 新增 {count} 条记录").format(uid=result.uid, count=style.number(added)) if added
+                    else tr("UID {uid} 没有新记录").format(uid=result.uid))
+            self._info("success", tr("抽卡记录已更新"), text)
+        else:
+            self.reload()
+            self._info("error", tr("更新失败"), result.reason)
+
+    # ---- 导入、导出、清空 ----
+
+    def importRecords(self, *args):
+        outcome = import_dialog(self.window(), store=self.store)
+        if outcome.status == "success":
+            self.reload(outcome.uids[0] if outcome.uids else None)
+            self._info("success", tr("导入成功"), tr("UID {uids}").format(uids=", ".join(outcome.uids)))
+        elif outcome.status == "failed":
+            box = MessageBox(tr("导入失败"), outcome.reason, self.window())
+            box.cancelButton.hide()
+            box.yesButton.setText(tr("确定"))
+            box.exec()
+
+    def exportRecords(self, fmt, every=False):
+        selected = self.summary.selected if self.summary is not None else None
+        if selected is None:
+            return
+        outcome = export_dialog(self.window(), fmt, None if every else selected.uid, store=self.store)
+        if outcome.status == "success":
+            self._info("success", tr("导出成功"), outcome.reason or str(outcome.path or ""))
+        elif outcome.status == "failed":
+            self._info("error", tr("导出失败"), outcome.reason)
+
+    def clearRecords(self, *args):
+        selected = self.summary.selected if self.summary is not None else None
+        if selected is None:
+            return
+        outcome = clear_dialog(self.window(), selected.uid, store=self.store)
+        if outcome.status == "success":
+            self.summary = None
+            self.reload()
+            self._info("success", tr("已清空"), tr("UID {uid} 的记录已清空，原文件的备份留在数据文件夹里").format(uid=selected.uid))
+        elif outcome.status == "failed":
+            self._info("error", tr("清空失败"), outcome.reason)
+
+    def copyLink(self, *args):
         try:
-            with open(paths.gacha_path(), 'r', encoding='utf-8') as file:
-                config = json.load(file)
+            self.updater.copy_link()
+        except Exception as exc:
+            self._info("warning", tr("复制失败"), str(exc))
+            return
+        self._info("success", tr("已复制抽卡链接"), tr("链接里有临时登录凭据，只发给你信任的工具"))
 
-            warp = WarpExport(config)
-            if qconfig.theme.name == "DARK":
-                content = warp.data_to_html("dark")
-            else:
-                content = warp.data_to_html("light")
-            self.clearBtn.setEnabled(True)
-            self.exportBtn.setEnabled(True)
-            self.exportExcelBtn.setEnabled(True)
-        except Exception as e:
-            content = tr("抽卡记录为空，请先打开游戏内抽卡记录，再点击更新数据即可。\n\n你也可以从其他支持 UIGF/SRGF 数据格式的应用导入数据，例如 StarRail Warp Export 或 Starward 等。\n\n复制链接功能可用于小程序或其他软件。")
-            self.clearBtn.setEnabled(False)
-            self.exportBtn.setEnabled(False)
-            self.exportExcelBtn.setEnabled(False)
-        self.contentLabel.setText(content)
+    def openFolder(self, *args):
+        folder = self.store.directory
+        open_path(str(folder if folder.exists() else folder.parent))
+
+    def _openIssueFolder(self):
+        if self._issueFolder is not None:
+            open_path(str(self._issueFolder))
+
+    def _info(self, kind, title, content):
+        duration = 8000 if kind == "error" else 4000
+        getattr(InfoBar, kind)(title, content or "", duration=duration, position=InfoBarPosition.TOP, parent=self)
