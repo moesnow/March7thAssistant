@@ -699,6 +699,15 @@ class DivergentUniverse:
 
     def process_battle_stage(self):
         interact_key = cfg.get_game_hotkey("hotkey_interact", "f")
+        is_boss = self.current_stage.endswith("|首领")
+        forward_attempts = 0
+
+        def stage_visible(max_retries=1):
+            return auto.find_element(
+                "./assets/images/screen/divergent_universe/stage.png", "image", 0.9,
+                crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080), max_retries=max_retries, retry_delay=0.5,
+            )
+
         for _ in range(3):
             time.sleep(2)
             enemy_crop = (675 / 1920, 41 / 1080, 274 / 1920, 37 / 1080)
@@ -735,7 +744,7 @@ class DivergentUniverse:
             for _ in range(5):
                 auto.press_mouse()
                 time.sleep(0.5)
-                if not auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
+                if not stage_visible():
                     break
             for _ in range(100):
                 if self.check_click_close() or self.check_title():
@@ -747,13 +756,13 @@ class DivergentUniverse:
                 return
 
             # 进入战斗失败，尝试重新进入
-            if auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
+            if stage_visible():
                 auto.press_key("s")
                 log.info("尝试进入战斗")
                 for _ in range(5):
                     auto.press_mouse()
                     time.sleep(0.5)
-                    if not auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
+                    if not stage_visible():
                         break
                 for _ in range(100):
                     if self.check_click_close() or self.check_title():
@@ -762,7 +771,21 @@ class DivergentUniverse:
                         break
                 if self.stage_finish:
                     return
-                if auto.find_element("./assets/images/screen/divergent_universe/stage.png", "image", 0.9, crop=(33 / 1920, 52 / 1080, 68 / 1920, 60 / 1080)):
+                on_stage = stage_visible(max_retries=2 if is_boss else 1)
+                if is_boss:
+                    while on_stage and forward_attempts < 5:
+                        forward_attempts += 1
+                        log.info(f"前进 1 秒接近首领（{forward_attempts}/5）")
+                        moved = auto.press_key("w", 1)
+                        on_stage = stage_visible(max_retries=2)
+                        if on_stage and moved is not False:
+                            auto.press_mouse()
+                            time.sleep(1)
+                            on_stage = stage_visible(max_retries=2)
+                    if not on_stage:
+                        self.process_stage = True
+                        return
+                if on_stage:
                     if self.process_re_enter():
                         return
                     continue
