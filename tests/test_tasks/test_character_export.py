@@ -1366,6 +1366,67 @@ def test_eidolon_empty_first_frames_are_not_six(eidolon_frames, eidolon_reader):
     assert clock.captures > 4
 
 
+@pytest.fixture
+def affinitive_eidolon_frame(eidolon_frames):
+    frame = eidolon_frames[0].copy()
+    # 用饮月的实机按钮验证取自景元的模板。
+    with Image.open(Path(__file__).parent / "fixtures/affinitive_eidolon_button.png") as button:
+        frame.paste(button, (1560, 955))
+    return frame
+
+
+@pytest.mark.parametrize("respond_on", [1, 2])
+def test_affinitive_eidolon_switch_waits_for_original_nodes(
+        respond_on, affinitive_eidolon_frame, eidolon_frames, eidolon_reader, monkeypatch):
+    empty, _, _, two, _ = eidolon_frames
+    reader, feed, clock = eidolon_reader
+    frames = [empty] * 26 + [affinitive_eidolon_frame] * 80
+    feed(frames)
+    clicks = []
+
+    def click(x, y):
+        assert reader.frame is affinitive_eidolon_frame
+        assert 1585 <= x <= 1757 and 975 <= y <= 1002
+        clicks.append(clock.now)
+        if len(clicks) == respond_on:
+            # 已点中，按钮稍后才消失，六个原星魂节点又过了一段时间才出现。
+            frames[clock.captures:] = [affinitive_eidolon_frame] * 8 + [empty] * 6 + [two]
+
+    monkeypatch.setattr(reader, "_click", click)
+    assert CharacterExport(reader)._read_eidolon() == 2
+    assert len(clicks) == respond_on
+    if respond_on == 2:
+        assert clicks[1] - clicks[0] >= reader_module.EIDOLON_TIMEOUT
+
+
+def test_affinitive_eidolon_unresponsive_switch_is_bounded(affinitive_eidolon_frame, eidolon_reader, monkeypatch):
+    reader, feed, _ = eidolon_reader
+    feed([affinitive_eidolon_frame])
+    click = Mock()
+    monkeypatch.setattr(reader, "_click", click)
+    with pytest.raises(parser.ParseError, match="星魂"):
+        CharacterExport(reader)._read_eidolon()
+    assert click.call_count == 2
+
+
+def test_affinitive_eidolon_switch_is_not_sent_after_deadline(affinitive_eidolon_frame, eidolon_reader, monkeypatch):
+    reader, feed, clock = eidolon_reader
+    feed([affinitive_eidolon_frame])
+    score = reader._score
+
+    def slow_score(frame, template, box):
+        if template == reader_module.EIDOLON_SWITCH:
+            clock.now += reader_module.EIDOLON_TIMEOUT
+        return score(frame, template, box)
+
+    click = Mock()
+    monkeypatch.setattr(reader, "_score", slow_score)
+    monkeypatch.setattr(reader, "_click", click)
+    with pytest.raises(parser.ParseError, match="星魂"):
+        CharacterExport(reader)._read_eidolon()
+    click.assert_not_called()
+
+
 @pytest.mark.parametrize("count", range(7))
 def test_eidolon_all_counts_need_visible_nodes(count, eidolon_frames, eidolon_reader):
     _, zero, six, _, _ = eidolon_frames
@@ -1451,6 +1512,7 @@ def test_eidolon_readiness_is_checked_again_for_next_character(eidolon_frames, e
 def test_eidolon_avatar_change_requires_panel_response(monkeypatch):
     reader = reader_module.CharacterReader.__new__(reader_module.CharacterReader)
     reader.tab = "eidolons"
+    reader.templates = {}
     reader.frame = Image.new("RGB", (1920, 1080))
     monkeypatch.setattr(reader, "grab", lambda: reader.frame)
     monkeypatch.setattr(reader, "_click", lambda *args: None)
@@ -1458,6 +1520,29 @@ def test_eidolon_avatar_change_requires_panel_response(monkeypatch):
     monkeypatch.setattr(reader, "_settle", lambda box, *args, **kwargs: reader.frame if box == reader_module.BREADCRUMB else None)
     with pytest.raises(PageError, match="星魂"):
         reader.select_avatar(600, required=True)
+
+
+@pytest.mark.parametrize("already_visible", [False, True])
+def test_eidolon_avatar_can_land_on_animated_affinitive_page(
+        already_visible, affinitive_eidolon_frame, eidolon_frames, eidolon_reader, monkeypatch):
+    reader, feed, _ = eidolon_reader
+    before = affinitive_eidolon_frame if already_visible else eidolon_frames[1]
+    animation = []
+    for color in (80, 180):
+        frame = affinitive_eidolon_frame.copy()
+        frame.paste("white", (100, 60, 430, 100))  # 名字已切换
+        for x, y in reader_module.EIDOLON_SLOTS:
+            frame.paste((color,) * 3, (x - 24, y - 24, x + 24, y + 24))
+        animation.append(frame)
+    feed([before] + animation * 24)
+    click = Mock()
+    monkeypatch.setattr(reader, "_click", click)
+    if already_visible:
+        with pytest.raises(PageError, match="星魂"):
+            reader.select_avatar(600, required=True)
+    else:
+        assert reader.select_avatar(600, required=True)
+    click.assert_called_once_with(600, reader_module.AVATAR_Y)
 
 
 def test_eidolon_avatar_waits_past_previous_characters_nodes(eidolon_frames, eidolon_reader, monkeypatch):
