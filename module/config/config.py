@@ -6,6 +6,8 @@ import os
 import shutil
 import tempfile
 import threading
+from contextvars import ContextVar
+from contextlib import contextmanager
 import traceback
 from ruamel.yaml import YAML
 from utils import paths
@@ -176,6 +178,7 @@ class Config(metaclass=SingletonMeta):
 
     # 只读角色（更新器/清理器等旁观进程）：只读取配置、绝不写入。
     # 进程启动时通过环境变量 MARCH7TH_CONFIG_READONLY=1 声明。
+    _listeners = ()  # Lightweight instances without GUI listeners can skip change tracking.
     _readonly = False
     writes_suspended = False
 
@@ -185,6 +188,8 @@ class Config(metaclass=SingletonMeta):
             _diag("info", "当前进程以只读模式加载配置（更新器/清理器等旁观进程），不会写入配置文件")
         _diag("info", f"Config 初始化: config_path={os.path.abspath(config_path)} "
                       f"exists={os.path.exists(config_path)} {_file_fingerprint(config_path) if os.path.exists(config_path) else ''}")
+        self._listeners = []
+        self.example_path = example_path
         self.yaml = YAML()
         self.version = self._load_version(version_path)
         self.config = self._load_default_config(example_path)
@@ -219,6 +224,20 @@ class Config(metaclass=SingletonMeta):
                 return self.yaml.load(file) or {}
         except FileNotFoundError:
             sys.exit("默认配置文件未找到")
+
+    def subscribe(self, listener):
+        """Receive (changed keys, external reload) after a completed update."""
+        self._listeners.append(listener)
+        return lambda: self._listeners.remove(listener)
+
+    def _notify_changes(self, before, reloaded=False):
+        keys = frozenset(key for key, value in before.items() if self.config.get(key) != value)
+        if keys:
+            for listener in tuple(self._listeners):
+                try:
+                    listener(keys, reloaded)
+                except Exception as exc:
+                    _diag("warning", f"配置变化通知失败：{type(exc).__name__}")
 
     def _read_config_file(self, path):
         """读取并解析配置文件，区分三种情况并做有限重试
@@ -292,10 +311,14 @@ class Config(metaclass=SingletonMeta):
         if loaded_config.get("loop_mode") == "power":
             loaded_config["loop_mode"] = "scheduled"
             _diag("info", "体力循环模式已移除，自动切换为定时模式")
+        before = {key: copy.deepcopy(self.config[key]) for key in loaded_config
+                  if key in self.config and self.config[key] != loaded_config[key]} if self._listeners else {}
         self._update_config(self.config, loaded_config)
         _diag("debug", f"_load_config 成功: 合并 {len(loaded_config)} 个顶层键")
         if save:
             self.save_config()
+
+        self._notify_changes(before, reloaded=True)
 
     def _handle_broken_config(self, path, reason):
         """处理损坏的配置文件：备份损坏内容并提示用户，避免静默重置为默认配置"""
@@ -522,8 +545,21 @@ class Config(metaclass=SingletonMeta):
         except Exception:
             pass
 
+    _task_switches = ContextVar("task_page_switches", default=())
+
+    @contextmanager
+    def standalone_switches(self, keys):
+        """A manually launched task may run with its full-run checkbox off. Never save this override."""
+        token = self._task_switches.set(tuple(keys))
+        try:
+            yield
+        finally:
+            self._task_switches.reset(token)
+
     def get_value(self, key, default=None):
         """获取配置项的值，环境变量优先，如果值是可变对象，则返回其拷贝"""
+        if key in self._task_switches.get():
+            return True
         if key == "cloud_game_enable":
             # 兼容仍读取旧开关的任务和 GUI，保留 YAML 中的原值。
             backend = self.get_value("control_backend")
@@ -551,15 +587,7 @@ class Config(metaclass=SingletonMeta):
 
     def set_value(self, key, value):
         """设置配置项的值并保存"""
-        logged_value = "***" if key == "github_token" else repr(value)
-        _diag("debug", f"set_value: {key}={logged_value}")
-        # 读取外部改动但不再多写一次：save_config 只在最后落盘一次
-        self._load_config(save=False)
-        if isinstance(value, (list, dict, set)):
-            self.config[key] = copy.deepcopy(value)
-        else:
-            self.config[key] = value
-        self.save_config()
+        self._write_values({key: value})
 
     def set_values(self, values):
         """批量设置配置项并一次性保存。
@@ -567,14 +595,29 @@ class Config(metaclass=SingletonMeta):
         与逐个调用 `set_value` 等价，但只落盘一次：
         `save_config` 带 fsync，逐项保存在批量恢复配置等场景会产生明显卡顿。
         """
+        self._write_values(values)
+
+    def _write_values(self, values):
         _diag("debug", f"set_values: {list(values.keys())}")
         self._load_config(save=False)
+        missing = object()
+        before = {key: self.config.get(key, missing) for key in values}
         for key, value in values.items():
             if isinstance(value, (list, dict, set)):
                 self.config[key] = copy.deepcopy(value)
             else:
                 self.config[key] = value
-        self.save_config()
+        try:
+            self.save_config()
+        except Exception:
+            for key, old in before.items():
+                if old is missing:
+                    self.config.pop(key, None)
+                else:
+                    self.config[key] = old
+            raise
+        if self._listeners:
+            self._notify_changes(before)
 
     def save_timestamp(self, key):
         """保存当前时间戳到指定的配置项"""

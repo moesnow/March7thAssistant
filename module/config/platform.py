@@ -4,6 +4,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Literal
 
+from module.connection_values import configured_backend, configured_profile
 from module.config import cfg
 from module.config.config import _get_env_override
 from module.localization import tr
@@ -88,9 +89,7 @@ def get_control_backend(config=None) -> ControlBackend:
     config = cfg if config is None else config
     if _pinned_connection is not None and _pinned_connection[0] is config:
         return _pinned_connection[1]
-    backend = getattr(config, "control_backend", None)
-    if backend is None:
-        return "cloud" if getattr(config, "cloud_game_enable", False) else "local"
+    backend = configured_backend(config)
     if backend in ("local", "cloud", "adb"):
         return backend
     raise InvalidGameConnection(tr("无效的 control_backend：{value}，可选值为 local、cloud、adb").format(value=backend))
@@ -100,15 +99,7 @@ def get_ui_profile(config=None) -> UIProfile:
     config = cfg if config is None else config
     if _pinned_connection is not None and _pinned_connection[0] is config:
         return _pinned_connection[2]
-    name = getattr(config, "ui_profile", None)
-    backend = getattr(config, "control_backend", None)
-    if backend == "adb" and name in (None, "pc_1080"):
-        return _UI_PROFILES["touch_720"]
-    if backend is None and name == "touch_720" and getattr(config, "cloud_game_enable", False):
-        # GUI 沿用旧开关切换云游戏，配置中的触屏形态留给切回本地时使用。
-        return _UI_PROFILES["pc_1080"]
-    if name is None:
-        name = "pc_1080"
+    name = configured_profile(config)
     if isinstance(name, str) and name in _UI_PROFILES:
         return _UI_PROFILES[name]
     raise InvalidGameConnection(tr("无效的 ui_profile：{value}，可选值为 pc_1080、touch_720").format(value=name))
