@@ -1,9 +1,13 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from module.ocr.ocr import (
     OCR,
     OCR_MODE_CPU,
+    OCR_MODE_ONNX_CPU,
+    OCR_MODE_OPENVINO_CPU,
     OCR_SLOW_CONSECUTIVE_LIMIT,
     OCR_SLOW_THRESHOLD,
     OCR_WARMUP_HARD_LIMIT,
@@ -227,6 +231,32 @@ class TestDisableOpenVINOTelemetry:
                 delattr(OptInChecker, "_march7th_telemetry_disabled")
 
 
+@pytest.fixture
+def isolated_ort_session(monkeypatch):
+    from rapidocr.inference_engine import onnxruntime
+
+    class IsolatedSession(onnxruntime.OrtInferSession):
+        pass
+
+    monkeypatch.setattr(onnxruntime, "OrtInferSession", IsolatedSession)
+    return IsolatedSession
+
+
+def test_kleidiai_workaround_preserves_rapidocr_session_options(isolated_ort_session):
+    from omegaconf import OmegaConf
+    from rapidocr import EngineType
+    from rapidocr.inference_engine.base import get_engine
+
+    OCR._disable_kleidiai_for_rapidocr()
+    factory = get_engine(EngineType.ONNXRUNTIME)._init_sess_opts
+    OCR._disable_kleidiai_for_rapidocr()
+    assert isolated_ort_session._init_sess_opts is factory
+    options = factory(OmegaConf.create({"enable_cpu_mem_arena": False, "inter_op_num_threads": 1}))
+    assert options.get_session_config_entry("mlas.disable_kleidiai") == "1"
+    assert options.enable_cpu_mem_arena is False
+    assert options.inter_op_num_threads == 1
+
+
 class _FakeConfig:
     """最小配置桩：仅实现 OCR 用到的 get_value / set_value。"""
 
@@ -249,6 +279,64 @@ def _create_ocr_for_internal_tests(config_values=None):
     ocr._slow_threshold = OCR_SLOW_THRESHOLD
     ocr._slow_count = 0
     return ocr
+
+
+@pytest.mark.parametrize(
+    ("platform_name", "machine", "mode", "disable_kleidiai"),
+    [
+        ("darwin", "arm64", OCR_MODE_ONNX_CPU, True),
+        ("darwin", "aarch64", OCR_MODE_OPENVINO_CPU, True),
+        ("darwin", "x86_64", OCR_MODE_ONNX_CPU, False),
+        ("linux", "aarch64", OCR_MODE_ONNX_CPU, False),
+        ("win32", "ARM64", OCR_MODE_ONNX_CPU, False),
+    ],
+)
+def test_instance_ocr_configures_kleidiai_by_platform(
+    monkeypatch, isolated_ort_session, platform_name, machine, mode, disable_kleidiai,
+):
+    from importlib import import_module
+    from types import SimpleNamespace
+    from unittest.mock import Mock
+
+    import rapidocr
+    from omegaconf import OmegaConf
+    from rapidocr.inference_engine.base import get_engine
+
+    ocr_module = import_module("module.ocr.ocr")
+    monkeypatch.setattr(ocr_module, "sys", SimpleNamespace(platform=platform_name))
+    monkeypatch.setattr(ocr_module, "platform", SimpleNamespace(machine=lambda: machine))
+    monkeypatch.setattr(ocr_module, "atexit", SimpleNamespace(register=Mock()))
+
+    ocr = _create_ocr_for_internal_tests()
+    ocr.ocr = None
+    ocr._cfg.ocr_gpu_acceleration = mode
+    monkeypatch.setattr(ocr, "_can_use_openvino_fallback", Mock(return_value=(True, "")))
+    monkeypatch.setattr(ocr, "_disable_openvino_telemetry", Mock())
+    monkeypatch.setattr(ocr, "_disable_openvino_runtime_cache", Mock())
+    monkeypatch.setattr(ocr, "_maybe_fallback_openvino_due_to_memory", Mock())
+
+    def create_rapidocr(*, params):
+        engine = get_engine(params["Det.engine_type"])
+        assert engine is isolated_ort_session
+        options = engine._init_sess_opts(OmegaConf.create({"enable_cpu_mem_arena": False}))
+        return SimpleNamespace(options=options)
+
+    rapidocr_factory = Mock(side_effect=create_rapidocr)
+    monkeypatch.setattr(rapidocr, "RapidOCR", rapidocr_factory)
+
+    ocr.instance_ocr()
+
+    rapidocr_factory.assert_called_once()
+    params = rapidocr_factory.call_args.kwargs["params"]
+    expected_rec_engine = (
+        rapidocr.EngineType.OPENVINO if mode == OCR_MODE_OPENVINO_CPU else rapidocr.EngineType.ONNXRUNTIME
+    )
+    assert params["Rec.engine_type"] == expected_rec_engine
+    if disable_kleidiai:
+        assert ocr.ocr.options.get_session_config_entry("mlas.disable_kleidiai") == "1"
+    else:
+        with pytest.raises(RuntimeError, match=r"mlas\.disable_kleidiai"):
+            ocr.ocr.options.get_session_config_entry("mlas.disable_kleidiai")
 
 
 class TestLoadThresholds:

@@ -101,7 +101,7 @@ internal fun startShizukuProcess(context: Context, recoverAudio: Boolean, trace:
         val uid = Shizuku.getUid()
         trace("Shizuku API=$api, UID=$uid, " + if (recoverAudio) "恢复音频" else "启动设备服务")
         val info = context.applicationInfo
-        val argv = shizukuLaunchArgs(api, uid, File(info.nativeLibraryDir, "libm7a_launcher.so"), info.sourceDir, recoverAudio)
+        val argv = shizukuLaunchArgs(api, uid, context.deviceServiceLauncher, info.sourceDir, recoverAudio)
         val remote = IShizukuService.Stub.asInterface(binder).newProcess(argv, null, null)
             ?: throw DeviceFailure("shizuku_unsupported", "Shizuku 未提供进程接口")
         return RemoteLauncher.connect(remote)

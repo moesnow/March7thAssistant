@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import android.util.Base64
 import rikka.shizuku.Shizuku
 import java.io.Closeable
+import java.io.File
 import java.io.IOException
 import java.security.SecureRandom
 
@@ -30,8 +31,11 @@ internal interface DeviceLease : Closeable {
     val port: Int
 }
 
+internal val Context.deviceServiceLauncher: File
+    get() = File(applicationInfo.nativeLibraryDir, "libm7a_launcher.so")
+
 internal class DeviceAccess(private val context: Context, trace: (String) -> Unit) {
-    private val root = RootAccess()
+    private val root = RootAccess(context.deviceServiceLauncher)
     private val shizuku = ShizukuAccess({ audio -> startShizukuProcess(context, audio, trace) }, trace)
 
     fun state(privilege: Privilege): PermissionState {

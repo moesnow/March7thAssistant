@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 
 from module.automation.input_base import limit_input_deadline, observe_input_dispatch
+from module.game.adb_startup_frames import StartupFrameHealth
 from module.game.adb_transport import AdbError
 from module.localization import tr
 from module.logger import log
@@ -86,6 +87,7 @@ def wait_for_game(controller, timeout, *, recover=None, recover_without_frame=No
     templates = {name: _load_template(name) for name in _TEMPLATES}
     inputs = controller.get_input_handler()
     monthly_card = _MonthlyCard()
+    frame_health = StartupFrameHealth() if controller.display_id else None
     next_enter = 0.0
     next_recovery = 0.0
     while time.monotonic() < deadline:
@@ -94,6 +96,11 @@ def wait_for_game(controller, timeout, *, recover=None, recover_without_frame=No
         pause_ctl.check_stop()
         if time.monotonic() >= deadline:
             break
+        if frame_health is not None and not monthly_card.seen:
+            frame_health.check(controller, frame, time.monotonic(), deadline)
+            pause_ctl.check_stop()
+            if time.monotonic() >= deadline:
+                break
         if frame:
             image = frame[0]
             if monthly_card.handle(image, templates, controller, inputs, deadline):

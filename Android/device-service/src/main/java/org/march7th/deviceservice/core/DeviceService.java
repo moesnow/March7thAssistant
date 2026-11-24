@@ -183,6 +183,8 @@ public final class DeviceService implements Watchdog.Host {
                     return new Message(configureWatchdog(session, header));
                 case "events":
                     return new Message(events(session, header));
+                case "startup_evidence":
+                    return new Message(startupEvidence(Message.ok(header)));
                 case "screen_power":
                     return new Message(screenPower(header));
                 case "keep_awake":
@@ -244,7 +246,7 @@ public final class DeviceService implements Watchdog.Host {
         out.put("encodings", new JSONArray(java.util.Arrays.asList(
                 FrameEncoder.RGBA, FrameEncoder.RGB, FrameEncoder.RGB_ZLIB, FrameEncoder.RGBA_ZLIB)));
         out.put("features", new JSONArray(java.util.Arrays.asList(
-                "screen_power", "mute", "stop_app", "events", "focus", "frame_after_ns", "keep_awake")));
+                "screen_power", "mute", "stop_app", "events", "focus", "frame_after_ns", "keep_awake", "startup_snapshot")));
         out.put("default_tap_ms", DEFAULT_TAP_MS);
         return out;
     }
@@ -279,15 +281,21 @@ public final class DeviceService implements Watchdog.Host {
         return json;
     }
 
+    private JSONObject describeFrame(VirtualScreen current) throws JSONException {
+        JSONObject frame = new JSONObject();
+        synchronized (sequencer) {
+            FrameSequencer.Frame latest = current == null ? null : current.latestFrame();
+            frame.put("seq", sequencer.latest());
+            frame.put("age_ms", latest == null ? -1 : SystemClock.elapsedRealtime() - latest.acquiredMs);
+            frame.put("capturing", sequencer.isActive());
+        }
+        return frame;
+    }
+
     private JSONObject status(JSONObject out) throws JSONException {
         VirtualScreen current = screen;
         out.put("display", describeScreen(current));
-        JSONObject frame = new JSONObject();
-        frame.put("seq", sequencer.latest());
-        FrameSequencer.Frame latest = current == null ? null : current.latestFrame();
-        frame.put("age_ms", latest == null ? -1 : SystemClock.elapsedRealtime() - latest.acquiredMs);
-        frame.put("capturing", sequencer.isActive());
-        out.put("frame", frame);
+        out.put("frame", describeFrame(current));
         JSONObject power = new JSONObject();
         try {
             power.put("interactive", SystemApis.interactive());
@@ -347,6 +355,7 @@ public final class DeviceService implements Watchdog.Host {
             out.put("height", current.height);
             out.put("dpi", current.dpi);
             out.put("flags", current.flags);
+            out.put("diagnostic", current.diagnostics());
             out.put("existing", existing);
             return out;
         }
@@ -886,7 +895,29 @@ public final class DeviceService implements Watchdog.Host {
         }
         out.put("events", array);
         out.put("subscribed", session.subscribed);
+        if (request.optBoolean("startup")) {
+            Watchdog dog = watchdog;
+            VirtualScreen current = screen;
+            if (dog != null && current != null) {
+                try {
+                    out.put("startup", new JSONObject().put("watchdog", dog.describe())
+                            .put("display_id", current.displayId).put("frame", describeFrame(current))
+                            .put("device_ms", SystemClock.elapsedRealtime()));
+                } catch (JSONException | RuntimeException e) {
+                    Logger.w("cannot describe startup frames", e);
+                }
+            }
+        }
         return out;
+    }
+
+    private JSONObject startupEvidence(JSONObject out) throws JSONException {
+        Watchdog dog = watchdog;
+        VirtualScreen current = screen;
+        if (dog == null || current == null) return out;
+        out.put("device_ms", SystemClock.elapsedRealtime());
+        out.put("display_now", current.diagnostics());
+        return StartupDiagnostics.collect(out, dog.describe(), current.displayId);
     }
 
     @Override

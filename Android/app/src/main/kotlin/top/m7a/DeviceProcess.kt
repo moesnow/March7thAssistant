@@ -98,6 +98,9 @@ internal class DeviceProcess(
             }) { line ->
                 when {
                     line == AppServer.ROOT_STDIN_READY -> ready.complete(true)
+                    line == "M7A_APP_FILES_FAILED" -> ready.completeExceptionally(
+                        DeviceFailure("service_start", "设备服务文件权限处理失败")
+                    )
                     !sending.get() -> false
                     line == "M7A_APP_BUSY" -> port.complete(-1)
                     line.startsWith("M7A_APP_PORT ") -> port.complete(line.substringAfter(' ').toIntOrNull()?.takeIf { it in 1..65535 } ?: 0)

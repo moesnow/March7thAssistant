@@ -20,6 +20,8 @@ a = Analysis(
     binaries=binaries,
     datas=datas,
     hiddenimports=[
+        # CredRead 读取已有凭据时，pywin32 会动态导入此模块来转换 LastWritten。
+        'win32timezone',
         'selenium.webdriver.chrome.webdriver',
         'selenium.webdriver.chrome.service',
         'selenium.webdriver.chrome.options',
@@ -63,6 +65,9 @@ def _is_excluded(dest_name: str) -> bool:
 
 a.binaries = [item for item in a.binaries if not _is_excluded(item[0])]
 a.datas = [item for item in a.datas if not _is_excluded(item[0])]
+
+if not any(name == 'win32timezone' for name, _, _ in a.pure):
+    raise RuntimeError("启动器缺少 win32timezone，无法读取已保存的桌面分身凭据")
 
 pyz = PYZ(a.pure)
 

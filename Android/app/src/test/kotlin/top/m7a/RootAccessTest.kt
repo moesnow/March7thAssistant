@@ -7,6 +7,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.march7th.deviceservice.AppServer
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.InputStream
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
@@ -15,7 +16,7 @@ import java.util.concurrent.TimeUnit
 
 class RootAccessTest {
     @Test
-    fun probeRequiresShellUid() {
+    fun probeRequiresRootForTheLauncher() {
         for (uid in listOf(2000, 0)) {
             val process = FakeSu { line ->
                 assertEquals("exec /system/bin/id -u", line)
@@ -24,7 +25,7 @@ class RootAccessTest {
             }
             val access = rootAccess(process)
             access.probe()
-            val expected = if (uid == 2000) PermissionState.READY else PermissionState.NOT_AUTHORIZED
+            val expected = if (uid == 0) PermissionState.READY else PermissionState.NOT_AUTHORIZED
             assertEquals(expected, access.permission)
         }
     }
@@ -32,10 +33,10 @@ class RootAccessTest {
     @Test
     fun recheckDoesNotKeepAnEarlierReadyStateWhenTheProbeFails() {
         var canStart = true
-        val access = RootAccess(startProcess = {
+        val access = RootAccess(LAUNCHER, startProcess = {
             check(canStart)
             FakeSu {
-                emit("2000")
+                emit("0")
                 exit(0)
             }
         }, warn = {})
@@ -53,8 +54,7 @@ class RootAccessTest {
             if (lines.size == 1) {
                 val quoted = "'/data/app/it'\\''s here/base.apk'"
                 assertEquals(
-                    "CLASSPATH=$quoted exec /system/bin/app_process /system/bin " +
-                        "--nice-name=m7a-apk-root org.march7th.deviceservice.AppServer $quoted",
+                    "exec '$QUOTED_LAUNCHER' --root $quoted",
                     line,
                 )
                 emit("M7A_APP_PORT 1111", AppServer.ROOT_STDIN_READY)
@@ -108,6 +108,30 @@ class RootAccessTest {
     }
 
     @Test
+    fun filePreparationFailurePreservesTheCauseWithoutSendingTheTokenOrRevokingRoot() {
+        val probe = FakeSu {
+            emit("0")
+            exit(0)
+        }
+        val process = FakeSu {
+            emit(
+                "prepare service files: chown: Permission denied (errno=13): /data/local/tmp/m7a-device-service.lock",
+                "M7A_APP_FILES_FAILED",
+            )
+            exit(1)
+        }
+        val children = listOf(probe, process).iterator()
+        val access = RootAccess(LAUNCHER, startProcess = { children.next() }, warn = {})
+        access.probe()
+        val failure = assertThrows(DeviceFailure::class.java) { access.open(APK, TOKEN) }
+        assertEquals("service_start", failure.code)
+        assertTrue(failure.message.orEmpty().contains("chown: Permission denied (errno=13)"))
+        assertEquals(PermissionState.READY, access.permission)
+        assertEquals(1, process.lines.size)
+        assertFalse(process.lines.single().contains(TOKEN))
+    }
+
+    @Test
     fun busyResponseKeepsItsErrorCode() {
         val process = FakeSu {
             if (lines.size == 1) {
@@ -143,7 +167,7 @@ class RootAccessTest {
     @Test
     fun audioRecoveryUsesItsOwnEntryWithoutStartingATask() {
         val process = FakeSu { line ->
-            assertTrue(line.endsWith("org.march7th.deviceservice.AppServer '$APK' --recover-audio"))
+            assertEquals("exec '$QUOTED_LAUNCHER' --root '$APK' --recover-audio", line)
             exit(0)
         }
         rootAccess(process).recoverAudio(APK)
@@ -162,8 +186,8 @@ class RootAccessTest {
         assertTrue(failure.message.orEmpty().contains("audio restore failed"))
     }
 
-    private fun rootAccess(process: FakeSu) = RootAccess(startProcess = { argv ->
-        assertEquals(listOf("su", "2000"), argv)
+    private fun rootAccess(process: FakeSu) = RootAccess(LAUNCHER, startProcess = { argv ->
+        assertEquals(listOf("su", "0"), argv)
         process
     }, warn = {})
 
@@ -221,6 +245,8 @@ class RootAccessTest {
     }
 
     private companion object {
+        val LAUNCHER = File("/data/app/it's here/lib/libm7a_launcher.so")
+        val QUOTED_LAUNCHER = LAUNCHER.absolutePath.replace("'", "'\\''")
         const val APK = "/data/app/base.apk"
         const val TOKEN = "test-token-for-stdin-only"
     }

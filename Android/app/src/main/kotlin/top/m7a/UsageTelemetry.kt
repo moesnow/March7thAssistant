@@ -31,7 +31,7 @@ private val reportedErrors = setOf(
     "service_busy", "service_start", "shizuku_unsupported", "root_unavailable", "protocol_mismatch", "service_version",
     "shell_context_init_failed", "display_failed", "display_exists", "no_display", "launch_failed", "game_start_timeout", "game_exited",
     "manual_action_required", "move_back_failed", "device_asleep", "inject_denied", "inject_failed",
-    "disconnected", "timeout", "invalid_response", "frame_clock_unavailable", "game_not_on_display",
+    "disconnected", "timeout", "invalid_response", "frame_clock_unavailable", "frame_timeout", "virtual_display_black", "game_not_on_display",
     "template_missing", "task_failed", "runtime_error", "cleanup_pending", "interrupted",
 )
 private val reportedTimings = setOf("ocr_init_seconds", "device_service_seconds", "game_ready_seconds")

@@ -1,11 +1,12 @@
 package top.m7a
 
-import android.os.Process.SHELL_UID
 import android.util.Log
+import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 internal class RootAccess(
+    private val launcher: File,
     private val startProcess: (List<String>) -> java.lang.Process = {
         ProcessBuilder(it).redirectErrorStream(true).start()
     },
@@ -33,12 +34,12 @@ internal class RootAccess(
             shell.process.outputStream.close()
             if (shell.process.waitFor(START_SECONDS, TimeUnit.SECONDS)) {
                 reader.join(OUTPUT_DRAIN_MS)
-                if (!reader.isAlive && shell.process.exitValue() == 0 && uid == SHELL_UID) {
+                if (!reader.isAlive && shell.process.exitValue() == 0 && uid == 0) {
                     permission = PermissionState.READY
                     return
                 }
             }
-            warn(shell.diagnostic("Root 自检未取得 UID $SHELL_UID"))
+            warn(shell.diagnostic("Root 自检未取得 UID 0"))
         } catch (error: IOException) {
             warn(shell.diagnostic("Root 自检：${error.message}"))
         } finally {
@@ -60,14 +61,13 @@ internal class RootAccess(
     }
 
     private fun appServerCommand(apkPath: String): String {
-        val path = "'" + apkPath.replace("'", "'\\''") + "'"
-        return "CLASSPATH=$path exec /system/bin/app_process /system/bin " +
-            "--nice-name=m7a-apk-root org.march7th.deviceservice.AppServer $path"
+        fun quote(path: String) = "'" + path.replace("'", "'\\''") + "'"
+        return "exec ${quote(launcher.absolutePath)} --root ${quote(apkPath)}"
     }
 
     private fun startShell(token: String? = null): DeviceProcess = try {
         // 只传 UID。Magisk 新旧版与 KernelSU、SukiSU 对 -c 和其后参数的解析不同。
-        DeviceProcess(startProcess(listOf("su", SHELL_UID.toString())), "Root", token)
+        DeviceProcess(startProcess(listOf("su", "0")), "Root", token)
     } catch (error: IOException) {
         permission = PermissionState.NOT_INSTALLED
         throw DeviceFailure("root_unavailable", "无法启动 su：${error.message}")

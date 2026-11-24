@@ -12972,3 +12972,17 @@ msgstr "Foreground mode uses your mouse and keyboard. Leave the PC idle during r
 #: app/content/setup_model.py:52
 msgid "默认安装位置"
 msgstr "Default install path"
+
+#: module/game/adb_startup_frames.py:110
+msgid "游戏已启动，但后台虚拟屏持续输出黑帧，请导出本轮日志反馈"
+msgstr ""
+"The game has started, but the background virtual display keeps producing "
+"black frames. Please export the log for this run and attach it to your "
+"report."
+
+#: module/game/adb_startup_frames.py:111
+msgid "游戏已启动，但后台虚拟屏持续没有新帧，请导出本轮日志反馈"
+msgstr ""
+"The game has started, but no new frames are coming from the background "
+"virtual display. Please export the log for this run and attach it to your "
+"report."

@@ -6266,7 +6266,7 @@ def test_dragon_cleanse_never_confirms_an_unselected_affix(monkeypatch, world, c
 DRAGON_BOND_CHOICES = (("召唤", 688, 352), ("治疗", 927, 352), ("连击", 1167, 352), ("反击", 1408, 352))
 
 
-def dragon_bond_dialog(*, selected=None, outline=False, enabled=False):
+def dragon_bond_dialog(*, stage="3-1", selected=None, outline=False, enabled=False):
     image = CANVAS.copy()
     draw = ImageDraw.Draw(image)
     if outline:
@@ -6277,7 +6277,7 @@ def dragon_bond_dialog(*, selected=None, outline=False, enabled=False):
     if enabled:
         draw.rounded_rectangle((1304, 571, 1680, 623), radius=26, fill=(229, 231, 245))
     return Frame(image, labels(
-        ("备战阶段", 323, 71), ("3-1", 323, 109), ("双龙吟", 1046, 78), ("请选择一个羁绊加入", 1046, 135),
+        ("备战阶段", 323, 71), (stage, 323, 109), ("双龙吟", 1046, 78), ("请选择一个羁绊加入", 1046, 135),
         *DRAGON_BOND_CHOICES, ("确认选择", 1492, 598), ("出战", 1818, 750),
     ))
 
@@ -6304,16 +6304,29 @@ def test_dragon_bond_outline_and_background_fight_do_not_count_as_selection():
     ("loop", "closed_on_choice", "连击", [(1167, 352)]),
     ("takeover", "preselected", "连击", [(1492, 598)]),
     ("daily", "partial_wrong_selection", "治疗", [(927, 352), (1492, 598)]),
+    ("single", "lost_default_choice", None, [(927, 352), (927, 352), (1492, 598)]),
+    ("loop", "closed_on_choice", None, [(1167, 352)]),
+    ("takeover", "unlabeled_confirm", None, [(1492, 597)]),
+    ("daily", "missing_cards", None, [(686, 352), (1492, 598)]),
 ))
 def test_dragon_bond_recovers_to_preparation_through_the_task_entry(monkeypatch, world, entry, fault, target, clicks):
-    stage = "3-1"
-    overlay = dragon_bond_dialog(outline=fault == "late_confirmation",
+    default = target is None
+    stage = "3-5" if default else "3-1"
+    overlay = dragon_bond_dialog(stage=stage, outline=fault == "late_confirmation",
                                  selected="连击" if fault == "partial_wrong_selection" else None,
                                  enabled=fault == "partial_wrong_selection")
+    if fault == "lost_default_choice":
+        overlay = Frame(overlay.image, (*overlay.labels, Label("治疗", (130, 420))))
+    if fault == "missing_cards":
+        overlay = Frame(overlay.image, tuple(label for label in overlay.labels if label.text not in ui.DRAGON_BOND_NAMES))
     partial = Frame(overlay.image, tuple(label for label in overlay.labels if label.text != "双龙吟"))
     assert partial.page == Page.DRAGON_BOND
-    selected = dragon_bond_dialog(selected=target, enabled=True)
-    awaiting_button = dragon_bond_dialog(selected=target)
+    selected = dragon_bond_dialog(stage=stage, selected=target, enabled=True)
+    if fault == "unlabeled_confirm":
+        selected = Frame(selected.image, tuple(
+            label for label in selected.labels if label.text not in (*ui.DRAGON_BOND_NAMES, "确认选择")
+        ))
+    awaiting_button = dragon_bond_dialog(stage=stage, selected=target)
     ready = Frame(CANVAS, labels(
         ("备战阶段", 323, 71), (stage, 323, 109), ("前台区域", 960, 315), ("后台区域", 960, 575),
         ("连击", 132, 418), ("1/2", 132, 449), ("商店", 1624, 982), ("出战", 1818, 750),
@@ -6321,20 +6334,23 @@ def test_dragon_bond_recovers_to_preparation_through_the_task_entry(monkeypatch,
     source = slot("bench", 0, policy.Unit("备战第1格", True, True))
     destination = slot("front", 0)
     team = board(source, destination, stage=stage, used=0)
-    before_move = page(Page.BOARD, stage=stage, capacity=(0, 3))
-    monkeypatch.setattr(before_move, "slot_occupied", lambda point: point == source.point)
+    before_move = board_screen(CANVAS, (source, destination), stage=stage)
+    before_move.capacity = (0, 3)
     won = page(Page.MATCH_RESULT, ("对局胜利", 960, 233), ("返回货币战争", 960, 899))
-    lobby, modes = home(), mode(("进入超频博弈", 1638, 960))
-    rank_page = page(Page.RANK, ("开始对局", 1680, 965), rank_mode="overclock", enemy_rank=1)
+    mode_name, mode_button = ("normal", "进入标准博弈") if default else ("overclock", "进入超频博弈")
+    lobby, modes = home(), mode((mode_button, 1638, 960))
+    rank_page = page(Page.RANK, ("开始对局", 1680, 965), rank_mode=mode_name, enemy_rank=1)
     entered = {"single": before_move, "loop": overlay, "takeover": selected, "daily": partial}[entry]
     routes = {(lobby, (1600, 972)): modes, (modes, (1638, 960)): rank_page, (rank_page, (1680, 965)): entered,
               (ready, (1818, 750)): won, (won, (960, 899)): lobby}
     initial = entered if entry == "takeover" else lobby
     state = SimpleNamespace(frame=initial, clicks=[], after=None, resume_at=None)
     world.cfg.currencywars_time_limit = 1
-    world.cfg.currencywars_type = "overclock"
+    world.cfg.currencywars_type = mode_name
     world.cfg.currencywars_rank_difficulty = "lowest"
-    if target != "连击":
+    if default:
+        world.cfg.currencywars_strategy = policy.DEFAULT_STRATEGY
+    elif target != "连击":
         lineup = replace(policy.LINEUPS[policy.HIGH_ANAXA], dragon_bond=target)
         monkeypatch.setitem(policy.LINEUPS, policy.HIGH_ANAXA, lineup)
 
@@ -6346,7 +6362,7 @@ def test_dragon_bond_recovers_to_preparation_through_the_task_entry(monkeypatch,
     def click(point, *, press_duration):
         if state.frame is overlay:
             state.clicks.append(point)
-            if fault == "late_confirmation" and len(state.clicks) == 1:
+            if fault in ("late_confirmation", "lost_default_choice") and len(state.clicks) == 1:
                 return False
             if fault == "closed_on_choice":
                 state.frame = ready
@@ -6363,6 +6379,8 @@ def test_dragon_bond_recovers_to_preparation_through_the_task_entry(monkeypatch,
 
     def prepare(frame):
         if frame is before_move:
+            if default:
+                return world.war._prepare_default_team(frame, deploy_only=True)
             return world.war._move(frame, team, source, destination)
         assert frame is ready
         return world.war._advance_board(frame, frame.board_advance)
@@ -6386,7 +6404,6 @@ def test_dragon_bond_recovers_to_preparation_through_the_task_entry(monkeypatch,
 
 
 @pytest.mark.parametrize(("fault", "error", "clicks"), (
-    ("no_target", task.CurrencyWarsUnavailable, []),
     ("double_label", task.CurrencyWarsUnavailable, []),
     ("low_confidence", task.CurrencyWarsUnavailable, []),
     ("missing_heading", task.CurrencyWarsUnavailable, []),
@@ -6399,7 +6416,7 @@ def test_dragon_bond_recovers_to_preparation_through_the_task_entry(monkeypatch,
 def test_dragon_bond_keeps_the_scene_when_an_operation_cannot_continue(monkeypatch, world, fault, error, clicks):
     confirmed = fault in ("no_receipt", "wrong_node", "lost_page")
     frame = dragon_bond_dialog(selected="连击" if confirmed else None, enabled=confirmed)
-    if fault == "no_target":
+    if fault in ("no_receipt", "wrong_node", "lost_page", "stopped", "deadline"):
         world.cfg.currencywars_strategy = policy.DEFAULT_STRATEGY
     if fault == "double_label":
         frame = Frame(frame.image, (*frame.labels, Label("连击", (685, 352))))

@@ -3,8 +3,8 @@
 后台模式下一次点击约 0.8 秒，界面响应却只要 0.1～0.3 秒，所以这里尽量少输入、不写固定等待：
 等待都是轮询画面变化；OCR 放到单独的线程，和后续界面操作重叠执行，读完一个角色再统一解析。
 
-只会点左侧页签、顶栏头像、属性详情、属性/技能子页签和遗器槽位，
-右下角的替换、强化、卸下、重掷、装备、切换等按钮一律不碰。
+只会点左侧页签、顶栏头像、属性详情、属性/技能子页签、遗器槽位，
+以及星魂页右下角的「切换至原星魂界面」按钮。
 """
 import json
 import time
@@ -137,6 +137,9 @@ EIDOLON_NODES = tuple((x - 24, y - 24, 48, 48) for x, y in EIDOLON_SLOTS)
 EIDOLON_SEARCH = 45
 EIDOLON_TIMEOUT = 3.0
 EIDOLON_STABLE_TIME = 0.15
+EIDOLON_SWITCH = "./assets/images/zh_CN/character_panel/original_eidolons.png"
+EIDOLON_SWITCH_BOX = (1560, 955, 230, 70)
+EIDOLON_SWITCH_POINT = (1671, 988)
 
 BUTTON_THRESHOLD = 0.8
 
@@ -354,6 +357,10 @@ class CharacterReader:
             if renamed is not None:
                 if self.tab == "eidolons":
                     frame = self._settle(EIDOLON_NODES, before, timeout=1.5, still=PANEL_STILL)
+                    # 奇缘页的这六处只有动态插画，新出现的切换按钮也能确认已离开上一个角色。
+                    if (frame is None and self._can_switch_to_original_eidolons(self.frame)
+                            and not self._can_switch_to_original_eidolons(before)):
+                        return True
                 else:
                     frame = self._settle(SUMMARY_BOX if self.tab == "detail" else RIGHT_PANEL, before, timeout=1.5, still=PANEL_STILL)
                 if frame is None:
@@ -617,6 +624,9 @@ class CharacterReader:
         sets, set_problems = parser.summarize_relic_sets(ordered)
         return {"sets": sets, "pieces": ordered, "by_slot": pieces}, problems + set_problems
 
+    def _can_switch_to_original_eidolons(self, frame):
+        return self._score(frame, EIDOLON_SWITCH, EIDOLON_SWITCH_BOX) >= BUTTON_THRESHOLD
+
     def _eidolon_unlocked(self, frame, box):
         if EIDOLON_UNLOCKED not in self.templates:
             self.templates[EIDOLON_UNLOCKED] = ImageUtils.read_image(EIDOLON_UNLOCKED, cv2.IMREAD_UNCHANGED)
@@ -630,6 +640,7 @@ class CharacterReader:
         """六个节点都须有锁或已解锁亮圈，并持续稳定；空页和动画中漏检的节点都是未知。"""
         self.open_tab("eidolons")
         deadline = time.monotonic() + EIDOLON_TIMEOUT
+        switch_sent = False
         previous = None
         stable_since = None
         while True:
@@ -641,9 +652,16 @@ class CharacterReader:
                     current.append(True)
                 else:
                     current.append(False if self._eidolon_unlocked(frame, box) else None)
+            needs_switch = not switch_sent and None in current and self._can_switch_to_original_eidolons(frame)
             now = time.monotonic()
             if now >= deadline:
-                raise parser.ParseError(f"星魂节点未就绪或状态未稳定：{current}")
+                context = "已尝试切换至原星魂界面，" if switch_sent else ""
+                raise parser.ParseError(f"{context}星魂节点未就绪或状态未稳定：{current}")
+            if needs_switch:
+                self._click(*EIDOLON_SWITCH_POINT)
+                switch_sent = True
+                # 入场动画可能晚于按钮消失。外层重读会重新核对按钮再决定是否补点。
+                deadline = time.monotonic() + EIDOLON_TIMEOUT
             if None in current:
                 stable_since = None
             elif current != previous or stable_since is None:

@@ -181,6 +181,23 @@ class OCR:
         if self.logger is not None:
             self.logger.debug("已禁用 OpenVINO CPU runtime cache")
 
+    @staticmethod
+    def _disable_kleidiai_for_rapidocr():
+        # RapidOCR 3.8.1 没有暴露 ORT 的 session config entry。
+        from rapidocr.inference_engine.onnxruntime import OrtInferSession
+
+        if getattr(OrtInferSession, "_march7th_kleidiai_disabled", False):
+            return
+        original_init = OrtInferSession._init_sess_opts
+
+        def init_session_options(config):
+            options = original_init(config)
+            options.add_session_config_entry("mlas.disable_kleidiai", "1")
+            return options
+
+        OrtInferSession._init_sess_opts = staticmethod(init_session_options)
+        OrtInferSession._march7th_kleidiai_disabled = True
+
     def _get_config(self):
         """延迟获取配置对象，避免循环导入"""
         if self._cfg is None:
@@ -682,9 +699,14 @@ class OCR:
                     params.update(runtime_params)
 
                 # 891
-                machine = platform.machine().lower()
+                machine = self._normalize_machine()
                 if machine.startswith(("arm", "aarch")) and prefer_engine == EngineType.OPENVINO:
                     params["Det.engine_type"] = EngineType.ONNXRUNTIME
+
+                # Apple Silicon 上连续检测变化的游戏画面时，ORT 1.26 的
+                # KleidiAI 路径会持续占用内存。混合 OpenVINO 模式也用 ORT 做检测。
+                if sys.platform == "darwin" and machine == "arm64":
+                    self._disable_kleidiai_for_rapidocr()
 
                 try:
                     self.ocr = RapidOCR(params=params)

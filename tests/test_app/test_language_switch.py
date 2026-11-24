@@ -122,6 +122,8 @@ def window(qtbot, monkeypatch, tmp_path, request):
     monkeypatch.setattr('utils.uac_free.is_enabled', lambda: False)
     monkeypatch.setattr('app.tools.adb_service.list_devices', lambda *_: [])
     config['evernight_unlocked'] = False
+    # set_value 被替换为 Mock，重建的设置页会显示配置里的语言；固定初值，避免开发者本机的 ui_language 让切换落空。
+    config['ui_language'] = 'auto'
     if config.get('ui_theme') == 'evernight':
         config['ui_theme'] = 'auto'
     options = dict(getattr(request, 'param', {}))

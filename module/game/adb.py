@@ -187,16 +187,58 @@ class AdbGameController(GameControllerBase):
             self._startup.saw_task = True
             self._startup.missing_since_ms = None
 
-    def _poll_events(self, *, force=False):
+    def _poll_events(self, *, force=False, startup=False):
         if not self._watching or (not force and time.monotonic() - self._last_event_poll < 0.35):
             return
-        response, _ = self._call("events", after=self._event_seq)
+        response, _ = self._call("events", after=self._event_seq, **({"startup": True} if startup else {}))
         self._last_event_poll = time.monotonic()
         for event in response["events"]:
             self._record_event(event)
         self._event_seq = response["event_seq"]
         if self._failure:
             raise self._failure
+        return response
+
+    def startup_frame_snapshot(self):
+        """只在虚拟屏启动检查取样，旧服务沿用原来的事件与超时处理。"""
+        with self._lock:
+            if not self._display_id or "startup_snapshot" not in self._service.client.hello.get("features", ()):
+                return None
+            try:
+                response = self._poll_events(force=True, startup=True)
+            except AdbError as error:
+                if self._failure is not None:
+                    raise
+                self.log_debug(f"ADB 启动状态取样不可用：{error}")
+                return None
+            if not response or not self._display_available():
+                return None
+            snapshot = response.get("startup")
+            if not isinstance(snapshot, dict) or snapshot.get("display_id") != self._display_id:
+                return None
+            # 两次取样之间也可能曾短暂锁屏、移走任务或弹出 SDK。
+            snapshot["last_transition"] = next((event["event_seq"] for event in reversed(self._events)
+                if event["event"] in {"device_state", "task_display_changed", "sdk_window_shown", "sdk_window_gone",
+                                      "game_exited", "game_started", "move_back_started"}), 0)
+            return snapshot
+
+    def log_startup_evidence(self, deadline):
+        """已判定故障后再读系统窗口和 SurfaceFlinger；取证失败仍返回原故障。"""
+        remaining = deadline - time.monotonic()
+        if remaining < 8:
+            return
+        try:
+            with self._lock:
+                result, _ = self._call("startup_evidence", timeout=8)
+            for layer, fields in result.get("game_layers", {}).items():
+                self.log_debug(f"ADB SurfaceFlinger {layer} {fields}")
+            for key, value in result.items():
+                if key not in {"id", "ok", "game_layers"}:
+                    self.log_debug(f"ADB 虚拟屏系统诊断 {key}={value}")
+            if not result.get("game_layers"):
+                self.log_debug("ADB SurfaceFlinger 未取得游戏图层的 buffer 信息")
+        except Exception as error:
+            self.log_debug(f"ADB 虚拟屏系统诊断不可用：{error}")
 
     def get_runtime_status(self) -> AdbRuntimeStatus:
         """查询本进程的会话。未连接时不启动服务，连接故障通过 error_code 返回。"""
@@ -247,6 +289,8 @@ class AdbGameController(GameControllerBase):
             else:
                 response, _ = self._call("create_display", width=RESOLUTION[0], height=RESOLUTION[1], dpi=240)
                 self._display_id = response["display_id"]
+                self.log_debug(f"ADB 虚拟屏 display={self._display_id} size={RESOLUTION} dpi=240 "
+                               f"device={self._service.client.hello.get('device')} diagnostic={response.get('diagnostic')}")
             return self._display_id
 
     def start_game_process(self, *, recover_startup=False) -> bool:
