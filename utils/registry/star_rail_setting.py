@@ -170,37 +170,23 @@ def get_graphics_setting() -> Optional[bytes]:
     return read_registry_value(winreg.HKEY_CURRENT_USER, get_registry_key_path(), graphics_value_name)
 
 
-def get_game_path() -> Optional[str]:
-    """
-    获取游戏路径函数，尝试从注册表中读取指定键值并验证游戏可执行文件是否存在。
-    支持国服和国际服。
-
-    Returns:
-        Optional[str]: 如果找到有效的游戏路径，则返回完整路径，否则返回 None。
-    """
-    # 注册表键路径和键值名称（国服和国际服）
-    registry_paths = [
-        r"Software\miHoYo\HYP\1_1\hkrpg_cn",     # 国服路径
-        r"Software\Cognosphere\HYP\1_0\hkrpg_global"  # 国际服路径
-    ]
-    registry_value_name = "GameInstallPath"  # 游戏安装路径的键值名称
-
-    # 尝试从不同的注册表路径中读取
-    for registry_path in registry_paths:
-        install_path = read_registry_value(
-            winreg.HKEY_CURRENT_USER,  # 从当前用户的注册表路径中读取
-            registry_path,             # 注册表的具体路径
-            registry_value_name        # 需要读取的键值名称
-        )
-
-        # 如果成功读取到路径，检查对应的游戏可执行文件是否存在
+def game_paths(*, skip_errors=False):
+    """按原有优先级读取国服和国际服，向导可以继续查找下一条记录。"""
+    for registry_path in (r"Software\miHoYo\HYP\1_1\hkrpg_cn", r"Software\Cognosphere\HYP\1_0\hkrpg_global"):
+        try:
+            install_path = read_registry_value(winreg.HKEY_CURRENT_USER, registry_path, "GameInstallPath")
+        except OSError:
+            if skip_errors:
+                continue
+            raise
         if install_path:
-            game_executable = os.path.join(install_path, "StarRail.exe")  # 构造完整的游戏可执行文件路径
-            if os.path.exists(game_executable):  # 验证文件路径是否存在
-                return game_executable  # 返回有效的游戏路径
+            executable = os.path.join(install_path, "StarRail.exe")
+            if os.path.exists(executable):
+                yield executable
 
-    # 如果路径无效或文件不存在，返回 None
-    return None
+
+def get_game_path() -> Optional[str]:
+    return next(game_paths(), None)
 
 
 def get_launcher_path() -> Optional[str]:

@@ -1,9 +1,7 @@
 """通过 Epic 协议启动 HoYoPlay 并进入游戏。"""
-import json
 import ntpath
 import os
 import time
-from pathlib import Path
 from urllib.parse import quote
 
 import psutil
@@ -11,11 +9,8 @@ import win32gui
 import win32process
 
 from module.game.launcher import LauncherController
+from utils.epic_install import EpicLaunchError, find_epic_install, inside
 from utils.pause import pause_ctl
-
-
-class EpicLaunchError(RuntimeError):
-    """Epic 渠道启动失败。"""
 
 
 def check_game_path(game_path):
@@ -28,43 +23,6 @@ def check_game_path(game_path):
 def build_epic_launch_url(launch_id):
     """协议 apps/ 段是 Epic 应用标识（不是安装路径），其中的冒号需要编码。"""
     return f"com.epicgames.launcher://apps/{quote(launch_id, safe='')}?action=launch&silent=true"
-
-
-def _inside(path, root):
-    try:
-        path, root = ntpath.normcase(ntpath.normpath(path)), ntpath.normcase(ntpath.normpath(root))
-        return ntpath.commonpath([path, root]) == root
-    except ValueError:
-        return False
-
-
-def _launch_id(item):
-    """应用标识取 命名空间:目录项:应用名，旧清单缺少前两项时退回应用名。"""
-    namespace, catalog_item = item.get("CatalogNamespace"), item.get("CatalogItemId")
-    if isinstance(namespace, str) and namespace and isinstance(catalog_item, str) and catalog_item:
-        return f"{namespace}:{catalog_item}:{item['AppName']}"
-    return item["AppName"]
-
-
-def find_epic_install(game_path):
-    """从 Epic 本地安装清单查找包含游戏路径的安装记录，返回 (安装目录, 应用标识)。"""
-    manifest_dir = Path(os.environ.get("PROGRAMDATA", r"C:\ProgramData")) / "Epic/EpicGamesLauncher/Data/Manifests"
-    installs = set()
-    for manifest in manifest_dir.glob("*.item"):
-        try:
-            with manifest.open(encoding="utf-8-sig") as stream:
-                item = json.load(stream)
-            root, app_name = item.get("InstallLocation"), item.get("AppName")
-            # 主程序清单的 MainGameAppName 可以为空，DLC 则指向另一应用。
-            if (isinstance(root, str) and ntpath.isabs(root) and _inside(game_path, root)
-                    and isinstance(app_name, str) and app_name
-                    and item.get("MainGameAppName", "") in ("", app_name)):
-                installs.add((ntpath.normcase(ntpath.normpath(root)), _launch_id(item)))
-        except (OSError, ValueError, AttributeError):
-            continue
-    if len(installs) > 1:
-        raise EpicLaunchError("Epic 启动[打开协议]：多个 Epic 安装记录包含游戏路径，无法确认渠道实例")
-    return next(iter(installs), None)
 
 
 class EpicLauncherController(LauncherController):
@@ -88,7 +46,7 @@ class EpicLauncherController(LauncherController):
             except (psutil.Error, OSError):
                 raise EpicLaunchError("Epic 启动[窗口归属]：无法读取 HoYoPlay 进程路径，不能安全点击") from None
             if (ntpath.basename(executable).lower() in ("hyp.exe", "launcher.exe")
-                    and _inside(executable, self.install_root)):
+                    and inside(executable, self.install_root)):
                 matches.append(hwnd)
         if len(matches) > 1:
             raise EpicLaunchError("Epic 启动[窗口归属]：存在多个匹配的 HoYoPlay 窗口，停止操作")
