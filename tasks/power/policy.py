@@ -126,6 +126,10 @@ def batch_limit(config, instance_type):
     return value
 
 
+def remaining_plan(config):
+    return config.remaining_power_plan() if hasattr(type(config), "remaining_power_plan") else config.power_plan
+
+
 def run_plan(config, plan, run_instance):
     """按当前计划逐项执行。生成器确认一批便回写，再继续运行。"""
     if not isinstance(plan, list):
@@ -134,6 +138,7 @@ def run_plan(config, plan, run_instance):
 
     names = get_raw_instance_names()
     remaining = list(plan)
+    base = getattr(config, "power_plan", plan)
     complete = True
     skipped = None
     for index, item in enumerate(plan):
@@ -157,7 +162,11 @@ def run_plan(config, plan, run_instance):
                 count -= completed
                 if not config.power_plan_keep:
                     remaining[index] = [instance_type, name, count] if count else None
-                    config.set_value("power_plan", [entry for entry in remaining if entry is not None])
+                    left = [entry for entry in remaining if entry is not None]
+                    if hasattr(type(config), "consume_power_plan"):
+                        config.consume_power_plan(left, base=base)
+                    else:
+                        config.set_value("power_plan", left)
         except InstanceTeamUnavailable as error:
             log.warning(error)
             skipped = skipped or error

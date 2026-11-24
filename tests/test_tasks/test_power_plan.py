@@ -130,3 +130,32 @@ def test_weekly_cleanup_records_only_confirmed_completion(monkeypatch, due, clea
     is_due.assert_called_once_with(0, 5, 4)
     assert clean.call_count == due
     assert cfg.save_timestamp.call_args_list == ([call("weekly_relic_cleanup_timestamp")] if due and cleanup_succeeds else [])
+
+
+@pytest.mark.parametrize("backend", [desktop, touch], ids=["pc", "touch"])
+def test_consumed_account_plan_runs_default_on_next_launch(monkeypatch, backend):
+    from copy import deepcopy
+
+    class Bound(SimpleNamespace):
+        remaining = [MATERIALS]
+        def remaining_power_plan(self):
+            return deepcopy(self.remaining)
+        def consume_power_plan(self, remaining, *, base):
+            self.remaining = deepcopy(remaining)
+
+    cfg = Bound(**vars(config(power_plan_continue=False)))
+    calls = []
+    def run_instance(kind, name, planned, **kwargs):
+        calls.append((kind, name, planned))
+        if planned:
+            yield planned
+    monkeypatch.setattr(backend, "cfg", cfg)
+    if backend is desktop:
+        monkeypatch.setattr(desktop.Power, "_run_instance", run_instance)
+        run = lambda: desktop.Power.run(skip_weekly_cleanup=True, support=SupportDemand())
+    else:
+        monkeypatch.setattr(touch, "_run_instance", run_instance)
+        run = touch.run
+    assert run() and cfg.remaining == [] and calls == [tuple(MATERIALS)]
+    assert run() and calls[-1] == (CAVERN, RELICS[1], None)
+    assert cfg.power_plan == [MATERIALS]

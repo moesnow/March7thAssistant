@@ -107,6 +107,7 @@ if sys.platform == 'win32':
             cfg.set_value("launcher_path", os.path.abspath(launcher_path))
             return True
         return False
-    if cfg.auto_set_game_path_enable:
+    from module.accounts.runtime import defer_path_detection
+    if cfg.auto_set_game_path_enable and not defer_path_detection(cfg):
         detect_game_path()
         detect_launcher_path()

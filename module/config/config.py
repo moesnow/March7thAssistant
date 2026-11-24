@@ -181,6 +181,8 @@ class Config(metaclass=SingletonMeta):
     _listeners = ()  # Lightweight instances without GUI listeners can skip change tracking.
     _readonly = False
     writes_suspended = False
+    _account_layer = None
+    _suspended_view = None
 
     def __init__(self, version_path, example_path, config_path):
         Config._readonly = paths.readonly_role() or os.environ.get(paths.RECOVERY_ENV) == "1"
@@ -193,6 +195,7 @@ class Config(metaclass=SingletonMeta):
         self.yaml = YAML()
         self.version = self._load_version(version_path)
         self.config = self._load_default_config(example_path)
+        self._account_defaults = copy.deepcopy(self.config)
         self.config_path = config_path
         try:
             self._load_config()
@@ -231,7 +234,7 @@ class Config(metaclass=SingletonMeta):
         return lambda: self._listeners.remove(listener)
 
     def _notify_changes(self, before, reloaded=False):
-        keys = frozenset(key for key, value in before.items() if self.config.get(key) != value)
+        keys = frozenset(key for key, value in before.items() if self.get_value(key) != value)
         if keys:
             for listener in tuple(self._listeners):
                 try:
@@ -311,9 +314,10 @@ class Config(metaclass=SingletonMeta):
         if loaded_config.get("loop_mode") == "power":
             loaded_config["loop_mode"] = "scheduled"
             _diag("info", "体力循环模式已移除，自动切换为定时模式")
-        before = {key: copy.deepcopy(self.config[key]) for key in loaded_config
-                  if key in self.config and self.config[key] != loaded_config[key]} if self._listeners else {}
+        changes = (key for key in loaded_config if key in self.config and self.config[key] != loaded_config[key])
+        before = self._previous_values(changes) if self._listeners else {}
         self._update_config(self.config, loaded_config)
+        self._rebuild_account()
         _diag("debug", f"_load_config 成功: 合并 {len(loaded_config)} 个顶层键")
         if save:
             self.save_config()
@@ -569,7 +573,8 @@ class Config(metaclass=SingletonMeta):
         has_override, override_value = _get_env_override(key)
         if has_override:
             return override_value
-        value = self.config.get(key, default)
+        layer = self._account_layer
+        value = layer.values[key] if layer and key in layer.values else self.config.get(key, default)
         # 如果是可变对象（如列表、字典等），返回拷贝
         if isinstance(value, (list, dict, set)):
             return copy.deepcopy(value)  # 使用深拷贝确保嵌套对象安全
@@ -597,11 +602,160 @@ class Config(metaclass=SingletonMeta):
         """
         self._write_values(values)
 
+    def _previous_values(self, keys):
+        keys = set(keys)
+        if (self._account_layer or self._suspended_view) and keys.intersection(("control_backend", "cloud_game_enable")):
+            keys.update(self.config)
+        return {k: self.get_value(k) for k in keys}
+
+    def _rebuild_account(self):
+        layer = self._account_layer or self._suspended_view
+        if layer is None:
+            return
+        from module.connection_values import configured_backend
+        if not layer.runtime and configured_backend(self) != "local":
+            self._suspended_view, self._account_layer = layer, None
+            return
+        if self._suspended_view:
+            index = layer.store.index()
+            row = next((a for a in index["accounts"] if a["uid"] == layer.uid), None)
+            if not index["enabled"] or row is None:
+                self._suspended_view = None
+                return
+            layer.row = row
+            layer.state = layer.store.read(layer.uid, "state.yaml")
+            layer.plan = layer.store.read(layer.uid, "plan.yaml")
+        self._account_layer, self._suspended_view = layer, None
+        layer.rebuild(self.config)
+
     def _write_values(self, values):
+        layer = self._account_layer
+        if layer is None:
+            return self._write_shared_values(values)
+        if self._readonly or self.writes_suspended:
+            return
+        self._load_config(save=False)
+        before = self._previous_values(values) if self._listeners else {}
+        common = layer.split_write(values, self.config)
+        if common:
+            self._write_shared_values(common, notify=False)
+        self._notify_changes(before)
+
+    @property
+    def bound_account(self):
+        return self._account_layer.uid if self._account_layer else None
+
+    @property
+    def account_inherited(self):
+        return self._inherited_uid if self._account_layer else None
+
+    def bind_account(self, uid, *, runtime=False, store=None):
+        from module.accounts.layers import AccountLayer, supported
+        from module.accounts.store import AccountStore, uid_string
+
+        before = {k: self.get_value(k) for k in self.config} if self._listeners else {}
+        layer = None
+        if uid is not None:
+            store = store or AccountStore(role="task" if runtime else "ui")
+            index = store.index()
+            if not supported(self, index, switching=False):
+                if runtime:
+                    raise ValueError("多账号未启用或运行方式不支持")
+            else:
+                uid = uid_string(uid)
+                row = next((a for a in index["accounts"] if a["uid"] == uid), None)
+                if row is None:
+                    raise ValueError("找不到账号")
+                layer = AccountLayer(store, row, runtime, self._account_defaults)
+                layer.rebuild(self.config)
+                self._inherited_uid = index["inherited"]
+        self._account_layer, self._suspended_view = layer, None
+        self._notify_changes(before)
+
+    def shared_value(self, key, default=None):
+        return copy.deepcopy(self.config.get(key, default))
+
+    def account_overrides(self, uid=None, *, store=None):
+        from module.accounts.store import AccountStore
+        layer = self._account_layer
+        if layer and (uid is None or str(uid) == layer.uid):
+            return copy.deepcopy(layer.plan)
+        if uid is None:
+            return {}
+        return (store or (layer.store if layer else AccountStore())).read(uid, "plan.yaml")
+
+    def account_value(self, uid, key, *, store=None):
+        from module.accounts.layers import AccountLayer
+        from module.accounts.store import AccountStore
+        if self.bound_account == str(uid):
+            return self.get_value(key)
+        store = store or (self._account_layer.store if self._account_layer else AccountStore())
+        row = store.account(uid)
+        if row is None:
+            raise ValueError("找不到账号")
+        layer = AccountLayer(store, row, False, self._account_defaults)
+        layer.rebuild(self.config)
+        return copy.deepcopy(layer.values.get(key, self.config.get(key)))
+
+    def restore_shared(self, key, subkey=None, *, uid=None, store=None):
+        from module.accounts.store import AccountStore
+        layer = self._account_layer
+        store = store or (layer.store if layer else AccountStore(role="ui"))
+        uid = uid or self.bound_account
+        def remove(data):
+            if subkey is None:
+                data.pop(key, None)
+            elif isinstance(data.get(key), dict):
+                data[key].pop(subkey, None)
+                if not data[key]:
+                    del data[key]
+        store.modify(uid, "plan.yaml", remove)
+        if layer and layer.uid == str(uid):
+            self.reload_account_files()
+
+    def account_files(self):
+        from module.accounts.store import AccountStore
+        layer = self._account_layer
+        store = layer.store if layer else AccountStore()
+        files = [store.index_path]
+        if layer:
+            files.extend(store.path(layer.uid, name) for name in ("plan.yaml", "state.yaml"))
+        return tuple(files)
+
+    def reload_account_files(self):
+        layer = self._account_layer
+        if not layer:
+            return
+        if layer.runtime:
+            before = {k: self.get_value(k) for k in self.config} if self._listeners else {}
+            layer.plan = layer.store.read(layer.uid, "plan.yaml")
+            layer.state = layer.store.read(layer.uid, "state.yaml")
+            layer.rebuild(self.config)
+            self._notify_changes(before)
+        else:
+            row = layer.store.account(layer.uid)
+            self.bind_account(layer.uid if row else None, store=layer.store)
+
+    def remaining_power_plan(self):
+        base = self.get_value("power_plan")
+        return self._account_layer.remaining(base) if self._account_layer else base
+
+    def consume_power_plan(self, remaining, *, base):
+        if self._readonly or self.writes_suspended:
+            return
+        layer = self._account_layer
+        if not layer:
+            return self.set_value("power_plan", remaining)
+        layer.guard_state()
+        layer.state = layer.store.modify(layer.uid, "state.yaml",
+            lambda data: data.update(power_progress={"base": base, "remaining": remaining}))
+
+    def _write_shared_values(self, values, *, notify=True):
         _diag("debug", f"set_values: {list(values.keys())}")
         self._load_config(save=False)
         missing = object()
         before = {key: self.config.get(key, missing) for key in values}
+        effective_before = self._previous_values(values) if self._listeners and notify else {}
         for key, value in values.items():
             if isinstance(value, (list, dict, set)):
                 self.config[key] = copy.deepcopy(value)
@@ -616,8 +770,8 @@ class Config(metaclass=SingletonMeta):
                 else:
                     self.config[key] = old
             raise
-        if self._listeners:
-            self._notify_changes(before)
+        self._rebuild_account()
+        self._notify_changes(effective_before)
 
     def save_timestamp(self, key):
         """保存当前时间戳到指定的配置项"""

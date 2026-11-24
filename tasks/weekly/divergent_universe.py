@@ -45,21 +45,23 @@ class DivergentUniverse:
     @staticmethod
     def reset_recorded_run_count(cycle: Optional[Literal["daily", "weekly"]] = None):
         cycles = (cycle,) if cycle else ("daily", "weekly")
+        values = {}
         for current_cycle in cycles:
             count_key, timestamp_key = DivergentUniverse._get_count_config(current_cycle)
-            cfg.set_value(count_key, 0)
-            cfg.set_value(timestamp_key, 0)
+            values.update({count_key: 0, timestamp_key: 0})
+        cfg.set_values(values)
 
     @staticmethod
     def record_completed_run() -> dict:
         now = time.time()
         counts = {}
+        values = {}
         for cycle in ("daily", "weekly"):
             count_key, timestamp_key = DivergentUniverse._get_count_config(cycle)
-            count = DivergentUniverse.get_recorded_run_count(cycle) + 1
-            cfg.set_value(count_key, count)
-            cfg.set_value(timestamp_key, now)
+            count = DivergentUniverse.get_recorded_run_count(cycle, sync=False) + 1
+            values.update({count_key: count, timestamp_key: now})
             counts[cycle] = count
+        cfg.set_values(values)
         return counts
 
     def start(self, universe_type: Optional[Literal["normal", "cycle"]] = None) -> bool:

@@ -21,6 +21,7 @@ from tasks.base.task_steps import GameRecoveryError
 from tasks.power.instance import Instance, TeamPresetUnavailable
 from tasks.power.battle import battle_speed_visible, ensure_double_speed
 from tasks.power.policy import (
+    remaining_plan,
     BATTLE_TIMEOUT, ENTRY_TIMEOUT, DEFEAT_RETRIES, CAVERN, CRIMSON_CALYX, ECHO, GOLDEN_CALYX,
     INSTANCE_LIMITS, ORNAMENT, STAGNANT_SHADOW, BattleDefeat, InstanceTeamUnavailable, PowerError, RelicBagFull,
     SupportDemand, batch_limit, normalize as _normalize,
@@ -615,8 +616,13 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
     borrowed = False
     retries = 0
     cleaned = False
+    completed = 0
     while remaining is None or remaining > 0:
+        from utils.runs import DETAIL_TEXT, publish_detail
         practice = quota == 0
+        total = planned or completed + (min(quota, power // cost) if is_echo else power // cost)
+        if total > completed:
+            publish_detail(DETAIL_TEXT["instance"], name=name, index=completed + 1, total=total)
         waves = limit if remaining is None else min(remaining, limit)
         if practice:
             waves = 1
@@ -672,6 +678,7 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
             continue
 
         demand.won(borrowed)
+        completed += waves
         yield waves
         log.info(f"已结算 {waves} 次")
         previous, retries = waves, 0
@@ -722,7 +729,7 @@ def _run(borrow_for_daily, on_settlement=None):
     def run_instance(instance_type, name, planned):
         return _run_instance(instance_type, name, planned, borrow_for_daily=demand, on_settlement=on_settlement)
 
-    plan = cfg.power_plan
+    plan = remaining_plan(cfg)
     if plan:
         complete = run_plan(cfg, plan, run_instance)
         if not complete or not getattr(cfg, "power_plan_continue", True):
