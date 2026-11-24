@@ -32,7 +32,8 @@ a {
     if result:
         sys.exit(0)
     try:
-        cfg.set_value(base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8"), True)
+        from module.setup.state import save_confirmation
+        save_confirmation(cfg, base64.b64decode("YXV0b191cGRhdGU=").decode("utf-8"), True)
         if sys.platform == 'win32':
             path = os.path.join(os.environ[base64.b64decode("UHJvZ3JhbURhdGE=").decode("utf-8")],base64.b64decode("TWFyY2g3dGhBc3Npc3RhbnQvZGlzY2xhaW1lcg==").decode("utf-8"))
         else:

@@ -87,6 +87,19 @@ def test_config_failure_keeps_running_and_tells_user(marker_root, ui):
     assert "Traceback" in ui.log.error.call_args.args[0]
 
 
+@pytest.mark.parametrize("fails", [False, True])
+def test_unused_config_saves_pending_with_confirmation_once(marker_root, ui, fails):
+    ui.cfg.config = {"game_path": "auto.exe"}
+    ui.cfg._account_defaults = {}
+    if fails:
+        ui.cfg.set_values.side_effect = PermissionError("denied")
+    disclaimer_module.disclaimer(MagicMock())
+    ui.cfg.set_values.assert_called_once_with({AUTO_UPDATE_KEY: True, "setup_wizard_pending": True})
+    ui.cfg.set_value.assert_not_called()
+    assert (marker_dir(marker_root) / "disclaimer").exists() != fails
+    assert ui.info_bar.error.called == fails
+
+
 def test_disclaimer_runs_before_background_threads():
     """disclaimer 可能 sys.exit，QThread 运行时退出会触发 Qt Fatal 中止进程（0xC0000409）。"""
     source = Path(__file__).parents[2] / "app" / "main_window.py"
