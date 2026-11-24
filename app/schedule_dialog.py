@@ -1,13 +1,9 @@
 # coding:utf-8
 from copy import deepcopy
 
-from PySide6.QtCore import Qt, QTime, QSize, QSignalBlocker
-from PySide6.QtGui import QFontMetrics
-from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-                               QTableWidgetItem, QFileDialog, QHeaderView,
-                               QToolButton, QWidget,
-                               QAbstractItemView)
-from qfluentwidgets import TimePicker, BodyLabel, PushButton, PrimaryPushButton, TableWidget, MessageBox
+from PySide6.QtCore import Qt, QTime, QSize
+from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QFileDialog, QToolButton, QWidget
+from qfluentwidgets import TimePicker, BodyLabel, PushButton, MessageBox
 from qfluentwidgets import LineEdit, ComboBox, CheckBox
 from app.components.ascii_spin_box import AsciiSpinBox
 from qfluentwidgets import InfoBar, InfoBarPosition
@@ -20,9 +16,9 @@ import os
 import json
 from module.config import cfg
 from module.localization import tr
+from app.pages.common import is_evernight, style_primary
 from app.common.schedule import (parse_schedule_time, task_timeout_seconds, task_trigger_mode,
-                                 task_weekdays, schedule_weekday_labels, format_task_weekdays,
-                                 scheduled_task_payload, task_launch_block_reason)
+                                 task_weekdays, schedule_weekday_labels, format_task_weekdays)
 
 
 def _strip_jsonc_comments(text: str) -> str:
@@ -112,7 +108,7 @@ class AddEditScheduleDialog(MessageBox):
 
     def __init__(self, parent=None, task=None, scheduled_tasks=None):
         # 使用 MessageBox 的风格初始化（不显示默认内容）
-        super().__init__(tr("添加/编辑定时任务"), "", parent)
+        super().__init__(tr("编辑定时计划") if task else tr("添加定时计划"), "", parent)
         self.task = deepcopy(task) if task else {}
         self._editing_task = task
         self._timeout_edited = False
@@ -130,6 +126,7 @@ class AddEditScheduleDialog(MessageBox):
         self.yesButton.setText(tr('确认'))
         self.cancelButton.setText(tr('取消'))
         self.buttonGroup.setMinimumWidth(480)
+        style_primary(self.yesButton, is_evernight())
 
         # 名称
         self.name_edit = LineEdit(self)
@@ -243,7 +240,11 @@ class AddEditScheduleDialog(MessageBox):
 
         # 组合表单并添加到 textLayout（标签与控件左右排列）
         form = QVBoxLayout()
-        label_width = 100
+        # 各语言共用同一列，给当前语言最长的表单标签留出宽度。
+        labels = (tr("任务名称："), tr("执行星期："), tr("程序路径："), tr("选择任务："), tr("选择流程："),
+                  tr("启动参数："), tr("账号："), tr("超时强制停止："), tr("完成后终止进程："), tr("完成后推送通知："))
+        metrics = self.enable_check.fontMetrics()
+        label_width = max(116, *(metrics.horizontalAdvance(text) + 4 for text in labels))
 
         # 启用（顶部左对齐）
         top_row = QHBoxLayout()
@@ -303,6 +304,27 @@ class AddEditScheduleDialog(MessageBox):
         row.addWidget(self.args_combo)
         row.addWidget(self.workflow_combo)
         form.addLayout(row)
+
+        self.account_row = QWidget(self)
+        account_layout = QHBoxLayout(self.account_row)
+        account_layout.setContentsMargins(0, 0, 0, 0)
+        account_layout.setSpacing(12)
+        account_label = BodyLabel(tr("账号："))
+        account_label.setFixedWidth(label_width)
+        account_layout.addWidget(account_label)
+        self.account_combo = ComboBox(self)
+        self.account_combo.addItem(tr("全部账号轮流"), userData="all")
+        model = getattr(parent, "accountModel", None)
+        self._show_accounts = bool(model and model.active() and model.accounts())
+        if self._show_accounts:
+            for info in model.accounts():
+                self.account_combo.addItem(info.name, userData=info.uid)
+        uid = self.task.get("account") or "all"
+        if self.account_combo.findData(uid) < 0:
+            self.account_combo.addItem(tr("指定的账号不可用"), userData=uid)
+        self.account_combo.setCurrentIndex(self.account_combo.findData(uid))
+        account_layout.addWidget(self.account_combo, 1)
+        form.addWidget(self.account_row)
 
         # 超时与任务完成后操作同一行
         row = QHBoxLayout()
@@ -482,6 +504,7 @@ class AddEditScheduleDialog(MessageBox):
     def _on_program_type_changed(self, text):
         """根据程序类型调整界面：本体 -> 显示任务下拉；外部程序 -> 显示路径与参数输入，并修改标签文本"""
         program_type = self._current_program_type()
+        self.account_row.setVisible(self._show_accounts and program_type == 'self')
         if program_type == 'self':
             self.program_path_edit.setVisible(False)
             self.prog_btn.setVisible(False)
@@ -702,6 +725,10 @@ class AddEditScheduleDialog(MessageBox):
             task['program'] = self.program_path_edit.text().strip() or ''
             task['args'] = self.args_edit.text().strip()
 
+        if program_type == "self" and self._show_accounts:
+            task["account"] = self.account_combo.currentData()
+        elif program_type != "self":
+            task.pop("account", None)
         if program_type != 'workflow':
             task.pop('workflow_name', None)
             task.pop('workflow_step_path', None)
@@ -724,435 +751,3 @@ class AddEditScheduleDialog(MessageBox):
         task['kill_processes'] = kp_list
 
         return task
-
-
-class ScheduleManagerDialog(MessageBox):
-    """基于 MessageBox 的定时任务管理对话框"""
-
-    def __init__(self, parent=None, scheduled_tasks=None, save_callback=None):
-        super().__init__(tr('定时任务配置'), "", parent)
-        self.scheduled_tasks = scheduled_tasks or []
-        self.save_callback = save_callback
-
-        # 清理默认内容
-        try:
-            self.textLayout.removeWidget(self.contentLabel)
-            self.contentLabel.clear()
-        except Exception:
-            pass
-
-        # 按钮调整（只显示一个关闭按钮）
-        self.yesButton.hide()
-        self.cancelButton.setText(tr('关闭'))
-        self.buttonGroup.setMinimumWidth(480)
-
-        # 表格
-        self.table = TableWidget(self)
-        self.table.setColumnCount(6)
-        # 列顺序：启用, 名称, 时间/链式启动, 程序, 参数/任务, 推送通知
-        self.table.setHorizontalHeaderLabels([tr('启用'), tr('名称'), tr('执行计划'), tr('程序'), tr('参数/任务'), tr('通知')])
-        # self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        header = self.table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.Fixed)
-        self.table.setColumnWidth(0, 60)
-        header.setSectionResizeMode(1, QHeaderView.Fixed)
-        self.table.setColumnWidth(1, 160)
-        header.setSectionResizeMode(2, QHeaderView.Fixed)
-        self.table.setColumnWidth(2, 170)
-        header.setSectionResizeMode(3, QHeaderView.Stretch)
-        header.setSectionResizeMode(4, QHeaderView.Fixed)
-        self.table.setColumnWidth(4, 150)
-        header.setSectionResizeMode(5, QHeaderView.Fixed)
-        self.table.setColumnWidth(5, 60)
-        self.table.setMinimumWidth(760)
-        self.table.setMinimumHeight(350)
-        # 只读表格设定：禁止直接编辑，整行选择，单选模式（只能通过按钮编辑）
-        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.table.setSelectionMode(QAbstractItemView.SingleSelection)
-
-        # 操作按钮行（添加/编辑/删除）
-        btn_layout = QHBoxLayout()
-        self.add_btn = PushButton(tr('添加'), self)
-        self.edit_btn = PushButton(tr('编辑'), self)
-        self.move_up_btn = PushButton(tr('上移'), self)
-        self.del_btn = PushButton(tr('删除'), self)
-        self.run_btn = PrimaryPushButton(tr('立即运行'), self)
-        btn_layout.addWidget(self.add_btn)
-        btn_layout.addWidget(self.edit_btn)
-        btn_layout.addWidget(self.move_up_btn)
-        btn_layout.addWidget(self.del_btn)
-        btn_layout.addWidget(self.run_btn)
-
-        # 冲突处理：当定时任务触发且已有任务在运行时如何处理（skip/stop）
-        conflict_label = BodyLabel(tr('冲突：'))
-        # conflict_label.setFixedWidth(90)
-        self.conflict_combo = ComboBox(self)
-        # options: key, label
-        self._conflict_options = [('skip', tr('跳过需要运行的任务')), ('stop', tr('停止正在运行的任务'))]
-        for key, label in self._conflict_options:
-            self.conflict_combo.addItem(label, userData=key)
-        # 设定为配置里保存的值（默认 skip）
-        try:
-            cur = cfg.get_value('scheduled_on_conflict', 'skip')
-            for i in range(self.conflict_combo.count()):
-                if self.conflict_combo.itemData(i) == cur:
-                    self.conflict_combo.setCurrentIndex(i)
-                    break
-        except Exception:
-            pass
-        # 保存设置到配置（用户更改时即时保存）
-        try:
-            self.conflict_combo.currentIndexChanged.connect(lambda i: cfg.set_value('scheduled_on_conflict', self.conflict_combo.itemData(i) or 'skip'))
-        except Exception:
-            pass
-
-        chain_failure_label = BodyLabel(tr('链式失败后：'))
-        self.chain_failure_combo = ComboBox(self)
-        self._chain_failure_options = [
-            (True, tr('继续后续任务')),
-            (False, tr('停止后续任务')),
-        ]
-        for value, label in self._chain_failure_options:
-            self.chain_failure_combo.addItem(label, userData=value)
-        try:
-            cur = cfg.get_value('scheduled_chain_continue_on_failure', True)
-            if isinstance(cur, str):
-                cur = cur.strip().lower() not in ('false', '0', 'no', 'stop')
-            else:
-                cur = bool(cur)
-            for i in range(self.chain_failure_combo.count()):
-                if self.chain_failure_combo.itemData(i) == cur:
-                    self.chain_failure_combo.setCurrentIndex(i)
-                    break
-        except Exception:
-            pass
-        try:
-            self.chain_failure_combo.currentIndexChanged.connect(
-                lambda i: cfg.set_value(
-                    'scheduled_chain_continue_on_failure',
-                    self.chain_failure_combo.itemData(i) if self.chain_failure_combo.itemData(i) is not None else True,
-                )
-            )
-        except Exception:
-            pass
-
-        btn_layout.addWidget(conflict_label)
-        btn_layout.addWidget(self.conflict_combo)
-        btn_layout.addWidget(chain_failure_label)
-        btn_layout.addWidget(self.chain_failure_combo)
-        btn_layout.addStretch()
-
-        # 插入到 textLayout
-        self.textLayout.addWidget(self.table, 0, Qt.AlignmentFlag.AlignTop)
-        self.textLayout.addLayout(btn_layout)
-
-        # 连接
-        self.add_btn.clicked.connect(self._on_add)
-        self.move_up_btn.clicked.connect(self._on_move_up)
-        self.edit_btn.clicked.connect(lambda _checked=False: self._on_edit())
-        self.del_btn.clicked.connect(self._on_delete)
-        self.run_btn.clicked.connect(self._on_run_now)
-        # 双击行打开编辑（等价于按编辑按钮）
-        self.table.cellDoubleClicked.connect(self._on_row_double_clicked)
-
-        # 加载数据
-        self._reload_table()
-
-    def _reload_table(self):
-        selected_row = self.table.currentRow()
-        scroll_position = self.table.verticalScrollBar().value()
-        self.table.setUpdatesEnabled(False)
-        try:
-            self._update_task_rows()
-            if selected_row >= 0 and self.scheduled_tasks:
-                self.table.selectRow(min(selected_row, len(self.scheduled_tasks) - 1))
-            self.table.verticalScrollBar().setValue(scroll_position)
-        finally:
-            self.table.setUpdatesEnabled(True)
-
-    def _update_task_rows(self):
-        self.table.setRowCount(len(self.scheduled_tasks))
-        chain_visuals = self._build_chain_visuals()
-        previous_rows = getattr(self, '_rendered_task_rows', [])
-        rendered_rows = []
-        for i, t in enumerate(self.scheduled_tasks):
-            trigger_mode = task_trigger_mode(t)
-            chain_role = chain_visuals.get(i)
-            row_values = tuple(t.get(field) for field in ('enabled', 'name', 'time', 'program', 'args', 'workflow_name', 'notify'))
-            row_values += (trigger_mode, chain_role, task_weekdays(t))
-            rendered_rows.append(row_values)
-            if i < len(previous_rows) and row_values == previous_rows[i]:
-                continue
-            # 启用（第一列）
-            enabled_widget = self.table.cellWidget(i, 0)
-            if enabled_widget is None:
-                enabled_widget = QWidget()
-                enabled_layout = QHBoxLayout(enabled_widget)
-                enabled_layout.setContentsMargins(0, 0, 0, 0)
-                enabled_layout.setSpacing(0)
-                enabled_widget.setContentsMargins(0, 0, 0, 0)
-                enabled_check = CheckBox('', enabled_widget)
-                enabled_check.stateChanged.connect(lambda _state, row=i: self._on_enabled_toggled(row))
-                enabled_layout.addWidget(enabled_check, 0, Qt.AlignmentFlag.AlignCenter)
-                self.table.setCellWidget(i, 0, enabled_widget)
-            else:
-                enabled_check = enabled_widget.findChild(CheckBox)
-            with QSignalBlocker(enabled_check):
-                enabled_check.setChecked(bool(t.get('enabled', True)))
-            # 名称
-            name_display = t.get('name', '')
-            if chain_role == 'child':
-                name_display = f"-> {name_display}"
-            name_item = QTableWidgetItem(name_display)
-            self.table.setItem(i, 1, name_item)
-            # 时间列：按时任务显示时间，链式任务显示启动方式
-            time_item = QTableWidgetItem()
-            if trigger_mode == 'time':
-                weekdays_display = format_task_weekdays(t)
-                plan_font = self.table.font()
-                plan_font.setBold(True)
-                metrics = QFontMetrics(plan_font)
-                weekdays_summary = metrics.elidedText(weekdays_display, Qt.TextElideMode.ElideRight, self.table.columnWidth(2) - 20)
-                time_item.setText(f"{t.get('time', '')}\n{weekdays_summary}")
-                time_item.setToolTip(f"{weekdays_display} {t.get('time', '')}")
-            else:
-                time_item.setText(tr('链式启动'))
-            self.table.setItem(i, 2, time_item)
-            # 程序（本体、流程编排显示类型，否则显示路径或文件名）
-            prog = t.get('program', '')
-            if prog == 'self':
-                prog_display = tr('本体')
-                prog_item = QTableWidgetItem(prog_display)
-            elif prog == 'workflow':
-                prog_display = tr('流程编排')
-                prog_item = QTableWidgetItem(prog_display)
-            else:
-                prog_str = str(prog)
-                # 判断是否为路径格式（绝对路径或包含路径分隔符），若是则仅显示文件名并在 tooltip 显示完整路径
-                if os.path.isabs(prog_str) or ('\\' in prog_str) or ('/' in prog_str):
-                    prog_display = os.path.basename(prog_str) or prog_str
-                    prog_item = QTableWidgetItem(prog_display)
-                    prog_item.setToolTip(prog_str)
-                else:
-                    prog_display = prog_str
-                    prog_item = QTableWidgetItem(prog_display)
-            self.table.setItem(i, 3, prog_item)
-            # 参数/任务（如果是本体，显示本地化任务名）
-            args = t.get('args', '')
-            if prog == 'self':
-                args_display = tr(TASK_NAMES.get(args, args))
-            elif prog == 'workflow':
-                args_display = t.get('workflow_name') or args
-            else:
-                args_display = args
-            args_item = QTableWidgetItem(args_display)
-            self.table.setItem(i, 4, args_item)
-            notify_item = QTableWidgetItem(tr('是') if t.get('notify', False) else tr('否'))
-            self.table.setItem(i, 5, notify_item)
-
-            if trigger_mode == 'time':
-                self._apply_time_task_visual_style(
-                    [name_item, time_item, prog_item, args_item, notify_item]
-                )
-
-        self._rendered_task_rows = rendered_rows
-        self.table.resizeRowsToContents()
-        self.table.doItemsLayout()
-        self.table.viewport().update()
-
-    def _build_chain_visuals(self):
-        visuals = {}
-        row = 0
-        total = len(self.scheduled_tasks)
-
-        while row < total:
-            trigger_mode = task_trigger_mode(self.scheduled_tasks[row])
-            if trigger_mode != 'time':
-                row += 1
-                continue
-
-            end_row = row + 1
-            while end_row < total:
-                next_mode = task_trigger_mode(self.scheduled_tasks[end_row])
-                if next_mode != 'chain':
-                    break
-                end_row += 1
-
-            if end_row - row >= 2:
-                visuals[row] = 'root'
-                for child_row in range(row + 1, end_row):
-                    visuals[child_row] = 'child'
-
-            row = end_row
-
-        return visuals
-
-    def _apply_time_task_visual_style(self, items):
-        for item in items:
-            if item is None:
-                continue
-            font = item.font()
-            font.setBold(True)
-            item.setFont(font)
-
-    def _on_enabled_toggled(self, row: int):
-        if row < 0 or row >= len(self.scheduled_tasks):
-            return
-        enabled_widget = self.table.cellWidget(row, 0)
-        if enabled_widget is None:
-            return
-        enabled_check = enabled_widget.findChild(CheckBox)
-        if enabled_check is None:
-            return
-        self.scheduled_tasks[row]['enabled'] = bool(enabled_check.isChecked())
-        if self.save_callback:
-            self.save_callback(self.scheduled_tasks)
-
-    def _on_add(self):
-        dlg = AddEditScheduleDialog(self, scheduled_tasks=self.scheduled_tasks)
-        if dlg.exec() == QDialog.DialogCode.Accepted:
-            task = dlg.get_task()
-            self.scheduled_tasks.append(task)
-            self._reload_table()
-            if self.save_callback:
-                self.save_callback(self.scheduled_tasks)
-
-    def _move_task(self, row: int, target_row: int):
-        if row < 0 or row >= len(self.scheduled_tasks):
-            return False
-        if target_row < 0 or target_row >= len(self.scheduled_tasks):
-            return False
-        if row == target_row:
-            return False
-
-        task = self.scheduled_tasks.pop(row)
-        self.scheduled_tasks.insert(target_row, task)
-        self._reload_table()
-        self.table.selectRow(target_row)
-        self.table.setCurrentCell(target_row, 1)
-        if self.save_callback:
-            self.save_callback(self.scheduled_tasks)
-        return True
-
-    def _on_move_up(self):
-        row = self.table.currentRow()
-        if row < 0 or row >= len(self.scheduled_tasks):
-            m = MessageBox(tr('提示'), tr('请先选择要上移的任务'), self)
-            m.cancelButton.hide()
-            m.yesButton.setText(tr('确认'))
-            m.exec()
-            return
-        if row == 0:
-            m = MessageBox(tr('提示'), tr('当前任务已经位于最上方'), self)
-            m.cancelButton.hide()
-            m.yesButton.setText(tr('确认'))
-            m.exec()
-            return
-        self._move_task(row, row - 1)
-
-    def _on_edit(self, row=None):
-        if isinstance(row, bool):
-            row = None
-        if row is None:
-            row = self.table.currentRow()
-        if row < 0 or row >= len(self.scheduled_tasks):
-            m = MessageBox(tr('提示'), tr('请先选择要编辑的任务'), self)
-            m.cancelButton.hide()
-            m.yesButton.setText(tr('确认'))
-            m.exec()
-            return
-        task = self.scheduled_tasks[row]
-        dlg = AddEditScheduleDialog(self, task=task, scheduled_tasks=self.scheduled_tasks)
-        if dlg.exec() == QDialog.DialogCode.Accepted:
-            self.scheduled_tasks[row] = dlg.get_task()
-            self._reload_table()
-            if self.save_callback:
-                self.save_callback(self.scheduled_tasks)
-
-    def _on_delete(self):
-        row = self.table.currentRow()
-        if row < 0 or row >= len(self.scheduled_tasks):
-            m = MessageBox(tr('提示'), tr('请先选择要删除的任务'), self)
-            m.cancelButton.hide()
-            m.yesButton.setText(tr('确认'))
-            m.exec()
-            return
-        m = MessageBox(tr('确认'), tr('确认删除选中的定时任务？'), self)
-        m.yesButton.setText(tr('确认'))
-        m.cancelButton.setText(tr('取消'))
-        if m.exec():
-            self.scheduled_tasks.pop(row)
-            self._reload_table()
-            if self.save_callback:
-                self.save_callback(self.scheduled_tasks)
-
-    def _on_run_now(self):
-        """立即运行所选任务（带确认），触发流程与 _checkScheduledTime 保持一致。"""
-        row = self.table.currentRow()
-        if row < 0 or row >= len(self.scheduled_tasks):
-            m = MessageBox(tr('提示'), tr('请先选择要运行的任务'), self)
-            m.cancelButton.hide()
-            m.yesButton.setText(tr('确认'))
-            m.exec()
-            return
-        t = self.scheduled_tasks[row]
-        if reason := task_launch_block_reason(scheduled_task_payload(t), cfg):
-            info = MessageBox(tr('提示'), reason, self)
-            info.cancelButton.hide()
-            info.yesButton.setText(tr('确认'))
-            info.exec()
-            return
-        # 确认
-        m = MessageBox(tr('确认'), tr('确认立即运行任务 "{name}" 吗？').format(name=t.get("name", "")), self)
-        m.yesButton.setText(tr('确认'))
-        m.cancelButton.setText(tr('取消'))
-        if not m.exec():
-            return
-
-        try:
-            parent = self.parent()
-            # 启动任务
-            if hasattr(parent, 'runScheduledTask'):
-                # 检查是否有任务正在运行
-                if parent.isTaskRunning():
-                    InfoBar.warning(
-                        title=tr('任务正在运行'),
-                        content=tr("请先停止当前任务后再启动新任务"),
-                        orient=Qt.Horizontal,
-                        isClosable=True,
-                        position=InfoBarPosition.TOP,
-                        duration=5000,
-                        parent=parent
-                    )
-                    # 切换到日志界面
-                    try:
-                        self.close()
-                    except Exception:
-                        pass
-                else:
-                    if parent.runScheduledTask(t, tasks=self.scheduled_tasks, manual=True):
-                        try:
-                            self.close()
-                        except Exception:
-                            pass
-            else:
-                info = MessageBox(tr('错误'), tr('无法运行任务：父组件不支持 runScheduledTask'), self)
-                info.cancelButton.hide()
-                info.yesButton.setText(tr('确认'))
-                info.exec()
-        except Exception as e:
-            m = MessageBox(tr('错误'), tr('启动任务失败：{error}').format(error=e), self)
-            m.cancelButton.hide()
-            m.yesButton.setText(tr('确认'))
-            m.exec()
-
-    def _on_row_double_clicked(self, row: int, column: int):
-        """双击表格任意单元格时触发编辑（等效于按编辑按钮）。"""
-        # 保护性检查
-        if row < 0 or row >= self.table.rowCount():
-            return
-        # 选中该行并打开编辑对话框
-        self.table.selectRow(row)
-        self.table.setCurrentCell(row, 1)
-        self._on_edit(row)

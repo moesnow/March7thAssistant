@@ -39,7 +39,7 @@ def build(host):
         "after_finish",
         FIF.POWER_BUTTON,
         tr('任务完成后'),
-        tr('“退出”会关闭游戏。需要定时运行时，请打开「运行」页的「定时任务」。'),
+        tr('“退出”会关闭游戏。需要定时运行时，请打开「运行」页的「定时计划」。'),
         texts={tr('无'): 'None', tr('退出'): 'Exit', tr('关机'): 'Shutdown', tr('睡眠'): 'Sleep', tr('休眠'): 'Hibernate', tr('重启'): 'Restart', tr('注销'): 'Logoff', tr('关闭显示器'): 'TurnOffDisplay', tr('运行脚本'): 'RunScript', tr('循环'): 'Loop'},
         parent=host.card_parent,
     )

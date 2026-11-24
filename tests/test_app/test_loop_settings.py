@@ -1,11 +1,3 @@
-import sys
-
-import pytest
-
-
-pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="原生设置界面仅在 Windows 验证")
-
-
 def test_settings_load_migrated_loop_config(qtbot, page_config, content_window, monkeypatch):
     from unittest.mock import Mock
     from app.navigation import navigate
@@ -20,8 +12,8 @@ def test_settings_load_migrated_loop_config(qtbot, page_config, content_window, 
     assert page.pages["game"].host.refreshHourEnableCard.configname == "refresh_hour"
     assert find_setting("loop_mode") is None
     content_window.switchTo = Mock()
-    content_window.logInterface._openScheduleManager = Mock()
+    content_window.logInterface = Mock()
     monkeypatch.setattr("app.navigation.highlight", Mock())
     content_window.logInterface.manageScheduleButton = Mock()
     assert navigate(content_window, "setting:scheduled_time")
-    content_window.logInterface._openScheduleManager.assert_called_once()
+    content_window.logInterface.showSchedule.assert_called_once()
