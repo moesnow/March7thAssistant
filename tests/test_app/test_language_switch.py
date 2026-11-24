@@ -13,13 +13,18 @@ from module import localization
 
 @pytest.fixture
 def log_page(qtbot, monkeypatch):
-    from app.log_interface import LogInterface
-    monkeypatch.setattr(LogInterface, '_LogInterface__initShortcut', lambda _: None)
-    monkeypatch.setattr(LogInterface, '_migrate_legacy_schedule', lambda _: None)
-    monkeypatch.setattr(LogInterface, '_startScheduleTimer', lambda _: None)
-    monkeypatch.setattr(LogInterface, '_initOverlayMonitor', lambda _: None)
-    page = LogInterface()
-    qtbot.addWidget(page)
+    from app.content.run_controller import RunController
+    monkeypatch.setattr(RunController, '_RunController__initShortcut', lambda _: None)
+    monkeypatch.setattr(RunController, '_migrate_legacy_schedule', lambda _: None)
+    monkeypatch.setattr(RunController, '_startScheduleTimer', lambda _: None)
+    monkeypatch.setattr(RunController, '_initOverlayMonitor', lambda _: None)
+    from PySide6.QtWidgets import QWidget
+    from app.run_interface import RunInterface
+    host = QWidget()
+    qtbot.addWidget(host)
+    host.runController = page = RunController(host)
+    host.logInterface = RunInterface(host)
+    page.widget = host.logInterface
     original = localization.get_current_language()
     yield page
     localization.load_language(original)
@@ -33,27 +38,22 @@ def log_page(qtbot, monkeypatch):
     ('running', True, '已暂停'), ('completed', False, '任务完成'), ('stopped', False, '任务已停止'),
 ])
 def test_log_retranslates_all_controls_without_touching_runtime(log_page, monkeypatch, state, paused, expected):
-    from app import log_interface as module
+    from app.content import run_controller as module
     page = log_page
     page._task_status = state
     page._task_display_name = '完整运行'
     page._task_name_is_msgid = True
     page._pause_supported = True
     page._pause_state = module.STATE_PAUSED if paused else module.STATE_RUNNING
-    page.process = object()
-    process = page.process
-    page._buffered_logs = 'hidden log\n'
-    page.logTextEdit.setPlainText('original log\npartial')
-    cursor = page.logTextEdit.textCursor()
-    cursor.setPosition(3)
-    cursor.setPosition(7, QTextCursor.MoveMode.KeepAnchor)
-    page.logTextEdit.setTextCursor(cursor)
-    page.stopButton.setEnabled(True)
-    page.pauseButton.setEnabled(False)  # Cooperative stop may intentionally disable it.
+    process = QProcess(page)
+    page.process = process
+    page.appendLog("original log\npartial")
+    page._preview = ()
+    page.current_task = "main"
     timeout = QTimer(page)
     timeout.start(60000)
     page._timeout_timer = timeout
-    page._active_task_chain = [('sentinel', {})]
+    page._active_task_chain = [({"name": "sentinel"}, {})]
     page._pending_post_action = 'sentinel'
     page._last_triggered_ts = {'id': 123}
     page._paused_timeout_remaining = 777
@@ -66,52 +66,48 @@ def test_log_retranslates_all_controls_without_touching_runtime(log_page, monkey
     # Synthetic translations exercise every label even if two catalogs share text.
     for code in ('en', 'ja', 'zh'):
         monkeypatch.setattr(module, 'tr', lambda text, prefix=code: prefix + ':' + text)
-        page.retranslateUi()
-        rendered = code + ':' + expected
-        if state == 'running' and not paused:
-            rendered = code + ':正在运行：' + code + ':完整运行'
-        assert page.statusLabel.text() == rendered
-        assert page.titleLabel.text() == code + ':任务日志'
-        assert page.stopButton.text().startswith(code + ':停止任务')
-        assert page.pauseButton.text().startswith(code + (':继续任务' if paused else ':暂停任务'))
-        assert page.pauseButton.toolTip() == code + ':仅内置任务支持暂停，暂停后脚本将停止一切操作'
-        assert page.logOverlayLabel.text() == code + ':在游戏内显示日志'
-        assert page.logOverlaySwitch.accessibleName() == code + ':在游戏内显示日志'
-        assert page.logOverlaySwitch.toolTip() == code + ':在游戏内显示日志'
-        assert page.logOverlaySwitch.onText == code + ':开'
-        assert page.logOverlaySwitch.offText == code + ':关'
-        assert page.manageScheduleButton.text() == code + ':定时任务'
-        assert page.manageScheduleButton.toolTip() == code + ':已启用 0 个按时任务，点击配置'
-        assert page.scheduleStatusLabel.text() == code + ':尚未配置定时任务'
-        assert page.logTextEdit.toPlainText() == 'original log\npartial'
-        assert page.logTextEdit.textCursor().selectedText() == 'gina'
-        assert page._buffered_logs == 'hidden log\n'
+        from app.run import cards
+        from app import run_interface
+        monkeypatch.setattr(cards, "tr", module.tr)
+        monkeypatch.setattr(run_interface, "tr", module.tr)
+        page.widget.retranslateUi()
+        card = page.widget.currentPage.card
+        assert page.widget.titleLabel.text() == code + ":运行"
+        assert card.startButton.text() == code + ":开始完整运行"
+        assert card.overlayLabel.text() == code + ":在游戏内显示日志"
+        if state == "running":
+            assert page.view().title == code + ":完整运行"
+            assert card.pauseButton.text().startswith(code + (":继续" if paused else ":暂停"))
+            assert card.stopButton.text().startswith(code + ":停止")
+        else:
+            assert page.view().state == "idle"
+        assert [e.text for e in page.log_entries()] == ["original log"]
+        assert page._parser.partial == "partial"
         assert page.process is process
         assert page._timeout_timer is timeout and timeout.isActive()
-        assert page._active_task_chain == [('sentinel', {})]
+        assert page._active_task_chain == [({'name': 'sentinel'}, {})]
         assert page._last_triggered_ts == {'id': 123}
         assert page._paused_timeout_remaining == 777
-        assert page.stopButton.isEnabled() and not page.pauseButton.isEnabled()
     commands.assert_not_called()
     config_writes.assert_not_called()
     hooks.assert_not_called()
 
 
 def test_resume_uses_new_language_and_custom_name_is_not_translated(log_page, monkeypatch):
-    from app import log_interface as module
+    from app.content import run_controller as module
     page = log_page
     page._setRunningStatus('完整运行', translate_name=True)
     page._pause_supported = True
     page._pause_state = module.STATE_PAUSED
     page._syncPauseUi()
     localization.load_language('en_US')
-    page.retranslateUi()
-    assert page.statusLabel.text() == localization.tr('已暂停')
+    page.widget.retranslateUi()
+    assert page.view().state == 'paused'
     page._pause_state = module.STATE_RUNNING
     page._syncPauseUi()
-    assert page.statusLabel.text() == localization.tr('正在运行：{name}').format(name=localization.tr('完整运行'))
+    assert page.view().title == localization.tr('完整运行')
     page._setRunningStatus('完整运行')  # Same characters, but explicitly user data.
-    assert page.statusLabel.text() == localization.tr('正在运行：{name}').format(name='完整运行')
+    assert page.view().title == '完整运行'
 
 
 @pytest.fixture
@@ -144,10 +140,10 @@ def window(qtbot, monkeypatch, tmp_path, request):
     else:
         monkeypatch.setattr(module.MainWindow, 'initSystemTray', lambda self: setattr(self, '_tray_actions', [Mock() for _ in range(4)]))
     monkeypatch.setattr(module.MainWindow, 'closeEvent', lambda self, event: event.accept())
-    monkeypatch.setattr(module.LogInterface, '_LogInterface__initShortcut', lambda _: None)
-    monkeypatch.setattr(module.LogInterface, '_migrate_legacy_schedule', lambda _: None)
-    monkeypatch.setattr(module.LogInterface, '_startScheduleTimer', lambda _: None)
-    monkeypatch.setattr(module.LogInterface, '_initOverlayMonitor', lambda _: None)
+    monkeypatch.setattr(module.RunController, '_RunController__initShortcut', lambda _: None)
+    monkeypatch.setattr(module.RunController, '_migrate_legacy_schedule', lambda _: None)
+    monkeypatch.setattr(module.RunController, '_startScheduleTimer', lambda _: None)
+    monkeypatch.setattr(module.RunController, '_initOverlayMonitor', lambda _: None)
     localization.load_language('zh_CN')
     cfg.ui_language_now = 'zh_CN'
     page = module.MainWindow(start_minimized_to_tray=True)
@@ -157,8 +153,8 @@ def window(qtbot, monkeypatch, tmp_path, request):
     yield page
     page._language_change_timer.stop()
     page.hide()
-    if page.logInterface._log_overlay:
-        page.logInterface._log_overlay.deleteLater()
+    if page.runController._log_overlay:
+        page.runController._log_overlay.deleteLater()
     if getattr(page, '_fluent_translator', None):
         QApplication.instance().removeTranslator(page._fluent_translator)
     localization.load_language(original)
@@ -210,9 +206,9 @@ def test_actual_language_combo_keeps_settings_tab_scroll_and_expansion(window, q
     route_events = []
     window.stackedWidget.currentChanged.connect(route_events.append)
     log = window.logInterface
-    log.logTextEdit.setPlainText('do not discard this log')
+    log.controller.appendLog('do not discard this log\n')
     process = QProcess(log)
-    log.process = process
+    log.controller.process = process
     process.start(sys.executable, ['-u', '-c', 'import time; time.sleep(60)'])
     assert process.waitForStarted(5000)
     pid = process.processId()
@@ -226,9 +222,9 @@ def test_actual_language_combo_keeps_settings_tab_scroll_and_expansion(window, q
             assert window.settingInterface.currentCategory() == 'game'
             assert window.settingInterface.pages["game"].verticalScrollBar().value() == 80
             assert window.settingInterface.pages["game"].host.updateViaLauncherEnableCard.isExpand
-            assert window.logInterface is log and log.process is process
+            assert window.logInterface is log and log.controller.process is process
             assert process.processId() == pid and process.state() == QProcess.Running
-            assert log.logTextEdit.toPlainText() == 'do not discard this log'
+            assert log.controller.log_entries()[-1].text == 'do not discard this log'
         assert route_events == []
         history.assert_not_called()
     finally:
@@ -296,11 +292,10 @@ def test_constructor_failure_keeps_old_page_and_allows_retry(window, qtbot, monk
 
 
 def test_scheduled_summary_retranslates_without_rearming_schedule(log_page, monkeypatch):
-    from app import log_interface as module
-    from PySide6.QtCore import QDateTime, QDate, QTime
+    from app.content import run_controller as module
     tasks = [{'id': 'keep', 'enabled': True, 'trigger_mode': 'time', 'time': '12:30'}]
-    scheduled = QDateTime(QDate(2026, 11, 9), QTime(12, 30))
-    monkeypatch.setattr(module, 'next_scheduled_datetime', lambda task, now: scheduled)
+    from datetime import datetime
+    monkeypatch.setattr(log_page.widget.schedule, 'now', lambda: datetime(2026, 11, 9, 4))
     original_get = module.cfg.get_value
     monkeypatch.setattr(module.cfg, 'get_value', lambda key, default=None: tasks if key == 'scheduled_tasks' else original_get(key, default))
     log_page._last_triggered_ts = {'keep': 1234}
@@ -308,11 +303,9 @@ def test_scheduled_summary_retranslates_without_rearming_schedule(log_page, monk
     timer = log_page._schedule_timer
     for code in ('en_US', 'ja_JP', 'ko_KR', 'zh_TW', 'zh_CN'):
         localization.load_language(code)
-        log_page.retranslateUi()
-        assert log_page.manageScheduleButton.text() == localization.tr('定时任务({count})').format(count=1)
-        assert log_page.scheduleStatusLabel.text().startswith(localization.tr('下次：{time}').split('{time}')[0])
-        assert '11-09' in log_page.scheduleStatusLabel.text()
-        assert '12:30' in log_page.scheduleStatusLabel.text()
+        log_page.widget.retranslateUi()
+        assert log_page.widget.segment.items["schedule"].text() == localization.tr("定时计划") + " 1"
+        assert localization.tr("今天 {time}").format(time="12:30") in log_page.widget.nextLabel.text()
         assert log_page._schedule_timer is timer
         assert log_page._last_triggered_ts == {'keep': 1234}
 
@@ -492,7 +485,7 @@ def test_config_reload_failure_disposes_unused_settings(window, monkeypatch, fai
     from module import notification
     monkeypatch.setattr(module.cfg, '_load_config', Mock())
     monkeypatch.setattr(notification, 'init_notifiers', Mock())
-    monkeypatch.setattr(window.logInterface, 'reloadConfigState', Mock())
+    monkeypatch.setattr(window.runController, 'reloadConfigState', Mock())
     warning = Mock()
     monkeypatch.setattr(module.InfoBar, 'warning', warning)
     method = '_refreshHints' if failure_stage == 'constructor' else 'restoreViewState'
@@ -563,7 +556,7 @@ def test_config_reload_refreshes_overview_and_tools_for_new_backend(window, monk
 
 @pytest.mark.parametrize('checked', [False, True])
 def test_switch_button_visible_text_refreshes_without_toggling(log_page, qtbot, monkeypatch, checked):
-    from app import log_interface
+    from app.content import run_controller
     from app.card import autoplot_setting_card
     from module.config import cfg
     from qfluentwidgets import FluentIcon
@@ -576,22 +569,26 @@ def test_switch_button_visible_text_refreshes_without_toggling(log_page, qtbot, 
     automatic = autoplot_setting_card.AutoPlotSettingCard(FluentIcon.CHAT, '自动对话')
     qtbot.addWidget(automatic)
     automatic.show()
-    log_page.show()
+    log_page.widget.show()
     qtbot.wait(1)
-    monkeypatch.setattr(log_interface, 'tr', lambda text: 'new:' + text)
+    from app.run import cards
+    monkeypatch.setattr(cards, 'tr', lambda text: 'new:' + text)
     monkeypatch.setattr(autoplot_setting_card, 'tr', lambda text: 'new:' + text)
-    switches = [automatic.switchButton, log_page.logOverlaySwitch]
+    card = log_page.widget.currentPage.card
+    log_page._overlay_enabled = checked
+    switches = [automatic.switchButton, card.overlaySwitch]
     toggled = Mock()
     for switch in switches:
         switch.blockSignals(True)
         switch.setChecked(checked)
         switch.blockSignals(False)
         switch.checkedChanged.connect(toggled)
-    log_page.retranslateUi()
+    log_page.widget.retranslateUi()
     automatic.retranslateUi()
     for switch in switches:
         assert switch.isChecked() == checked
-        assert switch.label.text() == 'new:' + ('开' if checked else '关')
+    assert automatic.switchButton.label.text() == 'new:' + ('开' if checked else '关')
+    assert card.overlaySwitch.accessibleName() == 'new:在游戏内显示日志'
     toggled.assert_not_called()
     cfg.set_value.assert_not_called()
     cfg.set_values.assert_not_called()
@@ -600,7 +597,8 @@ def test_switch_button_visible_text_refreshes_without_toggling(log_page, qtbot, 
 @pytest.mark.parametrize('selected_path', [None, (0,), (1,), (2, 0)])
 def test_generated_workflow_status_retranslates_snapshot_and_preserves_custom_names(
         log_page, qtbot, monkeypatch, selected_path):
-    from app import log_interface as log_module, workflow_interface as workflow_module
+    from app.content import run_controller as log_module
+    from app import workflow_interface as workflow_module
     from module.workflow import (build_workflow_task, get_workflow_step_by_path,
                                  normalize_workflow, summarize_step)
 
@@ -643,14 +641,14 @@ def test_generated_workflow_status_retranslates_snapshot_and_preserves_custom_na
         if original_step is not None:
             expected_name += ' - ' + summarize_step(original_step)[0]
         expected = localization.tr('正在运行：{name}').format(name=expected_name)
-        log_page.retranslateUi()
-        assert log_page.statusLabel.text() == expected
+        log_page.widget.retranslateUi()
+        assert log_page.view().title == expected_name
         log_page._pause_state = log_module.STATE_PAUSED
         log_page._syncPauseUi()
-        assert log_page.statusLabel.text() == localization.tr('已暂停')
+        assert log_page.view().state == 'paused'
         log_page._pause_state = log_module.STATE_RUNNING
         log_page._syncPauseUi()
-        assert log_page.statusLabel.text() == expected
+        assert log_page.view().title == expected_name
         assert log_page.process is process
         # 调用方修改任务字典也不能改掉已经启动的任务显示。
         task['workflow_display']['workflow_name'] = 'Edited task'
@@ -663,11 +661,10 @@ def test_generated_workflow_status_retranslates_snapshot_and_preserves_custom_na
     log_page.startTask(custom)
     for language in ('en_US', 'ja_JP'):
         localization.load_language(language)
-        log_page.retranslateUi()
-        assert log_page.statusLabel.text() == localization.tr('正在运行：{name}').format(name=original_name)
+        log_page.widget.retranslateUi()
+        assert log_page.view().title == original_name
     log_page._setRunningStatus('完整运行', translate_name=True)
-    assert log_page.statusLabel.text() == localization.tr('正在运行：{name}').format(
-        name=localization.tr('完整运行'))
+    assert log_page.view().title == localization.tr('完整运行')
 
 
 @pytest.mark.parametrize('page_name,label_name', [

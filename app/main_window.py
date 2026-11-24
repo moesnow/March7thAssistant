@@ -20,9 +20,10 @@ from .tools_interface import ToolsInterface
 from .workflow_interface import WorkflowInterface
 from .setting_interface import SettingInterface
 from .task_interface import TaskInterface
-from .pages.accounts import AccountsInterface
+from .accounts_interface import AccountsInterface
 from .pages.nav_search import NavigationSearchBox
-from .log_interface import LogInterface
+from .content.run_controller import RunController
+from .run_interface import RunInterface
 from .common.signal_bus import signalBus
 from .common.evernight import EvernightEasterEgg
 from .common.evernight_artwork import evernight_artwork
@@ -277,7 +278,7 @@ class MainWindow(FluentWindow):
         """执行启动时指定的任务"""
         if self.startup_task:
             from tasks.base.tasks import start_task
-            start_task(self.startup_task)
+            start_task({"program": "self", "args": self.startup_task, "trigger": "startup", "account": "all"})
 
     def initWindow(self):
         # 开启 “在标题栏和窗口边框上显示强调色” 后，会导致窗口顶部出现异色横条 bug 已经修复
@@ -437,9 +438,9 @@ class MainWindow(FluentWindow):
     def setDetectedUpdateVersion(self, version: str | None):
         self.detected_update_version = version or None
         self._refreshWindowTitleBar()
-        if hasattr(self, 'logInterface') and self.logInterface:
+        if hasattr(self, 'runController') and self.runController:
             try:
-                self.logInterface.setDetectedUpdateVersion(self.detected_update_version)
+                self.runController.setDetectedUpdateVersion(self.detected_update_version)
             except Exception:
                 pass
 
@@ -554,12 +555,15 @@ class MainWindow(FluentWindow):
             checkUpdate(self)
 
     def initInterface(self):
+        from app.content.account_model import AccountModel
+        self.accountModel = AccountModel(self)
         self.homeInterface = OverviewInterface(self)
         self.helpInterface = HelpInterface(self)
         self.warpInterface = WarpInterface(self)
         self.toolsInterface = ToolsInterface(self)
         self.workflowInterface = WorkflowInterface(self)
-        self.logInterface = LogInterface(self)
+        self.runController = RunController(self)
+        self.logInterface = RunInterface(self)
         self.homeInterface.attachModel(OverviewModel(self, config_changed=self.config_watcher.request_check))
         from module.search import SearchIndex
         self._search_popup = None
@@ -568,6 +572,13 @@ class MainWindow(FluentWindow):
         self.taskInterface = TaskInterface(self)
         self.accountsInterface = AccountsInterface(self)
         self.settingInterface = SettingInterface(self)
+        self.accountModel.bindingChanged.connect(self._accountBindingChanged)
+        self.accountModel.changed.connect(self.homeInterface.model.request_refresh)
+        self.accountModel.changed.connect(self.runController.changed)
+        self.accountModel.changed.connect(self.scheduleModel.changed)
+        self.runHistory.changed.connect(self.accountModel.refresh)
+        self.runController.taskFinished.connect(self.accountModel.refresh)
+        self.runController.sync_records()
 
         # 连接任务启动信号
         signalBus.startTaskSignal.connect(self._onStartTask)
@@ -576,10 +587,10 @@ class MainWindow(FluentWindow):
         # 连接 UI 语言改变信号
         signalBus.uiLanguageChanged.connect(self._on_ui_language_changed)
         # 连接任务完成信号
-        self.logInterface.taskSequenceFinished.connect(self._onTaskFinished)
-        self.logInterface.taskStarted.connect(self._cancelTaskExit)
+        self.runController.taskSequenceFinished.connect(self._onTaskFinished)
+        self.runController.taskStarted.connect(self._cancelTaskExit)
         # 连接自动对话切换信号
-        self.logInterface.autoplotToggleRequested.connect(self._onAutoplotToggleRequested)
+        self.runController.autoplotToggleRequested.connect(self._onAutoplotToggleRequested)
 
     def initNavigation(self):
         navigation = self.navigationInterface
@@ -588,6 +599,11 @@ class MainWindow(FluentWindow):
         navigation.setMenuButtonVisible(False)
         navigation.setExpandWidth(232)
         navigation.panel.vBoxLayout.insertSpacing(0, 42)
+        from .accounts.nav_card import AccountNavCard
+        self.accountNavCard = AccountNavCard(self)
+        navigation.addWidget("accountsInterface", self.accountNavCard,
+                             lambda: self.openAccountSwitcher(self.accountNavCard), NavigationItemPosition.TOP)
+        self.accountModel.changed.connect(self._refreshAccountNavigation)
         self.searchBox = NavigationSearchBox(self)
         navigation.addWidget('searchBox', self.searchBox, self.openSearch, NavigationItemPosition.TOP)
         self.addSubInterface(self.homeInterface, FIF.HOME, tr('总览'))
@@ -619,7 +635,7 @@ class MainWindow(FluentWindow):
             ).exec(),
             selectable=False, position=NavigationItemPosition.BOTTOM
         )
-        self.addSubInterface(self.accountsInterface, FIF.PEOPLE, tr('账号'), position=NavigationItemPosition.BOTTOM)
+        self.stackedWidget.addWidget(self.accountsInterface)
         self._refreshAccountNavigation()
 
         # 回调每次读取当前实例，替换设置页时不删除导航项或污染导航历史。
@@ -789,7 +805,7 @@ class MainWindow(FluentWindow):
             )
             return
         # 检查是否有任务正在运行
-        if self.logInterface.isTaskRunning():
+        if self.runController.isTaskRunning():
             InfoBar.warning(
                 title=tr('任务正在运行'),
                 content=tr("请先停止当前任务后再启动新任务"),
@@ -807,7 +823,7 @@ class MainWindow(FluentWindow):
         # 切换到日志界面
         self.switchTo(self.logInterface)
         # 启动任务
-        self.logInterface.startTask(command)
+        self.runController.startTask(command)
 
     def startFullTask(self):
         """启动完整运行任务"""
@@ -815,11 +831,33 @@ class MainWindow(FluentWindow):
         start_task("main")
 
     def _refreshAccountNavigation(self):
-        from app.content.visibility import page_visible
-        available = page_visible("accounts")
-        self.navigationInterface.widget("accountsInterface").setVisible(available)
-        if not available and self.stackedWidget.currentWidget() is self.accountsInterface:
-            self.switchTo(self.homeInterface)
+        self.accountNavCard.setAccount(*self.accountModel.card())
+
+    def _accountBindingChanged(self):
+        self.taskInterface.rebuild(account_changed=True)
+        self.searchIndex.invalidate()
+        self.homeInterface.model.request_refresh()
+
+    def openAccountSwitcher(self, target):
+        from .accounts.switcher import AccountSwitcher
+        self.accountModel.refresh()
+        switcher = AccountSwitcher(self.accountModel)
+        def select(uid):
+            if self.accountModel.active():
+                result = self.accountModel.set_current(uid)
+                show = InfoBar.success if result.ok else InfoBar.warning
+                name = next((a.name for a in self.accountModel.accounts() if a.uid == uid), "")
+                show(tr("切换账号"), result.text or tr("正在查看「{name}」").format(name=name), parent=self)
+            else:
+                self.switchTo(self.accountsInterface)
+                self.accountsInterface.showAccount(uid)
+        def add():
+            self.switchTo(self.accountsInterface)
+            self.accountsInterface.addAccount()
+        switcher.accountClicked.connect(select)
+        switcher.addClicked.connect(add)
+        switcher.manageClicked.connect(lambda: self.switchTo(self.accountsInterface))
+        return switcher.open(target)
 
     def refreshBackendTasks(self):
         connection = display_connection(cfg)
@@ -830,14 +868,14 @@ class MainWindow(FluentWindow):
                 auto.reload_connection()
                 screen.reload_profile()
             self._backend_connection = connection
-        self._refreshAccountNavigation()
+        self.accountModel.refresh()
         self.homeInterface.refreshBackendTasks()
         self.toolsInterface.refreshBackendTasks(connection_changed=changed)
 
     def _onHotkeyChanged(self):
         """处理热键配置改变信号"""
-        if hasattr(self, 'logInterface'):
-            self.logInterface.updateHotkey()
+        if hasattr(self, 'runController'):
+            self.runController.updateHotkey()
         if hasattr(self, 'toolsInterface'):
             self.toolsInterface.automaticPlotCard.updateHotkeyHint()
 
@@ -850,7 +888,7 @@ class MainWindow(FluentWindow):
         from utils.runs import read_active_run
 
         game_launch = getattr(self, "game_launch_thread", None)
-        if (self.logInterface.autoCloseBlockReason(preserve_schedule=False) or read_active_run()
+        if (self.runController.autoCloseBlockReason(preserve_schedule=False) or read_active_run()
                 or (game_launch is not None and game_launch.isRunning())):
             raise RuntimeError(tr("请先结束主桌面的任务再连接分身"))
 
@@ -859,7 +897,8 @@ class MainWindow(FluentWindow):
         self._desktop_twin_hosting = active
         cfg.writes_suspended = active
         self._cancelTaskExit()
-        self.logInterface.setDesktopTwinHosting(active)
+        self.runController.setDesktopTwinHosting(active)
+        self.accountNavCard.setDisabled(active)
         for page in (self.homeInterface, self.taskInterface, self.settingInterface, self.workflowInterface,
                      self.warpInterface, self.logInterface, self.accountsInterface):
             page.setDisabled(active)
@@ -964,11 +1003,15 @@ class MainWindow(FluentWindow):
         old.deleteLater()
 
     def _retranslate_persistent_interfaces(self):
-        for interface in (self.homeInterface, self.toolsInterface, self.workflowInterface, self.logInterface):
+        for interface in (self.homeInterface, self.toolsInterface, self.workflowInterface):
             position = interface.verticalScrollBar().value()
             interface.retranslateUi()
             interface.verticalScrollBar().setValue(position)
         # 帮助页按小节保存和恢复阅读位置：换语言后文档长度不同，不能沿用像素位置。
+        self.runController.retranslateOverlay()
+        self.accountModel.refresh()
+        self.runHistory.refresh()
+        self.logInterface.retranslateUi()
         self.helpInterface.retranslateUi()
         # 抽卡记录页的页头固定，统计和明细各自滚动、保留位置。
         self.warpInterface.retranslateUi()
@@ -1076,18 +1119,19 @@ class MainWindow(FluentWindow):
         self._cancelTaskExit()
         requested_by_cli = bool(self.exit_on_complete and self.startup_task)
         self.exit_on_complete = False
-        if exit_code != 0:
+        if exit_code != 0 or self.runController._finish_skipped:
             return
         if not requested_by_cli and not cfg.get_value('exit_app_after_success', False):
             return
-        reason = self.logInterface.autoCloseBlockReason(preserve_schedule=not requested_by_cli)
+        reason = self.runController.autoCloseBlockReason(preserve_schedule=not requested_by_cli)
         if reason:
-            self.logInterface.appendLog(f"本次不自动关闭助手：{reason}。\n")
+            self.runController.appendLog(f"本次不自动关闭助手：{reason}。\n")
             return
         self._task_exit_requested_by_cli = requested_by_cli
         self._task_exit_pending = True
-        self.logInterface.appendLog("全部任务已成功完成，5 秒后关闭助手；启动新任务可取消。\n")
+        self.runController.appendLog("全部任务已成功完成，5 秒后关闭助手；启动新任务可取消。\n")
         self._task_exit_timer.start(self.TASK_EXIT_DELAY_MS)
+        self.runController.changed.emit()
 
     def _quitAfterTask(self):
         # stop() 不能撤回已经排队的回调，因此还需检查请求是否仍有效。
@@ -1097,9 +1141,9 @@ class MainWindow(FluentWindow):
         self._cancelTaskExit()
         if not requested_by_cli and not cfg.get_value('exit_app_after_success', False):
             return
-        reason = self.logInterface.autoCloseBlockReason(preserve_schedule=not requested_by_cli)
+        reason = self.runController.autoCloseBlockReason(preserve_schedule=not requested_by_cli)
         if reason:
-            self.logInterface.appendLog(f"已取消自动关闭助手：{reason}。\n")
+            self.runController.appendLog(f"已取消自动关闭助手：{reason}。\n")
             return
         self.quitApp()
 
@@ -1155,8 +1199,8 @@ class MainWindow(FluentWindow):
                 pass
 
             # 更新日志界面的热键与日志悬浮窗开关
-            if hasattr(self, 'logInterface'):
-                self.logInterface.reloadConfigState()
+            if hasattr(self, 'runController'):
+                self.runController.reloadConfigState()
 
             state = self.settingInterface.captureViewState()
             replacement = SettingInterface(self)
@@ -1203,16 +1247,8 @@ class MainWindow(FluentWindow):
             self.themeListener = None
 
     def _stopRunningTask(self):
-        """停止正在运行的任务"""
-        if hasattr(self, 'logInterface') and self.logInterface.isTaskRunning():
-            self.logInterface.stopTask()
-            # 等待进程结束
-            if self.logInterface.process:
-                self.logInterface.process.waitForFinished(3000)
-                # 如果还没结束，强制结束
-                if self.logInterface.process.state() != 0:  # QProcess.NotRunning
-                    self.logInterface.process.kill()
-                    self.logInterface.process.waitForFinished(1000)
+        if hasattr(self, "runController"):
+            self.runController.stopOwnedTasksOnExit()
 
     def _do_quit(self, e=None):
         """执行退出前的清理并退出程序
@@ -1240,9 +1276,9 @@ class MainWindow(FluentWindow):
         self._stopThemeListener()
 
         # 可选地清理日志界面资源
-        if hasattr(self, 'logInterface'):
+        if hasattr(self, 'runController'):
             try:
-                self.logInterface.cleanup()
+                self.runController.cleanup()
             except Exception:
                 pass
 
@@ -1349,6 +1385,25 @@ class MainWindow(FluentWindow):
             if start_game_button:
                 start_game_button.setEnabled(True)
             return
+        account = self.accountModel.editing()
+        if account and connection.control_backend == "local":
+            from copy import copy
+            from utils.registry import gameaccount
+            path = account.game_path or cfg.game_path
+            if gameaccount.server_for_path(path) != account.server:
+                if start_game_button:
+                    start_game_button.setEnabled(True)
+                InfoBar.warning(tr("启动失败"), tr("请为这个账号设置同一服务器的游戏路径"), parent=self)
+                return
+            game = copy(game)
+            game.game_path = path
+            if str(gameaccount.gamereg_uid(path)) != account.uid:
+                if start_game_button:
+                    start_game_button.setEnabled(True)
+                outcome = self.accountModel.prepare_login(account.uid, after=self.startGame)
+                if not outcome.ok:
+                    InfoBar.warning(tr("启动失败"), outcome.text, parent=self)
+                return
         if cfg.cloud_game_enable and cfg.browser_type == "integrated" and not game.is_integrated_browser_downloaded():
             InfoBar.warning(
                 title=tr('正在下载内置浏览器(ง •̀_•́)ง'),

@@ -85,19 +85,16 @@ def test_greeting_background_crossfades_at_midpoint_below_text_and_buttons(windo
 
 
 def test_real_button_changes_all_branding_and_restores_without_starting_tasks(window, qtbot, monkeypatch):
-    from app.log_interface import GameLogOverlay
-    from app.sub_interfaces.accounts_interface import AccountsCard
+    from app.run.overlay import GameLogOverlay
+    from app.pages.common import is_evernight
     from app.common.design_tokens import DARK, LIGHT
     from tests.test_app.test_help_interface import link_colors
     start_task = Mock()
     monkeypatch.setattr(window, 'startFullTask', start_task)
     setTheme(Theme.LIGHT)
-    accounts = window.accountsInterface.findChild(AccountsCard)
-    assert accounts is not None
-    tips = (accounts.tipsText, accounts.tipsText2) if accounts is not None else ()
-    for label in tips:
-        label.ensurePolished()
-        assert label.palette().color(QPalette.ColorRole.WindowText).name() == '#f94e9b'
+    accounts = window.accountsInterface
+    normal_style = accounts.runAllButton.property("lightCustomQss")
+    assert not is_evernight()
     overlay = GameLogOverlay()
     qtbot.addWidget(overlay)
     original_overlay_style = overlay.panel.styleSheet()
@@ -112,6 +109,7 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
     cfg.set_values.reset_mock()
 
     setTheme(Theme.DARK)
+    dark_style = accounts.runAllButton.property("darkCustomQss")
     click_logo(window, qtbot)
     dark_march_icon = window.windowIcon().pixmap(32, 32).toImage()
     dark_march_titlebar = window.titleBar.iconLabel.pixmap().toImage()
@@ -144,7 +142,7 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
             window._evey_title_decoration, window.settingInterface.themeCard.eveyDecoration,
             window._evey_settings_decoration))
         assert qconfig.get(qconfig.themeColor).name() == MARCH7TH_PINK
-        assert all(label.palette().color(QPalette.ColorRole.WindowText).name() == '#f94e9b' for label in tips)
+        assert accounts.runAllButton.property("darkCustomQss") == dark_style
     from app.common import evernight_artwork as artwork
     with monkeypatch.context() as midpoint:
         midpoint.setattr(artwork, '_pixmap', Mock(side_effect=AssertionError('decoration decoded at midpoint')))
@@ -158,7 +156,7 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
         window._evey_title_decoration, window.settingInterface.themeCard.eveyDecoration,
         window._evey_settings_decoration))
     assert qconfig.get(qconfig.themeColor).name() == EVERNIGHT_RED
-    assert all(label.palette().color(QPalette.ColorRole.WindowText).name() == themeColor().name() for label in tips)
+    assert is_evernight() and accounts.runAllButton.property("lightCustomQss") != normal_style
     assert 'rgba(241, 140, 185,' not in overlay.panel.styleSheet()
     assert page.greeting._mode() == 'evernight'
     assert window.windowTitle() == 'Evernight Assistant'
@@ -191,7 +189,7 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
     qtbot.wait(20)
     assert link_colors(window.helpInterface.currentPage()) == {LIGHT.deep_pink}
     window.switchTo(current_page)
-    assert all(label.palette().color(QPalette.ColorRole.WindowText).name() == '#f94e9b' for label in tips)
+    assert accounts.runAllButton.property("lightCustomQss") == normal_style
     assert overlay.panel.styleSheet() == original_overlay_style
     assert page.greeting._mode() == 'light'
     assert window.windowTitle() == 'March7th Assistant'

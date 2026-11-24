@@ -100,6 +100,9 @@ class LiveRun:
     paused: bool = False
     run_id: str | None = None
     started_at: datetime | None = None
+    account_number: int | None = None
+    account_total: int | None = None
+    account_name: str | None = None
 
 
 @dataclass(frozen=True)

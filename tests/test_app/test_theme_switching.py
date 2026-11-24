@@ -226,16 +226,13 @@ def test_default_size_memory_and_navigation(window_size_case, window):
     assert window.height() == window_size_case
     assert window.minimumHeight() == 640
     navigation = window.navigationInterface
-    routes = ('searchBox', 'homeInterface', 'taskInterface', 'logInterface', 'warpInterface',
+    routes = ('accountsInterface', 'searchBox', 'homeInterface', 'taskInterface', 'logInterface', 'warpInterface',
               'toolsInterface', 'workflowInterface', 'helpInterface', 'startGameButton', 'avatar',
-              'accountsInterface', 'settingInterface')
+              'settingInterface')
     assert tuple(navigation.panel.items) == routes
     rectangles = []
     for route in routes:
         widget = navigation.widget(route)
-        if route == 'accountsInterface' and sys.platform != 'win32':
-            assert widget.isHidden()
-            continue
         assert widget.isVisible() and widget.visibleRegion().boundingRect() == widget.rect(), route
         rectangle = widget.rect().translated(widget.mapTo(navigation, widget.rect().topLeft()))
         assert navigation.rect().contains(rectangle), route

@@ -863,21 +863,21 @@ class WorkflowInterface(ScrollArea):
         self._update_workflow_action_state()
 
     def _append_log(self, message: str):
-        log_interface = self._get_log_interface()
-        if log_interface is not None:
-            log_interface.logMessage.emit(f"{message}\n")
+        run_controller = self._get_run_controller()
+        if run_controller is not None:
+            run_controller.logMessage.emit(f"{message}\n")
 
     def _get_main_window(self):
         window = self.window()
-        if hasattr(window, 'logInterface') and hasattr(window, 'switchTo'):
+        if hasattr(window, 'runController') and hasattr(window, 'switchTo'):
             return window
         return None
 
-    def _get_log_interface(self):
+    def _get_run_controller(self):
         main_window = self._get_main_window()
         if main_window is None:
             return None
-        return getattr(main_window, 'logInterface', None)
+        return getattr(main_window, 'runController', None)
 
     def _selected_path(self):
         if not self.workflows:
@@ -1235,9 +1235,9 @@ class WorkflowInterface(ScrollArea):
 
     def _start_workflow_execution(self, selected_path=None):
         main_window = self._get_main_window()
-        log_interface = self._get_log_interface()
+        run_controller = self._get_run_controller()
         game = get_game_controller()
-        if log_interface is not None and log_interface.isTaskRunning():
+        if run_controller is not None and run_controller.isTaskRunning():
             InfoBar.warning(
                 title=tr('任务正在运行'),
                 content=tr("请先停止当前任务后再启动新任务"),
@@ -1248,7 +1248,7 @@ class WorkflowInterface(ScrollArea):
                 parent=self,
             )
             if main_window is not None:
-                main_window.switchTo(log_interface)
+                main_window.switchTo(main_window.logInterface)
             return
 
         # 云游戏由任务进程连接并校验会话，不依赖桌面窗口或 GUI 进程里的 driver。
@@ -1276,12 +1276,12 @@ class WorkflowInterface(ScrollArea):
             )
             return
 
-        if log_interface is None:
+        if run_controller is None:
             return
 
         if main_window is not None:
-            main_window.switchTo(log_interface)
-        log_interface.startTask(self._build_workflow_task(selected_path))
+            main_window.switchTo(main_window.logInterface)
+        run_controller.startTask(self._build_workflow_task(selected_path))
 
     def _run_current_workflow(self):
         self._start_workflow_execution()

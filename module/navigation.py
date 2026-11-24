@@ -32,7 +32,7 @@ def parse_link(link: str) -> tuple[str, str, str] | None:
         return ("run", "schedule", "")
     if kind == "run":
         from utils.runs import is_valid_run_id
-        valid = page in ("current", "schedule") or is_valid_run_id(page)
+        valid = page in ("current", "schedule", "history") or is_valid_run_id(page)
     elif kind == "setting":
         valid = find_setting(page) is not None
     elif kind == "category":

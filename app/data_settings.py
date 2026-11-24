@@ -94,7 +94,7 @@ def save_data(parent, diagnostics):
 
 def restore_data(parent, importing):
     window = parent.window()
-    running = getattr(window, "logInterface", None)
+    running = getattr(window, "runController", None)
     if running and running.isTaskRunning():
         InfoBar.warning(tr("请先停止正在运行的任务"), "", parent=window)
         return

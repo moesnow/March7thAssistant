@@ -1,5 +1,6 @@
 """Integration through the desktop pages, with external operations replaced at their boundaries."""
 from pathlib import Path
+import sys
 from unittest.mock import Mock
 
 import pytest
@@ -26,13 +27,13 @@ def test_search_shortcut_sidebar_keyboard_filters_and_empty_state(window, qtbot)
     qtbot.keyClick(window, Qt.Key.Key_K, Qt.KeyboardModifier.ControlModifier)
     qtbot.waitUntil(lambda: window._search_popup is not None and window._search_popup.isVisible())
     popup = window._search_popup
-    popup.input.setText("后台")
+    popup.input.setText("下载代理")
     qtbot.waitUntil(lambda: bool(popup.rows))
     from app.search_popup import result_group
     groups = list(dict.fromkeys(map(result_group, popup.results)))
     assert [r.result for r in popup.rows] == sorted(popup.results, key=lambda r: groups.index(result_group(r)))
     assert len({row.result.kind for row in popup.rows}) >= 1
-    assert popup.rows[0].result.link == "setting:local_control_mode"
+    assert popup.rows[0].result.link == "setting:update_download_proxy"
     qtbot.keyClick(popup.input, Qt.Key.Key_Down)
     assert popup.selected == 1
     qtbot.keyClick(popup.input, Qt.Key.Key_Up)
@@ -61,7 +62,7 @@ def test_search_shortcut_sidebar_keyboard_filters_and_empty_state(window, qtbot)
 
 def test_external_yaml_refreshes_task_cards_notifications_and_open_search(window, qtbot, monkeypatch):
     monkeypatch.setattr("module.notification.init_notifiers", Mock())
-    monkeypatch.setattr(window.logInterface, "reloadConfigState", Mock())
+    monkeypatch.setattr(window.runController, "reloadConfigState", Mock())
     window.stackedWidget.setAnimationEnabled(False)
     assert window.navigate("category:notify")
     assert window.taskInterface.showTask("reward")
@@ -93,7 +94,7 @@ def test_external_yaml_refreshes_task_cards_notifications_and_open_search(window
 
 @pytest.mark.parametrize("window", [{"test_tray": True}], indirect=True)
 def test_tray_opens_current_settings_and_twin_disables_new_pages(window, monkeypatch):
-    monkeypatch.setattr(window.logInterface, "setDesktopTwinHosting", Mock())
+    monkeypatch.setattr(window.runController, "setDesktopTwinHosting", Mock())
     monkeypatch.setattr(window.toolsInterface, "setDesktopTwinHosting", Mock())
     monkeypatch.setattr(cfg, "is_config_changed", lambda: False)
     monkeypatch.setattr(cfg, "writes_suspended", False)
@@ -126,18 +127,18 @@ def test_pages_keep_theme_language_and_task_state(window, editable, qtbot):
         assert window.set_ui_theme(theme)
         assert len(window.settingInterface.pages) == len(window.taskInterface.pages) == 10
         window.openSearch()
-        assert window._search_popup.isVisible() and window.accountsInterface.content is not None
+        assert window._search_popup.isVisible() and window.accountsInterface.detail is not None
         window._search_popup.close()
     assert qconfig.get(qconfig.themeColor).name() == EVERNIGHT_RED
     assert window.taskInterface.pages["power"].header.tile._evernight
     assert window.settingInterface.hint.actionButton._evernight
     assert window.settingInterface.themeCard.comboBox.findData("evernight") >= 0
-    previous_accounts = window.accountsInterface.content
+    previous_accounts = window.accountsInterface.detail
     old_task = window.taskInterface.pages["assets"]
     window.openSearch()
     window._search_popup.input.setText("proxy")
     switch_language(qtbot, window, "en_US")
-    assert window.accountsInterface.content is not previous_accounts
+    assert window.accountsInterface.detail is previous_accounts
     assert window.taskInterface.pages["assets"] is not old_task
     assert window.taskInterface.currentTask() == "assets"
     assert window.taskInterface.pages["assets"].views["relics"].isExpanded()
@@ -232,13 +233,13 @@ def test_channel_dialog_validation_test_send_save_and_qq_binding(editable, qtbot
 @pytest.mark.parametrize("component", ["task", "accounts"])
 def test_language_rollback_on_new_page_failure(editable, qtbot, monkeypatch, component):
     from app import task_interface
-    from app.pages import accounts
+    from app import accounts_interface as accounts
     w = editable
     w.stackedWidget.setAnimationEnabled(False)
     assert w.navigate("task:reward")
     before = w.settingInterface
     previous = cfg.ui_language
-    owner, name = (task_interface, "TaskPage") if component == "task" else (accounts, "accounts_interface")
+    owner, name = (task_interface, "TaskPage") if component == "task" else (accounts.AccountsInterface, "_setTexts")
     factory = getattr(owner, name)
 
     def fail_in_english(*args, **kwargs):
@@ -256,3 +257,38 @@ def test_language_rollback_on_new_page_failure(editable, qtbot, monkeypatch, com
     assert w.taskInterface.currentTask() == "reward"
     assert w.stackedWidget.currentWidget() is w.taskInterface
     assert w.accountsInterface.titleLabel.text() == "账号"
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="需要 Windows 本地账号绑定")
+def test_live_account_binding_preserves_run_page_and_scopes_plan(window, qtbot, tmp_path, monkeypatch):
+    from module.accounts.store import AccountStore
+    from module.accounts.files import write_yaml
+    from qfluentwidgets import Theme, setTheme
+    model, page, controller = window.accountModel, window.logInterface, window.runController
+    store = AccountStore(tmp_path / "accounts", role="ui")
+    monkeypatch.setattr(model, "store", store)
+    monkeypatch.setattr(cfg, "_account_layer", None)
+    monkeypatch.setattr("utils.registry.gameaccount.gamereg_uid", lambda *args: 100000789)
+    write_yaml(store.index_path, {"enabled": True, "current": "100000789", "accounts": [
+        {"uid": "100000789", "name": "虚构甲"}, {"uid": "100000456", "name": "虚构乙", "plan": "independent"}]})
+    store.modify("100000456", "plan.yaml", lambda plan: plan.update(instance_type="侵蚀隧洞"))
+    try:
+        model.refresh()
+        assert cfg.bound_account == "100000789" and not window.taskModel.overridden("power")
+        controller.appendLog("样例任务已开始\n")
+        window.stackedWidget.setAnimationEnabled(False)
+        assert window.navigate("page:accounts")
+        assert model.set_current("100000456").ok
+        assert window.taskModel.overridden("power") and cfg.instance_type == "侵蚀隧洞"
+        result = window.searchIndex.query("定时计划", settings_only=True)[0]
+        assert result.link == "run:schedule"
+        window.settingInterface._openResult(result)
+        assert window.stackedWidget.currentWidget() is page and page.page() == "schedule"
+        for segment in ("current", "schedule", "history"):
+            assert window.navigate("run:" + segment) and page.page() == segment
+        setTheme(Theme.DARK)
+        switch_language(qtbot, window, "en_US")
+        assert window.logInterface is page and window.runController is controller
+        assert model.card()[1] == "虚构乙" and controller.log_entries()[-1].text == "样例任务已开始"
+    finally:
+        cfg.bind_account(None)

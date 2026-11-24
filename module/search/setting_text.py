@@ -38,7 +38,7 @@ DESCRIPTIONS = {
     'adb_path': 'adb 可执行文件',
     'adb_serial': '设备序列号或 IP:端口',
     'adb_tap_ms': '单次触摸点按的毫秒数',
-    'after_finish': '“退出”会关闭游戏。需要定时运行时，请打开「运行」页的「定时任务」。',
+    'after_finish': '“退出”会关闭游戏。需要定时运行时，请打开「运行」页的「定时计划」。',
     'agentPromptCard': '复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作三月七小助手',
     'apocalyptic_enable': '上次运行末日幻影的时间',
     'apocalyptic_level': '末日幻影关卡范围，设置允许尝试的关卡等级范围',
@@ -234,3 +234,13 @@ PAGE_DESCRIPTIONS = {
     'update': '管理更新源、下载代理和版本检测。',
     'hotkeys': '设置停止、暂停和自动对话的全局热键。',
 }
+
+
+def choice_texts(key):
+    from module.localization import tr
+    return {tr(label): value for value, label in CHOICES[key].items()}
+
+
+def technique_labels():
+    from module.localization import tr
+    return {-1: tr("秘技 / 开怪"), 0: tr("无操作"), 1: tr("秘技 1 次"), 2: tr("秘技 2 次")}

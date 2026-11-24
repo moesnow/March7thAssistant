@@ -56,7 +56,7 @@ def test_tools_button_opens_one_desktop_twin_window(qtbot, monkeypatch):
 
     monkeypatch.setattr(tool, "start", Mock())
     parent = QWidget()
-    parent.logInterface = Mock()
+    parent.runController = Mock()
     qtbot.addWidget(parent)
     page = ToolsInterface(parent)
 
@@ -458,7 +458,7 @@ def test_reopening_minimized_twin_keeps_it_maximized(qtbot, monkeypatch):
 
     monkeypatch.setattr(tool, "start", Mock())
     parent = QWidget()
-    parent.logInterface = Mock()
+    parent.runController = Mock()
     qtbot.addWidget(parent)
     page = ToolsInterface(parent)
     page.desktopTwinCard.button.click()
@@ -752,12 +752,12 @@ def test_logoff_from_recovery_window(qtbot, monkeypatch, outcome):
 
 
 def test_host_leaves_manual_and_scheduled_tasks_to_child():
-    from app.log_interface import LogInterface
+    from app.content.run_controller import RunController
 
     host = SimpleNamespace(_desktop_twin_hosting=True, appendLog=Mock())
-    assert LogInterface.runScheduledTask(host, {"program": "self", "args": "daily"}) is False
-    LogInterface._checkScheduledTime(host)
-    LogInterface.startTask(host, "daily")
+    assert RunController.runScheduledTask(host, {"program": "self", "args": "daily"}) is False
+    RunController._checkScheduledTime(host)
+    RunController.startTask(host, "daily")
     host.appendLog.assert_called_once()
 
 
@@ -783,10 +783,10 @@ def main_window(qtbot, monkeypatch, tmp_path):
         monkeypatch.setattr(module.MainWindow, "initSystemTray",
                             lambda self: setattr(self, "_tray_actions", [Mock() for _ in range(4)]))
         monkeypatch.setattr(module.MainWindow, "closeEvent", lambda self, event: event.accept())
-        monkeypatch.setattr(module.LogInterface, "_LogInterface__initShortcut", lambda _: None)
-        monkeypatch.setattr(module.LogInterface, "_migrate_legacy_schedule", lambda _: None)
-        monkeypatch.setattr(module.LogInterface, "_startScheduleTimer", lambda _: None)
-        monkeypatch.setattr(module.LogInterface, "_initOverlayMonitor", lambda _: None)
+        monkeypatch.setattr(module.RunController, "_RunController__initShortcut", lambda _: None)
+        monkeypatch.setattr(module.RunController, "_migrate_legacy_schedule", lambda _: None)
+        monkeypatch.setattr(module.RunController, "_startScheduleTimer", lambda _: None)
+        monkeypatch.setattr(module.RunController, "_initOverlayMonitor", lambda _: None)
         window = module.MainWindow(start_minimized_to_tray=True)
         qtbot.addWidget(window)
         window.show()
@@ -821,12 +821,12 @@ def test_host_window_explains_why_pages_are_disabled(main_window):
     # 快捷方式等外部入口请求任务时给出提示，而不是没有任何反应
     from app import main_window as module
     warning = Mock()
-    window.logInterface.startTask = Mock()
+    window.runController.startTask = Mock()
     with pytest.MonkeyPatch.context() as patch:
         patch.setattr(module.InfoBar, "warning", warning)
         window._onStartTask("daily")
     warning.assert_called_once()
-    window.logInterface.startTask.assert_not_called()
+    window.runController.startTask.assert_not_called()
 
     window.setDesktopTwinHosting(False)
     assert not notice.isVisible() and window.homeInterface.isEnabled()

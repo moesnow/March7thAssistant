@@ -104,8 +104,8 @@ def test_data_card_buttons_use_selected_files(qtbot, tmp_path, monkeypatch):
     window.setAttribute(Qt.WidgetAttribute.WA_DontShowOnScreen)
     qtbot.addWidget(window)
     window.quitApp = Mock()
-    window.logInterface = Mock()
-    window.logInterface.isTaskRunning.return_value = False
+    window.runController = Mock()
+    window.runController.isTaskRunning.return_value = False
     page = SimpleNamespace()
     data_settings.build_data_cards(page, window)
     out = tmp_path / "backup.zip"
@@ -116,10 +116,10 @@ def test_data_card_buttons_use_selected_files(qtbot, tmp_path, monkeypatch):
     choose = Mock(return_value=(str(out), ""))
     monkeypatch.setattr(data_settings.QFileDialog, "getOpenFileName", choose)
     monkeypatch.setattr(data_settings.MessageBox, "exec", lambda self: True)
-    window.logInterface.isTaskRunning.return_value = True
+    window.runController.isTaskRunning.return_value = True
     page.restoreCard.button.click()
     choose.assert_not_called()
-    window.logInterface.isTaskRunning.return_value = False
+    window.runController.isTaskRunning.return_value = False
     page.restoreCard.button.click()
     assert current.path(paths.CONFIG).read_bytes() == b"setting: old\n"
     assert cfg.writes_suspended

@@ -401,15 +401,31 @@ class ShortcutsCard(OverviewCard):
         self.editLink.setEvernight(evernight)
         self.editLink.setVisible(editable and not unavailable)
         shortcuts = tuple(shortcuts or ())
-        for index, shortcut in enumerate(shortcuts):
-            button = self._makeButton(shortcut)
-            self.grid.addWidget(button, index // 2, index % 2)
-            self._buttons.append(button)
+        self._buttons = [self._makeButton(shortcut) for shortcut in shortcuts]
+        self._columns = 0
+        self._arrangeButtons()
         if unavailable:
             self.emptyLabel.setText(tr("暂时读不到快捷启动"))
         else:
             self.emptyLabel.setText(tr("还没有快捷启动，点「编辑」添加常用操作") if editable else tr("还没有快捷启动"))
         self.emptyLabel.setVisible(not shortcuts)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._arrangeButtons()
+
+    def _arrangeButtons(self):
+        if not self._buttons:
+            return
+        margins = self.vBox.contentsMargins()
+        width = self.width() - margins.left() - margins.right()
+        widest = max(button.sizeHint().width() for button in self._buttons)
+        columns = 2 if width >= 2 * widest + self.grid.spacing() else 1
+        if columns != self._columns:
+            self._columns = columns
+            span = 2 if columns == 1 else 1
+            for i, button in enumerate(self._buttons):
+                self.grid.addWidget(button, i // columns, i % columns, 1, span)
 
     def _makeButton(self, shortcut):
         icon = resolve_icon(shortcut.icon)

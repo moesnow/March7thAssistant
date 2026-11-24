@@ -10,7 +10,6 @@ from module.overview import plan
 from module.overview.snapshot import build_snapshot
 from module.overview.types import LiveRun
 from utils import runs
-from utils.pause import COMMAND_PAUSE, COMMAND_RESUME, COMMAND_STOP, read_state, write_command
 from utils.tasks import AVAILABLE_TASKS
 
 
@@ -26,7 +25,7 @@ class OverviewModel(QObject):
         self.config = config
         self.clock = clock
         self._config_changed = config_changed
-        self.page = window.logInterface
+        self.page = window.runController
         self._config_path = Path(config.config_path).absolute()
         self._runs_path = Path(runs.runs_dir())
         self._stamp = self._config_stamp()
@@ -69,7 +68,7 @@ class OverviewModel(QObject):
             self._watcher.addPaths(sorted(missing))
 
     def _live(self):
-        if not self.page.isTaskRunning():
+        if not self.page.isTaskRunning() or getattr(self.page, "_remote", False):
             return None
         task = str(self.page.current_task or "main")
         name = self.page._task_display_name or AVAILABLE_TASKS.get(task, task)
@@ -100,6 +99,14 @@ class OverviewModel(QObject):
             log.warning(f"总览读取运行页状态失败：{exc}")
             live = None
         self.snapshot = build_snapshot(self.config, now=self.clock(), live=live)
+        accounts = getattr(self.window, "accountModel", None)
+        if (accounts and self.snapshot.greeting and self.snapshot.greeting.state == "ready" and accounts.active()
+                and sum(a.rotate for a in accounts.accounts()) >= 2):
+            from dataclasses import replace
+            from module.overview.types import Button
+            greeting = self.snapshot.greeting
+            self.snapshot = replace(self.snapshot, greeting=replace(greeting, buttons=(*greeting.buttons,
+                                    Button("start_all", tr("轮流运行全部")))))
         self.changed.emit(self.snapshot)
         return self.snapshot
 
@@ -136,37 +143,11 @@ class OverviewModel(QObject):
         return True
 
     def _control(self, stop):
-        if self.page.isTaskRunning():
-            if stop:
-                self.page.stopTask()
-            elif self.page._pause_supported:
-                self.page._onPauseToggle()
-            else:
-                return False
-            self.request_refresh()
-            return True
-        # CLI / 其他进程启动的任务沿用其本次控制文件，重验运行编号和进程身份。
-        from module.overview.history import read_history
-        live = read_history(self.clock()).live
-        if not live or not live.can_pause or not runs.is_valid_run_id(live.run_id):
+        if not self.page.isTaskRunning():
             return False
-        record = runs.load_run(live.run_id)
-        if not record or runs.effective_status(record) != runs.STATUS_RUNNING:
-            return False
-        path = record.get("control_file")
-        if not path:
-            return False
-        command = COMMAND_STOP if stop else COMMAND_PAUSE
-        if not stop and read_state(path) == "paused":
-            command = COMMAND_RESUME
-        try:
-            write_command(path, command)
-        except OSError as exc:
-            from module.logger import log
-            log.warning(f"未能发送总览运行控制指令：{exc}")
-            return False
+        result = self.page.stop() if stop else self.page.toggle_pause()
         self.request_refresh()
-        return True
+        return result is not False
 
     def stop(self):
         return self._control(True)

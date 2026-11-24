@@ -27,8 +27,8 @@ def test_signals_actions_and_late_created_runs(qtbot, monkeypatch, tmp_path):
     Path(cfg.config_path).write_text("enabled", encoding="utf-8")
     cfg._load_config = Mock()
     window = QObject()
-    page = window.logInterface = Page(window)
-    page.isTaskRunning, page.stopTask, page._onPauseToggle = Mock(return_value=False), Mock(), Mock()
+    page = window.runController = Page(window)
+    page.isTaskRunning, page.stop, page.toggle_pause = Mock(return_value=False), Mock(), Mock()
     page._pause_supported, page._pause_state, page._task_name_is_msgid = True, "running", True
     page._task_display_name, page.current_task, page.process = "完整运行", "main", None
     window._onStartTask, window.startFullTask = Mock(), Mock()
@@ -48,8 +48,8 @@ def test_signals_actions_and_late_created_runs(qtbot, monkeypatch, tmp_path):
         page.pauseStateChanged.emit()
     assert model.snapshot.greeting.buttons[1].text == "继续任务"
     assert model.stop() and model.toggle_pause()
-    page.stopTask.assert_called_once()
-    page._onPauseToggle.assert_called_once()
+    page.stop.assert_called_once()
+    page.toggle_pause.assert_called_once()
     with qtbot.waitSignal(model.changed):
         page.isTaskRunning.return_value = False
         page.taskFinished.emit(0)
@@ -83,17 +83,18 @@ def test_run_navigation(monkeypatch, tmp_path):
     assert navigate(window, "run:current")
     window.switchTo.assert_called_once_with(window.logInterface)
     assert navigate(window, "run:schedule")
-    window.logInterface._openScheduleManager.assert_called_once()
+    window.logInterface.showSchedule.assert_called_once()
     for link in ("run:../test", "run:current#file", "run:fake.json"):
         assert parse_link(link) is None
     run_id = "20261123-130000-abcd"
+    warning = Mock()
+    monkeypatch.setattr("qfluentwidgets.InfoBar.warning", warning)
+    window.logInterface.showRun.return_value = False
     assert not navigate(window, "run:" + run_id)
-    path = tmp_path / (run_id + ".log")
-    path.touch()
-    opened = Mock(return_value=True)
-    monkeypatch.setattr(QDesktopServices, "openUrl", opened)
+    warning.assert_called_once()
+    window.logInterface.showRun.return_value = True
     assert navigate(window, "run:" + run_id)
-    assert Path(opened.call_args.args[0].toLocalFile()) == path
+    window.logInterface.showRun.assert_called_with(run_id)
 
 
 def test_appearance_controls_offscreen(qtbot, monkeypatch, tmp_path):

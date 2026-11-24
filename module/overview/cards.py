@@ -129,8 +129,9 @@ def checks(config, now, setup, backend, last, schedule, *, schedule_available=Tr
     if schedule_available and schedule is None:
         items.append(Check("schedule", "info", tr("没有可运行的定时计划"), tr("可以设置自动启动任务的时间。"),
                            "setting:scheduled_tasks"))
+    hour = config.refresh_hour if isinstance(getattr(config, "bound_account", None), str) else 4
     if (last and last.status in ("failed", "partial", "aborted") and backend == last.login_required
-            and backend in ("cloud", "local") and game_day(last.ended_at or last.started_at) == game_day(now)):
+            and backend in ("cloud", "local") and game_day(last.ended_at or last.started_at, hour) == game_day(now, hour)):
         cloud = backend == "cloud"
         items.append(Check("login", "warning", tr("上次运行需要登录"),
                            tr("云游戏等待登录超时，请打开云游戏完成登录。") if cloud

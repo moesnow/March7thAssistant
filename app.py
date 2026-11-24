@@ -357,6 +357,17 @@ if __name__ == "__main__":
     app.installTranslator(translator)
 
     # 传递任务参数给主窗口
+    if sys.platform == "win32":
+        from module.config import cfg
+        from utils.desktop_twin import in_desktop_twin
+        from module.accounts.layers import bind_desktop
+        from module.accounts.store import AccountStore
+        try:
+            bind_desktop(cfg, AccountStore(role="observer" if in_desktop_twin() else "ui"))
+        except (OSError, ValueError) as error:
+            import logging
+            logging.getLogger("March7thAssistant").warning("账号设置暂时无法读取（%s）", type(error).__name__)
+
     from app.main_window import MainWindow
     w = MainWindow(
         task=_startup_task,
@@ -392,8 +403,8 @@ if __name__ == "__main__":
                 _session_timer.stop()
                 w.quitApp()
             else:
-                if not info.active and w.logInterface.isTaskRunning():
-                    w.logInterface.stopTask(user_initiated=False)
+                if not info.active and w.runController._hasActiveStartedProcess():
+                    w.runController.stopTask(user_initiated=False)
 
         _session_timer.timeout.connect(check_desktop_twin_host)
         _session_timer.start()

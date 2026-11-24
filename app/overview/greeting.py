@@ -340,6 +340,8 @@ class GreetingCard(QWidget):
             return widget
         if button.id == "choose_task":
             return DropDownPushButton(button.text, parent)
+        if button.id == "start_all":
+            return PushButton(FIF.PEOPLE, button.text, parent)
         if button.id == "toggle_pause":
             icon = FIF.PLAY if button.text == tr("继续任务") else FIF.PAUSE
             return PushButton(icon, button.text, parent)

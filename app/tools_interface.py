@@ -388,7 +388,7 @@ class ToolsInterface(ScrollArea):
             from .tools.desktop_twin import DesktopTwinDialog
 
             self._desktop_twin = DesktopTwinDialog(
-                self.window(), self.parent.logInterface, getattr(self.parent, "checkDesktopTwinReady", None),
+                self.window(), self.parent.runController, getattr(self.parent, "checkDesktopTwinReady", None),
             )
             hosting_changed = getattr(self.parent, "setDesktopTwinHosting", None)
             if hosting_changed:

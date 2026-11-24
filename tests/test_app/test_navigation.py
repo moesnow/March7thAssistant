@@ -149,7 +149,7 @@ def test_new_window_protocol_for_all_targets(monkeypatch):
         assert navigate(window, f"doc:{name}")
         window.helpInterface.showDocument.assert_called_with(name, "")
     assert navigate(window, "setting:scheduled_time")
-    window.logInterface._openScheduleManager.assert_called()
+    window.logInterface.showSchedule.assert_called()
     for link in ("task:power#ui_theme", "page:no", "tool:missing", "category:power", "setting:game_path#bad"):
         assert not navigate(window, link)
 
@@ -179,14 +179,14 @@ def test_every_settings_link_respects_visibility_and_highlights(host, qtbot, mon
     cfg.config.update(control_backend=backend, ui_profile=profile, currencywars_strategy=strategy)
     cfg._notify_changes(old, reloaded=True)
     host.taskInterface.refresh()
-    monkeypatch.setattr(host.logInterface, "_openScheduleManager", lambda: None)
     for item in SETTINGS:
         visible = setting_visible(item)
         assert host.navigate("setting:" + item.id) == visible, item.id
         if not visible:
             continue
         if item.page == "run":
-            target = host.logInterface.manageScheduleButton
+            assert host.logInterface.page() == "schedule"
+            continue
         elif item.page in host.settingInterface.pages:
             page = host.settingInterface.pages[item.page]
             target = page.target(item)

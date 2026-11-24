@@ -63,29 +63,19 @@ def navigate(window, link: str) -> bool:
             return False
         kind, name = target.kind, target.page
         page = getattr(window, target.interface, None)
-        if name == "accounts":
-            from app.content.visibility import page_visible
-            if not page_visible(name):
-                return False
         if page is None:
             return False
         window.switchTo(page)
         if kind == 'run':
-            if name == 'current':
+            if name in ("current", "history"):
+                return page.showPage(name)
+            if name == "schedule":
+                return page.showSchedule()
+            if page.showRun(name):
                 return True
-            if name == 'schedule':
-                highlight(page.manageScheduleButton)
-                page._openScheduleManager()
-                return True
-            from pathlib import Path
-            from PySide6.QtCore import QUrl
-            from PySide6.QtGui import QDesktopServices
-            from utils.runs import run_file
-
-            path = Path(run_file(name, '.log'))
-            if path.is_file():
-                return QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
-            log.warning(f'该次运行的日志文件不存在：{name}')
+            from qfluentwidgets import InfoBar
+            from module.localization import tr
+            InfoBar.warning(tr("运行记录"), tr("这条运行记录已清理"), duration=3500, parent=window)
             return False
         if target.item is not None:
             return bool(page.locate(target.item))

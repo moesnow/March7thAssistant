@@ -7,6 +7,7 @@ from qfluentwidgets import FluentIcon, isDarkTheme
 from app.common.design_tokens import DARK, LIGHT
 from app.common.icon import UiIcon
 from module.localization import tr
+from module.overview.labels import format_duration
 
 GREETING_TONES = {"ready": "success", "running": "accent", "completed": "success", "failed": "error",
                   "setup": "warning", "stopped": "neutral"}
@@ -96,19 +97,6 @@ def format_when(moment, now):
         return tr("昨天 {time}").format(time=clock)
     return f"{moment.month:02d}-{moment.day:02d} {clock}"
 
-
-def format_duration(seconds):
-    if seconds is None:
-        return ""
-    if seconds < 60:
-        return tr("不到 1 分钟")
-    minutes = int(round(seconds / 60))
-    if minutes < 60:
-        return tr("{minutes} 分钟").format(minutes=minutes)
-    hours, minutes = divmod(minutes, 60)
-    if not minutes:
-        return tr("{hours} 小时").format(hours=hours)
-    return tr("{hours} 小时 {minutes} 分钟").format(hours=hours, minutes=minutes)
 
 
 def animations_enabled():

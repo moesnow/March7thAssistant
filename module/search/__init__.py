@@ -97,6 +97,11 @@ def _entries(files):
         yield _entry("task", tr(task.name), ("任务", task.group), tr(task.description), "task:" + task.id, task.icon, original=task.name, source_description=task.description)
     for key, (name, _, icon) in TOP_PAGES.items():
         yield _entry("page", tr(name), (), tr(PAGE_DESCRIPTIONS[key]), "page:" + key, icon, original=name)
+    for title, link, icon in ((tr("多账号轮流"), "page:accounts", "FIF.PEOPLE"),
+                              (tr("账号密码自动填写"), "page:accounts", "FIF.PEOPLE"),
+                              (tr("运行记录"), "run:history", "FIF.COMMAND_PROMPT")):
+        group = tr("账号") if link == "page:accounts" else tr("运行")
+        yield _entry("page", title, (group,), group, link, icon)
     for tool in TOOLS:
         yield _entry("tool", tr(tool.name), ("工具箱",), tr(tool.description), "tool:" + tool.id, tool.icon, original=tool.name, source_description=tool.description)
     for manual, (source, stamp) in zip(SIDEBAR, files):
@@ -193,7 +198,8 @@ class SearchIndex:
         for entry in self._entries:
             if kinds is not None and entry.result.kind not in kinds:
                 continue
-            if settings_only and (entry.setting is None or PAGE_BY_ID[entry.setting.page].kind != "setting"):
+            if settings_only and (entry.setting is None or
+                                  PAGE_BY_ID[entry.setting.page].kind != "setting" and entry.result.link != "run:schedule"):
                 continue
             score = 0
             for word, aliases in tokens:

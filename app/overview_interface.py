@@ -259,6 +259,8 @@ class OverviewInterface(ScrollArea):
             return
         if button.id in ("start_full", "continue"):
             model.start_full()
+        elif button.id == "start_all":
+            model.window.runController.start_all()
         elif button.id == "stop":
             model.stop()
         elif button.id == "toggle_pause":

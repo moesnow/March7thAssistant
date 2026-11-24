@@ -6,8 +6,6 @@ from threading import Event
 
 import pytest
 
-pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="原生设置界面仅在 Windows 验证")
-
 from module.game.adb_transport import AdbError, AdbTouchInjectionStatus  # noqa: E402
 
 from .adb_fakes import EMULATOR, PHONE, UNAUTHORIZED, FakeAdb, FakeConfig, status  # noqa: E402
@@ -141,9 +139,10 @@ def test_list_failure_shows_message_and_guide(qtbot, config, adb):
     wait_idle(qtbot, card)
     assert card.messageRow.message.text() == "未找到 adb"
     assert card.messageRow.guide.text() == service.error_guide("adb_not_found")
-    assert card.messageRow.downloadButton.isEnabled()
+    assert hasattr(card.messageRow, "downloadButton") == (sys.platform == "win32")
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows 提供下载 adb 的按钮")
 def test_device_card_downloads_off_thread_and_refreshes(qtbot, config, adb, monkeypatch):
     from app.card.adb_setting_cards import AdbDeviceCard
     from app.tools import adb_service as service
@@ -176,6 +175,7 @@ def test_device_card_downloads_off_thread_and_refreshes(qtbot, config, adb, monk
     assert config.writes == []
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows 提供下载 adb 的按钮")
 def test_download_failure_can_retry(qtbot, config, adb, monkeypatch):
     from app.card.adb_setting_cards import AdbDeviceCard
     from app.tools import adb_service as service
@@ -480,7 +480,7 @@ def test_settings_page_walks_through_adb_setup(settings_page, qtbot, adb):
     interface.pages["run_mode"].chooser.cards["adb"].clicked.emit("adb")
     assert (saved(path)["control_backend"], saved(path)["ui_profile"]) == ("adb", "touch_720")
     assert not interface.pages["run_mode"].host.adbDeviceCard.isHidden()
-    assert interface.pages["run_mode"].host.gamePathCard.isHidden() and interface.pages["run_mode"].host.browserTypeCard.isHidden()
+    assert all(interface.pages["run_mode"].views[key].isHidden() for key in ("local", "cloud"))
 
     devices = interface.pages["run_mode"].host.adbDeviceCard
     # 切换后先排队启动扫描，不能把启动前的空闲当成扫描结束。
@@ -500,6 +500,7 @@ def test_settings_page_walks_through_adb_setup(settings_page, qtbot, adb):
     assert interface.pages["run_mode"].host.adbStatusCard.rows["game"].value.text() == "被登录界面带回了实体屏"
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="用例选择仅在 Windows 可用的本地客户端")
 def test_connection_switch_preserves_legacy_cloud_config(settings_page, qtbot, adb):
     interface, config, path = settings_page
     chooser = interface.pages["run_mode"].chooser
@@ -518,6 +519,7 @@ def test_connection_switch_preserves_legacy_cloud_config(settings_page, qtbot, a
             assert saved(path)["ui_profile"] == "pc_1080"
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="用例选择仅在 Windows 可用的本地客户端")
 def test_connection_switch_restores_local_touch_settings(settings_page):
     from app.content.visibility import page_visible
     from app.tools.adb_service import display_connection
@@ -549,6 +551,7 @@ def test_opening_old_echo_plan_does_not_change_instance_type(settings_page, qtbo
 
 
 @pytest.mark.parametrize("invalid", [{"control_backend": "android"}, {"ui_profile": "old_touch"}])
+@pytest.mark.skipif(sys.platform != "win32", reason="用例选择仅在 Windows 可用的本地客户端")
 def test_invalid_connection_can_be_repaired_in_settings(settings_page, qtbot, invalid):
     from app.setting_interface import SettingInterface
 
@@ -568,7 +571,7 @@ def test_invalid_connection_can_be_repaired_in_settings(settings_page, qtbot, in
 
 def test_backend_change_is_blocked_while_task_runs(settings_page):
     interface, _, path = settings_page
-    interface.window_.logInterface.isTaskRunning = lambda: True
+    interface.window_.runController.isTaskRunning = lambda: True
     page = interface.pages["run_mode"]
     page.chooser.cards["adb"].clicked.emit("adb")
     assert page.chooser.cards["local"].isSelected()

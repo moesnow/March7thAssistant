@@ -33,7 +33,7 @@ def current(config=cfg):
 
 
 def block_while_running(window, message):
-    log_page = getattr(window, "logInterface", None)
+    log_page = getattr(window, "runController", None)
     if (log_page and log_page.isTaskRunning()) or read_active_run() is not None:
         InfoBar.warning(tr("任务正在运行"), message, parent=window, position=InfoBarPosition.TOP)
         return True

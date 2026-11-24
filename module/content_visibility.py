@@ -38,7 +38,7 @@ class Visibility:
 
     def page(self, page):
         if page == "accounts":
-            return self.windows and not self.touch
+            return True
         return not self.touch or getattr(PAGE_BY_ID.get(page), "kind", None) != "task" or page in TOUCH_PAGES
 
     def setting(self, item):
