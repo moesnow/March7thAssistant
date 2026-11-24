@@ -11928,3 +11928,619 @@ msgstr "{name} 파일이 손상되어 빈 데이터로 읽었습니다."
 #: module/accounts/store.py:31
 msgid "{name} 暂时无法留存损坏副本，请稍后重试"
 msgstr "지금은 {name}의 손상된 사본을 보관할 수 없습니다. 나중에 다시 시도하세요."
+
+#: app/setup/steps.py:205
+msgid "Epic 渠道版需要从 Epic 启动，请提前在 Epic 里登录"
+msgstr "Epic 버전은 Epic에서 실행합니다. 먼저 Epic에 로그인하세요."
+
+#: app/content/setup_model.py:52
+msgid "Epic 游戏商城"
+msgstr "Epic Games 스토어"
+
+#: app/setup/steps.py:26
+msgid "Windows、macOS、Linux 都能用"
+msgstr "Windows, macOS, Linux 지원"
+
+#: app/content/setup_model.py:404
+msgid "{days} {time}"
+msgstr "{days} {time}"
+
+#: module/setup/run_plan.py:228
+msgid "{error}；恢复原开机启动设置失败：{reason}"
+msgstr "{error}. 기존 시작 설정을 복원하지 못했습니다: {reason}"
+
+#: module/setup/tasks.py:108
+msgid "{minutes} 分钟–{hours} 小时"
+msgstr "{minutes}분~{hours}시간"
+
+#: app/content/setup_model.py:428
+msgid "{names}等 {count} 项"
+msgstr "{names} 등 총 {count}개"
+
+#: app/content/setup_model.py:424
+msgid "{task}（{category} · {name}）"
+msgstr "{task} ({category} · {name})"
+
+#: app/content/setup_model.py:432
+msgid "{when} 自动运行"
+msgstr "{when} 자동 실행"
+
+#: app/content/setup_model.py:436
+msgid "{when}，完成后{action}"
+msgstr "{when}, 완료 후: {action}"
+
+#: app/setup/dialog.py:84
+msgid "上一步"
+msgstr "이전"
+
+#: app/setup/steps.py:417
+msgid "云·星穹铁道在浏览器里运行，登录一次就能一直用。"
+msgstr "클라우드 스타레일은 브라우저에서 실행되며 한 번 로그인하면 다음에도 사용할 수 있습니다."
+
+#: app/content/setup_model.py:413
+msgid "什么时候运行"
+msgstr "실행 시간"
+
+#: app/setup/steps.py:564
+msgid "什么时候运行？"
+msgstr "언제 실행할까요?"
+
+#: app/setup/dialog.py:79
+msgid "以后再设置"
+msgstr "나중에 설정"
+
+#: app/setup/steps.py:118
+msgid "以后可以在「设置 › 运行方式」更换。"
+msgstr "나중에 설정 › 실행 방식에서 변경할 수 있습니다."
+
+#: app/setup/steps.py:703
+msgid "任务完成或失败时告诉你。可以跳过，以后在「设置 › 消息推送」添加。"
+msgstr "작업 완료 또는 실패 시 알림을 받습니다. 건너뛰고 나중에 설정 › 알림 푸시에서 추가해도 됩니다."
+
+#: app/setup/steps.py:702
+msgid "做完了怎么通知你？"
+msgstr "어떻게 알려 드릴까요?"
+
+#: app/setup/steps.py:447
+msgid "先跳过"
+msgstr "건너뛰기"
+
+#: app/content/setup_model.py:301
+msgid "全部打开"
+msgstr "모두 선택"
+
+#: app/setup/steps.py:210
+msgid "关闭 HDR、N 卡滤镜、帧率显示和微星小飞机等悬浮窗"
+msgstr "HDR, NVIDIA 필터, FPS 표시, MSI Afterburner 등의 오버레이를 끄세요."
+
+#: app/setup/steps.py:412
+msgid "准备云游戏"
+msgstr "클라우드 준비"
+
+#: app/setup/steps.py:23
+msgid "分辨率会自动调成 1920×1080，不用自己改"
+msgstr "해상도는 자동으로 1920×1080으로 조정됩니다."
+
+#: module/search/terms.py:7
+msgid "初始化"
+msgstr "초기화"
+
+#: app/setup/steps.py:572
+msgid "到点自动开始，需要小助手保持打开。"
+msgstr "설정한 시각에 시작합니다. 도우미를 켜 두세요."
+
+#: app/setup/steps.py:654
+msgid "{hint}另外还有 {count} 个启用的定时计划，可以在「运行」页调整。"
+msgstr "{hint} 활성화된 다른 일정이 {count}개 있습니다. 실행 페이지에서 변경할 수 있습니다."
+
+#: app/content/setup_model.py:301
+msgid "只做日常"
+msgstr "일일만"
+
+#: app/setup/steps.py:29
+msgid "只支持清体力、每日实训、领取奖励和历战余响"
+msgstr "개척력 소모, 일일 훈련, 보상 수령, 전쟁의 여운만 지원합니다."
+
+#: app/content/setup_model.py:382
+msgid "只有 Windows 通知"
+msgstr "Windows 알림만"
+
+#: app/main_window.py:790
+msgid "可以在「设置 › 高级」重新打开向导"
+msgstr "설정 › 고급에서 마법사를 다시 열 수 있습니다."
+
+#: app/setup/steps.py:564
+msgid "可以自己点，也可以让小助手按时开始。"
+msgstr "직접 시작하거나 일정을 설정할 수 있습니다."
+
+#: app/setup/steps.py:299
+msgid "可执行文件 (*.exe)"
+msgstr "실행 파일 (*.exe)"
+
+#: app/setup/dialog.py:236
+msgid "可跳过"
+msgstr "선택 사항"
+
+#: module/search/terms.py:7
+msgid "向导"
+msgstr "마법사"
+
+#: app/setup/steps.py:614
+msgid "国际服各服务器不同，请换算成电脑时间，用来判断今天做没做完"
+msgstr "서버별 초기화 시각을 PC 현지 시각으로 환산해 입력하세요. 일일 진행 상황을 판정하는 데 사용합니다."
+
+#: app/setup/steps.py:335
+msgid "在后台运行，看不到画面；锄大地和模拟宇宙不支持"
+msgstr "창 없이 백그라운드에서 실행합니다. 토벌과 시뮬레이션 우주는 지원하지 않습니다."
+
+#: app/setup/steps.py:25
+msgid "在浏览器里运行，不占显卡，也可以无窗口运行"
+msgstr "브라우저에서 실행해 GPU를 사용하지 않으며 창 없이도 실행할 수 있습니다."
+
+#: module/setup/tasks.py:46
+msgid "委托、邮件、无名勋礼、兑换码等"
+msgstr "의뢰, 우편, 무명의 공훈, 리딤 코드 등"
+
+#: app/setup/dialog.py:235
+msgid "安装位置或连接方式"
+msgstr "설치 위치 또는 연결 방식"
+
+#: app/setup/dialog.py:90
+msgid "完成"
+msgstr "완료"
+
+#: module/setup/tasks.py:45
+msgid "完成实训，领取 500 活跃度奖励"
+msgstr "훈련을 완료하고 활약도 500 보상 수령"
+
+#: app/setup/steps.py:715
+msgid "完成设置"
+msgstr "설정 완료"
+
+#: app/content/setup_model.py:51
+msgid "官方启动器"
+msgstr "공식 런처"
+
+#: app/setup/dialog.py:236
+msgid "定时与完成后操作"
+msgstr "일정 및 완료 후 동작"
+
+#: app/setup/steps.py:651
+msgid "定时运行需要小助手保持打开，可以最小化到托盘；电脑不能睡眠。"
+msgstr "예약 실행 중에는 도우미를 켜 두고 PC가 절전 모드에 들어가지 않게 하세요. 트레이로 최소화할 수 있습니다."
+
+#: app/setup/steps.py:338
+msgid "小助手会打开浏览器，请在里面登录米哈游账号，之后会记住登录"
+msgstr "열리는 브라우저에서 HoYoverse 계정으로 로그인하세요. 다음에도 로그인 상태가 유지됩니다."
+
+#: app/setup/steps.py:421
+msgid "小助手需要知道 StarRail.exe 的位置，才能替你启动游戏。"
+msgstr "게임을 실행할 수 있도록 StarRail.exe의 위치를 지정하세요."
+
+#: module/setup/tasks.py:51
+msgid "差分宇宙积分"
+msgstr "차분화 우주 포인트"
+
+#: module/setup/tasks.py:79
+msgid "已启用体力计划，清体力时会按计划选择副本。"
+msgstr "개척력 계획이 활성화되어 있어 계획에 따라 스테이지를 선택합니다."
+
+#: module/setup/tasks.py:81
+msgid "已启用培养目标，清体力时会按培养目标选择副本。"
+msgstr "육성 목표가 활성화되어 있어 목표에 따라 스테이지를 선택합니다."
+
+#: app/content/setup_model.py:381
+msgid "已添加 {names}"
+msgstr "추가됨: {names}"
+
+#: app/content/setup_model.py:400
+msgid "已选 {count} 项"
+msgstr "{count}개 선택"
+
+#: app/setup/steps.py:599
+msgid "开始时间"
+msgstr "시작 시각"
+
+#: app/content/setup_model.py:52
+msgid "开始菜单"
+msgstr "시작 메뉴"
+
+#: module/setup/run_plan.py:210
+msgid "开机启动设置失败，请检查 Windows 计划任务权限后重试。"
+msgstr "시작 설정을 변경하지 못했습니다. Windows 작업 스케줄러 권한을 확인한 후 다시 시도하세요."
+
+#: module/search/terms.py:7
+msgid "引导"
+msgstr "안내"
+
+#: app/content/setup_model.py:178
+msgid "当前系统不支持这种运行方式。"
+msgstr "현재 시스템에서는 이 실행 방식을 지원하지 않습니다."
+
+#: app/content/setup_model.py:51
+msgid "当前设置"
+msgstr "현재 설정"
+
+#: app/setup/steps.py:471
+msgid "快速选择"
+msgstr "빠른 선택"
+
+#: app/content/setup_model.py:407
+msgid "我自己点开始"
+msgstr "직접 시작"
+
+#: app/content/setup_model.py:53
+msgid "手动选择"
+msgstr "직접 선택"
+
+#: app/setup/steps.py:384
+msgid "手机：在开发者选项打开 USB 调试，用数据线连接后允许调试"
+msgstr "휴대폰의 개발자 옵션에서 USB 디버깅을 켜고 케이블을 연결한 뒤 디버깅을 허용하세요."
+
+#: app/content/settings/advanced.py:25
+msgid "打开向导"
+msgstr "마법사 열기"
+
+#: app/setup/steps.py:570
+msgid "打开小助手，点总览的「开始完整运行」。"
+msgstr "도우미 개요에서 '전체 실행 시작'을 누르세요."
+
+#: app/setup/steps.py:493
+msgid "打开的项目会加入「完整运行」，已经做完的会自动跳过。之后可以在「任务」页细调。"
+msgstr "선택한 작업은 전체 실행에 추가되며 완료된 작업은 건너뜁니다. 나중에 작업 페이지에서 변경할 수 있습니다."
+
+#: app/content/setup_model.py:413
+msgid "找到游戏"
+msgstr "게임 찾기"
+
+#: module/setup/tasks.py:45
+msgid "把开拓力用在你选择的副本上"
+msgstr "선택한 스테이지에서 개척력 소모"
+
+#: module/setup/tasks.py:127
+msgid "按当前选择，每天大约 {daily}（按常见配置估算）。"
+msgstr "일반적인 환경에서 하루 약 {daily} 소요됩니다."
+
+#: module/setup/tasks.py:125
+msgid "按当前选择，每天大约 {daily}，周常每周另外 {weekly}（按常见配置估算）。"
+msgstr "일반적인 환경에서 하루 약 {daily}, 주간 작업은 매주 약 {weekly} 추가로 소요됩니다."
+
+#: app/setup/steps.py:756
+msgid "接下来点「开始完整运行」就可以，以后改主意随时再调。"
+msgstr "'전체 실행 시작'을 누르면 됩니다. 설정은 언제든 변경할 수 있습니다."
+
+#: app/setup/steps.py:22
+msgid "支持全部任务，可以在前台运行，也可以设成后台运行，边挂机边用电脑"
+msgstr "모든 작업을 지원합니다. 백그라운드 실행으로 전환하면 실행 중에도 PC를 쓸 수 있습니다."
+
+#: module/search/terms.py:7
+msgid "新手"
+msgstr "초보자"
+
+#: app/main_window.py:788
+msgid "无法保存设置"
+msgstr "설정을 저장할 수 없음"
+
+#: app/content/setup_model.py:125
+msgid "无法保存设置：{error}"
+msgstr "설정을 저장할 수 없습니다: {error}"
+
+#: app/main_window.py:769
+msgid "无法打开首次配置向导"
+msgstr "초기 설정을 열 수 없음"
+
+#: app/setup/steps.py:335
+msgid "无窗口运行"
+msgstr "창 없이 실행"
+
+#: app/setup/steps.py:339
+msgid "无窗口运行时如果没有登录，会自动换成有窗口让你登录"
+msgstr "로그인되지 않은 경우 창 없는 모드에서도 로그인 창이 열립니다."
+
+#: app/content/setup_model.py:301
+msgid "日常 + 周常（推荐）"
+msgstr "일일 + 주간 (추천)"
+
+#: app/setup/steps.py:602
+msgid "最小化到托盘，不会忘记打开"
+msgstr "트레이에서 시작하므로 따로 켤 필요가 없습니다."
+
+#: app/content/setup_model.py:392
+msgid "有窗口"
+msgstr "창 모드"
+
+#: app/content/setup_model.py:134
+msgid "桌面分身正在使用设置，请回到主桌面并结束托管后打开向导。"
+msgstr "데스크톱 분신이 설정을 사용 중입니다. 기본 데스크톱으로 돌아가 호스팅을 종료한 뒤 마법사를 여세요."
+
+#: app/setup/steps.py:385
+msgid "模拟器：填地址后点「连接」，MuMu 默认是 127.0.0.1:16384"
+msgstr "에뮬레이터 주소를 입력하고 '연결'을 누르세요. MuMu 기본 주소는 127.0.0.1:16384입니다."
+
+#: app/setup/dialog.py:119
+msgid "欢迎使用三月七小助手"
+msgstr "Mar. 7th 도우미에 오신 것을 환영합니다"
+
+#: app/setup/steps.py:183
+msgid "正在查找游戏…"
+msgstr "게임 찾는 중…"
+
+#: app/content/setup_model.py:331
+msgid "正在设置「{name}」的任务"
+msgstr "'{name}' 작업 설정 중"
+
+#: app/content/setup_model.py:51
+msgid "正在运行的游戏"
+msgstr "실행 중인 게임"
+
+#: app/setup/dialog.py:121
+msgid "每一步点「下一步」时保存"
+msgstr "단계마다 '다음'을 누르면 저장됩니다"
+
+#: module/setup/tasks.py:47
+msgid "每周 3 次，优先消耗开拓力"
+msgstr "주 3회, 개척력을 우선 소모"
+
+#: module/setup/tasks.py:47
+msgid "每周自动完成积分奖励"
+msgstr "주간 포인트 보상 자동 획득"
+
+#: app/content/setup_model.py:413
+msgid "每天做什么"
+msgstr "일일 작업"
+
+#: app/setup/steps.py:571
+msgid "每天定时运行"
+msgstr "매일 예약 실행"
+
+#: app/setup/steps.py:492
+msgid "每天想让小助手做什么？"
+msgstr "매일 어떤 작업을 실행할까요?"
+
+#: app/setup/steps.py:599
+msgid "每天，按电脑时间"
+msgstr "매일 PC 현지 시각 기준"
+
+#: module/setup/tasks.py:46
+msgid "每日签到和双倍掉落"
+msgstr "일일 출석과 2배 드롭"
+
+#: app/setup/steps.py:575
+msgid "每次登录后自动打开小助手，开始完整运行。"
+msgstr "로그인할 때마다 도우미가 열리고 전체 실행을 시작합니다."
+
+#: app/setup/steps.py:261
+msgid "没有自动找到游戏，请选择安装目录里的 StarRail.exe。也可以先跳过，以后在「设置 › 运行方式」设置。"
+msgstr "게임을 찾지 못했습니다. 설치 폴더의 StarRail.exe를 선택하거나 건너뛴 뒤 설정 › 실행 방식에서 지정하세요."
+
+#: app/content/setup_model.py:382
+msgid "没有通知"
+msgstr "알림 없음"
+
+#: app/setup/steps.py:334
+msgid "浏览器"
+msgstr "브라우저"
+
+#: module/setup/tasks.py:48
+msgid "混沌回忆等三项，需要先配好队伍"
+msgstr "혼돈의 기억 등 세 콘텐츠. 먼저 파티를 구성하세요"
+
+#: module/setup/run_plan.py:134
+msgid "游戏刷新时间应在 0 至 23 点之间。"
+msgstr "게임 초기화 시각은 0~23시 사이여야 합니다."
+
+#: app/content/setup_model.py:413
+msgid "游戏在哪里运行"
+msgstr "실행 방식"
+
+#: app/setup/steps.py:118
+msgid "游戏在哪里运行？"
+msgstr "어디에서 게임을 실행할까요?"
+
+#: app/setup/steps.py:421
+msgid "游戏安装在哪里？"
+msgstr "게임이 어디에 설치되어 있나요?"
+
+#: app/setup/steps.py:208
+msgid "游戏已经登录过一次，能正常进入"
+msgstr "게임에 한 번 로그인했고 정상적으로 접속할 수 있어야 합니다."
+
+#: app/content/setup_model.py:224
+msgid "游戏文件不存在，请重新选择。"
+msgstr "게임 파일이 없습니다. 다시 선택하세요."
+
+#: app/setup/steps.py:209
+msgid "游戏语言是简体中文"
+msgstr "게임 언어를 중국어 간체로 설정하세요."
+
+#: module/setup/run_plan.py:160
+msgid "现有定时计划无法读取，请到「运行」检查后再设置。"
+msgstr "기존 일정을 읽을 수 없습니다. 실행 페이지에서 확인한 뒤 다시 설정하세요."
+
+#: app/setup/steps.py:28
+msgid "用数据线或网络连接手机、模拟器，手机屏幕可以照常使用"
+msgstr "USB나 네트워크로 휴대폰 또는 에뮬레이터를 연결하세요. 휴대폰 화면은 계속 사용할 수 있습니다."
+
+#: app/setup/dialog.py:235
+msgid "电脑、云游戏或安卓设备"
+msgstr "PC, 클라우드 또는 Android"
+
+#: app/content/setup_model.py:406
+msgid "登录 Windows 后"
+msgstr "Windows 로그인 시"
+
+#: app/setup/steps.py:602
+msgid "登录 Windows 后自动打开小助手"
+msgstr "Windows 로그인 시 도우미 자동 시작"
+
+#: app/content/setup_model.py:434
+msgid "登录 Windows 后自动运行"
+msgstr "Windows 로그인 시 자동 실행"
+
+#: app/setup/steps.py:574
+msgid "登录 Windows 后运行"
+msgstr "Windows 로그인 시"
+
+#: app/setup/steps.py:652
+msgid "登录后大约半分钟开始，小助手会最小化到托盘。今天已经做完的任务会自动跳过。"
+msgstr "로그인 약 30초 후 트레이로 최소화되어 시작합니다. 오늘 완료한 작업은 건너뜁니다."
+
+#: app/setup/dialog.py:248
+msgid "第 {index} 步，共 {total} 步"
+msgstr "{total}단계 중 {index}단계"
+
+#: app/setup/steps.py:336
+msgid "第一次运行"
+msgstr "첫 실행"
+
+#: app/setup/steps.py:775
+msgid "细调每个任务"
+msgstr "작업 세부 설정"
+
+#: app/setup/dialog.py:119
+msgid "花 1 分钟，设好每天要做的事"
+msgstr "1분이면 일일 작업을 설정할 수 있어요"
+
+#: app/setup/steps.py:756
+msgid "设置好了"
+msgstr "설정 완료"
+
+#: app/setup/steps.py:386
+msgid "请先在设备上安装国服客户端并登录一次"
+msgstr "먼저 기기에 중국 본토 클라이언트를 설치하고 한 번 로그인하세요."
+
+#: app/content/setup_model.py:222
+msgid "请先选择游戏文件。"
+msgstr "먼저 게임 파일을 선택하세요."
+
+#: module/setup/tasks.py:96
+msgid "请选择列表中的副本。"
+msgstr "목록에서 스테이지를 선택하세요."
+
+#: module/setup/run_plan.py:200
+msgid "请选择可用的完成后操作。"
+msgstr "사용 가능한 완료 후 동작을 선택하세요."
+
+#: app/content/setup_model.py:269
+msgid "请选择可用的浏览器。"
+msgstr "사용 가능한 브라우저를 선택하세요."
+
+#: module/setup/run_plan.py:166
+msgid "请选择有效的运行时间。"
+msgstr "올바른 시작 시각을 선택하세요."
+
+#: app/content/setup_model.py:226
+msgid "请选择游戏目录里的 StarRail.exe。"
+msgstr "게임 폴더의 StarRail.exe를 선택하세요."
+
+#: module/setup/tasks.py:51
+msgid "货币战争积分"
+msgstr "화폐 전쟁 포인트"
+
+#: app/setup/steps.py:607
+msgid "跑完之后"
+msgstr "완료 후 동작"
+
+#: app/setup/steps.py:775
+msgid "边挂机边用电脑"
+msgstr "실행 중 PC 사용"
+
+#: app/setup/steps.py:206
+msgid "运行前请确认"
+msgstr "실행 전 확인"
+
+#: app/content/setup_model.py:191
+msgid "运行方式已保存，界面刷新失败：{error}"
+msgstr "실행 방식은 저장했지만 화면을 새로 고치지 못했습니다: {error}"
+
+#: app/setup/steps.py:770
+msgid "还想多了解一点？"
+msgstr "더 알아보기"
+
+#: app/content/setup_model.py:397
+msgid "还没有找到游戏"
+msgstr "아직 게임을 찾지 못함"
+
+#: module/setup/tasks.py:118
+msgid "还没有选择任何任务，完整运行不会做任何事。"
+msgstr "선택한 작업이 없어 전체 실행 시 아무 작업도 하지 않습니다."
+
+#: module/setup/run_plan.py:162
+msgid "这个定时计划已被移除，请重新打开向导后再设置。"
+msgstr "이 일정은 삭제되었습니다. 마법사를 다시 열어 설정하세요."
+
+#: app/setup/steps.py:419
+msgid "连接要运行游戏的手机或模拟器。"
+msgstr "게임을 실행할 휴대폰이나 에뮬레이터를 연결하세요."
+
+#: app/setup/steps.py:412
+msgid "连接设备"
+msgstr "기기 연결"
+
+#: app/setup/steps.py:298
+msgid "选择 StarRail.exe"
+msgstr "StarRail.exe 선택"
+
+#: app/setup/steps.py:192
+msgid "选择其他位置"
+msgstr "다른 위치 선택"
+
+#: app/setup/dialog.py:235
+msgid "选择要自动完成的内容"
+msgstr "자동으로 완료할 작업 선택"
+
+#: app/content/setup_model.py:413
+msgid "通知我"
+msgstr "알림"
+
+#: app/setup/steps.py:194
+msgid "重新查找"
+msgstr "다시 찾기"
+
+#: app/content/settings/advanced.py:26
+msgid "重新设置游戏位置、每天要做的任务、运行时间和通知"
+msgstr "게임 위치, 일일 작업, 실행 시간 및 알림을 다시 설정합니다."
+
+#: module/search/terms.py:7
+msgid "重新配置"
+msgstr "다시 설정"
+
+#: app/content/setup_model.py:260
+msgid "集成浏览器"
+msgstr "내장 브라우저"
+
+#: app/setup/steps.py:334
+msgid "集成浏览器会在第一次运行时自动下载，效果最好"
+msgstr "내장 브라우저를 권장합니다. 처음 실행할 때 자동으로 다운로드됩니다."
+
+#: app/setup/steps.py:27
+msgid "需要云游戏时长；锄大地和模拟宇宙要有窗口才能运行"
+msgstr "클라우드 플레이 시간이 필요합니다. 토벌과 시뮬레이션 우주는 창 모드에서만 실행할 수 있습니다."
+
+#: module/setup/tasks.py:49
+msgid "需要前台全屏，通常超过 1 小时"
+msgstr "전면 전체 화면 필요, 보통 1시간 이상"
+
+#: app/setup/steps.py:30
+msgid "需要安卓 10 以上、国服客户端，并打开 USB 调试"
+msgstr "Android 10 이상, 중국 본토 클라이언트, USB 디버깅이 필요합니다."
+
+#: app/setup/steps.py:340
+msgid "需要有云游戏时长，高峰期可能要排队"
+msgstr "클라우드 플레이 시간이 필요합니다. 혼잡한 시간에는 대기열이 생길 수 있습니다."
+
+#: module/search/terms.py:7
+msgid "首次设置"
+msgstr "첫 설정"
+
+#: app/content/settings/advanced.py:25
+msgid "首次配置向导"
+msgstr "초기 설정 마법사"
+
+#: app/setup/steps.py:24
+msgid "默认在前台运行，任务期间会操作鼠标和键盘，先别用电脑"
+msgstr "기본 전면 실행은 마우스와 키보드를 사용합니다. 작업 중에는 PC를 조작하지 마세요."
+
+#: app/content/setup_model.py:52
+msgid "默认安装位置"
+msgstr "기본 설치 위치"

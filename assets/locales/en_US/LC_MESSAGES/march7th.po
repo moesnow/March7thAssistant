@@ -12356,3 +12356,619 @@ msgstr "{name} is damaged and was read as empty."
 #: module/accounts/store.py:31
 msgid "{name} 暂时无法留存损坏副本，请稍后重试"
 msgstr "Couldn't keep a damaged copy of {name} right now. Try again later."
+
+#: app/setup/steps.py:205
+msgid "Epic 渠道版需要从 Epic 启动，请提前在 Epic 里登录"
+msgstr "Sign in to Epic first to launch the Epic edition."
+
+#: app/content/setup_model.py:52
+msgid "Epic 游戏商城"
+msgstr "Epic Games Store"
+
+#: app/setup/steps.py:26
+msgid "Windows、macOS、Linux 都能用"
+msgstr "Works on Windows, macOS and Linux"
+
+#: app/content/setup_model.py:404
+msgid "{days} {time}"
+msgstr "{days} at {time}"
+
+#: module/setup/run_plan.py:228
+msgid "{error}；恢复原开机启动设置失败：{reason}"
+msgstr "{error}. Could not restore startup settings: {reason}"
+
+#: module/setup/tasks.py:108
+msgid "{minutes} 分钟–{hours} 小时"
+msgstr "{minutes} min–{hours} hr"
+
+#: app/content/setup_model.py:428
+msgid "{names}等 {count} 项"
+msgstr "{count} tasks, including {names}"
+
+#: app/content/setup_model.py:424
+msgid "{task}（{category} · {name}）"
+msgstr "{task} ({category} · {name})"
+
+#: app/content/setup_model.py:432
+msgid "{when} 自动运行"
+msgstr "{when} (automatic)"
+
+#: app/content/setup_model.py:436
+msgid "{when}，完成后{action}"
+msgstr "{when}, then {action}"
+
+#: app/setup/dialog.py:84
+msgid "上一步"
+msgstr "Back"
+
+#: app/setup/steps.py:417
+msgid "云·星穹铁道在浏览器里运行，登录一次就能一直用。"
+msgstr "Cloud StarRail runs in a browser and remembers your login."
+
+#: app/content/setup_model.py:413
+msgid "什么时候运行"
+msgstr "Run time"
+
+#: app/setup/steps.py:564
+msgid "什么时候运行？"
+msgstr "When should it run?"
+
+#: app/setup/dialog.py:79
+msgid "以后再设置"
+msgstr "Set up later"
+
+#: app/setup/steps.py:118
+msgid "以后可以在「设置 › 运行方式」更换。"
+msgstr "You can change this in Settings › Run mode."
+
+#: app/setup/steps.py:703
+msgid "任务完成或失败时告诉你。可以跳过，以后在「设置 › 消息推送」添加。"
+msgstr "Get notified when tasks finish or fail. You can skip this and add a channel in Settings › Push Notification later."
+
+#: app/setup/steps.py:702
+msgid "做完了怎么通知你？"
+msgstr "How should we notify you?"
+
+#: app/setup/steps.py:447
+msgid "先跳过"
+msgstr "Skip for now"
+
+#: app/content/setup_model.py:301
+msgid "全部打开"
+msgstr "Select all"
+
+#: app/setup/steps.py:210
+msgid "关闭 HDR、N 卡滤镜、帧率显示和微星小飞机等悬浮窗"
+msgstr "Turn off HDR, NVIDIA filters, FPS counters and overlays such as MSI Afterburner."
+
+#: app/setup/steps.py:412
+msgid "准备云游戏"
+msgstr "Cloud setup"
+
+#: app/setup/steps.py:23
+msgid "分辨率会自动调成 1920×1080，不用自己改"
+msgstr "Resolution is set to 1920×1080 automatically."
+
+#: module/search/terms.py:7
+msgid "初始化"
+msgstr "Initialize"
+
+#: app/setup/steps.py:572
+msgid "到点自动开始，需要小助手保持打开。"
+msgstr "Starts on time while the assistant is open."
+
+#: app/setup/steps.py:654
+msgid "{hint}另外还有 {count} 个启用的定时计划，可以在「运行」页调整。"
+msgstr "{hint} Other active schedules: {count}. Edit them on the Run page."
+
+#: app/content/setup_model.py:301
+msgid "只做日常"
+msgstr "Dailies only"
+
+#: app/setup/steps.py:29
+msgid "只支持清体力、每日实训、领取奖励和历战余响"
+msgstr "Supports Spend Power, Daily Training, reward collection and Echo of War only."
+
+#: app/content/setup_model.py:382
+msgid "只有 Windows 通知"
+msgstr "Windows only"
+
+#: app/main_window.py:790
+msgid "可以在「设置 › 高级」重新打开向导"
+msgstr "Reopen the wizard in Settings › Advanced."
+
+#: app/setup/steps.py:564
+msgid "可以自己点，也可以让小助手按时开始。"
+msgstr "Start it yourself or set a schedule."
+
+#: app/setup/steps.py:299
+msgid "可执行文件 (*.exe)"
+msgstr "Executables (*.exe)"
+
+#: app/setup/dialog.py:236
+msgid "可跳过"
+msgstr "Optional"
+
+#: module/search/terms.py:7
+msgid "向导"
+msgstr "Wizard"
+
+#: app/setup/steps.py:614
+msgid "国际服各服务器不同，请换算成电脑时间，用来判断今天做没做完"
+msgstr "Enter the server reset hour in your PC's local time so daily progress resets correctly."
+
+#: app/setup/steps.py:335
+msgid "在后台运行，看不到画面；锄大地和模拟宇宙不支持"
+msgstr "Runs without a window. Fhoe-Rail and Simulated Universe need a visible window."
+
+#: app/setup/steps.py:25
+msgid "在浏览器里运行，不占显卡，也可以无窗口运行"
+msgstr "Runs in a browser without using your GPU. A window is optional."
+
+#: module/setup/tasks.py:46
+msgid "委托、邮件、无名勋礼、兑换码等"
+msgstr "Assignments, mail, Nameless Honor, codes"
+
+#: app/setup/dialog.py:235
+msgid "安装位置或连接方式"
+msgstr "Path or connection"
+
+#: app/setup/dialog.py:90
+msgid "完成"
+msgstr "Done"
+
+#: module/setup/tasks.py:45
+msgid "完成实训，领取 500 活跃度奖励"
+msgstr "Claim the 500 Activity reward"
+
+#: app/setup/steps.py:715
+msgid "完成设置"
+msgstr "Finish setup"
+
+#: app/content/setup_model.py:51
+msgid "官方启动器"
+msgstr "Official launcher"
+
+#: app/setup/dialog.py:236
+msgid "定时与完成后操作"
+msgstr "Schedule and finish action"
+
+#: app/setup/steps.py:651
+msgid "定时运行需要小助手保持打开，可以最小化到托盘；电脑不能睡眠。"
+msgstr "Keep the assistant open and your PC awake. You can minimize it to the system tray."
+
+#: app/setup/steps.py:338
+msgid "小助手会打开浏览器，请在里面登录米哈游账号，之后会记住登录"
+msgstr "Sign in to your HoYoverse account in the browser that opens. Your login is saved."
+
+#: app/setup/steps.py:421
+msgid "小助手需要知道 StarRail.exe 的位置，才能替你启动游戏。"
+msgstr "Choose StarRail.exe so the assistant can launch the game."
+
+#: module/setup/tasks.py:51
+msgid "差分宇宙积分"
+msgstr "Divergent Universe points"
+
+#: module/setup/tasks.py:79
+msgid "已启用体力计划，清体力时会按计划选择副本。"
+msgstr "Your Power Plan chooses the stages."
+
+#: module/setup/tasks.py:81
+msgid "已启用培养目标，清体力时会按培养目标选择副本。"
+msgstr "Your training goals choose the stages."
+
+#: app/content/setup_model.py:381
+msgid "已添加 {names}"
+msgstr "Added: {names}"
+
+#: app/content/setup_model.py:400
+msgid "已选 {count} 项"
+msgstr "{count} selected"
+
+#: app/setup/steps.py:599
+msgid "开始时间"
+msgstr "Start time"
+
+#: app/content/setup_model.py:52
+msgid "开始菜单"
+msgstr "Start menu"
+
+#: module/setup/run_plan.py:210
+msgid "开机启动设置失败，请检查 Windows 计划任务权限后重试。"
+msgstr "Could not change startup settings. Check Windows Task Scheduler permissions and try again."
+
+#: module/search/terms.py:7
+msgid "引导"
+msgstr "Onboarding"
+
+#: app/content/setup_model.py:178
+msgid "当前系统不支持这种运行方式。"
+msgstr "This mode is unavailable on your system."
+
+#: app/content/setup_model.py:51
+msgid "当前设置"
+msgstr "Current setting"
+
+#: app/setup/steps.py:471
+msgid "快速选择"
+msgstr "Presets"
+
+#: app/content/setup_model.py:407
+msgid "我自己点开始"
+msgstr "Start manually"
+
+#: app/content/setup_model.py:53
+msgid "手动选择"
+msgstr "Selected manually"
+
+#: app/setup/steps.py:384
+msgid "手机：在开发者选项打开 USB 调试，用数据线连接后允许调试"
+msgstr "Phone: enable USB debugging in Developer options, connect by cable and allow debugging."
+
+#: app/content/settings/advanced.py:25
+msgid "打开向导"
+msgstr "Open wizard"
+
+#: app/setup/steps.py:570
+msgid "打开小助手，点总览的「开始完整运行」。"
+msgstr "Open Overview and select Start full run."
+
+#: app/setup/steps.py:493
+msgid "打开的项目会加入「完整运行」，已经做完的会自动跳过。之后可以在「任务」页细调。"
+msgstr "Selected tasks join Full Run. Completed tasks are skipped. You can change these on the Task page."
+
+#: app/content/setup_model.py:413
+msgid "找到游戏"
+msgstr "Find game"
+
+#: module/setup/tasks.py:45
+msgid "把开拓力用在你选择的副本上"
+msgstr "Spend Power on your chosen stage"
+
+#: module/setup/tasks.py:127
+msgid "按当前选择，每天大约 {daily}（按常见配置估算）。"
+msgstr "About {daily} per day on a typical setup."
+
+#: module/setup/tasks.py:125
+msgid "按当前选择，每天大约 {daily}，周常每周另外 {weekly}（按常见配置估算）。"
+msgstr "About {daily} a day, plus {weekly} a week on a typical setup."
+
+#: app/setup/steps.py:756
+msgid "接下来点「开始完整运行」就可以，以后改主意随时再调。"
+msgstr "Select Start full run when you’re ready. You can change these settings anytime."
+
+#: app/setup/steps.py:22
+msgid "支持全部任务，可以在前台运行，也可以设成后台运行，边挂机边用电脑"
+msgstr "All tasks are supported. Use background mode to keep working on your PC."
+
+#: module/search/terms.py:7
+msgid "新手"
+msgstr "Beginner"
+
+#: app/main_window.py:788
+msgid "无法保存设置"
+msgstr "Couldn’t save settings"
+
+#: app/content/setup_model.py:125
+msgid "无法保存设置：{error}"
+msgstr "Couldn’t save settings: {error}"
+
+#: app/main_window.py:769
+msgid "无法打开首次配置向导"
+msgstr "Couldn’t open setup"
+
+#: app/setup/steps.py:335
+msgid "无窗口运行"
+msgstr "Run headless"
+
+#: app/setup/steps.py:339
+msgid "无窗口运行时如果没有登录，会自动换成有窗口让你登录"
+msgstr "If you’re signed out, a window opens so you can sign in."
+
+#: app/content/setup_model.py:301
+msgid "日常 + 周常（推荐）"
+msgstr "Daily + weekly (recommended)"
+
+#: app/setup/steps.py:602
+msgid "最小化到托盘，不会忘记打开"
+msgstr "Start in the system tray so it’s ready on time."
+
+#: app/content/setup_model.py:392
+msgid "有窗口"
+msgstr "Windowed"
+
+#: app/content/setup_model.py:134
+msgid "桌面分身正在使用设置，请回到主桌面并结束托管后打开向导。"
+msgstr "Desktop Twin is using these settings. Return to the main desktop and end hosting to open the wizard."
+
+#: app/setup/steps.py:385
+msgid "模拟器：填地址后点「连接」，MuMu 默认是 127.0.0.1:16384"
+msgstr "Emulator: enter its address and select Connect. MuMu’s default is 127.0.0.1:16384."
+
+#: app/setup/dialog.py:119
+msgid "欢迎使用三月七小助手"
+msgstr "Welcome to March7th"
+
+#: app/setup/steps.py:183
+msgid "正在查找游戏…"
+msgstr "Finding game…"
+
+#: app/content/setup_model.py:331
+msgid "正在设置「{name}」的任务"
+msgstr "Editing tasks for {name}"
+
+#: app/content/setup_model.py:51
+msgid "正在运行的游戏"
+msgstr "Running game"
+
+#: app/setup/dialog.py:121
+msgid "每一步点「下一步」时保存"
+msgstr "Next saves each step."
+
+#: module/setup/tasks.py:47
+msgid "每周 3 次，优先消耗开拓力"
+msgstr "3 runs a week, spending Power first"
+
+#: module/setup/tasks.py:47
+msgid "每周自动完成积分奖励"
+msgstr "Earn the weekly point rewards"
+
+#: app/content/setup_model.py:413
+msgid "每天做什么"
+msgstr "Daily tasks"
+
+#: app/setup/steps.py:571
+msgid "每天定时运行"
+msgstr "Daily schedule"
+
+#: app/setup/steps.py:492
+msgid "每天想让小助手做什么？"
+msgstr "What should run each day?"
+
+#: app/setup/steps.py:599
+msgid "每天，按电脑时间"
+msgstr "Daily, in your PC’s time zone"
+
+#: module/setup/tasks.py:46
+msgid "每日签到和双倍掉落"
+msgstr "Daily check-in and double drops"
+
+#: app/setup/steps.py:575
+msgid "每次登录后自动打开小助手，开始完整运行。"
+msgstr "Open the assistant and start Full Run at sign-in."
+
+#: app/setup/steps.py:261
+msgid "没有自动找到游戏，请选择安装目录里的 StarRail.exe。也可以先跳过，以后在「设置 › 运行方式」设置。"
+msgstr "Game not found. Choose StarRail.exe in the install folder, or skip and set it later in Settings › Run mode."
+
+#: app/content/setup_model.py:382
+msgid "没有通知"
+msgstr "No notifications"
+
+#: app/setup/steps.py:334
+msgid "浏览器"
+msgstr "Browser"
+
+#: module/setup/tasks.py:48
+msgid "混沌回忆等三项，需要先配好队伍"
+msgstr "Set teams for Memory of Chaos + 2 more"
+
+#: module/setup/run_plan.py:134
+msgid "游戏刷新时间应在 0 至 23 点之间。"
+msgstr "Choose a reset hour from 0 to 23."
+
+#: app/content/setup_model.py:413
+msgid "游戏在哪里运行"
+msgstr "Run mode"
+
+#: app/setup/steps.py:118
+msgid "游戏在哪里运行？"
+msgstr "Where will you play?"
+
+#: app/setup/steps.py:421
+msgid "游戏安装在哪里？"
+msgstr "Where is the game installed?"
+
+#: app/setup/steps.py:208
+msgid "游戏已经登录过一次，能正常进入"
+msgstr "You’ve signed in and can enter the game."
+
+#: app/content/setup_model.py:224
+msgid "游戏文件不存在，请重新选择。"
+msgstr "Game file not found. Choose it again."
+
+#: app/setup/steps.py:209
+msgid "游戏语言是简体中文"
+msgstr "Game language is set to Simplified Chinese."
+
+#: module/setup/run_plan.py:160
+msgid "现有定时计划无法读取，请到「运行」检查后再设置。"
+msgstr "Couldn’t read existing schedules. Check them on the Run page, then try again."
+
+#: app/setup/steps.py:28
+msgid "用数据线或网络连接手机、模拟器，手机屏幕可以照常使用"
+msgstr "Connect a phone or emulator by USB or network. You can still use the phone screen."
+
+#: app/setup/dialog.py:235
+msgid "电脑、云游戏或安卓设备"
+msgstr "PC, cloud or Android"
+
+#: app/content/setup_model.py:406
+msgid "登录 Windows 后"
+msgstr "At Windows sign-in"
+
+#: app/setup/steps.py:602
+msgid "登录 Windows 后自动打开小助手"
+msgstr "Open the assistant at Windows sign-in"
+
+#: app/content/setup_model.py:434
+msgid "登录 Windows 后自动运行"
+msgstr "Run at Windows sign-in"
+
+#: app/setup/steps.py:574
+msgid "登录 Windows 后运行"
+msgstr "At Windows sign-in"
+
+#: app/setup/steps.py:652
+msgid "登录后大约半分钟开始，小助手会最小化到托盘。今天已经做完的任务会自动跳过。"
+msgstr "Starts about 30 seconds after sign-in, minimized to the tray. Tasks already done today are skipped."
+
+#: app/setup/dialog.py:248
+msgid "第 {index} 步，共 {total} 步"
+msgstr "Step {index} of {total}"
+
+#: app/setup/steps.py:336
+msgid "第一次运行"
+msgstr "First run"
+
+#: app/setup/steps.py:775
+msgid "细调每个任务"
+msgstr "Edit tasks"
+
+#: app/setup/dialog.py:119
+msgid "花 1 分钟，设好每天要做的事"
+msgstr "Set up your daily routine in a minute."
+
+#: app/setup/steps.py:756
+msgid "设置好了"
+msgstr "You’re all set"
+
+#: app/setup/steps.py:386
+msgid "请先在设备上安装国服客户端并登录一次"
+msgstr "Install the mainland China client on the device and sign in once."
+
+#: app/content/setup_model.py:222
+msgid "请先选择游戏文件。"
+msgstr "Choose the game file first."
+
+#: module/setup/tasks.py:96
+msgid "请选择列表中的副本。"
+msgstr "Choose a stage from the list."
+
+#: module/setup/run_plan.py:200
+msgid "请选择可用的完成后操作。"
+msgstr "Choose an available completion action."
+
+#: app/content/setup_model.py:269
+msgid "请选择可用的浏览器。"
+msgstr "Choose an available browser."
+
+#: module/setup/run_plan.py:166
+msgid "请选择有效的运行时间。"
+msgstr "Choose a valid start time."
+
+#: app/content/setup_model.py:226
+msgid "请选择游戏目录里的 StarRail.exe。"
+msgstr "Choose StarRail.exe in the game folder."
+
+#: module/setup/tasks.py:51
+msgid "货币战争积分"
+msgstr "Currency Wars points"
+
+#: app/setup/steps.py:607
+msgid "跑完之后"
+msgstr "After the run"
+
+#: app/setup/steps.py:775
+msgid "边挂机边用电脑"
+msgstr "Use your PC during runs"
+
+#: app/setup/steps.py:206
+msgid "运行前请确认"
+msgstr "Before you start"
+
+#: app/content/setup_model.py:191
+msgid "运行方式已保存，界面刷新失败：{error}"
+msgstr "Run mode saved. Couldn’t refresh the interface: {error}"
+
+#: app/setup/steps.py:770
+msgid "还想多了解一点？"
+msgstr "Learn more"
+
+#: app/content/setup_model.py:397
+msgid "还没有找到游戏"
+msgstr "Game not found yet"
+
+#: module/setup/tasks.py:118
+msgid "还没有选择任何任务，完整运行不会做任何事。"
+msgstr "No tasks selected. Full Run has nothing to do."
+
+#: module/setup/run_plan.py:162
+msgid "这个定时计划已被移除，请重新打开向导后再设置。"
+msgstr "This schedule was removed. Reopen the wizard to set it up again."
+
+#: app/setup/steps.py:419
+msgid "连接要运行游戏的手机或模拟器。"
+msgstr "Connect the phone or emulator that will run the game."
+
+#: app/setup/steps.py:412
+msgid "连接设备"
+msgstr "Connect device"
+
+#: app/setup/steps.py:298
+msgid "选择 StarRail.exe"
+msgstr "Choose StarRail.exe"
+
+#: app/setup/steps.py:192
+msgid "选择其他位置"
+msgstr "Browse…"
+
+#: app/setup/dialog.py:235
+msgid "选择要自动完成的内容"
+msgstr "Choose tasks to automate"
+
+#: app/content/setup_model.py:413
+msgid "通知我"
+msgstr "Notifications"
+
+#: app/setup/steps.py:194
+msgid "重新查找"
+msgstr "Search again"
+
+#: app/content/settings/advanced.py:26
+msgid "重新设置游戏位置、每天要做的任务、运行时间和通知"
+msgstr "Change the game location, daily tasks, run time and notifications."
+
+#: module/search/terms.py:7
+msgid "重新配置"
+msgstr "Reconfigure"
+
+#: app/content/setup_model.py:260
+msgid "集成浏览器"
+msgstr "Built-in browser"
+
+#: app/setup/steps.py:334
+msgid "集成浏览器会在第一次运行时自动下载，效果最好"
+msgstr "Recommended. The built-in browser downloads on first use."
+
+#: app/setup/steps.py:27
+msgid "需要云游戏时长；锄大地和模拟宇宙要有窗口才能运行"
+msgstr "Requires cloud playtime. Fhoe-Rail and Simulated Universe need a visible window."
+
+#: module/setup/tasks.py:49
+msgid "需要前台全屏，通常超过 1 小时"
+msgstr "Foreground fullscreen, usually over 1 hr"
+
+#: app/setup/steps.py:30
+msgid "需要安卓 10 以上、国服客户端，并打开 USB 调试"
+msgstr "Requires Android 10+, the mainland China client and USB debugging."
+
+#: app/setup/steps.py:340
+msgid "需要有云游戏时长，高峰期可能要排队"
+msgstr "Cloud playtime is required. You may have to queue at peak times."
+
+#: module/search/terms.py:7
+msgid "首次设置"
+msgstr "First-time setup"
+
+#: app/content/settings/advanced.py:25
+msgid "首次配置向导"
+msgstr "Setup wizard"
+
+#: app/setup/steps.py:24
+msgid "默认在前台运行，任务期间会操作鼠标和键盘，先别用电脑"
+msgstr "Foreground mode uses your mouse and keyboard. Leave the PC idle during runs."
+
+#: app/content/setup_model.py:52
+msgid "默认安装位置"
+msgstr "Default install path"
