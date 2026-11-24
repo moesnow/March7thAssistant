@@ -85,6 +85,8 @@ def scheduled_task_payload(task) -> dict:
         'id': task.get('id'),
         'trigger_mode': task_trigger_mode(task),
     }
+    if str(payload['program']).strip().lower() == 'self':
+        payload['account'] = task.get('account') or 'all'
     if str(payload['program']).strip().lower() == 'workflow':
         payload['workflow_name'] = task.get('workflow_name', '')
         if task.get('workflow_step_path') not in (None, ''):

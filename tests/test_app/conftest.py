@@ -52,7 +52,7 @@ def content_window(qtbot, monkeypatch):
     overview.config = cfg
     overview.snapshot = SimpleNamespace(plan=())
     window.homeInterface = SimpleNamespace(model=overview)
-    window.logInterface = SimpleNamespace(isTaskRunning=lambda: False)
+    window.runController = SimpleNamespace(isTaskRunning=lambda: False)
     window.refreshBackendTasks = Mock()
     monkeypatch.setattr("app.card.autostart_setting_card.AutostartSettingCard.refreshState", lambda *_: None)
     monkeypatch.setattr("utils.uac_free.is_enabled", lambda: False)

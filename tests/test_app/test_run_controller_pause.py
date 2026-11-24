@@ -6,14 +6,8 @@ from types import SimpleNamespace
 
 import pytest
 
-pytestmark = pytest.mark.skipif(
-    sys.platform != "win32" or not hasattr(sys, 'getwindowsversion'),
-    reason="GUI 测试仅在 Windows 平台运行"
-)
-
-
 def test_cooperative_stop_waits_for_cleanup_and_keeps_old_process_identity(monkeypatch,tmp_path):
-    import app.log_interface as module
+    import app.content.run_controller as module
     from utils.pause import STATE_STOPPING
     callbacks=[]
     monkeypatch.setattr(module.QTimer,'singleShot',lambda _delay,callback:callbacks.append(callback))
@@ -21,34 +15,34 @@ def test_cooperative_stop_waits_for_cleanup_and_keeps_old_process_identity(monke
     killed=[]
     host=SimpleNamespace(process=process,_pauseControlPath=lambda:str(tmp_path/'control.json'),
                          _killProcessTree=lambda pid:killed.append(pid),appendLog=lambda _:None)
-    host._finishCooperativeStop=lambda p,pid,d:module.LogInterface._finishCooperativeStop(host,p,pid,d)
-    module.LogInterface._finishCooperativeStop(host,process,123,module.time.monotonic()+10)
+    host._finishCooperativeStop=lambda p,pid,d:module.RunController._finishCooperativeStop(host,p,pid,d)
+    module.RunController._finishCooperativeStop(host,process,123,module.time.monotonic()+10)
     assert killed==[] and callbacks
     (tmp_path/'control.json.state').write_text(json.dumps({'state':STATE_STOPPING}),encoding='utf-8')
     callbacks.pop()()
     assert killed==[123]
     host.process=SimpleNamespace(state=lambda:module.QProcess.Running,processId=lambda:456)
-    module.LogInterface._finishCooperativeStop(host,process,123,0)
+    module.RunController._finishCooperativeStop(host,process,123,0)
     assert killed==[123]
 
 
 def test_stop_sends_stop_and_prevents_hotkey_overwriting_it(monkeypatch,tmp_path):
-    import app.log_interface as module
+    import app.content.run_controller as module
     callbacks=[]
     monkeypatch.setattr(module.QTimer,'singleShot',lambda _delay,callback:callbacks.append(callback))
     process=SimpleNamespace(state=lambda:module.QProcess.Running,processId=lambda:123)
     killed=[]
     path=tmp_path/'control.json'
-    host=SimpleNamespace(process=process,_clearTaskTimeout=lambda:None,_pause_supported=True,
+    host=SimpleNamespace(_remote=False,changed=SimpleNamespace(emit=lambda: None),process=process,_clearTaskTimeout=lambda:None,_pause_supported=True,
                          _pauseControlPath=lambda:str(path),_killProcessTree=lambda pid:killed.append(pid),
                          appendLog=lambda _:None,pauseButton=SimpleNamespace(setEnabled=lambda _:None))
-    host._finishCooperativeStop=lambda p,pid,d:module.LogInterface._finishCooperativeStop(host,p,pid,d)
-    module.LogInterface.stopTask(host)
+    host._finishCooperativeStop=lambda p,pid,d:module.RunController._finishCooperativeStop(host,p,pid,d)
+    module.RunController.stopTask(host)
     assert json.loads(path.read_text(encoding='utf-8'))['command']=='stop'
     assert killed==[] and len(callbacks)==1
-    module.LogInterface._sendPauseCommand(host,'resume')
+    module.RunController._sendPauseCommand(host,'resume')
     assert json.loads(path.read_text(encoding='utf-8'))['command']=='stop'
-    module.LogInterface.stopTask(host)
+    module.RunController.stopTask(host)
     assert len(callbacks)==1
     (tmp_path/'control.json.state').write_text(json.dumps({'state':'stopping'}),encoding='utf-8')
     callbacks.pop()()
@@ -127,50 +121,50 @@ class TestResolvePauseSupport:
     """启动目标的暂停支持判定：内置任务按白名单，workflow 支持，外部程序不支持。"""
 
     def test_builtin_pausable_tasks(self):
-        from app.log_interface import LogInterface
+        from app.content.run_controller import RunController
         for task_id in ("main", "daily", "currencywars", "divergentloop", "screen_test"):
-            assert LogInterface._resolvePauseSupport(task_id) is True
+            assert RunController._resolvePauseSupport(task_id) is True
 
     def test_builtin_non_pausable_tasks(self):
-        from app.log_interface import LogInterface
+        from app.content.run_controller import RunController
         for task_id in ("universe_gui", "app_update", "game_update"):
-            assert LogInterface._resolvePauseSupport(task_id) is False
+            assert RunController._resolvePauseSupport(task_id) is False
 
     def test_workflow_task_is_pausable(self):
-        from app.log_interface import LogInterface
+        from app.content.run_controller import RunController
         task = {"program": "workflow", "workflow_name": "示例流程"}
-        assert LogInterface._resolvePauseSupport(task) is True
+        assert RunController._resolvePauseSupport(task) is True
 
     def test_workflow_launcher_task_is_pausable(self):
         # 流程编排启动形态：program 为真实可执行文件，args 内带 --workflow-name
-        from app.log_interface import LogInterface
+        from app.content.run_controller import RunController
         task = {
             "name": "流程编排 - 示例流程",
             "program": "C:\\repo\\.venv\\Scripts\\python.exe",
             "args": "C:\\repo\\main.py --workflow-name 示例流程",
             "timeout": 0,
         }
-        assert LogInterface._resolvePauseSupport(task) is True
+        assert RunController._resolvePauseSupport(task) is True
 
     def test_workflow_step_task_is_pausable(self):
         # 运行选中步骤：--workflow-name + --workflow-step-path
-        from app.log_interface import LogInterface
+        from app.content.run_controller import RunController
         task = {
             "program": "C:\\repo\\March7th Assistant.exe",
             "args": "--workflow-name 示例流程 --workflow-step-path 0/1",
         }
-        assert LogInterface._resolvePauseSupport(task) is True
+        assert RunController._resolvePauseSupport(task) is True
 
     def test_external_program_is_not_pausable(self):
-        from app.log_interface import LogInterface
+        from app.content.run_controller import RunController
         task = {"program": "BetterGI.exe", "args": "--foo"}
-        assert LogInterface._resolvePauseSupport(task) is False
+        assert RunController._resolvePauseSupport(task) is False
 
     def test_self_program_defers_to_task_id(self):
         # program='self' 的任务由 _startTask 按任务 ID 重新判定
-        from app.log_interface import LogInterface
+        from app.content.run_controller import RunController
         task = {"program": "self", "args": "daily"}
-        assert LogInterface._resolvePauseSupport(task) is False
+        assert RunController._resolvePauseSupport(task) is False
 
 
 class TestWorkflowLaunchResolution:
@@ -178,8 +172,8 @@ class TestWorkflowLaunchResolution:
 
     def _resolve(self, task):
         import shlex
-        from app.log_interface import LogInterface
-        program, args_text = LogInterface._resolveWorkflowLaunch(task)
+        from app.content.run_controller import RunController
+        program, args_text = RunController._resolveWorkflowLaunch(task)
         return program, shlex.split(args_text)
 
     def test_dev_mode_resolves_main_py(self, monkeypatch):
@@ -226,8 +220,8 @@ class TestWorkflowLaunchResolution:
         assert tokens[tokens.index("--workflow-step-path") + 1] == "0/1"
 
     def test_scheduled_payload_passes_workflow_fields(self):
-        from app.log_interface import LogInterface
-        iface = LogInterface.__new__(LogInterface)
+        from app.content.run_controller import RunController
+        iface = RunController.__new__(RunController)
         payload = iface._buildScheduledTaskPayload({
             'program': 'workflow', 'args': '示例流程', 'workflow_name': '示例流程',
             'workflow_step_path': '0/1', 'id': 'x', 'trigger_mode': 'time',
@@ -236,8 +230,8 @@ class TestWorkflowLaunchResolution:
         assert payload['workflow_step_path'] == '0/1'
 
     def test_scheduled_payload_omits_workflow_fields_for_external(self):
-        from app.log_interface import LogInterface
-        iface = LogInterface.__new__(LogInterface)
+        from app.content.run_controller import RunController
+        iface = RunController.__new__(RunController)
         payload = iface._buildScheduledTaskPayload({
             'program': 'BetterGI.exe', 'args': '--foo', 'id': 'x', 'trigger_mode': 'time',
         })
@@ -249,9 +243,11 @@ class TestPauseToggle:
     """按钮/热键共用的暂停切换逻辑。"""
 
     def _make_iface(self, tmp_path):
-        from app.log_interface import LogInterface
+        from app.content.run_controller import RunController
         from utils.pause import STATE_RUNNING
-        iface = LogInterface.__new__(LogInterface)
+        iface = RunController.__new__(RunController)
+        from PySide6.QtCore import QObject
+        QObject.__init__(iface)
         iface._pause_supported = True
         iface._pause_state = STATE_RUNNING
         iface._task_status = 'running'
@@ -329,10 +325,9 @@ class TestPauseToggle:
         iface._syncPauseState()
 
         assert iface._pause_state == STATE_PAUSED
-        assert iface.statusLabel.value == tr('已暂停')
+        assert iface._title() == tr('货币战争')
         assert iface.paused_flags == [True]
-        assert iface.pauseButton.enabled is True
-        assert tr('继续任务') in iface.pauseButton.text
+        assert iface._pause_supported
 
     def test_reset_pause_runtime(self, tmp_path):
         from utils.pause import STATE_PAUSED, read_state, write_command
@@ -348,7 +343,7 @@ class TestPauseToggle:
 
         assert iface._pause_supported is False
         assert iface._pause_state == "running"
-        assert iface.pauseButton.enabled is False
+        assert iface.paused_flags == [False]
         assert read_state(str(control)) is None
 
     def test_timeout_timer_frozen_while_paused(self, tmp_path):
@@ -382,7 +377,7 @@ class TestGameLogOverlayPauseDisplay:
     """悬浮窗：双快捷键提示 + 暂停徽章。"""
 
     def _make_overlay(self):
-        from app.log_interface import GameLogOverlay
+        from app.run.overlay import GameLogOverlay
         overlay = GameLogOverlay.__new__(GameLogOverlay)
         overlay.hotkeyLabel = _FakeLabel()
         overlay.pauseBadge = SimpleNamespace(
@@ -422,9 +417,9 @@ class TestGameLogOverlayPauseDisplay:
         assert overlay.pauseBadge.visible is False
 
     def test_overlay_hint_reflects_task_pausability(self, tmp_path):
-        from app.log_interface import LogInterface
+        from app.content.run_controller import RunController
         from utils.pause import STATE_RUNNING
-        iface = LogInterface.__new__(LogInterface)
+        iface = RunController.__new__(RunController)
         iface._pause_supported = False
         iface._pause_state = STATE_RUNNING
         calls = []
@@ -441,9 +436,9 @@ class TestGameLogOverlayPauseDisplay:
         assert calls[-1][2] is False  # 未暂停：提示仍是「暂停」
 
     def test_overlay_hint_reflects_paused_state(self, tmp_path):
-        from app.log_interface import LogInterface
+        from app.content.run_controller import RunController
         from utils.pause import STATE_PAUSED, STATE_PAUSING, STATE_RUNNING
-        iface = LogInterface.__new__(LogInterface)
+        iface = RunController.__new__(RunController)
         iface._pause_supported = True
         calls = []
         iface._log_overlay = SimpleNamespace(

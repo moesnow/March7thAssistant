@@ -20,7 +20,7 @@ def _auxiliary_page(object_name, parent=None):
 @pytest.fixture
 def exit_window(qtbot, monkeypatch, tmp_path, request):
     from app import main_window as module
-    from app import log_interface
+    from app.content import run_controller
     from module import localization
     from module.config import cfg
 
@@ -37,14 +37,14 @@ def exit_window(qtbot, monkeypatch, tmp_path, request):
     monkeypatch.setattr(module.MainWindow, "initSystemTray",
                         lambda self: setattr(self, "_tray_actions", [Mock() for _ in range(4)]))
     monkeypatch.setattr(module.MainWindow, "closeEvent", lambda self, event: event.accept())
-    monkeypatch.setattr(module.LogInterface, "_LogInterface__initShortcut", lambda _: None)
-    monkeypatch.setattr(module.LogInterface, "_migrate_legacy_schedule", lambda _: None)
-    monkeypatch.setattr(module.LogInterface, "_startScheduleTimer", lambda _: None)
-    monkeypatch.setattr(module.LogInterface, "_initOverlayMonitor", lambda _: None)
-    monkeypatch.setattr(log_interface.notif, "notify", Mock())
+    monkeypatch.setattr(module.RunController, "_RunController__initShortcut", lambda _: None)
+    monkeypatch.setattr(module.RunController, "_migrate_legacy_schedule", lambda _: None)
+    monkeypatch.setattr(module.RunController, "_startScheduleTimer", lambda _: None)
+    monkeypatch.setattr(module.RunController, "_initOverlayMonitor", lambda _: None)
+    monkeypatch.setattr(run_controller.notif, "notify", Mock())
     localization.load_language("zh_CN")
     if getattr(request, "param", "focused") != "full":
-        # 每个用例仍新建真实 MainWindow、LogInterface、QProcess 和 QTimer，
+        # 每个用例仍新建真实 MainWindow、RunController、QProcess 和 QTimer，
         # 走原有初始化与信号连接；只省去与退出规则无关的五个完整页面。
         # 设置开关和成功退出另用 full 参数覆盖完整窗口，避免状态共享。
         for name, object_name in (
@@ -61,19 +61,19 @@ def exit_window(qtbot, monkeypatch, tmp_path, request):
         page.show()
         qtbot.wait(1)
     page.quitApp = Mock()
-    page.logInterface._perform_post_action = Mock()
+    page.runController._perform_post_action = Mock()
     page.completed_sequences = []
-    page.logInterface.taskSequenceFinished.connect(page.completed_sequences.append)
+    page.runController.taskSequenceFinished.connect(page.completed_sequences.append)
     yield page
     page._cancelTaskExit()
     page._language_change_timer.stop()
     page._config_reload_timer.stop()
-    if page.logInterface.process:
-        page.logInterface.process.kill()
-        page.logInterface.process.waitForFinished(3000)
-    page.logInterface.cleanup()
-    if page.logInterface._log_overlay:
-        page.logInterface._log_overlay.deleteLater()
+    if page.runController.process:
+        page.runController.process.kill()
+        page.runController.process.waitForFinished(3000)
+    page.runController.cleanup()
+    if page.runController._log_overlay:
+        page.runController._log_overlay.deleteLater()
     localization.load_language(original_language)
     page.hide()
 
@@ -96,7 +96,7 @@ def harmless_task(tmp_path):
 
 def wait_finished(window, qtbot, count=1):
     qtbot.waitUntil(lambda: len(window.completed_sequences) >= count, timeout=10000)
-    assert not window.logInterface._hasActiveStartedProcess()
+    assert not window.runController._hasActiveStartedProcess()
 
 
 def test_old_config_defaults_off_and_new_setting_persists_independently(tmp_path):
@@ -135,7 +135,7 @@ def test_single_success_uses_real_timer_and_existing_quit_path(exit_window, harm
 
     assert exit_window.TASK_EXIT_DELAY_MS == 5000
     exit_window.TASK_EXIT_DELAY_MS = 20
-    exit_window.logInterface.startTask(harmless_task())
+    exit_window.runController.startTask(harmless_task())
     qtbot.waitUntil(lambda: exit_window.quitApp.called, timeout=10000)
     exit_window.quitApp.assert_called_once_with()
     assert exit_window.completed_sequences == [0]
@@ -147,7 +147,7 @@ def test_single_failure_never_auto_closes(exit_window, harmless_task, qtbot, ena
     from module.config import cfg
 
     cfg.config["exit_app_after_success"] = enabled
-    exit_window.logInterface.startTask(harmless_task(code=1))
+    exit_window.runController.startTask(harmless_task(code=1))
     wait_finished(exit_window, qtbot)
     assert exit_window.completed_sequences == [1]
     assert not exit_window._task_exit_timer.isActive()
@@ -158,7 +158,7 @@ def test_disabled_setting_preserves_existing_behavior(exit_window, harmless_task
     from module.config import cfg
 
     cfg.config["exit_app_after_success"] = False
-    exit_window.logInterface.startTask(harmless_task())
+    exit_window.runController.startTask(harmless_task())
     wait_finished(exit_window, qtbot)
     assert not exit_window._task_exit_timer.isActive()
     exit_window.quitApp.assert_not_called()
@@ -177,8 +177,8 @@ def test_entire_chain_must_succeed(exit_window, harmless_task, qtbot, first_code
     child = harmless_task("child", trigger_mode="chain", enabled=True)
     last = harmless_task("last", trigger_mode="chain", enabled=True)
     per_task = []
-    exit_window.logInterface.taskFinished.connect(per_task.append)
-    exit_window.logInterface.runScheduledTask(root, tasks=[root, child, last], manual=True)
+    exit_window.runController.taskFinished.connect(per_task.append)
+    exit_window.runController.runScheduledTask(root, tasks=[root, child, last], manual=True)
     wait_finished(exit_window, qtbot)
     assert per_task == [first_code, 0, 0]
     assert exit_window.completed_sequences == [0 if first_code == 0 else 1]
@@ -195,7 +195,7 @@ def test_failed_start_is_not_lost_or_completed_twice(exit_window, harmless_task,
     child = harmless_task("child", trigger_mode="chain", enabled=True)
     tasks = [root, child]
     tasks[failed_index]["program"] = str(tmp_path / "missing.exe")
-    exit_window.logInterface.runScheduledTask(root, tasks=tasks, manual=True)
+    exit_window.runController.runScheduledTask(root, tasks=tasks, manual=True)
     wait_finished(exit_window, qtbot)
     assert exit_window.completed_sequences == [1]
     assert not exit_window._task_exit_timer.isActive()
@@ -204,16 +204,16 @@ def test_failed_start_is_not_lost_or_completed_twice(exit_window, harmless_task,
 def test_new_run_does_not_inherit_failed_chain(exit_window, harmless_task, qtbot):
     root = harmless_task("failed", code=1)
     child = harmless_task("child", trigger_mode="chain", enabled=True)
-    exit_window.logInterface.runScheduledTask(root, tasks=[root, child], manual=True)
+    exit_window.runController.runScheduledTask(root, tasks=[root, child], manual=True)
     wait_finished(exit_window, qtbot)
-    exit_window.logInterface.startTask(harmless_task("fresh"))
+    exit_window.runController.startTask(harmless_task("fresh"))
     wait_finished(exit_window, qtbot, count=2)
     assert exit_window.completed_sequences == [1, 0]
     assert exit_window._task_exit_timer.isActive()
 
 
 def test_new_task_cancels_countdown_and_queued_callback(exit_window, harmless_task, qtbot):
-    page = exit_window.logInterface
+    page = exit_window.runController
     page.startTask(harmless_task("first"))
     wait_finished(exit_window, qtbot)
     assert exit_window._task_exit_timer.isActive()
@@ -229,7 +229,7 @@ def test_new_task_cancels_countdown_and_queued_callback(exit_window, harmless_ta
 def test_countdown_rechecks_new_config_or_pending_work(exit_window, harmless_task, qtbot, change):
     from module.config import cfg
 
-    page = exit_window.logInterface
+    page = exit_window.runController
     page.startTask(harmless_task())
     wait_finished(exit_window, qtbot)
     if change == "disabled":
@@ -255,14 +255,14 @@ def test_enabled_time_schedule_is_preserved_unless_cli_explicitly_exits(
     cfg.config["exit_app_after_success"] = not cli_exit
     exit_window.startup_task = "main" if cli_exit else None
     exit_window.exit_on_complete = cli_exit
-    exit_window.logInterface.startTask(harmless_task())
+    exit_window.runController.startTask(harmless_task())
     wait_finished(exit_window, qtbot)
     assert exit_window._task_exit_timer.isActive() == cli_exit
     if cli_exit:
         exit_window._task_exit_timer.timeout.emit()
         exit_window.quitApp.assert_called_once_with()
     else:
-        assert "仍有已启用的按时任务" in (exit_window.logInterface.logTextEdit.toPlainText() + exit_window.logInterface._buffered_logs)
+        assert "仍有已启用的按时任务" in "\n".join(e.text for e in exit_window.runController.log_entries())
 
 
 @pytest.mark.parametrize("cli_exit", [False, True])
@@ -270,16 +270,16 @@ def test_scheduled_post_action_is_never_canceled_by_auto_exit(exit_window, harml
     exit_window.startup_task = "main" if cli_exit else None
     exit_window.exit_on_complete = cli_exit
     task = harmless_task(post_action="Shutdown")
-    exit_window.logInterface.runScheduledTask(task, tasks=[task], manual=True)
+    exit_window.runController.runScheduledTask(task, tasks=[task], manual=True)
     wait_finished(exit_window, qtbot)
-    assert exit_window.logInterface._pending_post_action_timer.isActive()
+    assert exit_window.runController._pending_post_action_timer.isActive()
     assert not exit_window._task_exit_timer.isActive()
-    exit_window.logInterface._perform_post_action.assert_not_called()
+    exit_window.runController._perform_post_action.assert_not_called()
 
 
 @pytest.mark.parametrize("stopped", [False, True])
 def test_external_task_completion_obeys_same_rule(exit_window, stopped):
-    page = exit_window.logInterface
+    page = exit_window.runController
     page.startExternalTask("safe in-process task")
     page.finishExternalTask(0, user_stopped=stopped)
     assert exit_window.completed_sequences == [1 if stopped else 0]
@@ -288,9 +288,9 @@ def test_external_task_completion_obeys_same_rule(exit_window, stopped):
 
 @pytest.mark.parametrize("reason", ["crash", "user_stop", "timeout"])
 def test_zero_exit_code_does_not_hide_abnormal_completion(exit_window, reason):
-    from app.log_interface import _TaskSequence
+    from app.content.run_controller import _TaskSequence
 
-    page = exit_window.logInterface
+    page = exit_window.runController
     page.process = QProcess(page)
     page._task_sequence = _TaskSequence()
     page._user_initiated_stop = reason == "user_stop"
@@ -302,7 +302,7 @@ def test_zero_exit_code_does_not_hide_abnormal_completion(exit_window, reason):
 
 
 def test_conflict_replacement_starts_fresh_sequence(exit_window, harmless_task, qtbot):
-    page = exit_window.logInterface
+    page = exit_window.runController
     old = harmless_task("old", code=1, delay=0.2)
     new = harmless_task("replacement")
     page.startTask(old)
@@ -311,13 +311,13 @@ def test_conflict_replacement_starts_fresh_sequence(exit_window, harmless_task, 
     wait_finished(exit_window, qtbot)
     assert exit_window.completed_sequences == [0]
     assert exit_window._task_exit_timer.isActive()
-    assert "延迟启动任务" in (page.logTextEdit.toPlainText() + page._buffered_logs)
+    assert "延迟启动任务" in ("\n".join(e.text for e in page.log_entries()))
 
 
 def test_starting_process_and_queued_work_block_exit(exit_window):
     from types import SimpleNamespace
 
-    page = exit_window.logInterface
+    page = exit_window.runController
     page.process = SimpleNamespace(state=lambda: QProcess.Starting)
     assert page.autoCloseBlockReason() == "仍有运行中或排队的任务"
     page.process = None
@@ -327,7 +327,7 @@ def test_starting_process_and_queued_work_block_exit(exit_window):
 
 
 def test_user_stop_of_real_process_does_not_close_assistant(exit_window, harmless_task, qtbot):
-    page = exit_window.logInterface
+    page = exit_window.runController
     page.startTask(harmless_task(delay=30))
     qtbot.waitUntil(lambda: page.process.state() == QProcess.Running, timeout=5000)
     page.stopTask(user_initiated=True)
@@ -335,3 +335,16 @@ def test_user_stop_of_real_process_does_not_close_assistant(exit_window, harmles
     assert exit_window.completed_sequences == [1]
     assert not exit_window._task_exit_pending
     exit_window.quitApp.assert_not_called()
+
+
+def test_skip_finish_covers_scheduled_action_and_close_once(exit_window, harmless_task, qtbot):
+    page = exit_window.runController
+    task = harmless_task(delay=0.25, post_action="Shutdown")
+    assert page.runScheduledTask(task, manual=True)
+    assert page.set_finish_skipped(True)
+    wait_finished(exit_window, qtbot)
+    assert page._pending_post_action_timer is None and not exit_window._task_exit_timer.isActive()
+    page._perform_post_action.assert_not_called()
+    page.startTask(harmless_task("new"))
+    wait_finished(exit_window, qtbot, count=2)
+    assert exit_window._task_exit_timer.isActive()
