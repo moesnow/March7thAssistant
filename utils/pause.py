@@ -310,6 +310,10 @@ class PauseController:
     def _watch_loop(self):
         while not self._watcher_stop.is_set():
             try:
+                cancel = os.getenv("M7A_ROTATION_CANCEL")
+                if cancel and not self._stop_requested and (_read_json(cancel) or {}).get("command") == COMMAND_STOP:
+                    self._apply_command(COMMAND_STOP)
+                    continue
                 data = _read_json(self._control_path) or {}
                 command = data.get("command")
                 if command in (COMMAND_PAUSE, COMMAND_RESUME, COMMAND_STOP) and command != self._last_command:

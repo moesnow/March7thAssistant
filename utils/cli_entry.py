@@ -204,6 +204,8 @@ def collect_status() -> dict:
         status["ui_profile"] = get_ui_profile(cfg).name
     except ValueError as error:
         status["game_connection_error"] = str(error)
+    from module.accounts.status import cli_status
+    status["accounts"] = cli_status(cfg)
     return status
 
 
@@ -445,7 +447,7 @@ def follow_command(spec: str, json_output=False, out=None, poll_interval=0.5) ->
     return _normalize_exit_code(record.get("exit_code"))
 
 
-_CONTROL_COMMANDS = {"pause": COMMAND_PAUSE, "resume": COMMAND_RESUME, "stop": COMMAND_STOP}
+_CONTROL_COMMANDS = {"pause": COMMAND_PAUSE, "resume": COMMAND_RESUME, "stop": COMMAND_STOP, "skip": "skip"}
 
 
 def control_command(spec: str, action: str, json_output=False, out=None, wait_seconds=10.0) -> int:
@@ -453,7 +455,7 @@ def control_command(spec: str, action: str, json_output=False, out=None, wait_se
     out = out or sys.stdout
     command = _CONTROL_COMMANDS.get(action)
     if command is None:
-        _say(out, f"不支持的操作：{action}（可选 pause / resume / stop）")
+        _say(out, f"不支持的操作：{action}（可选 pause / resume / stop / skip）")
         return EXIT_FAILED
     record, error = resolve_run(spec)
     if record is None:
@@ -467,6 +469,20 @@ def control_command(spec: str, action: str, json_output=False, out=None, wait_se
     if not control_path:
         _say(out, f"运行 {run_id} 不支持暂停 / 停止控制")
         return EXIT_FAILED
+    if command == "skip":
+        from utils.pause import _atomic_write_json
+        rotation = record.get("rotation") or {}
+        index = rotation.get("index")
+        rows = rotation.get("accounts") or []
+        if not isinstance(index, int) or not 0 <= index < len(rows) or rows[index].get("status") != "running":
+            _say(out, "当前没有正在轮流运行的账号")
+            return EXIT_FAILED
+        child = rows[index]["run_id"]
+        _atomic_write_json(control_path + ".skip", {"child_run_id": child})
+        _say(out, "已请求跳过当前账号")
+        if json_output:
+            _print_json(out, {"run_id": run_id, "action": action, "child_run_id": child})
+        return EXIT_OK
     write_command(control_path, command)
 
     # 目标回执，以及可以视为「已收到指令」的回执（暂停中 = 已收到、尚未走到卡点）

@@ -325,7 +325,7 @@ def build_workflow_task(workflow_name: str, step_path=None, timeout: int = 0, na
     """构造 workflow 启动任务字典（标记形态：program='workflow'）。
 
     所有 GUI 启动入口（流程编排、定时任务等）统一产出该形态，
-    由 `LogInterface.startTask` 的 workflow 改写处唯一解析为实际命令行
+    由 `RunController.startTask` 的 workflow 改写处唯一解析为实际命令行
     （含 frozen/开发态分支），避免同一启动语义出现多份解析逻辑。
 
     :param workflow_name: 要运行的流程名称

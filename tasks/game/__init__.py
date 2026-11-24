@@ -6,7 +6,8 @@ import psutil
 from contextlib import nullcontext
 
 
-from app.tools.account_manager import load_acc_and_pwd
+from module.accounts.runtime import AccountError, load_acc_and_pwd, mark_expired, prepare_launch, verify_ready
+from module.accounts.switching import renew as renew_login
 from utils.registry.gameaccount import gamereg_uid
 from .starrailcontroller import GameResolutionMismatch, StarRailController
 from .adb_check import wait_for_game as wait_for_adb_game
@@ -57,8 +58,18 @@ class GameStartupUnavailable(InputInterrupted, GameRecoveryError):
 def start(headless=None, *, optimize_graphics=True, screen_ready=None, preserve_cloud_session=False):
     task_power_request.acquire(log)
     log.hr("开始运行", 0)
-    start_game(headless=headless, optimize_graphics=optimize_graphics, screen_ready=screen_ready,
-               preserve_cloud_session=preserve_cloud_session)
+    if isinstance(getattr(cfg, "bound_account", None), str):
+        pause_ctl.checkpoint()
+        prepare_launch(cfg)
+    try:
+        start_game(headless=headless, optimize_graphics=optimize_graphics, screen_ready=screen_ready,
+                   preserve_cloud_session=preserve_cloud_session)
+    except GameStartupUnavailable as error:
+        layer = getattr(cfg, "_account_layer", None)
+        if layer is not None and getattr(layer, "login_prompt_seen", False) is True:
+            raise AccountError("account_login_expired", "登录过期，本次未能完成登录，请在客户端重新登录") from error
+        raise
+    verify_ready(cfg)
     log.hr("完成", 2)
 
 
@@ -268,6 +279,7 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None, pres
         else:
             return False
         login_attempts += 1
+        mark_expired(cfg)
         try:
             found_credentials = login_with_saved_credentials(login, before_credentials=mark_credentials_started)
         except (InputInterrupted, GameWindowLost, GameRecoveryError, ProfileAssetNotFoundError, TouchProfileInputError):
@@ -282,6 +294,8 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None, pres
         if not found_credentials:
             from utils.runs import publish_progress
             publish_progress(login_required="local")
+            if isinstance(getattr(cfg, "bound_account", None), str):
+                raise AccountError("account_login_expired", "账号登录过期，请重新登录或保存账号密码")
             raise GameStartupUnavailable("本地游戏账号登录过期，未找到保存的登录凭据，已保留游戏现场")
         login_error = None
         return True
@@ -607,7 +621,7 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None, pres
             else:
                 cloud_game.stop_game()
             raise
-        except (CloudGameLoginTimeoutError, TouchProfileInputError, ProfileAssetNotFoundError):
+        except (AccountError, CloudGameLoginTimeoutError, TouchProfileInputError, ProfileAssetNotFoundError):
             raise
         except (InputInterrupted, RunStopRequested):
             # 窗口持续最小化等需要用户处理的情况不能触发原有的“关闭游戏后重启”恢复路径；
@@ -688,41 +702,46 @@ def prepare_game_connection(backend, profile):
         screen.reload_profile()
 
 
+def play_finish_audio():
+    log.info("开始播放音频")
+    try:
+        from playsound3 import playsound
+        playsound("./assets/audio/pa.mp3")
+        log.info("播放音频完成")
+    except Exception as error:
+        log.warning(f"播放音频时发生错误：{error}")
+
+
 def stop(detect_loop=False, *, success=True):
     """执行完成后操作；success 控制非循环运行的退出码和成功等待提示。"""
     pause_ctl.check_stop()
+    renew_login(cfg)
     log.hr("停止运行", 0)
 
-    def play_audio():
-        log.info("开始播放音频")
-        try:
-            from playsound3 import playsound
-            playsound("./assets/audio/pa.mp3")
-            log.info("播放音频完成")
-        except Exception as e:
-            log.warning(f"播放音频时发生错误：{e}")
-
-    if detect_loop and cfg.after_finish == "Loop":
-        if cfg.play_audio:
-            play_audio()
+    from utils.runs import effective_after_finish
+    action = effective_after_finish(cfg.after_finish)
+    child = bool(os.getenv("M7A_ROTATION_PARENT"))
+    if detect_loop and action == "Loop":
+        if cfg.play_audio and not child:
+            play_finish_audio()
         after_finish_is_loop()
     else:
         if detect_loop:
             notify_after_finish_not_loop()
-        if cfg.play_audio:
-            play_audio()
+        if cfg.play_audio and not child:
+            play_finish_audio()
         # 在关闭游戏前优先退出 OCR 避免内存占用
         ocr.exit_ocr()
-        if cfg.after_finish in ["Exit", "Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript"]:
-            if get_game_controller().shutdown(cfg.after_finish, on_stopped=_finish_game_run) is False:
-                raise RuntimeError(f"任务完成后的操作失败：{cfg.after_finish}")
+        if action in ["Exit", "Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript"]:
+            if get_game_controller().shutdown(action, on_stopped=_finish_game_run) is False:
+                raise RuntimeError(f"任务完成后的操作失败：{action}")
         else:
             # 无完成后操作时也要在 CLI 等待回车前结束 ADB 会话。
             if get_control_backend(cfg) == "adb":
                 get_game_controller("adb").close()
             _finish_game_run()
         log.hr("完成", 2)
-        if success and cfg.after_finish not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript"]:
+        if success and not child and action not in ["Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript"]:
             pause_on_success()
         sys.exit(0 if success else 1)
 
@@ -774,7 +793,8 @@ def after_finish_is_loop(*, preserve_game=False):
 def wait_after_cloud_zero_duration(error):
     """云游戏时长为 0 时，循环模式下发送通知并等待到下次定时运行，返回 True；
     非循环模式返回 False，由调用方按错误退出。"""
-    if cfg.after_finish != "Loop":
+    from utils.runs import effective_after_finish
+    if effective_after_finish(cfg.after_finish) != "Loop":
         return False
     msg = cfg.notify_template['ErrorOccurred'].format(error=error)
     log.error(msg)

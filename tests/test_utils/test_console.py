@@ -56,9 +56,9 @@ class TestGuiStartedEnvContract:
     def test_all_written_values_are_recognized(self, monkeypatch):
         import re
         from pathlib import Path
-        source = (Path(__file__).resolve().parents[2] / 'app' / 'log_interface.py').read_text(encoding='utf-8')
+        source = (Path(__file__).resolve().parents[2] / 'app' / 'content' / 'run_controller.py').read_text(encoding='utf-8')
         written = re.findall(r'env\.insert\("MARCH7TH_GUI_STARTED", "([^"]+)"\)', source)
-        assert written, "app/log_interface.py 中应存在 MARCH7TH_GUI_STARTED 写入点"
+        assert written, "app/run_controller.py 中应存在 MARCH7TH_GUI_STARTED 写入点"
         for value in written:
             monkeypatch.setenv("MARCH7TH_GUI_STARTED", value)
             assert is_gui_started() is True, f"写入值 {value!r} 未被 is_gui_started() 认可"

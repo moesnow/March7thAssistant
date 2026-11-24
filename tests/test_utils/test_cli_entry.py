@@ -460,6 +460,26 @@ class TestReadOnlyCommands:
         assert result.returncode == 0, result.stderr.decode("utf-8", "replace")
         assert isinstance(json.loads(result.stdout)["workflows"], list)
 
+    @pytest.mark.parametrize("backend", ["local", "cloud", "adb"])
+    def test_saved_accounts_in_readonly_queries(self, backend):
+        from module.accounts.files import write_yaml
+
+        root = Path(os.environ["M7A_DATA_DIR"])
+        uid = "100000789"
+        write_yaml(root / "config.yaml", {"control_backend": backend, "auto_set_game_path_enable": False})
+        index = root / "accounts" / "accounts.yaml"
+        write_yaml(index, {"enabled": True, "current": uid, "accounts": [{"uid": uid, "name": "示例主号"}]})
+        before = index.read_bytes()
+        query = _run_main("--status")
+        assert query.returncode == 0, query.stderr.decode("utf-8", "replace")
+        assert json.loads(query.stdout)["accounts"] == {
+            "enabled": True, "effective": sys.platform == "win32" and backend == "local",
+            "current": uid, "list": [{"uid": uid, "name": "示例主号", "rotate": True}]}
+        listing = _run_main("--list", "--json")
+        assert listing.returncode == 0 and any(row["id"] == "daily" for row in json.loads(listing.stdout))
+        assert list(index.parent.iterdir()) == [index] and index.read_bytes() == before
+        assert not (root / "backup" / ".accounts.lock").exists()
+
     def test_status_json(self):
         root = Path(os.environ["M7A_DATA_DIR"])
         config = root / "config.yaml"
@@ -471,6 +491,7 @@ class TestReadOnlyCommands:
         for key in ("version", "install_dir", "first_run_completed", "game_path_exists", "active_run",
                     "recent_runs", "runs_dir", "install_registry", "agent_skill", "elevation", "uac_free"):
             assert key in status
+        assert status["accounts"] == {"enabled": False, "effective": False, "current": None, "list": []}
         assert status["install_dir"] == str(REPO)
         assert status["data_dir"] == str(root)
         assert status["data_layout"] == "custom"

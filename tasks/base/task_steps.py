@@ -1,5 +1,7 @@
 from contextlib import contextmanager
 
+from module.accounts.runtime import AccountError
+
 from module.automation.background_input import GameWindowLost, InputInterrupted
 from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError
 from module.game.adb_transport import AdbError
@@ -15,7 +17,7 @@ class GameRecoveryError(RuntimeError):
     preserve_game = True
 
 
-FATAL_GAME_ERRORS = (AdbError, GameWindowLost, InputInterrupted, ProfileAssetNotFoundError,
+FATAL_GAME_ERRORS = (AccountError, AdbError, GameWindowLost, InputInterrupted, ProfileAssetNotFoundError,
                      TouchProfileInputError, GameRecoveryError)
 
 

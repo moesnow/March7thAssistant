@@ -106,6 +106,7 @@ def test_preserved_local_game_wait_releases_resources_and_honors_stop(loop, monk
 @pytest.mark.parametrize("trigger", ["startup", "finished", "failed", "zero_duration"])
 def test_main_loop_waits_then_starts_next_run(loop, trigger):
     game = loop.game
+    from module.config.platform import get_control_backend
     real_stop = game.stop
     starts = []
     if trigger == "failed":
@@ -129,7 +130,7 @@ def test_main_loop_waits_then_starts_next_run(loop, trigger):
                  notif=game.notif, telemetry=MagicMock(), time=game.time,
                  CloudGameZeroDurationError=game.CloudGameZeroDurationError,
                  GameRecoveryError=GameRecoveryError,
-                 get_ui_profile=lambda cfg: SimpleNamespace(name="pc_1080"),
+                 get_ui_profile=lambda cfg: SimpleNamespace(name="pc_1080"), get_control_backend=get_control_backend,
                  is_gui_started=game.is_gui_started, _game_connection=lambda _: nullcontext())
     scope["Daily"].start.return_value = trigger != "failed"
     exec(compile(ast.Module(body=[run], type_ignores=[]), str(source), "exec"), scope)
