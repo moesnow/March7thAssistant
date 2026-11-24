@@ -1,6 +1,9 @@
 # coding:utf-8
 """utils/desktop.py 测试。"""
 import os
+import threading
+
+import pytest
 
 from utils import desktop
 
@@ -12,6 +15,24 @@ def test_open_path_uses_startfile_on_win32(monkeypatch):
     monkeypatch.setattr(desktop.os, 'startfile', lambda path: calls.append(path), raising=False)
     desktop.open_path("./logs")
     assert calls == [os.path.abspath("./logs")]
+
+
+def test_open_path_does_not_call_the_shell_on_the_calling_thread(monkeypatch):
+    threads = []
+    monkeypatch.setattr(desktop.sys, 'platform', 'win32')
+    monkeypatch.setattr(desktop.os, 'startfile', lambda path: threads.append(threading.get_ident()), raising=False)
+    desktop.open_path("./logs")
+    assert len(threads) == 1 and threads[0] != threading.get_ident()
+
+
+def test_open_path_reports_shell_errors(monkeypatch):
+    def missing(path):
+        raise FileNotFoundError(path)
+
+    monkeypatch.setattr(desktop.sys, 'platform', 'win32')
+    monkeypatch.setattr(desktop.os, 'startfile', missing, raising=False)
+    with pytest.raises(FileNotFoundError):
+        desktop.open_path("./logs")
 
 
 def test_open_path_uses_open_on_darwin(monkeypatch):
