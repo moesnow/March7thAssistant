@@ -76,3 +76,13 @@ def test_translated_paths_use_catalog_names_and_keep_explicit_links(tmp_path, mo
     finally:
         paths._label.cache_clear()
         paths._localized.cache_clear()
+
+
+def test_setup_wizard_is_reachable_from_help_and_settings_search():
+    from urllib.parse import unquote
+    section = "doc:Tutorial#首次配置向导"
+    assert any(unquote(hit.section.link) == section for hit in search_help("首次配置向导").hits)
+    index = SearchIndex(SampleConfig())
+    hits = index.query("向导", settings_only=True)
+    assert [hit.link for hit in hits] == ["setting:setup_wizard"]
+    assert any(unquote(hit.link) == section for hit in index.query("向导"))

@@ -1,5 +1,6 @@
 from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import MessageBox
+from qfluentwidgets import MessageBox, PushSettingCard
+from utils.desktop_twin import in_desktop_twin
 from app.common.icon import UiIcon
 from app.card.comboboxsettingcard2 import ComboBoxSettingCard2, ComboBoxSettingCardLog
 from app.card.switchsettingcard1 import SwitchSettingCard1, SwitchSettingCardWithAction
@@ -20,6 +21,12 @@ def build(host):
         message.yesButton.setText(tr("确认"))
         message.exec()
 
+    host.setupWizardCard = PushSettingCard(
+        tr("打开向导"), FIF.BOOK_SHELF, tr("首次配置向导"),
+        tr("重新设置游戏位置、每天要做的任务、运行时间和通知"), parent=host.card_parent,
+    )
+    host.setupWizardCard.setDisabled(in_desktop_twin())
+    host.setupWizardCard.clicked.connect(lambda: host.window.openSetup())
     host.logLevelCard = ComboBoxSettingCardLog(
         "log_level",
         FIF.TAG,

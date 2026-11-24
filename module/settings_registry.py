@@ -223,6 +223,7 @@ SETTINGS = (
          'apocalyptic_team2', 'apocalyptic_team3',)),
 
     # 程序
+    _global('setupWizardCard', '首次配置向导', 'advanced', 'general', link_id='setup_wizard'),
     _global('logLevelCard', '日志等级', 'advanced', 'general', ('log_level',), doc='doc:Tutorial#日志等级'),
     _global('startGameTimeoutCard', '启动游戏超时时间（分）', 'game', 'launch', ('start_game_timeout',)),
     _global('pauseAfterSuccess', '成功后暂停程序', 'after_run', 'actions', ('pause_after_success',)),

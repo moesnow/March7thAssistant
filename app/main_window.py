@@ -23,6 +23,7 @@ from .task_interface import TaskInterface
 from .accounts_interface import AccountsInterface
 from .pages.nav_search import NavigationSearchBox
 from .content.run_controller import RunController
+from .content.setup_model import SetupModel
 from .run_interface import RunInterface
 from .common.signal_bus import signalBus
 from .common.evernight import EvernightEasterEgg
@@ -242,6 +243,10 @@ class MainWindow(FluentWindow):
         self._task_exit_timer.timeout.connect(self._quitAfterTask)
         self.start_minimized_to_tray = start_minimized_to_tray
         self._defer_startup_checks = False  # 静默启动时推迟的启动检查（检查更新/公告）
+        self._setup_dialog = None
+        self._setup_model = None
+        self._setup_checks_pending = False
+        self._reload_after_setup = False
         self.detected_update_version = None
         self.updateVersionBadge = None
         self._evernight = EvernightEasterEgg()
@@ -263,14 +268,40 @@ class MainWindow(FluentWindow):
         if self.start_minimized_to_tray:
             self.hide()
 
+        self._finishStartup()
+
+    def _finishStartup(self):
         # 如果有启动任务，延迟执行
         if self.startup_task:
             QTimer.singleShot(1000, self._executeStartupTask)
         elif self.start_minimized_to_tray:
             # 最小化到托盘启动：不弹出任何窗口，检查更新与公告推迟到主窗口首次显示
             self._defer_startup_checks = True
+        elif self._shouldOpenSetup():
+            self._setup_checks_pending = True
+            QTimer.singleShot(0, self, self._openInitialSetup)
         else:
-            # 检查更新
+            checkUpdate(self, flag=True)
+            checkAnnouncement(self)
+
+    @property
+    def setupModel(self):
+        if self._setup_model is None:
+            self._setup_model = SetupModel(self)
+        return self._setup_model
+
+    def _shouldOpenSetup(self):
+        return (not self.startup_task and not self.start_minimized_to_tray
+                and SetupModel.pending(cfg) and not self.setupModel.blocked_reason()
+                and not self.runController.isTaskRunning())
+
+    def _openInitialSetup(self):
+        if not self._shouldOpenSetup() or not self.openSetup(automatic=True):
+            self._finishSetupChecks()
+
+    def _finishSetupChecks(self):
+        if self._setup_checks_pending:
+            self._setup_checks_pending = False
             checkUpdate(self, flag=True)
             checkAnnouncement(self)
 
@@ -722,7 +753,55 @@ class MainWindow(FluentWindow):
         self.titleBar.move(0, 0)
         self.titleBar.resize(self.width(), self.titleBar.height())
 
+    def openSetup(self, *, automatic=False):
+        if reason := self.setupModel.blocked_reason():
+            InfoBar.warning(tr("首次配置向导"), reason, parent=self)
+            return False
+        if self._setup_dialog is not None:
+            self._setup_dialog.raise_()
+            return True
+        try:
+            from app.setup.dialog import SetupDialog
+            self.setupModel.begin(automatic)
+            dialog = SetupDialog(self.setupModel, self)
+        except Exception as error:
+            log.error(f"打开首次配置向导失败：{type(error).__name__}: {error}")
+            InfoBar.error(tr("无法打开首次配置向导"), str(error), parent=self)
+            return False
+        self._setup_dialog = dialog
+        actions = []
+
+        def after_close(action):
+            if self._setup_dialog is dialog:
+                actions.append(action)
+            else:
+                QTimer.singleShot(0, self, action)
+
+        def closed(completed):
+            if self._setup_dialog is not dialog:
+                return
+            self._setup_dialog = None
+            if self._reload_after_setup:
+                self._reload_after_setup = False
+                self._config_reload_timer.start(0)
+            if not self.setupModel.close_result.ok:
+                InfoBar.error(tr("无法保存设置"), self.setupModel.close_result.text, parent=self)
+            elif automatic and not completed:
+                InfoBar.info(tr("首次配置向导"), tr("可以在「设置 › 高级」重新打开向导"), duration=6000, parent=self)
+            for action in actions:
+                QTimer.singleShot(0, self, action)
+            actions.clear()
+            QTimer.singleShot(0, self, self._finishSetupChecks)
+
+        dialog.closed.connect(closed)
+        dialog.runRequested.connect(lambda: after_close(self.startFullTask))
+        dialog.linkRequested.connect(lambda link: after_close(lambda: self.navigate(link)))
+        dialog.open()
+        return True
+
     def openSearch(self, *_):
+        if self._setup_dialog is not None:
+            return
         if self._search_popup is None:
             from .search_popup import SearchPopup
             self._search_popup = SearchPopup(self)
@@ -1180,6 +1259,12 @@ class MainWindow(FluentWindow):
             return
         replacement = None
         try:
+            if self._setup_dialog is not None:
+                # 向导继续显示已编辑的草稿，侧栏和其他页的卡片照常接收配置变化。
+                self._config_reload_timer.stop()
+                self._reload_after_setup = True
+                cfg._load_config(None, save=False)
+                return
             if not self._can_replace_settings() or self._pending_ui_language is not None:
                 self._config_reload_timer.start(100)
                 return
