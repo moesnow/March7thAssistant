@@ -61,7 +61,8 @@ _LOCK_RETRY_DELAY = 0.1
 
 RUN_SCHEMA = 1
 # 保留最近多少次运行的记录与输出
-KEEP_RUNS = 100
+KEEP_RUNS = 300
+AFTER_FINISH_CHOICES = ("None", "Exit", "Loop", "Shutdown", "Sleep", "Hibernate", "Restart", "Logoff", "TurnOffDisplay", "RunScript")
 
 _RUN_ID_RE = re.compile(r"^\d{8}-\d{6}-[0-9a-f]{4}$")
 # 控制台颜色等 ANSI 控制序列（日志控制台输出带颜色，写入运行日志时去掉）
@@ -166,15 +167,33 @@ def recent_runs(limit: int = 5) -> list:
 
 
 def cleanup_old_runs(keep: int = KEEP_RUNS):
-    """只保留最近 keep 次运行的文件；仍在运行中的不删除。"""
-    run_ids = list_run_ids()
-    if len(run_ids) <= keep:
+    """以最近的记录作保留线，父子记录作为一组一起回收。"""
+    ids = list_run_ids()
+    if len(ids) <= keep:
         return
-    for run_id in run_ids[:-keep]:
-        record = load_run(run_id)
+    retained = set(ids[-keep:]) if keep else set()
+    groups = {}
+    for run_id in ids:
+        record = load_run(run_id) or {}
+        parent = record.get("parent_run_id")
+        group = parent if is_valid_run_id(parent) else run_id
+        groups.setdefault(group, set()).add(run_id)
         if record and effective_status(record) == STATUS_RUNNING:
+            retained.add(run_id)
+        rotation = record.get("rotation") or {}
+        if isinstance(rotation, dict):
+            for row in rotation.get("accounts") or []:
+                child = row.get("run_id") if isinstance(row, dict) else None
+                if is_valid_run_id(child):
+                    groups[group].add(child)
+    for group, members in groups.items():
+        if members & retained or group in retained:
+            retained.update(members)
+    for run_id in ids:
+        if run_id in retained:
             continue
-        for suffix in (".json", ".log", ".control", ".control" + STATE_FILE_SUFFIX):
+        for suffix in (".json", ".log", ".control", ".control" + STATE_FILE_SUFFIX, ".control.skip",
+                       ".after-finish", ".cancel", ".notices"):
             try:
                 os.remove(run_file(run_id, suffix))
             except OSError:
@@ -267,7 +286,7 @@ def acquire_run_lock(info: dict, force: bool = False):
             if alive and holder.get("run_id") == info.get("run_id"):
                 return True, None
             if alive:
-                if not force or INVOKER_DESKTOP_TWIN in (info.get("invoker"), holder.get("invoker")):
+                if not force or holder.get("rotation") or INVOKER_DESKTOP_TWIN in (info.get("invoker"), holder.get("invoker")):
                     return False, holder
                 _atomic_write_json(path, info)
                 return True, holder
@@ -389,9 +408,47 @@ def publish_progress(**fields):
     """进度记录只供旁观界面使用，写入失败不改变自动化结果。"""
     if _current_session is not None:
         try:
+            if "current_step" in fields and fields["current_step"] != _current_session.record.get("current_step"):
+                fields.setdefault("detail", None)
             _current_session.update_record(**fields)
         except Exception:
             logging.getLogger("March7thAssistant").warning("本次运行进度未能保存", exc_info=True)
+
+
+DETAIL_TEXT = {"instance": "{name} 第 {index} / {total} 次", "challenge": "第 {level} 层"}
+
+
+def publish_detail(msgid, **args):
+    publish_progress(detail={"msgid": msgid, "args": args})
+
+
+def publish_full_plan(config, *, touch, backend, task="main"):
+    if _current_session is None or _current_session._finished:
+        return
+    from module.overview.plan import planned_steps
+    publish_progress(plan=planned_steps(config, task, touch=touch, backend=backend))
+
+
+def set_after_finish(run_id, action):
+    record = load_run(run_id)
+    if action not in AFTER_FINISH_CHOICES or not record or effective_status(record) != STATUS_RUNNING:
+        raise ValueError("运行已结束或完成后操作无效")
+    target = record.get("parent_run_id") or run_id
+    if not is_valid_run_id(target):
+        raise ValueError("运行编号无效")
+    _atomic_write_json(run_file(target, ".after-finish"), {"action": action})
+
+
+def effective_after_finish(default, run_id=None):
+    if run_id is None and _current_session:
+        if _current_session.record.get("parent_run_id"):
+            return "None"
+        run_id = _current_session.run_id
+    if not is_valid_run_id(run_id):
+        return default
+    data = _read_json(run_file(run_id, ".after-finish")) or {}
+    action = data.get("action")
+    return action if action in AFTER_FINISH_CHOICES else default
 
 
 def observe_step(key, action, skipped=None):
@@ -443,6 +500,7 @@ class RunSession:
         self._finished = False
         self._record_write_failed = False
         self.lock_held = False
+        self.account_prepared = False
         self.print_json = False
         # 最后一条错误日志：任务失败但调用方没有显式登记错误时，写入运行记录的 error
         self.last_error = None
@@ -479,6 +537,9 @@ class RunSession:
             "task": task,
             "workflow": workflow,
             "workflow_step_path": workflow_step_path,
+            "account": None,
+            "plan": [],
+            "detail": None,
             "args": list(argv or []),
             "invoker": invoker,
             "version": version,
@@ -563,6 +624,7 @@ class RunSession:
             "workflow": self.record["workflow"],
             "invoker": self.record["invoker"],
             "started_at": self.record["started_at"],
+            **({"rotation": True} if self.record.get("rotation") else {}),
         }
 
     def acquire_lock(self, force: bool = False) -> "LockResult":
@@ -605,6 +667,7 @@ class RunSession:
             error = self.last_error
         self.record.update({
             "phase": "finish",
+            "detail": None,
             "current_step": None,
             "status": status,
             "reason": self._pending.get("reason", reason),

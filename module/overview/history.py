@@ -11,8 +11,8 @@ from .plan import STEP_NAMES
 from .types import LiveRun, RunInfo, StepResult
 
 
-def game_day(value):
-    return (value - timedelta(hours=4)).date()
+def game_day(value, hour=4):
+    return (value - timedelta(hours=hour)).date()
 
 
 def _local(value):
@@ -74,7 +74,20 @@ class History:
     unreadable: bool = False
 
 
-def read_history(now):
+def record_uid(record, inherited):
+    if "account" not in record:
+        return inherited
+    account = record.get("account")
+    return account.get("uid") if isinstance(account, dict) else None
+
+
+def read_history(now, config=None):
+    if config is None:
+        import sys
+        config = getattr(sys.modules.get("module.config"), "cfg", None)
+    uid = getattr(config, "bound_account", None)
+    inherited = getattr(config, "account_inherited", None)
+    hour = config.refresh_hour if isinstance(uid, str) else 4
     last = full = live = None
     unreadable = False
     holder = runs.read_active_run() or {}
@@ -88,6 +101,20 @@ def read_history(now):
             record = runs.load_run(run_id)
             if not record:
                 raise ValueError("记录缺失或损坏")
+            rotation = record.get("rotation")
+            if isinstance(rotation, dict):
+                rows = rotation.get("accounts") or []
+                index = rotation.get("index")
+                if runs.effective_status(record) == "running" and type(index) is int and 0 <= index < len(rows):
+                    from utils.pause import read_state
+                    row = rows[index]
+                    child = runs.load_run(row.get("run_id")) or {}
+                    info = read_record(run_id, record)
+                    control = record.get("control_file")
+                    live = LiveRun(info.task, info.name, child.get("phase") or "prepare", child.get("current_step"),
+                                   True, True, bool(control and read_state(control) == "paused"), run_id, info.started_at,
+                                   index + 1, len(rows), row.get("name"))
+                continue
             info = read_record(run_id, record)
             if info.status == "running":
                 if live is None:
@@ -99,13 +126,16 @@ def read_history(now):
                     step = record.get("current_step")
                     live = LiveRun(info.task, info.name, phase if isinstance(phase, str) else "execute",
                                    step if isinstance(step, str) else None,
-                                   supported, supported, state == "paused", run_id, info.started_at)
+                                   supported, supported, state == "paused", run_id, info.started_at,
+                                   account_name=(record.get("account") or {}).get("name"))
+                continue
+            if isinstance(uid, str) and record_uid(record, inherited) != uid:
                 continue
             # 运行锁允许部分任务并存；较早启动的长任务可能最后才结束。
             finished = info.ended_at or info.started_at
             if last is None or finished > (last.ended_at or last.started_at):
                 last = info
-            if (info.task == "main" and info.status == "success" and game_day(finished) == game_day(now)
+            if (info.task == "main" and info.status == "success" and game_day(finished, hour) == game_day(now, hour)
                     and (full is None or finished > (full.ended_at or full.started_at))):
                 full = info
         except (TypeError, ValueError, KeyError, OverflowError, OSError) as exc:

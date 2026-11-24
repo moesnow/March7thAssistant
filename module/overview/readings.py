@@ -17,7 +17,10 @@ def seconds_until_full(value):
 def save_reading(config, key, value):
     try:
         config.set_value(key, {"value": value, "timestamp": time.time()})
-    except Exception:
+    except Exception as error:
+        from module.accounts.runtime import AccountError
+        if isinstance(error, AccountError):
+            raise
         logging.getLogger("March7thAssistant").warning("无法保存总览读数 %s，本次任务继续", key, exc_info=True)
 
 

@@ -137,6 +137,8 @@ class Apocalyptic(BaseChallenge):
         return count if count is not None and 0 <= count <= 3 else None
 
     def start_challenge(self, level):
+        from utils.runs import DETAIL_TEXT, publish_detail
+        publish_detail(DETAIL_TEXT["challenge"], level=level)
         '''开始挑战'''
         # 每个关卡挑战2次，status 用于判断是否交换配队
         for status in [True, False]:

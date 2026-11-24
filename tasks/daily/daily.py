@@ -63,10 +63,11 @@ class Daily:
 
     @staticmethod
     def routine():
+        from utils.runs import observe_step
         return run_steps((
             ("日常准备", lambda: Daily.prepare_daily(ignore_refresh=True)),
-            ("日常领奖", reward.start),
-            ("每日实训", Daily.run),
+            ("日常领奖", observe_step("reward", reward.start)),
+            ("每日实训", observe_step("daily", Daily.run)),
         ))
 
     @staticmethod

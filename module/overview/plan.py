@@ -81,6 +81,16 @@ def plan_order(cfg, touch=False):
     return TOUCH if touch else PREPARATION + main_order(cfg)[1:]
 
 
+def planned_steps(cfg, task, *, touch, backend):
+    if task == "routine":
+        order = TOUCH if touch else (*PREPARATION, "reward", "daily")
+        return [key for key in order if key in ("reward", "daily") or
+                entry_state(key, cfg, touch=touch, full_run=False) == "pending"]
+    return [key for key in plan_order(cfg, touch) if entry_state(key, cfg, touch=touch) == "pending"
+            and detail_state(key, cfg, backend=backend, headless=lambda: cfg.browser_headless_enable)
+            in ("pending", "claim_only")]
+
+
 def due(cycle, timestamp, hour, now=None):
     check = {"day": Date.is_next_x_am, "week": Date.is_next_mon_x_am, "month": Date.is_next_month_x_am}[cycle]
     return check(timestamp, hour) if now is None else check(timestamp, hour, now=now)

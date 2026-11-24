@@ -278,6 +278,10 @@ class Notification(metaclass=SingletonMeta):
         :param level: 通知级别，默认为 ALL。当 level_filter 为 ERROR 时，只有 ERROR 级别的通知会被发送。
         :param _image_already_processed: 内部参数，标记图片是否已经过处理，避免重复压缩。
         """
+        from module.accounts.messages import collect, context
+        record = context()
+        if record.get("parent_run_id") and collect(self, record, content, image, level):
+            return
         # 合并通知模式：收集内容而不立即发送
         if self._batch_mode:
             if content:
@@ -288,6 +292,9 @@ class Notification(metaclass=SingletonMeta):
                 self._batch_has_error = True
             return
 
+        account = record.get("account")
+        if account:
+            content = f"【{account['name']}】{content}"
         # 检查是否应该发送此通知
         if self.level_filter == NotificationLevel.ERROR and level != NotificationLevel.ERROR:
             if self.logger:
