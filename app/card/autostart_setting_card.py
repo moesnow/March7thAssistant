@@ -30,6 +30,7 @@ from qfluentwidgets import (
 
 from module.config import cfg
 from module.localization import tr
+from app.common.signal_bus import signalBus
 from utils import autostart
 from utils.tasks import AVAILABLE_TASKS, supported_tasks, UNSUPPORTED_TASK
 from app.tools.adb_service import display_connection
@@ -146,6 +147,7 @@ class AutostartSettingCard(SettingCard):
         self.switchButton.checkedChanged.connect(self.__onCheckedChanged)
         self.configButton.clicked.connect(self.__onConfigClicked)
         self.upgradeButton.clicked.connect(self.__onUpgradeClicked)
+        signalBus.autostartChanged.connect(self._externalChange)
 
         self.refreshState()
 
@@ -159,6 +161,10 @@ class AutostartSettingCard(SettingCard):
             self.switchButton.blockSignals(False)
         finally:
             self._syncing = False
+
+    def _externalChange(self, source):
+        if source is not self:
+            self.refreshState()
 
     def refreshState(self):
         """按旧版/新版切换卡片形态，并同步开/关状态（保持页面滚动位置不动）"""
@@ -204,6 +210,7 @@ class AutostartSettingCard(SettingCard):
         if ok:
             self.setValue(isChecked)
             self.checkedChanged.emit(isChecked)
+            signalBus.autostartChanged.emit(self)
             if isChecked:
                 InfoBar.success(
                     title=tr('开机启动已开启'),
@@ -253,6 +260,7 @@ class AutostartSettingCard(SettingCard):
     def __onUpgradeClicked(self):
         if autostart.remove_legacy_task():
             self.refreshState()
+            signalBus.autostartChanged.emit(self)
             InfoBar.success(
                 title=tr('已升级到新版开机启动'),
                 content=tr('旧的计划任务已删除，请按需配置并重新开启开关'),

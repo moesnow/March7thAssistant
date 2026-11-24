@@ -9,6 +9,7 @@ from qfluentwidgets import (BodyLabel, CaptionLabel, ComboBox, ExpandSettingCard
                             InfoBarIcon, LineEdit, PushButton, RadioButton, SettingCard)
 from qfluentwidgets.components.settings.expand_setting_card import GroupSeparator
 
+from app.common.signal_bus import signalBus
 from app.common.icon import UiIcon
 from app.components.ascii_spin_box import AsciiSpinBox
 from app.tools import adb_service
@@ -294,6 +295,7 @@ class AdbDeviceCard(_PanelCard):
     def _onDevicesListed(self, devices):
         self._loaded = True
         self._devices = list(devices)
+        signalBus.adbDevicesChanged.emit(tuple(self._devices))
         self._showDownload = False
         if self._devices:
             self._message = None
@@ -304,6 +306,7 @@ class AdbDeviceCard(_PanelCard):
     def _onListFailed(self, code, message):
         self._loaded = True
         self._devices = []
+        signalBus.adbDevicesChanged.emit(())
         self._onDeviceError(code, message)
 
     def _onDownloadClicked(self):
