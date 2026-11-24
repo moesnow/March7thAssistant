@@ -160,7 +160,7 @@ def test_account_uid_is_redetected_after_first_game_start():
     spec.loader.exec_module(module)
     module.sys = types.SimpleNamespace(platform='win32')
     module.winreg = MagicMock()
-    module.winreg.EnumValue.return_value = (module.uid_key, 123456, 4)
+    module.winreg.QueryValueEx.return_value = (123456, 4)
     with patch.object(module, 'get_reg_path', side_effect=[None, module.reg_path_cn]):
         assert module.gamereg_uid() is None
         assert module.gamereg_uid() == 123456

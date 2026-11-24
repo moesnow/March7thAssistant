@@ -1,5 +1,5 @@
 import pytest
-from app.tools.account_manager import xor_encrypt_to_base64, xor_decrypt_from_base64, Account
+from module.accounts.store import xor_encrypt_to_base64, xor_decrypt_from_base64
 
 
 class TestXorEncrypt:
@@ -61,17 +61,11 @@ class TestXorRoundtrip:
         assert decrypted == original
 
 
-class TestAccount:
-    def test_init(self):
-        acc = Account(123456, "TestUser", 1700000000)
-        assert acc.account_id == 123456
-        assert acc.account_name == "TestUser"
-        assert acc.timestamp == 1700000000
-
-    def test_str(self):
-        acc = Account(123456, "TestUser")
-        assert str(acc) == "123456: TestUser"
-
-    def test_default_timestamp(self):
-        acc = Account(1, "user")
-        assert acc.timestamp == 0
+def test_account_model_exposes_saved_name_uid_and_date():
+    from app.content.account_model import _info
+    item = _info(dict(uid="100000789", masked_uid="1•••789", name="虚构主号", server="cn", rotate=True, plan="shared",
+                      game_path="", refresh_hour=None, auto_login=False, password_status="missing", has_snapshot=True,
+                      login_status="ready", snapshot_saved_at=0, is_logged_in=False, status="idle",
+                      status_text="今日未运行", week=[], color=3))
+    assert item.name == "虚构主号" and item.masked == "1•••789" and item.uid == "100000789"
+    assert item.saved_at is None and item.color == 3 and item.credentials == "none"

@@ -11,7 +11,7 @@ import zipfile
 from utils import paths
 from utils.gacha_transaction import recover_import
 from utils.data_files import (atomic_json, critical_items, data_lock, install_stream, linked, move, remove, remove_retired, stamp,
-                              verified_copy, verify_zip, write_zip)
+                              verified_copy, verify_zip, walk_files, write_zip)
 from utils.install_registry import find_install, is_gui_running
 from utils.runs import is_process_alive, live_run_in, process_create_time
 
@@ -83,7 +83,7 @@ def _check_source(old, source):
 @contextmanager
 def _prepared_moves(old, items):
     """Do slow cross-volume copies before taking the short layout selection lock."""
-    with tempfile.TemporaryDirectory(dir=old.storage / "backup", prefix=".transfer-") as temp:
+    with tempfile.TemporaryDirectory(dir=old.storage, prefix=".transfer-") as temp:
         prepared = {}
         for name, source in items.items():
             _check_source(old, source)
@@ -159,6 +159,19 @@ def _notice(install):
         encoding="utf-8-sig")
 
 
+def _restore_legacy_passwords(source, destination):
+    # Legacy passwords are deliberately absent from the recovery archive.
+    # Recover from the published directory when undoing the directory rename fails.
+    if not source.is_dir():
+        return
+    for file in list(walk_files(source)):
+        if file.suffix.casefold() != ".acc":
+            continue
+        target = destination / file.relative_to(source)
+        if not target.exists():
+            move(file, target)
+
+
 def _rollback(old, record):
     # The intent is persisted before the first rename, including for the item in flight.
     items = record["items"]
@@ -173,9 +186,14 @@ def _rollback(old, record):
             try:
                 move(target, source)
             except OSError:
-                pass  # The verified archive can restore files even when the inverse rename is locked.
+                if name == "accounts":
+                    _restore_legacy_passwords(target, source)
+                # The verified archive restores all other files even if the directory rename was locked.
         elif source.exists() and target.exists():
-            move(target, old.storage / "backup" / ("回滚时保留_" + stamp()) / name)
+            if name == "accounts" and any(target.rglob("*.acc")):
+                record.setdefault("reasons", {})[name] = "新旧账号均含待核对数据，已保留两处原件"
+            else:
+                move(target, old.storage / "backup" / ("回滚时保留_" + stamp()) / name)
     # Recover any missing files from the verified zip, without replacing existing old data.
     backup = old.storage / "backup" / Path(record["backup"]).name
     with zipfile.ZipFile(backup) as archive:
@@ -193,7 +211,7 @@ def _rollback(old, record):
     verify_zip(backup, {name: old.path(name) for name in items})
     for name in items:
         target = _destination(old, name, record)
-        if target.exists():
+        if target.exists() and not (name == "accounts" and any(target.rglob("*.acc"))):
             move(target, old.storage / "backup" / ("回滚时保留_" + stamp()) / name)
 
 
@@ -201,6 +219,10 @@ def _critical(old, record):
     record.pop("reason", None)
     recover_import(old)
     items = critical_items(old)
+    if "accounts" in items and (old.storage / "accounts").exists() and any(items["accounts"].rglob("*.acc")):
+        # The existing new list wins. Leave the older folder at its original location, including its passwords.
+        items.pop("accounts")
+        record.setdefault("reasons", {})["accounts"] = "旧账号目录含待转换密码，已保留原处"
     conflicts = [name for name in items if (old.storage / name).exists()]
     _validate_config(old.path(paths.CONFIG))
     archive = _backup(old, items)
@@ -327,6 +349,16 @@ def _leftovers(old, record):
         relative = source.relative_to(old.install)
         try:
             _check_source(old, source)
+            if name == "accounts" and any(source.rglob("*.acc")):
+                destination = folder / relative
+                for file in list(walk_files(source)):
+                    if file.suffix.casefold() != ".acc":
+                        move(file, destination / file.relative_to(source))
+                if destination.is_dir():
+                    record.setdefault("leftovers", []).append(str(destination.relative_to(old.storage)))
+                record.setdefault("reasons", {})[str(relative)] = "待转换的旧密码已保留原处"
+                _save(old.storage, record)
+                continue
             move(source, folder / relative)
             record.setdefault("leftovers", []).append(str((folder / relative).relative_to(old.storage)))
             logging.info("已保留旧位置残留：%s", folder / relative)

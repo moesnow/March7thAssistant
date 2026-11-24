@@ -157,7 +157,9 @@ def test_new_wins_and_old_files_are_retained(install, monkeypatch):
     start(install, monkeypatch)
     assert (new / paths.CONFIG).read_text() == "new: 1"
     retained, = (new / "backup").glob("旧位置残留_*")
-    assert all((retained / name).is_file() for name in ALL)
+    assert all((retained / name).is_file() for name in ALL if not name.endswith(".acc"))
+    assert not list((new / "backup").rglob("*.acc"))
+    assert (install / "settings/accounts/a.acc").is_file()
 
 
 def test_custom_fresh_and_fixed_paths(install, monkeypatch):

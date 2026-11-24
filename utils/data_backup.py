@@ -150,7 +150,7 @@ def _import(folder, stage):
     if (source.path(paths.GACHA) / PENDING).exists():
         raise ValueError(tr("所选目录的抽卡导入尚未完成，请先在原安装中打开抽卡页。"))
     items = _items(source, confined=True)
-    for name, file in members_of(items):
+    for name, file in members_of(items, include_legacy_passwords=True):
         if not _managed(name):
             raise ValueError(tr("无法导入文件：{name}").format(name=name))
         out = stage / name
@@ -220,7 +220,7 @@ def _restore(source, importing):
         tools = _tool_dirs(current)
         items = _items(current, tools)
         write_zip(archive, items)
-        with tempfile.TemporaryDirectory(prefix=".restore-", dir=directory) as temp:
+        with tempfile.TemporaryDirectory(prefix=".restore-", dir=current.storage) as temp:
             stage = Path(temp)
             empty_snapshot = False
             if importing:
@@ -233,6 +233,9 @@ def _restore(source, importing):
             if paths.CONFIG in incoming and not isinstance(YAML(typ="safe").load(incoming[paths.CONFIG]), dict):
                 raise ValueError(tr("备份中的设置文件无效"))
             previous = dict(members_of(items))
+            # Old .acc files are outside backups. Preserve an existing local copy on conflict.
+            incoming = {name: file for name, file in incoming.items() if not (
+                name.startswith("accounts/") and name.lower().endswith(".acc") and _target(current, name, tools).exists())}
             # Preserve the current on-disk spelling on case-insensitive filesystems, including for undo.
             spellings = {os.path.normcase(name): name for name in previous}
             incoming = {spellings.get(os.path.normcase(name), name): file for name, file in incoming.items()}
@@ -310,6 +313,16 @@ def diagnostics(destination):
     destination = _safe_output(current, destination)
     config = YAML(typ="safe").load(current.path(paths.CONFIG)) if current.path(paths.CONFIG).exists() else {}
     values = set()
+    from module.accounts.store import AccountStore
+    store = AccountStore(current.path("accounts"), storage=current.storage)
+    summary = []
+    try:
+        for row in store.index()["accounts"]:
+            values.update((row["uid"], row["name"]))
+            login = store.read(row["uid"], "state.yaml").get("login_status")
+            summary.append({"server": row["server"], "login": login if login in ("ready", "expired") else "unknown"})
+    except (OSError, ValueError):
+        summary = []
     clean = _scrub_config(config, values)
     patterns = {v for value in values for v in (value, *value.splitlines(), quote(value, safe=""),
                                                  json.dumps(value)[1:-1]) if v}
@@ -328,6 +341,10 @@ def diagnostics(destination):
         config_file = stage / paths.CONFIG
         config_file.write_text(output.getvalue(), encoding="utf-8")
         items = {paths.CONFIG: config_file}
+        if summary:
+            report = stage / "accounts-summary.json"
+            report.write_text(json.dumps({"count": len(summary), "accounts": summary}, ensure_ascii=True), encoding="utf-8")
+            items[report.name] = report
         directory = current.path(paths.LOGS) / "runs"
         logs = sorted((p for p in directory.glob("*.log") if runs.is_valid_run_id(p.stem)), reverse=True)
         if logs:

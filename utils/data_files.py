@@ -106,9 +106,12 @@ def critical_items(layout, *, external=False):
     return items
 
 
-def members_of(items):
+def members_of(items, *, include_legacy_passwords=False):
     for member, root in items.items():
         for file in walk_files(root):
+            if member == "accounts" and (file.name.startswith(".account-") or
+                                         file.suffix.casefold() == ".acc" and not include_legacy_passwords):
+                continue
             yield (member if root == file else member + "/" + file.relative_to(root).as_posix()), file
 
 
