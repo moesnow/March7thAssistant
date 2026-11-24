@@ -1,10 +1,11 @@
-"""设置卡上的「已修改」「恢复默认」「说明 ↗」。判断和操作来自 app.content.settings_state。"""
+"""设置卡上的「已修改」「本账号独有」「恢复默认 / 恢复共享」「说明 ↗」。判断和操作来自 app.content.settings_state。"""
 from PySide6.QtCore import QEvent, QObject, Qt
 from PySide6.QtWidgets import QBoxLayout, QHBoxLayout
 from qfluentwidgets import InfoBar, qconfig
 
 from app.content.base import card_for
-from app.content.settings_state import config_events, doc_link, is_modified, reset_reason, restore_default
+from app.content.settings_state import (account_override, config_events, doc_link, is_modified, reset_reason,
+                                        restore_default, restore_shared)
 from app.overview.widgets import LinkButton, Pill
 from module.localization import tr
 from module.logger import log
@@ -57,6 +58,7 @@ class _Badge(QObject):
         self.resetButton.hide()
         self._hover = False
         self._modified = False
+        self._override = None
         self._reason = ""
         self.target.installEventFilter(self)
         self.restyle()
@@ -72,22 +74,31 @@ class _Badge(QObject):
         return False
 
     def _updateReset(self):
-        self.resetButton.setVisible(self._hover and self._modified and not self._reason)
+        shown = self._override is not None or (self._modified and not self._reason)
+        self.resetButton.setVisible(self._hover and shown)
 
     def refresh(self):
         try:
+            self._override = account_override(self.item)
             self._modified = bool(self.item.keys) and is_modified(self.item)
             self._reason = reset_reason(self.item) if self._modified else ""
         except Exception as exc:
             log.debug(f"读取设置状态失败：{self.item.id} {type(exc).__name__}")
-            self._modified, self._reason = False, ""
-        self.pill.setVisible(self._modified)
-        self.pill.setToolTip(self._reason or tr("和默认值不同，悬停卡片可以恢复默认"))
+            self._modified, self._reason, self._override = False, "", None
+        self.restyle()
+        self.pill.setVisible(self._modified or self._override is not None)
+        if self._override is not None:
+            tip = tr("共享方案：{value}。悬停卡片可以恢复共享").format(value=self._override.shared_text)
+        else:
+            tip = self._reason or tr("和默认值不同，悬停卡片可以恢复默认")
+        self.pill.setToolTip(tip)
         self._updateReset()
 
     def restyle(self):
         evernight = is_evernight()
-        self.pill.setPill(tr("已修改"), "accent", evernight=evernight)
+        own = self._override is not None
+        self.pill.setPill(tr("本账号独有") if own else tr("已修改"), "info" if own else "accent", evernight=evernight)
+        self.resetButton.setText(tr("恢复共享") if own else tr("恢复默认"))
         self.resetButton.setEvernight(evernight)
         self.docButton.setEvernight(evernight)
 
@@ -97,6 +108,16 @@ class _Badge(QObject):
             window.navigate(self.link)
 
     def _reset(self):
+        if self._override is not None:
+            try:
+                done = restore_shared(self.item, self.owner.host)
+            except Exception as exc:
+                log.error(f"恢复共享失败：{self.item.id} {type(exc).__name__}: {exc}")
+                done = False
+            if not done:
+                InfoBar.warning(tr("没有恢复共享"), tr("请在账号页的任务方案里恢复"), duration=3000, parent=self.owner.window)
+            self.refresh()
+            return
         try:
             done = restore_default(self.item, self.owner.host)
         except Exception as exc:

@@ -1,5 +1,5 @@
 """新页面共用的配色、图标和小控件。"""
-from PySide6.QtCore import QEvent, QObject, QPointF, QRectF, Qt, Signal
+from PySide6.QtCore import QEvent, QObject, QPointF, QRectF, QTimer, Qt, Signal
 from PySide6.QtGui import QColor, QPainter, QPen, QPolygonF
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 from qfluentwidgets import (BodyLabel, CaptionLabel, CardWidget, ExpandSettingCard, FluentIcon, IconWidget,
@@ -80,6 +80,40 @@ def shared(window, name, factory):
         if window is not None:
             setattr(window, name, value)
     return value
+
+
+class _RestoreFilter(QObject):
+    def __init__(self, widget, callback):
+        super().__init__(widget)
+        self.widget, self.callback = widget, callback
+
+    def eventFilter(self, watched, event):
+        if event.type() == QEvent.Type.WindowStateChange and not watched.isMinimized():
+            QTimer.singleShot(0, self, self._run)
+        return False
+
+    def _run(self):
+        if self.widget.isVisible() and not self.widget.window().isMinimized():
+            self.callback()
+
+
+def refresh_on_restore(widget, window, callback):
+    """窗口最小化期间页面不刷新，恢复时补一次；这时子控件不一定收到显示事件。"""
+    if window is not None:
+        window.installEventFilter(_RestoreFilter(widget, callback))
+
+
+def popup_menu(owner, menu, position, **options):
+    """弹出一次性菜单，同时删掉 owner 上次弹出的那个。
+
+    不能在菜单关闭时就删：这时 Qt 还在处理列表的鼠标事件，动作打开的对话框会让删除提前生效，
+    对话框关掉后回到已经删除的列表，程序直接崩溃。
+    """
+    previous = getattr(owner, "_popupMenu", None)
+    owner._popupMenu = menu
+    if previous is not None:
+        previous.deleteLater()
+    menu.exec(position, **options)
 
 
 def surface_color(hover=False):

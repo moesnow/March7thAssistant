@@ -12,8 +12,7 @@ from app.card.pushsettingcard1 import (
 )
 from app.card.expandable_switch_setting_card import ExpandableSwitchSettingCard
 from module.localization import tr
-
-INSTANCE_TYPES = ("拟造花萼（金）", "拟造花萼（赤）", "凝滞虚影", "侵蚀隧洞", "饰品提取")
+from module.search.setting_text import choice_texts
 
 
 def build(host):
@@ -26,7 +25,7 @@ def build(host):
     )
     host.instanceTypeCard = ComboBoxSettingCard2(
         "instance_type", UiIcon.LIST, tr("副本类型"),
-        texts={tr(name): name for name in INSTANCE_TYPES},
+        texts=choice_texts("instance_type"),
         parent=host.card_parent,
     )
     host.instanceTeamEnableCard = InstanceTeamSettingCard(
@@ -118,10 +117,7 @@ def build(host):
         FIF.SEARCH,
         tr("识别方案"),
         tr("副本名称识别会进入挑战页读取副本信息；掉落物识别根据列表中的掉落物匹配副本，异常时可尝试切换方案"),
-        texts={
-            tr("副本名称识别"): "instance",
-            tr("掉落物识别"): "drop"
-        },
+        texts=choice_texts("build_target_scheme"),
         parent=host.card_parent,
     )
     host.buildTargetPlanarOrnamentWeeklyCountCard = RangeSettingCard1(

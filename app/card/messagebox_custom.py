@@ -12,6 +12,7 @@ from typing import Optional
 from app.common.scroll_dialog import (SplitFadeDialogMixin, available_host_size,
                                       build_scroll_area)
 from module.config import cfg
+from module.search.setting_text import technique_labels
 from module.localization import tr, get_raw_instance_names, get_instance_names, instance_display_to_raw
 import datetime
 import json
@@ -840,12 +841,7 @@ class MessageBoxTeam(MessageBox):
 
         self.template = template
 
-        self.tech_map = {
-            -1: tr("秘技 / 开怪"),
-            0: tr("无操作"),
-            1: tr("秘技 1 次"),
-            2: tr("秘技 2 次"),
-        }
+        self.tech_map = technique_labels()
 
         self.comboBox_list = []
         for i in range(1, 5):

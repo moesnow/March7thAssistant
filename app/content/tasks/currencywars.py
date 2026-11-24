@@ -6,10 +6,10 @@ from app.card.spinboxsettingcard1 import SpinBoxSettingCard1
 from app.card.expandable_switch_setting_card import ExpandableComboBoxSettingCard
 from module.config import cfg
 from module.localization import tr
+from module.search.setting_text import choice_texts
 from tasks.weekly.currency_wars_strategy import (
     DEFAULT_STRATEGY as CURRENCY_WARS_DEFAULT,
     HIGH_ANAXA,
-    PROMOTION_CAP_DIFFICULTY,
     STRATEGY_NAMES,
 )
 
@@ -20,7 +20,7 @@ def build(host):
         UiIcon.OPTIONS,
         tr('类别'),
         '',
-        texts={tr('标准博弈'): 'normal', tr('超频博弈'): 'overclock'},
+        texts=choice_texts("currencywars_type"),
         parent=host.card_parent,
     )
     host.currencywarsBonusEnableCard = SwitchSettingCard1(
@@ -35,12 +35,7 @@ def build(host):
         UiIcon.GAUGE,
         tr('职级难度'),
         '',
-        texts={
-            tr('最高职级'): 'highest',
-            tr('当前职级'): 'current',
-            tr('最低职级'): 'lowest',
-            tr('晋升点封顶档'): PROMOTION_CAP_DIFFICULTY,
-        },
+        texts=choice_texts("currencywars_rank_difficulty"),
         parent=host.card_parent,
     )
     visible_strategies = (CURRENCY_WARS_DEFAULT, HIGH_ANAXA)
@@ -61,7 +56,7 @@ def build(host):
         UiIcon.OPTIONS,
         tr("投资选项优先级"),
         "",
-        texts={tr("策略优先"): "strategy", tr("图鉴优先"): "catalog"},
+        texts=choice_texts("currencywars_investment_priority"),
         parent=host.card_parent,
     )
     host.currencywarsUnfinishedMatchCard = ComboBoxSettingCard2(
@@ -69,7 +64,7 @@ def build(host):
         UiIcon.OPTIONS,
         tr("未完成对局"),
         "",
-        texts={tr("结算后重新开局"): "restart", tr("继续进度"): "resume"},
+        texts=choice_texts("currencywars_unfinished_match"),
         parent=host.card_parent,
     )
     host.currencywarsFastModeCard = SwitchSettingCard1(

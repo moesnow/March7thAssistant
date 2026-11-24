@@ -7,6 +7,7 @@ from app.card.rangesettingcard1 import RangeSettingCard1
 from app.card.expandable_switch_setting_card import ExpandableSwitchSettingCard
 from app.card.stationprioritysettingcard import StationPrioritySettingCard
 from module.localization import tr, translations_of
+from module.search.setting_text import choice_texts
 from module.config import cfg
 from PySide6.QtCore import QSignalBlocker
 
@@ -33,7 +34,7 @@ def build(host):
         UiIcon.OPTIONS,
         tr('类别'),
         '',
-        texts={tr('常规演算'): 'normal', tr('周期演算'): 'cycle'},
+        texts=choice_texts("weekly_divergent_type"),
         parent=host.card_parent,
     )
     host.weeklyDivergentBonusEnableCard = SwitchSettingCard1(
@@ -83,7 +84,7 @@ def build(host):
         UiIcon.OPTIONS,
         tr('类别'),
         '',
-        texts={tr('差分宇宙'): 'divergent', tr('模拟宇宙'): 'universe'},
+        texts=choice_texts("universe_category"),
         parent=host.card_parent,
     )
     host.divergentTypeCard = ComboBoxSettingCard2(
@@ -91,7 +92,7 @@ def build(host):
         UiIcon.OPTIONS,
         tr('选择差分宇宙时类别'),
         '',
-        texts={tr('常规演算'): 'normal', tr('周期演算'): 'cycle'},
+        texts=choice_texts("divergent_type"),
         parent=host.card_parent,
     )
     host.universeBonusEnableCard = SwitchSettingCard1(
@@ -106,7 +107,7 @@ def build(host):
         UiIcon.TIMER,
         tr('运行频率'),
         '',
-        texts={tr('每周'): 'weekly', tr('每天'): 'daily'},
+        texts=choice_texts("universe_frequency"),
         parent=host.card_parent,
     )
     host.universeCountCard = RangeSettingCard1(
@@ -149,7 +150,7 @@ def build(host):
         UiIcon.OPTIONS,
         tr('运行模式'),
         '',
-        texts={tr('集成'): 'exe', tr('源码'): 'source'},
+        texts=choice_texts("universe_operation_mode"),
         parent=host.card_parent,
     )
     host.universeEnableGpuCard = SwitchSettingCard1(

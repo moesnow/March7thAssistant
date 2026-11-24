@@ -12,6 +12,8 @@ from app.content.visibility import setting_visible
 from app.content.task_model import TaskModel
 from module.localization import tr
 from module.logger import log
+from app.content.account_model import AccountModel
+from .accounts.editing import EditingAccount
 from .pages.common import NoticeStrip, SectionView, is_evernight, secondary, shared
 from .pages.decorations import CardDecorations
 from .pages.tasks import ChecksCard, TaskHeader, TaskListPanel
@@ -93,10 +95,14 @@ class TaskInterface(QWidget):
         self.model = shared(parent, "taskModel", lambda: TaskModel(parent))
         self.titleLabel = TitleLabel(tr("任务"), self)
         self.subtitleLabel = secondary(BodyLabel(tr("打开开关的任务会加入「完整运行」，每项也可以单独立即运行"), self))
+        self.accountModel = shared(parent, "accountModel", lambda: AccountModel(parent))
+        self.editing = EditingAccount(self.accountModel, parent, self)
         title = QHBoxLayout()
+        title.setContentsMargins(0, 0, 12, 0)
         title.setSpacing(16)
         title.addWidget(self.titleLabel)
         title.addWidget(self.subtitleLabel, 1, Qt.AlignmentFlag.AlignBottom)
+        title.addWidget(self.editing, 0, Qt.AlignmentFlag.AlignVCenter)
         self.body = QHBoxLayout()
         self.body.setSpacing(16)
         self.vBoxLayout = QVBoxLayout(self)
@@ -138,11 +144,14 @@ class TaskInterface(QWidget):
         if first:
             self.showTask(first)
 
-    def rebuild(self):
+    def rebuild(self, *, account_changed=False):
         """切换语言后重建列表和各任务页，保留所选任务、滚动位置和展开状态。"""
         state = self.captureViewState()
+        if account_changed:
+            state.pop("cards", None)
         self.titleLabel.setText(tr("任务"))
         self.subtitleLabel.setText(tr("打开开关的任务会加入「完整运行」，每项也可以单独立即运行"))
+        self.editing.refresh()
         self._build()
         self.restoreViewState(state)
 

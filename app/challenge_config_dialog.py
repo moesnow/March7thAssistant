@@ -12,6 +12,7 @@ from app.common.scroll_dialog import SplitFadeDialogMixin, available_host_size, 
 from app.components.ascii_spin_box import AsciiSpinBox
 from module.config import cfg
 from module.localization import tr, get_character_names
+from module.search.setting_text import technique_labels
 
 
 def _get_level_range(prefix, highest_level):
@@ -31,10 +32,7 @@ class ChallengeConfigDialog(SplitFadeDialogMixin, MessageBox):
         self.prefix = prefix
         self.highest_level = highest_level
         self.template = get_character_names()
-        self.techniques = {
-            -1: tr("秘技 / 开怪"), 0: tr("无操作"),
-            1: tr("秘技 1 次"), 2: tr("秘技 2 次"),
-        }
+        self.techniques = technique_labels()
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.hide()
         self.yesButton.setText(tr("保存"))

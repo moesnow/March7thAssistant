@@ -28,6 +28,14 @@ class TaskModel(QObject):
     def tasks(self):
         return TASKS
 
+    def overridden(self, task_id):
+        from module.accounts.differences import _HIDDEN
+        layer = getattr(self.config, "_account_layer", None)
+        if not layer or layer.row["plan"] != "independent":
+            return False
+        return (any(item.page == task_id and layer.plan.keys() & set(item.keys) for item in SETTINGS)
+                or any(_HIDDEN.get(key, (None,))[0] == task_id for key in layer.plan))
+
     def enabled(self, task_id):
         return any(self.config.get_value(key) for key in BY_ID[task_id].switches)
 

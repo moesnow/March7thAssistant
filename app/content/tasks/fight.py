@@ -4,6 +4,7 @@ from app.card.switchsettingcard1 import SwitchSettingCardTeam
 from app.card.rangesettingcard1 import RangeSettingCard1
 from app.card.expandable_switch_setting_card import ExpandableSwitchSettingCard
 from module.localization import tr
+from module.search.setting_text import choice_texts
 
 
 def build(host):
@@ -12,7 +13,7 @@ def build(host):
         UiIcon.OPTIONS,
         tr('运行模式'),
         '',
-        texts={tr('集成'): 'exe', tr('源码'): 'source'},
+        texts=choice_texts("fight_operation_mode"),
         parent=host.card_parent,
     )
     host.fightTimeoutCard = RangeSettingCard1(
@@ -36,7 +37,7 @@ def build(host):
         UiIcon.MAP,
         tr('地图版本'),
         '',
-        texts={tr("不配置"): "不配置", tr("默认（疾跑）"): "default", tr("黄泉专用"): "HuangQuan", tr("获得特殊物品"): "reward"},
+        texts=choice_texts("fight_map_version"),
         parent=host.card_parent,
     )
     host.fightMainMapCard = ComboBoxSettingCard2(
@@ -44,7 +45,7 @@ def build(host):
         UiIcon.PLANET,
         tr('优先星球'),
         '',
-        texts={tr("不配置"): "0", tr("空间站"): "1", tr("雅利洛"): "2", tr("仙舟"): "3", tr("匹诺康尼"): "4", tr("翁法罗斯"): 5, tr("二相乐园"): 6},
+        texts=choice_texts("fight_main_map"),
         parent=host.card_parent,
     )
     host.fightRewardEnableCard = ExpandableSwitchSettingCard(
@@ -59,7 +60,7 @@ def build(host):
         UiIcon.FOOD,
         tr('购买秘技零食并合成零食'),
         tr("每日获得特殊物品：购买秘技零食材料并合成零食"),
-        texts={tr("不配置"): "不配置", tr("启用"): True, tr("停用"): False},
+        texts=choice_texts("fight_allow_snack_buy"),
         parent=host.card_parent,
     )
     host.fightAllowMapBuyCard = ComboBoxSettingCard2(
@@ -67,7 +68,7 @@ def build(host):
         UiIcon.COIN,
         tr('购买代币与过期邮包'),
         tr("每周获得特殊物品：购买仙舟过期邮包与匹诺康尼艾迪恩代币"),
-        texts={tr("不配置"): "不配置", tr("启用"): True, tr("停用"): False},
+        texts=choice_texts("fight_allow_map_buy"),
         parent=host.card_parent,
     )
     host.fightAllowMemoryTokenCard = ComboBoxSettingCard2(
@@ -75,7 +76,7 @@ def build(host):
         UiIcon.COIN_STACK,
         tr('获得翁法罗斯记忆代币'),
         tr("每周获得特殊物品：收集翁法罗斯忆质残晶"),
-        texts={tr("不配置"): "不配置", tr("启用"): True, tr("停用"): False},
+        texts=choice_texts("fight_allow_memory_token"),
         parent=host.card_parent,
     )
     return host.finish("fight", (

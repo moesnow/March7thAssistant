@@ -8,7 +8,7 @@ from qfluentwidgets import (Action, BodyLabel, CaptionLabel, CheckBox, DropDownP
                             InfoBar, PrimaryPushButton, PrimarySplitPushButton, RoundMenu, ScrollArea,
                             SearchLineEdit, SimpleCardWidget, StrongBodyLabel, SubtitleLabel, isDarkTheme)
 
-from app.overview.style import accent, primary_button_qss, text_color, tone
+from app.overview.style import accent, brand, primary_button_qss, text_color, tone
 from app.overview.widgets import ElidedLabel, IconTile, LinkButton, Pill
 from module.localization import tr
 from module.search import normalize
@@ -52,6 +52,7 @@ class TaskRow(QWidget):
         self._selected = False
         self._hover = False
         self._available = True
+        self._overridden = False
         self.setFixedHeight(54)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.iconWidget = IconWidget(icon_of(task.icon), self)
@@ -82,6 +83,13 @@ class TaskRow(QWidget):
         self.nameLabel.setEnabled(available)
         self.update()
 
+    def setOverridden(self, overridden):
+        """当前账号的独立方案里改过这项任务，和共享方案不同。"""
+        if self._overridden != bool(overridden):
+            self._overridden = bool(overridden)
+            self.setToolTip(tr("这个账号改过，和共享方案不同") if overridden else "")
+            self.update()
+
     def setSelected(self, selected):
         self._selected = bool(selected)
         self.update()
@@ -109,6 +117,11 @@ class TaskRow(QWidget):
         if self._selected:
             painter.setBrush(accent(is_evernight()))
             painter.drawRoundedRect(QRectF(0, self.height() / 2 - 9, 3, 18), 1.5, 1.5)
+        if self._overridden:
+            # 名称后的小圆点；名称标签占满一列，圆点跟在文字后面。
+            x = self.nameLabel.x() + min(self.nameLabel.width(), self.nameLabel.fontMetrics().horizontalAdvance(self.nameLabel.text())) + 9
+            painter.setBrush(brand(is_evernight()))
+            painter.drawEllipse(QRectF(x - 3, self.nameLabel.geometry().center().y() - 2.5, 6, 6))
 
 
 class TaskListPanel(SimpleCardWidget):
@@ -171,6 +184,7 @@ class TaskListPanel(SimpleCardWidget):
         for task_id, row in self.rows.items():
             try:
                 row.setState(self.model.status(task_id), self.model.enabled(task_id), self.model.available(task_id))
+                row.setOverridden(self.model.overridden(task_id))
             except Exception:
                 continue
         for group, (header, count, members) in self.groupHeaders.items():

@@ -57,8 +57,9 @@ def doc_link(item):
 
 
 def is_modified(item, config=cfg):
-    # Compare saved values. Environment and desktop-twin overrides are temporary.
-    return any(config.config.get(k) != v for k, v in defaults_for(item, config).items())
+    # Defaults apply to the plan currently visible in the page.
+    value = config.get_value if hasattr(config, "get_value") else config.config.get
+    return any(value(k) != v for k, v in defaults_for(item, config).items())
 
 
 MANUAL = {
@@ -188,3 +189,30 @@ def restore_default(item, host):
             signalBus.hotkeyChangedSignal.emit()
     refresh_card(item, host)
     return not is_modified(item)
+
+
+def account_override(item, config=cfg):
+    from module.accounts.differences import Difference, value_text
+    layer = getattr(config, "_account_layer", None)
+    if not layer or layer.row["plan"] != "independent":
+        return None
+    for key in item.keys:
+        if key in layer.plan:
+            shared = config.shared_value(key)
+            parts = layer.plan[key]
+            if isinstance(shared, dict) and isinstance(parts, dict):
+                text = "、".join(f"{tr(str(k))} · {value_text(key, shared.get(k), k)}" for k in parts)
+            else:
+                text = value_text(key, shared)
+            return Difference(key, None, tr(item.title), item.page, "", item.link, "", text)
+    return None
+
+
+def restore_shared(item, host):
+    if item.page != host.page_id or not account_override(item):
+        return False
+    for key in item.keys:
+        if key in cfg.account_overrides():
+            cfg.restore_shared(key)
+    refresh_card(item, host)
+    return not account_override(item)
