@@ -192,7 +192,8 @@ def test_registry_doc_links_and_canonical_button_labels(lang):
     doc = load_document("Tutorial", lang)
     paths = [s for b in walk_blocks(doc.blocks) for s in block_spans(b) if isinstance(s, SettingPath)]
     if lang in ("zh_CN", "zh_TW"):
-        assert len(paths) == 26
+        assert len(paths) == 28
+        assert {"setting:game_path", "setting:refresh_hour", "run:schedule"} <= {s.target for s in paths}
     for s in paths:
         kind, name, anchor = parse_link(s.target)
         if kind in ("setting", "task") and (kind == "setting" or anchor):

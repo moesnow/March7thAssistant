@@ -39,6 +39,7 @@ AI 助手会从 GitHub 下载最新正式版，核对官方 SHA-256 后解压到
 | 帮我跑一下每日实训 | 先检查小助手状态，再运行每日实训，把输出和结果告诉你 |
 | 清体力改成刷遗器副本 | 对照配置说明修改体力计划，下次运行生效 |
 | 每天早上 5 点自动做日常 | 修改小助手自己的定时任务（需要图形界面保持运行，最小化到托盘即可） |
+| 让主号和小号依次清体力 | 查询参与轮流的账号，按列表顺序运行并分别汇报结果 |
 | 昨天的完整运行为什么失败了？ | 读取运行记录、日志和失败截图，对照常见问题分析原因 |
 | 帮我更新小助手 | 运行小助手自带的更新，不会用完整包覆盖安装目录 |
 
@@ -99,6 +100,22 @@ AI 助手使用的是安装目录里的 `m7a.exe`。它和 `March7th Assistant.e
 运行 `m7a.exe --status` 可查到数据目录 `data_dir`、配置文件 `config_file` 和日志目录 `logs_dir`。每次运行在 `runs_dir` 指向的目录留下记录：`<运行编号>.log` 是完整输出，`<运行编号>.json` 是状态、原因、错误与失败截图。
 
 抽卡记录按 UID 分文件保存。默认或自定义数据目录使用 `<data_dir>/gacha/<UID>.json`，旧布局使用 `<logs_dir>/gacha/<UID>.json`。在桌面端的「抽卡记录」页打开「更多操作」可找到当前数据文件夹。
+
+### 指定账号与轮流
+
+查询 `--status` 的 `accounts`。`enabled` 是已保存的开关，`effective` 表示本次环境可按账号运行。`current` 是界面当前查看的 UID，`list` 按顺序列出 `uid`、`name` 和是否参与轮流的 `rotate`。Windows 主桌面的本地客户端启用多账号后，可以使用以下命令。
+
+```powershell
+.\m7a.exe daily --account "开拓者 · 主号" --after-finish None
+.\m7a.exe main --account all --after-finish None --detach
+.\m7a.exe --control <父运行编号> skip
+```
+
+将尖括号中的编号换成启动时返回的编号。名称重复时用 UID；省略 `--account` 会沿用当前登录。轮流按参与顺序逐个启动子运行，`skip` 跳过当前账号，`stop` 停止整轮。在 `runs_dir` 里打开父编号的 JSON，读取 `rotation.accounts` 每项的 `status`、`reason` 和子 `run_id`。子记录的 `parent_run_id` 指回父记录，`steps`、`detail` 和同编号日志说明这个账号执行到哪一步。
+
+遇到 `account_login_expired`，请账号持有人重新登录并保存快照。`account_mismatch` 表示 UID 核对失败，`account_server_mismatch` 表示客户端选错服务器。`account_no_login`、`account_switch_failed` 分别表示缺少可用登录或切换失败。`account_unsupported` 或 `account_not_found` 要先核对运行方式、开关和账号标识。`account_timeout` 表示该账号超时。`child_crashed`、`child_error`、`child_failed`、`child_record_missing` 指向子运行，`rotation_parent_lost`、`rotation_finish_failed` 指向整轮。先看对应记录的 `error` 和日志，再决定是否重试。
+
+AI 助手可只对本次命令设置环境变量 `M7A_RUN_TRIGGER=ai`，让运行记录标出 AI 来源。计划和启动任务会记录各自的触发方式。
 
 全部参数见 `.\m7a.exe --help`，给 AI 助手看的完整说明见 [SKILL.md](https://github.com/moesnow/March7thAssistant/blob/main/assets/agent/skills/march7th-assistant/SKILL.md)。
 

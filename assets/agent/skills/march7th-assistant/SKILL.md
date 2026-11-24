@@ -72,6 +72,21 @@ license: GPL-3.0
 `apocalyptic` 末日幻影、`character_export` 角色面板导出、`redemption` 兑换码、`game` 启动游戏、`app_update` 更新小助手。
 每个任务做什么见 `assets/docs/TasksTable.md`。
 
+### 按账号运行
+
+先读 `--status` 中的 `accounts`。`effective` 为真才可以指定账号；`enabled` 是保存的开关，`current` 是当前查看的 UID。`list` 每项含 `uid`、`name` 和 `rotate`。用户只指定某个账号时，传 `--account <UID或名称>`，重名时用 UID。未指定账号的任务沿用已登录身份。用户要求轮流时，运行 `.\m7a.exe main --account all --after-finish None --detach`。中途接管任务与 workflow 带账号时只核对当前登录。
+
+记下返回的父编号，用 `--control <父运行编号> skip` 跳过当前账号，`stop` 停止整轮。读父 JSON 的 `rotation.accounts`，逐项核对 `uid`、`status`、`reason` 和子 `run_id`。用子编号读取 `<编号>.json` 的 `account`、`parent_run_id`、`steps`、`detail`，再查 `<编号>.log`。向用户汇报每个账号的结果。要标记本次调用来自 AI，可在启动命令的进程环境中设置 `M7A_RUN_TRIGGER=ai`。
+
+| 原因码 | 处理 |
+| --- | --- |
+| `account_unsupported`、`account_not_found` | 核对 Windows 主桌面、本地客户端、账号开关和 UID。 |
+| `account_no_login`、`account_login_expired` | 请持有人在客户端登录，看到角色后重新保存快照。 |
+| `account_mismatch`、`account_server_mismatch` | 核对 UID、服务器和本账号的游戏路径。 |
+| `account_switch_failed` | 查看错误详情，确认游戏已退出、临时画质已恢复、快照属于此账号。 |
+| `account_timeout`、`child_failed`、`child_error`、`child_crashed`、`child_record_missing` | 查该账号的子记录和输出，确认整轮是否已继续。 |
+| `rotation_parent_lost`、`rotation_finish_failed` | 查父记录和日志里的退出或收尾错误。 |
+
 ## 4. 修改配置
 
 - 直接编辑 `--status` 的 `config_file` 指向的文件（YAML）。改之前先在 `assets/config/config.example.yaml` 里找到同名配置项，读它的注释与可选值。
@@ -81,7 +96,7 @@ license: GPL-3.0
 
 ## 5. 定时与无人值守
 
-- 优先用小助手自己的定时：`config.yaml` 的 `scheduled_tasks`（可按星期、可链式执行），由**图形界面**执行，图形界面需要保持运行（最小化到托盘即可）；开机自启在图形界面「设置 → 高级」配置。
+- 优先用小助手自己的定时：`config.yaml` 的 `scheduled_tasks`（界面入口在「运行」的「定时计划」，支持星期和链式执行；内置任务的 `account` 可设为 UID 或 `all`），由**图形界面**执行，图形界面需要保持运行（最小化到托盘即可）；开机自启在图形界面「设置 → 高级」配置。
 - 不要让自己充当调度器，也不要另建 Windows 计划任务，除非用户明确要求。
 
 ### 免 UAC 运行（用户不在电脑前时）

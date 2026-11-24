@@ -70,8 +70,8 @@ def _registry():
             else:
                 items[key] = dest
     paths.update(items)
-    schedule = ("运行", "定时任务")
-    paths[schedule] = Destination((PAGE_BY_ID["run"].name, GROUP_BY_ID["run", "schedule"].title), "run:schedule")
+    schedule = (PAGE_BY_ID["run"].name, GROUP_BY_ID["run", "schedule"].title)
+    paths[schedule] = paths[("运行", "定时任务")] = Destination(schedule, "run:schedule")
     return paths
 
 
