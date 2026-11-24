@@ -95,3 +95,29 @@ class TestUnsupportedPlatform:
         assert autostart.is_enabled() is False
         assert autostart.enable() is False
         assert autostart.disable() is False
+
+
+def test_setup_upgrade_can_restore_the_original_legacy_registration(monkeypatch):
+    import sys
+    from types import SimpleNamespace
+    from unittest.mock import Mock
+
+    folder = Mock()
+    definition = folder.GetTask.return_value.Definition
+    definition.Principal.UserId = "test-user"
+    definition.Principal.LogonType = 3
+    service = Mock()
+    service.GetFolder.return_value = folder
+    client = SimpleNamespace(Dispatch=Mock(return_value=service))
+    monkeypatch.setitem(sys.modules, "win32com", SimpleNamespace(client=client))
+    monkeypatch.setitem(sys.modules, "win32com.client", client)
+    remove = Mock(return_value=True)
+    monkeypatch.setattr(autostart, "remove_legacy_task", remove)
+
+    restore = autostart.remove_legacy_for_setup()
+    service.GetFolder.assert_called_once_with("\\")
+    folder.GetTask.assert_called_once_with(autostart.LEGACY_TASK_NAME)
+    remove.assert_called_once()
+    folder.RegisterTaskDefinition.assert_not_called()
+    restore()
+    folder.RegisterTaskDefinition.assert_called_once_with(autostart.LEGACY_TASK_NAME, definition, 2, "test-user", None, 3)

@@ -669,11 +669,14 @@ class RunController(QObject):
 
         return True
 
-    def _saveScheduledTasks(self, tasks):
+    def _saveScheduledTasks(self, tasks, values=None):
         """保存定时任务列表到配置文件"""
-        cfg.set_value('scheduled_tasks', tasks)
+        valid_ids = {t['id'] for t in tasks if isinstance(t, dict) and isinstance(t.get('id'), str)}
+        if values:
+            cfg.set_values({**values, 'scheduled_tasks': tasks})
+        else:
+            cfg.set_value('scheduled_tasks', tasks)
         # 清理 last_triggered_ts 中已删除任务的条目
-        valid_ids = set(t.get('id') for t in tasks if t.get('id'))
         self._last_triggered_ts = {k: v for k, v in self._last_triggered_ts.items() if k in valid_ids}
 
     def _migrate_legacy_schedule(self):

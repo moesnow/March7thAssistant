@@ -69,6 +69,25 @@ def remove_legacy_task() -> bool:
         return False
 
 
+def remove_legacy_for_setup():
+    """先保留旧注册定义，后续注册或保存失败时可以原样恢复。"""
+    import win32com.client
+    from module.localization import tr
+
+    service = win32com.client.Dispatch("Schedule.Service")
+    service.Connect()
+    folder = service.GetFolder("\\")
+    definition = folder.GetTask(LEGACY_TASK_NAME).Definition
+    principal = definition.Principal
+    if not remove_legacy_task():
+        raise OSError(tr("删除旧的计划任务失败，请重试"))
+
+    def restore():
+        folder.RegisterTaskDefinition(LEGACY_TASK_NAME, definition, 2, principal.UserId, None, principal.LogonType)
+
+    return restore
+
+
 def is_enabled() -> bool:
     """新版开机启动是否开启（登录触发的计划任务是否存在）"""
     if not IS_WINDOWS:

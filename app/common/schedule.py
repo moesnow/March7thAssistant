@@ -8,25 +8,8 @@ import sys
 from PySide6.QtCore import QDateTime, QTime
 
 from module.overview.schedule import (find_scheduled_task, following_tasks, next_occurrence,
-                                      schedule_time, task_trigger_mode, task_weekdays)
-
-
-def schedule_weekday_labels() -> tuple[str, ...]:
-    from module.localization import tr
-
-    return (tr('周一'), tr('周二'), tr('周三'), tr('周四'), tr('周五'), tr('周六'), tr('周日'))
-
-
-def format_task_weekdays(task) -> str:
-    from module.localization import tr
-
-    weekdays = task_weekdays(task)
-    if len(weekdays) == 7:
-        return tr('每天')
-    if not weekdays:
-        return tr('未选择')
-    labels = schedule_weekday_labels()
-    return '、'.join(labels[day - 1] for day in weekdays)
+                                      schedule_time, task_trigger_mode, task_weekdays,
+                                      schedule_weekday_labels, format_task_weekdays)
 
 
 def parse_schedule_time(value) -> QTime | None:

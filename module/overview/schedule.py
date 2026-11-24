@@ -26,6 +26,43 @@ def schedule_time(value):
         return None
 
 
+def schedule_weekday_labels() -> tuple[str, ...]:
+    from module.localization import tr
+
+    return (tr('周一'), tr('周二'), tr('周三'), tr('周四'), tr('周五'), tr('周六'), tr('周日'))
+
+
+def format_task_weekdays(task) -> str:
+    from module.localization import tr
+
+    weekdays = task_weekdays(task)
+    if len(weekdays) == 7:
+        return tr('每天')
+    if not weekdays:
+        return tr('未选择')
+    labels = schedule_weekday_labels()
+    return '、'.join(labels[day - 1] for day in weekdays)
+
+
+def schedule_conflict(tasks, clock, weekdays, editing=None):
+    from module.localization import tr
+
+    days = set(weekdays)
+    if not days:
+        return tr("请至少选择一个执行星期")
+    for task in tasks:
+        if not isinstance(task, dict) or task_trigger_mode(task) != "time":
+            continue
+        if task is editing or (editing and editing.get("id") and task.get("id") == editing["id"]):
+            continue
+        overlap = days.intersection(task_weekdays(task))
+        if overlap and schedule_time(task.get("time")) == clock:
+            return tr("任务“{name}”已占用{days}的 {time}，请调整时间或星期").format(
+                name=task.get("name") or tr("未命名"), days=format_task_weekdays({"weekdays": overlap}),
+                time=clock.strftime("%H:%M"))
+    return ""
+
+
 def next_occurrence(task, now, make_candidate=None):
     clock = schedule_time(task.get('time', '00:00'))
     weekdays = task_weekdays(task)

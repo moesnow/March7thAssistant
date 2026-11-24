@@ -10,6 +10,7 @@ from qfluentwidgets import InfoBar, InfoBarPosition
 from qfluentwidgets import FluentIcon as FIF
 from utils.tasks import TASK_NAMES, supported_tasks, task_is_supported, UNSUPPORTED_TASK
 from app.tools.adb_service import display_connection
+from module.overview.schedule import schedule_conflict
 from module.workflow import load_workflows
 import uuid
 import os
@@ -390,30 +391,14 @@ class AddEditScheduleDialog(MessageBox):
 
         # 时间重复校验（跳过与当前编辑任务相同的 id）
         if self._current_trigger_mode() == 'time':
-            selected_days = set(self._selected_weekdays())
-            if not selected_days:
-                message = MessageBox(tr('错误'), tr('请至少选择一个执行星期'), self)
+            content = schedule_conflict(self.existing_tasks, self.time_picker.time.toPython(),
+                                        self._selected_weekdays(), self._editing_task)
+            if content:
+                message = MessageBox(tr('错误'), content, self)
                 message.cancelButton.hide()
                 message.yesButton.setText(tr('确认'))
                 message.exec()
                 return
-            for t in (self.existing_tasks or []):
-                if t is self._editing_task or (self.task.get('id') and t.get('id') == self.task.get('id')):
-                    continue
-                if task_trigger_mode(t) != 'time':
-                    continue
-                overlapping_days = selected_days.intersection(task_weekdays(t))
-                if overlapping_days and parse_schedule_time(t.get('time')) == self.time_picker.time:
-                    content = tr('任务“{name}”已占用{days}的 {time}，请调整时间或星期').format(
-                        name=t.get('name') or tr('未命名'),
-                        days=format_task_weekdays({'weekdays': overlapping_days}),
-                        time=self.time_picker.time.toString('HH:mm'),
-                    )
-                    m = MessageBox(tr('错误'), content, self)
-                    m.cancelButton.hide()
-                    m.yesButton.setText(tr('确认'))
-                    m.exec()
-                    return
 
         # 程序路径不能为空（非本体类型都要求路径）
         if self._current_program_type() != 'self':
