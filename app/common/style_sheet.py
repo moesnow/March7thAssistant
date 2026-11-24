@@ -26,7 +26,6 @@ class StyleSheet(StyleSheetBase, Enum):
     Tutorial_INTERFACE = "tutorial_interface"
     TOOLS_INTERFACE = "tools_interface"
     WORKFLOW_INTERFACE = "workflow_interface"
-    LOG_INTERFACE = "log_interface"
     DESKTOP_TWIN = "desktop_twin"
 
     def path(self, theme=Theme.AUTO):
