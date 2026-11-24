@@ -58,24 +58,12 @@ msgstr "로그"
 msgid "任务日志"
 msgstr "임무 로그"
 
-#: app/log_interface.py:434
-msgid "等待任务..."
-msgstr "작업 대기 중..."
-
 #: app/log_interface.py:1809
 msgid "清空日志"
 msgstr "로그 지우기"
 
 msgid "配置定时任务"
 msgstr "예약 실행 설정"
-
-#: app/log_interface.py:996
-msgid "尚未配置定时任务"
-msgstr "예약된 임무 없음"
-
-#: app/log_interface.py:2357
-msgid "任务完成"
-msgstr "임무 완료"
 
 #: app/log_interface.py:2360
 msgid "任务已停止"
@@ -1130,10 +1118,6 @@ msgstr "게임 시작 중 (❁´◡`❁)"
 msgid "程序已最小化到托盘"
 msgstr "프로그램이 트레이로 최소화되었습니다"
 
-#: app/log_interface.py:449
-msgid "停止任务"
-msgstr "임무 중지"
-
 msgid "更换背景图片"
 msgstr "배경 이미지 변경"
 
@@ -1533,32 +1517,6 @@ msgstr "임무 중지 (전역 단축키, 백그라운드 지원)"
 msgid "按键设置"
 msgstr "단축키 설정"
 
-#: app/sub_interfaces/accounts_interface.py:31
-msgid "重要：请完全进入游戏（看到角色）后再进行导出，否则会读取前一个账号的UID，导致文件和账号不对应"
-msgstr ""
-"중요: 완전히 게임에 진입한 후(캐릭터가 보일 때) 내보내세요. 그렇지 않으면 이전 UID를 읽어 파일과 계정이 일치하지 않을 수 "
-"있습니다."
-
-#: app/sub_interfaces/accounts_interface.py:34
-msgid "该功能不支持云·星穹铁道"
-msgstr "이 기능은 클라우드·스타레일 미지원"
-
-#: app/sub_interfaces/accounts_interface.py:41
-msgid "导出当前游戏账户"
-msgstr "현재 게임 계정 내보내기"
-
-#: app/sub_interfaces/accounts_interface.py:42
-msgid "导入选中的账户"
-msgstr "선택한 계정 가져오기"
-
-#: app/sub_interfaces/accounts_interface.py:43
-msgid "删除账户"
-msgstr "계정 삭제"
-
-#: app/sub_interfaces/accounts_interface.py:44
-msgid "账户更名"
-msgstr "계정 이름 변경"
-
 #: app/sub_interfaces/accounts_interface.py:45
 msgid "自动登录"
 msgstr "자동 로그인"
@@ -1567,97 +1525,13 @@ msgstr "자동 로그인"
 msgid "刷新"
 msgstr "새로고침"
 
-#: app/sub_interfaces/accounts_interface.py:47
-msgid "清除注册表"
-msgstr "레지스트리 정리"
-
-#: app/sub_interfaces/accounts_interface.py:72
-msgid "账户列表刷新成功"
-msgstr "계정 목록 새로고침 성공"
-
 #: app/sub_interfaces/accounts_interface.py:77
 msgid "导出"
 msgstr "내보내기"
 
-#: app/sub_interfaces/accounts_interface.py:77
-msgid "账户导出成功"
-msgstr "계정 내보내기 성공"
-
-#: app/sub_interfaces/accounts_interface.py:82
-msgid "请选择要删除的账户"
-msgstr "삭제할 계정을 선택하세요"
-
-#: app/sub_interfaces/accounts_interface.py:84
-msgid "确定要删除选中的账户吗？"
-msgstr "선택한 계정을 삭제하시겠습니까?"
-
-#: app/sub_interfaces/accounts_interface.py:94
-msgid "请选择要更名的账户"
-msgstr "이름을 변경할 계정을 선택하세요"
-
-#: app/sub_interfaces/accounts_interface.py:97
-msgid "只能选择一个账户"
-msgstr "하나의 계정만 선택할 수 있습니다"
-
-#: app/sub_interfaces/accounts_interface.py:101
-msgid "请输入新的账户名"
-msgstr "새로운 계정 이름을 입력하세요"
-
 #: app/sub_interfaces/accounts_interface.py:105
 msgid "账户名不能为空"
 msgstr "계정 이름은 비워둘 수 없습니다"
-
-#: app/sub_interfaces/accounts_interface.py:113
-msgid "请选择要使用的账户"
-msgstr "사용할 계정을 선택하세요"
-
-#: app/sub_interfaces/accounts_interface.py:124
-msgid ""
-"当登录过期时尝试自动重新填写账号密码\n"
-" *此功能存在一定风险，请谨慎使用*"
-msgstr ""
-"로그인 만료 시 자동으로 계정 및 비밀번호 재입력 시도\n"
-" *이 기능은 위험이 있을 수 있으니 주의해서 사용하세요*"
-
-#: app/sub_interfaces/accounts_interface.py:131
-msgid "请输入用户名"
-msgstr "사용자 이름을 입력하세요"
-
-#: app/sub_interfaces/accounts_interface.py:135
-msgid "用户名不能为空"
-msgstr "사용자 이름은 비워둘 수 없습니다"
-
-#: app/sub_interfaces/accounts_interface.py:138
-msgid "请输入密码"
-msgstr "비밀번호를 입력하세요"
-
-#: app/sub_interfaces/accounts_interface.py:142
-msgid "密码不能为空"
-msgstr "비밀번호는 비워둘 수 없습니다"
-
-#: app/sub_interfaces/accounts_interface.py:150
-msgid "导入"
-msgstr "가져오기"
-
-#: app/sub_interfaces/accounts_interface.py:158
-msgid "账户导入成功"
-msgstr "계정 가져오기 성공"
-
-#: app/sub_interfaces/accounts_interface.py:161
-msgid "确定要清除注册表中的账户信息吗？"
-msgstr "레지스트리의 계정 정보를 삭제하시겠습니까?"
-
-#: app/sub_interfaces/accounts_interface.py:164
-msgid "注册表中的账户信息已清除"
-msgstr "레지스트리의 계정 정보가 삭제되었습니다"
-
-#: app/sub_interfaces/accounts_interface.py:184
-msgid "账户设置"
-msgstr "계정 설정"
-
-#: app/schedule_dialog.py:113
-msgid "添加/编辑定时任务"
-msgstr "예약 작업 추가/편집"
 
 #: app/schedule_dialog.py:134
 msgid "例如：完整运行"
@@ -1730,14 +1604,6 @@ msgstr "실행 파일 (*.exe *.bat *.ps1);;모든 파일 (*.*)"
 msgid "{exe} 的完整路径"
 msgstr "{exe} 의 전체 경로"
 
-#: app/schedule_dialog.py:725
-msgid "定时任务配置"
-msgstr "예약 작업 구성"
-
-#: app/schedule_dialog.py:745
-msgid "参数/任务"
-msgstr "인수/작업"
-
 #: app/schedule_dialog.py:745
 msgid "通知"
 msgstr "알림"
@@ -1794,30 +1660,6 @@ msgstr ""
 "시간 기반 시작: 설정한 시간이 되면 현재 작업을 바로 시작합니다.\n"
 "체인 시작: 시간만으로는 단독 실행되지 않습니다. 앞선 작업 뒤에 배치하면, 그 작업이 정상 종료된 직후 목록 순서대로 바로 시작됩니다.\n"
 "즉시 실행: 현재 작업부터 시작하며, 뒤에 이어진 체인 작업도 함께 실행됩니다."
-
-#: app/schedule_dialog.py:1052
-msgid "请先选择要编辑的任务"
-msgstr "편집할 작업을 먼저 선택하세요"
-
-#: app/schedule_dialog.py:1068
-msgid "请先选择要删除的任务"
-msgstr "삭제할 작업을 먼저 선택하세요"
-
-#: app/schedule_dialog.py:1073
-msgid "确认删除选中的定时任务？"
-msgstr "선택한 예약 작업을 삭제하시겠습니까?"
-
-#: app/schedule_dialog.py:1086
-msgid "请先选择要运行的任务"
-msgstr "실행할 작업을 먼저 선택하세요"
-
-#: app/schedule_dialog.py:1093
-msgid "确认立即运行任务 \"{name}\" 吗？"
-msgstr "작업 \"{name}\"을(를) 즉시 실행하시겠습니까?"
-
-#: app/schedule_dialog.py:1126
-msgid "无法运行任务：父组件不支持 runScheduledTask"
-msgstr "작업 실행 불가: 부모 구성 요소가 runScheduledTask를 지원하지 않음"
 
 #: app/card/autoplot_setting_card.py:64
 msgid "自动跳过 (当出现跳过按钮时自动点击)"
@@ -3244,14 +3086,6 @@ msgstr "이미지 수동 선택"
 #: app/card/messagebox_custom.py:1170
 msgid "上移"
 msgstr "위로 이동"
-
-#: app/schedule_dialog.py:1033
-msgid "请先选择要上移的任务"
-msgstr "먼저 위로 이동할 작업을 선택하세요"
-
-#: app/schedule_dialog.py:1039
-msgid "当前任务已经位于最上方"
-msgstr "현재 작업은 이미 맨 위에 있습니다"
 
 #: app/setting_interface.py:2479
 msgid "优先使用后台截图"
@@ -5579,18 +5413,6 @@ msgstr "워크플로 선택:"
 msgid "启动参数："
 msgstr "실행 인수:"
 
-#: app/schedule_dialog.py:780
-msgid "冲突："
-msgstr "충돌:"
-
-#: app/schedule_dialog.py:802
-msgid "链式失败后："
-msgstr "체인 실패 후:"
-
-#: app/schedule_dialog.py:1131
-msgid "启动任务失败：{error}"
-msgstr "작업 시작 실패: {error}"
-
 msgid "执行完成(＾∀＾●)"
 msgstr "실행 완료(＾∀＾●)"
 
@@ -5750,14 +5572,6 @@ msgstr "일시 중지됨"
 #: app/log_interface.py:212
 msgid "按下 {stop} 停止 · {pause} 暂停"
 msgstr "{stop} 중지 · {pause} 일시 중지"
-
-#: app/log_interface.py:458
-msgid "暂停任务"
-msgstr "임무 일시 중지"
-
-#: app/log_interface.py:463
-msgid "仅内置任务支持暂停，暂停后脚本将停止一切操作"
-msgstr "내장 임무만 일시 중지를 지원하며, 일시 중지 시 스크립트가 모든 동작을 중지합니다"
 
 #: app/log_interface.py:1750
 msgid "继续任务"
@@ -6180,10 +5994,6 @@ msgstr "이 채널의 버전이 대상 버전과 일치하지 않습니다. 잠�
 msgid "未选择"
 msgstr "선택 안 함"
 
-#: app/log_interface.py:989
-msgid "{date}（{weekday}）{time}"
-msgstr "{date} ({weekday}) {time}"
-
 #: app/schedule_dialog.py:269
 msgid "执行星期："
 msgstr "실행 요일:"
@@ -6210,20 +6020,8 @@ msgstr ""
 "연속 실행: 시간에 따라 독립적으로 시작하지 않으며, 다른 작업 뒤에 배치해야 합니다. 앞선 작업이 정상적으로 완료되면 요일을 별도로 확인하지 않고 목록 순서대로 즉시 시작합니다.\n"
 "지금 실행: 요일 제한 없이 현재 작업부터 시작하며, 뒤에 연속 실행 작업이 이어지면 함께 실행합니다."
 
-#: app/schedule_dialog.py:745
-msgid "执行计划"
-msgstr "실행 일정"
-
 msgid "游戏内日志"
 msgstr "게임 내 로그"
-
-#: app/log_interface.py:975
-msgid "定时任务({count})"
-msgstr "예약 작업 ({count})"
-
-#: app/log_interface.py:977
-msgid "已启用 {count} 个按时任务，点击配置"
-msgstr "예약 작업 {count}개가 활성화되었습니다. 클릭하여 설정하세요"
 
 #: app/log_interface.py:994
 msgid "下次：{time}"
@@ -7859,21 +7657,9 @@ msgstr "탐환의 신의 머리"
 msgid "星神★阿哈·群星乐透"
 msgstr "에이언즈★아하•별무리 로또"
 
-#: app/sub_interfaces/accounts_interface.py:80
-msgid "账户导出失败，请确认已登录游戏后重试。"
-msgstr "계정을 내보내지 못했습니다. 게임에 로그인했는지 확인한 후 다시 시도해 주세요."
-
-#: app/sub_interfaces/accounts_interface.py:166
-msgid "账户导入失败，请重试。"
-msgstr "계정을 가져오지 못했습니다. 다시 시도해 주세요."
-
 #: app/sub_interfaces/accounts_interface.py:171
 msgid "这会清除该游戏的登录信息和画质、分辨率等设置。确定继续吗？"
 msgstr "이 게임의 로그인 정보와 그래픽 품질, 해상도 등의 설정이 지워집니다. 계속하시겠습니까?"
-
-#: app/sub_interfaces/accounts_interface.py:177
-msgid "清除失败，请重试。"
-msgstr "지우지 못했습니다. 다시 시도해 주세요."
 
 #: app/sub_interfaces/accounts_interface.py:179
 msgid "游戏登录信息和设置已清除"
@@ -10057,11 +9843,6 @@ msgstr "프록시"
 msgid "任务完成或失败时通知你。先添加一个常用的渠道，再点「测试」确认能收到。"
 msgstr "작업이 완료되거나 실패하면 알려줍니다. 채널을 추가한 뒤 테스트를 눌러 수신을 확인하세요."
 
-msgid "保存本地客户端的登录状态，换号时直接导入，不用每次重新登录。只支持本地客户端。"
-msgstr ""
-"로컬 클라이언트의 로그인 상태를 저장합니다. 계정을 바꿀 때 가져오면 다시 로그인할 필요가 없습니다. 로컬 클라이언트에서만 사용할 수 "
-"있습니다."
-
 msgid "全部"
 msgstr "전체"
 
@@ -10311,9 +10092,6 @@ msgstr "도구"
 
 msgid "页面"
 msgstr "페이지"
-
-msgid "“退出”会关闭游戏。需要定时运行时，请打开「运行」页的「定时任务」。"
-msgstr "‘종료’는 게임을 닫습니다. 예약하려면 실행 페이지에서 예약 작업을 여세요."
 
 #: module/docs/catalog.py:22
 msgid "每日实训对照表"
@@ -11066,3 +10844,1087 @@ msgstr "워프 기록 링크를 복사했습니다"
 #: app/warp_interface.py:350
 msgid "链接里有临时登录凭据，只发给你信任的工具"
 msgstr "링크에는 임시 로그인 인증 정보가 들어 있습니다. 신뢰할 수 있는 도구에만 공유하세요."
+
+#: app/run/history.py:83
+msgid "{count} 个账号"
+msgstr "계정 {count}개"
+
+#: app/accounts/detail.py:449
+msgid "{day} 日"
+msgstr "{day}일"
+
+#: module/overview/snapshot.py:40
+msgid "{name} · 第 {index} / {total} 个账号"
+msgstr "{name} · {index}/{total}번째 계정"
+
+#: module/accounts/differences.py:46
+msgid "{name} · 队伍 {number}"
+msgstr "{name} · {number}번 파티"
+
+#: module/accounts/differences.py:54
+msgid "{name} × {count}"
+msgstr "{name} × {count}"
+
+#: utils/runs.py:418
+msgid "{name} 第 {index} / {total} 次"
+msgstr "{name} · {index}/{total}회"
+
+#: module/overview/run_data.py:190
+msgid "{name}（{reason}）"
+msgstr "{name} ({reason})"
+
+#: app/content/run_models.py:362
+msgid "{name}（副本）"
+msgstr "{name} (복사본)"
+
+#: module/accounts/messages.py:86
+msgid "{result}（{reason}）"
+msgstr "{result} ({reason})"
+
+#: app/accounts/dialogs.py:159
+msgid "· 「{name}」沿用现在的完成状态，其他账号从空的状态开始。"
+msgstr "· {name} 계정은 현재 진행 상황을 이어받습니다. 다른 계정은 처음부터 시작합니다."
+
+#: app/accounts/dialogs.py:160
+msgid "· 现在的任务设置成为共享方案，每个账号可以改用独立方案。"
+msgstr "· 현재 작업 설정이 공유 계획이 됩니다. 계정마다 독립 계획을 선택할 수 있습니다."
+
+#: app/accounts/dialogs.py:161
+msgid "· 轮流运行时按顺序切换：关闭游戏、写回登录、重新启动并核对 UID。"
+msgstr "· 순서대로 게임을 종료하고 로그인 정보를 복원한 뒤 다시 실행해 UID를 확인합니다."
+
+#: app/content/settings/after_run.py:42
+msgid "“退出”会关闭游戏。需要定时运行时，请打开「运行」页的「定时计划」。"
+msgstr "종료를 선택하면 게임이 종료됩니다. 예약 실행은 실행 → 일정에서 설정하세요."
+
+#: app/accounts/editing.py:37
+msgid "「{name}」使用共享方案"
+msgstr "{name} 계정은 공유 계획을 사용 중입니다"
+
+#: app/accounts/dialogs.py:136
+msgid "「{name}」的登录过期时，小助手会在登录界面自动输入下面的账号密码。"
+msgstr "{name} 계정의 로그인이 만료되면 로그인 화면에 아래 계정과 비밀번호를 자동으로 입력합니다."
+
+#: app/content/run_models.py:274
+msgid "上一项完成后"
+msgstr "이전 작업 완료 후"
+
+#: app/run_interface.py:112
+msgid "上次：{detail}"
+msgstr "지난 실행: {detail}"
+
+#: app/content/run_models.py:315
+msgid "下次定时：{time} {name}"
+msgstr "다음: {time} {name}"
+
+#: app/accounts/detail.py:174
+msgid "不参与轮流"
+msgstr "순차 실행 제외"
+
+#: app/run/cards.py:363
+msgid "不执行完成后操作"
+msgstr "완료 후 동작 건너뛰기"
+
+#: app/run/cards.py:27
+msgid "中断"
+msgstr "중단됨"
+
+#: module/accounts/reasons.py:5
+msgid "临时画质尚未恢复"
+msgstr "임시 그래픽 설정이 아직 복원되지 않았습니다"
+
+#: app/run/history.py:27
+msgid "今天"
+msgstr "오늘"
+
+#: module/accounts/status.py:15
+msgid "今日失败"
+msgstr "오늘 실패"
+
+#: module/accounts/status.py:135
+msgid "今日失败（{reason}）"
+msgstr "오늘 실패 ({reason})"
+
+#: module/accounts/status.py:15
+msgid "今日完成"
+msgstr "오늘 완료"
+
+#: module/accounts/status.py:15
+msgid "今日未运行"
+msgstr "오늘 실행 안 함"
+
+#: module/accounts/status.py:15
+msgid "今日部分完成"
+msgstr "오늘 일부 완료"
+
+#: app/accounts_interface.py:111
+msgid "从另一个游戏客户端导入…"
+msgstr "다른 클라이언트에서 가져오기…"
+
+#: app/accounts/switcher.py:134
+msgid "从当前游戏登录导入"
+msgstr "현재 로그인 가져오기"
+
+#: app/content/account_model.py:302
+msgid "任务或账号操作正在运行，请稍后再试"
+msgstr "작업이나 계정 처리가 진행 중입니다. 잠시 후 다시 시도하세요."
+
+#: app/accounts/detail.py:359
+msgid "任务方案"
+msgstr "작업 계획"
+
+#: app/accounts/detail.py:154
+msgid "任务方案：共享"
+msgstr "공유 계획"
+
+#: app/accounts/detail.py:154
+msgid "任务方案：独立"
+msgstr "독립 계획"
+
+#: app/content/account_model.py:328
+msgid "任务正在运行，结束后才能更改多账号开关"
+msgstr "현재 작업이 끝난 뒤 순차 실행 설정을 변경하세요."
+
+#: app/run_interface.py:57
+msgid "任务运行时，日志会显示在这里"
+msgstr "작업을 실행하면 여기에 로그가 표시됩니다"
+
+#: app/accounts/detail.py:160
+msgid "任务页和总览改为查看、编辑这个账号；游戏没在运行时，同时切换登录"
+msgstr "작업과 개요에서 이 계정을 보고 편집합니다. 게임이 종료되어 있으면 로그인도 전환합니다."
+
+#: app/accounts/dialogs.py:168
+msgid "会删除它的登录快照、保存的密码、独立方案和完成状态。抽卡记录和运行记录不受影响，游戏账号本身也不受影响。"
+msgstr "로그인 스냅샷, 저장된 비밀번호, 독립 계획과 진행 상황을 삭제합니다. 게임 계정, 워프 기록과 실행 기록은 유지됩니다."
+
+#: app/accounts/detail.py:246
+msgid "使用 Windows 加密保存在本机，仅当前 Windows 用户可以解密"
+msgstr "이 PC에 암호화해 저장하며 현재 Windows 사용자만 복호화할 수 있습니다."
+
+#: app/accounts/dialogs.py:142
+msgid "使用 Windows 加密保存在本机，仅当前 Windows 用户可以解密。自动输入密码有一定风险，需要验证码时仍要你自己处理。"
+msgstr ""
+"이 PC에 암호화해 저장하며 현재 Windows 사용자만 복호화할 수 있습니다. 자동 입력에는 위험이 따릅니다. 인증 코드는 직접 "
+"입력해야 합니다."
+
+#: app/accounts/detail.py:259
+msgid "使用「运行方式」里设置的游戏路径"
+msgstr "실행 모드에 설정한 게임 경로 사용"
+
+#: app/accounts/detail.py:360
+msgid "使用哪套任务设置"
+msgstr "사용할 작업 설정 선택"
+
+#: app/accounts/dialogs.py:90
+msgid "例如：小号"
+msgstr "예: 부계정"
+
+#: app/run/log_view.py:22
+msgid "信息"
+msgstr "정보"
+
+#: app/accounts/dialogs.py:120
+msgid "修改备注名"
+msgstr "별명 변경"
+
+#: app/run/cards.py:323
+msgid "停止整轮；箭头里可以只跳过当前账号"
+msgstr "순차 실행 전체를 중지합니다. 화살표를 누르면 현재 계정만 건너뜁니다."
+
+#: app/accounts_interface.py:218
+msgid "先添加至少一个账号，再打开多账号轮流"
+msgstr "계정을 하나 이상 추가한 뒤 순차 실행을 켜세요"
+
+#: app/run/cards.py:363
+msgid "全部完成后：{action}"
+msgstr "모두 완료한 뒤: {action}"
+
+#: app/run/history.py:252
+msgid "全部结果"
+msgstr "모든 결과"
+
+#: app/run/history.py:248
+msgid "全部账号"
+msgstr "모든 계정"
+
+#: app/content/run_models.py:272
+msgid "全部账号轮流"
+msgstr "모든 계정 순차 실행"
+
+#: app/accounts/detail.py:363
+msgid "共享方案"
+msgstr "공유 계획"
+
+#: app/accounts/detail.py:311
+msgid "共享方案：{value}"
+msgstr "공유 계획: {value}"
+
+#: app/pages/decorations.py:91
+msgid "共享方案：{value}。悬停卡片可以恢复共享"
+msgstr "공유 계획: {value}. 카드에 마우스를 올리면 공유 설정으로 되돌릴 수 있습니다."
+
+#: app/content/run_controller.py:2216
+msgid "关闭助手"
+msgstr "도우미 종료"
+
+#: app/accounts/detail.py:268
+msgid "其他服务器的刷新时间换算成本机时间后可能不同"
+msgstr "서버에 따라 현지 시간 기준 초기화 시각이 다를 수 있습니다"
+
+#: app/content/run_controller.py:2220
+msgid "切换到「{name}」继续"
+msgstr "{name} 계정으로 전환 후 계속"
+
+#: app/content/run_controller.py:2219
+msgid "切换到「{name}」继续，最后{action}"
+msgstr "{name} 계정으로 전환해 계속한 뒤 {action}"
+
+#: app/accounts/detail.py:158
+msgid "切换到此账号"
+msgstr "이 계정으로 전환"
+
+#: app/accounts/detail.py:163
+msgid "切换登录"
+msgstr "로그인 전환"
+
+#: module/accounts/reasons.py:5
+msgid "切换登录失败"
+msgstr "로그인을 전환하지 못했습니다"
+
+#: app/content/account_model.py:400
+msgid "切换登录需要 Windows 本地客户端"
+msgstr "로그인 전환에는 Windows 로컬 클라이언트가 필요합니다"
+
+#: app/accounts/switcher.py:93
+msgid "切换要查看和编辑的账号"
+msgstr "보고 편집할 계정 선택"
+
+#: app/accounts/editing.py:39
+msgid "切换账号"
+msgstr "계정 전환"
+
+#: app/accounts/detail.py:239
+msgid "切换账号时写回游戏的登录信息 · 上次保存于{time}"
+msgstr "계정 전환 시 로그인을 복원합니다 · 마지막 저장: {time}"
+
+#: app/run/schedule.py:420
+msgid "删除…"
+msgstr "삭제…"
+
+#: app/accounts/dialogs.py:167
+msgid "删除「{name}」？"
+msgstr "{name} 계정을 삭제할까요?"
+
+#: app/run/schedule.py:403
+msgid "删除定时计划"
+msgstr "일정 삭제"
+
+#: app/accounts_interface.py:290
+msgid "删除账号"
+msgstr "계정 삭제"
+
+#: app/accounts/detail.py:178
+msgid "删除账号…"
+msgstr "계정 삭제…"
+
+#: app/accounts_interface.py:100
+msgid "刷新时间"
+msgstr "초기화 시각"
+
+#: module/accounts/differences.py:86
+msgid "助燃券连续挑战"
+msgstr "연소 촉진 티켓으로 연속 도전"
+
+#: app/accounts/detail.py:174
+msgid "参与轮流"
+msgstr "순차 실행에 포함"
+
+#: app/accounts/detail.py:167
+msgid "只运行此账号"
+msgstr "이 계정만 실행"
+
+#: module/accounts/reasons.py:5
+msgid "启动或运行账号时出错"
+msgstr "이 계정을 시작하거나 실행하지 못했습니다"
+
+#: module/overview/labels.py:4
+msgid "启动时自动运行"
+msgstr "시작할 때 자동 실행"
+
+#: app/accounts/empty.py:84
+msgid "启动游戏，登录要添加的账号，完全进入游戏（看到角色）"
+msgstr "게임을 실행해 추가할 계정으로 로그인하고 캐릭터가 보일 때까지 기다리세요."
+
+#: app/run/log_view.py:217
+msgid "回到最新"
+msgstr "최신으로"
+
+#: app/accounts/empty.py:85
+msgid "回到这里点「添加账号」，保存它的登录"
+msgstr "여기로 돌아와 계정 추가를 눌러 로그인을 저장하세요."
+
+#: app/accounts/account_list.py:24
+msgid "国服"
+msgstr "중국 서버"
+
+#: app/accounts/account_list.py:24
+msgid "国际服"
+msgstr "글로벌 서버"
+
+#: app/accounts/empty.py:86
+msgid "在游戏里换一个账号，再添加一次；全部添加好后打开多账号轮流"
+msgstr "게임에서 다른 계정으로 로그인한 뒤 같은 방법으로 추가하세요. 모두 저장하면 순차 실행을 켜세요."
+
+#: app/accounts/detail.py:251
+msgid "填写账号密码"
+msgstr "계정과 비밀번호 입력"
+
+#: app/accounts/dialogs.py:92
+msgid "备注名"
+msgstr "별명"
+
+#: app/run/schedule.py:418
+msgid "复制一份"
+msgstr "복제"
+
+#: app/content/run_models.py:280
+msgid "外部程序 {name}"
+msgstr "외부 프로그램: {name}"
+
+#: module/search/__init__.py:100
+msgid "多账号轮流"
+msgstr "계정 순차 실행"
+
+#: app/content/account_model.py:234
+msgid "多账号轮流仅支持 Windows 本地客户端，当前按单账号运行"
+msgstr "순차 실행은 Windows 로컬 클라이언트에서만 지원합니다. 현재는 단일 계정으로 실행합니다."
+
+#: app/accounts/panel.py:56
+msgid "多账号轮流运行"
+msgstr "계정 순차 실행"
+
+#: module/accounts/messages.py:79
+msgid "多账号轮流运行结束"
+msgstr "계정 순차 실행 완료"
+
+#: app/run/history.py:253
+msgid "失败和异常"
+msgstr "실패 및 오류"
+
+#: module/accounts/differences.py:86
+msgid "姬子试用"
+msgstr "체험 히메코"
+
+#: module/accounts/reasons.py:5
+msgid "子运行记录缺失"
+msgstr "하위 실행 기록이 없습니다"
+
+#: module/accounts/reasons.py:5
+msgid "子进程意外退出"
+msgstr "하위 프로세스가 예기치 않게 종료되었습니다"
+
+#: app/content/run_models.py:282
+msgid "完成后{action}"
+msgstr "완료 후 {action}"
+
+#: app/run_interface.py:106
+msgid "完成后操作：{action}，{seconds} 秒后执行"
+msgstr "완료 후 동작: {seconds}초 뒤 {action}"
+
+#: app/content/run_models.py:388
+msgid "定时计划已删除"
+msgstr "일정을 삭제했습니다"
+
+#: app/accounts/dialogs.py:141
+msgid "密码"
+msgstr "비밀번호"
+
+#: module/accounts/differences.py:86
+msgid "差分宇宙队伍类型"
+msgstr "차분화 우주 파티 유형"
+
+#: app/accounts/detail.py:247
+msgid "已保存"
+msgstr "저장됨"
+
+#: app/accounts/switcher.py:93
+msgid "已保存的账号"
+msgstr "저장된 계정"
+
+#: app/content/account_model.py:411
+msgid "已切换查看的账号，下次运行时切换登录"
+msgstr "표시할 계정을 변경했습니다. 다음 실행 때 로그인도 전환됩니다."
+
+#: app/content/account_model.py:418
+msgid "已切换登录"
+msgstr "로그인을 전환했습니다"
+
+#: app/accounts_interface.py:277
+msgid "已加密保存"
+msgstr "암호화하여 저장됨"
+
+#: app/content/run_models.py:319
+msgid "已启用 {count} 个按时计划"
+msgstr "활성 시간 지정 일정: {count}개"
+
+#: module/accounts/reasons.py:5
+msgid "已有任务在运行"
+msgstr "이미 실행 중인 작업이 있습니다"
+
+#: app/run/schedule.py:331
+msgid "已有任务在运行时"
+msgstr "다른 작업 실행 중"
+
+#: app/accounts/dialogs.py:109
+msgid "已经保存过，会更新它的登录快照"
+msgstr "이미 저장된 계정입니다. 로그인 스냅샷을 갱신합니다."
+
+#: app/run/cards.py:384
+msgid "已运行 {time}"
+msgstr "경과: {time}"
+
+#: app/content/account_model.py:268
+msgid "开拓者"
+msgstr "개척자"
+
+#: module/accounts/differences.py:86
+msgid "开拓者名称"
+msgstr "개척자 이름"
+
+#: app/content/account_model.py:432
+msgid "当前没有可轮流运行的账号"
+msgstr "순차 실행할 수 있는 계정이 없습니다"
+
+#: app/accounts/detail.py:163
+msgid "当前登录"
+msgstr "로그인 중"
+
+#: app/run_interface.py:182
+msgid "当前运行"
+msgstr "현재 실행"
+
+#: module/accounts/reasons.py:5
+msgid "当前运行方式不支持按账号运行"
+msgstr "이 실행 모드에서는 계정을 지정할 수 없습니다"
+
+#: app/run/stepper.py:18
+msgid "待执行"
+msgstr "실행 대기"
+
+#: app/run/cards.py:364
+msgid "恢复"
+msgstr "복원"
+
+#: app/accounts/detail.py:312
+msgid "恢复共享"
+msgstr "공유 설정 복원"
+
+#: app/accounts/dialogs.py:138
+msgid "手机号、邮箱或用户名"
+msgstr "전화번호, 이메일 또는 사용자 이름"
+
+#: app/accounts/dialogs.py:157
+msgid "打开多账号轮流？"
+msgstr "계정 순차 실행을 켤까요?"
+
+#: app/run/history.py:232
+msgid "打开日志文件"
+msgstr "로그 파일 열기"
+
+#: app/accounts/detail.py:176
+msgid "打开账号文件夹"
+msgstr "계정 폴더 열기"
+
+#: app/content/account_model.py:387
+msgid "找不到指定账号"
+msgstr "지정한 계정을 찾을 수 없습니다"
+
+#: app/accounts/empty.py:79
+msgid "把登录保存下来，换号时不用重新登录；保存两个以上就可以按顺序轮流运行。只支持本地客户端。"
+msgstr ""
+"로그인을 저장하면 다시 로그인하지 않고 계정을 바꿀 수 있습니다. 두 개 이상 저장하면 순차 실행이 가능합니다. 로컬 클라이언트 "
+"전용입니다."
+
+#: app/accounts/detail.py:165
+msgid "把这个账号的登录信息写回游戏，需要先退出游戏"
+msgstr "이 계정의 로그인을 복원하려면 먼저 게임을 종료하세요"
+
+#: app/accounts/panel.py:73
+msgid "拖动调整顺序。一个账号失败后会记录原因并继续下一个账号，全部结束后合并发送一条通知。多账号只支持本地客户端。"
+msgstr ""
+"드래그해 순서를 바꾸세요. 실패하면 이유를 기록하고 다음 계정으로 진행합니다. 마지막에 결과를 모아 알립니다. 로컬 클라이언트 "
+"전용입니다."
+
+#: module/accounts/differences.py:86
+msgid "拟造花萼（金）偏好地区"
+msgstr "고치 (금) 선호 지역"
+
+#: app/schedule_dialog.py:320
+msgid "指定的账号不可用"
+msgstr "지정한 계정을 사용할 수 없습니다"
+
+#: app/content/run_controller.py:606
+msgid "指定的账号不可用，本次任务已跳过"
+msgstr "지정한 계정을 사용할 수 없어 이번 작업을 건너뛰었습니다."
+
+#: app/content/run_models.py:270
+msgid "指定的账号不可用，计划将跳过"
+msgstr "지정한 계정을 사용할 수 없어 이 일정을 건너뜁니다."
+
+#: app/content/run_models.py:284
+msgid "推送通知"
+msgstr "푸시 알림"
+
+#: app/accounts_interface.py:193
+msgid "操作没有完成，详情见日志"
+msgstr "작업을 완료하지 못했습니다. 자세한 내용은 로그를 확인하세요."
+
+#: app/run/cards.py:26
+msgid "收尾中"
+msgstr "마무리 중"
+
+#: app/content/account_model.py:286
+msgid "无法读写账号文件或登录信息：{error}"
+msgstr "계정 파일 또는 로그인 정보를 읽거나 쓸 수 없습니다: {error}"
+
+#: app/accounts/detail.py:238
+msgid "时间未知"
+msgstr "시각 알 수 없음"
+
+#: app/run/history.py:29
+msgid "昨天"
+msgstr "어제"
+
+#: app/run/schedule.py:226
+msgid "更多"
+msgstr "더 보기"
+
+#: app/accounts/detail.py:471
+msgid "最近 7 天"
+msgstr "최근 7일"
+
+#: app/content/account_model.py:272
+msgid "未保存账号"
+msgstr "저장되지 않은 계정"
+
+#: module/overview/run_data.py:190
+msgid "未完成"
+msgstr "미완료"
+
+#: app/run/cards.py:364
+msgid "本次不执行"
+msgstr "이번만 건너뛰기"
+
+#: app/pages/decorations.py:100
+msgid "本账号独有"
+msgstr "이 계정 전용"
+
+#: app/run/history.py:226
+msgid "查看截图"
+msgstr "스크린샷 보기"
+
+#: app/run/history.py:227
+msgid "查看整轮"
+msgstr "전체 순차 실행 보기"
+
+#: app/run_interface.py:113
+msgid "查看记录"
+msgstr "기록 보기"
+
+#: app/content/account_model.py:231
+msgid "桌面分身中账号页只读，请在主桌面管理账号"
+msgstr "데스크톱 분신에서는 계정을 볼 수만 있습니다. 주 데스크톱에서 관리하세요."
+
+#: app/accounts/detail.py:158
+msgid "正在使用"
+msgstr "사용 중"
+
+#: app/run/cards.py:25
+msgid "正在停止"
+msgstr "중지 중"
+
+#: app/content/account_model.py:313
+msgid "正在处理账号操作"
+msgstr "계정 처리 중…"
+
+#: app/content/account_model.py:293
+msgid "正在处理账号操作，请稍后再试"
+msgstr "계정 처리 중입니다. 잠시 후 다시 시도하세요."
+
+#: app/run/cards.py:25
+msgid "正在暂停"
+msgstr "일시 정지 중"
+
+#: app/main_window.py:850
+msgid "正在查看「{name}」"
+msgstr "{name} 보는 중"
+
+#: app/accounts/editing.py:37
+msgid "正在编辑「{name}」的独立方案"
+msgstr "{name}의 독립 계획 편집 중"
+
+#: module/accounts/status.py:15
+msgid "正在运行"
+msgstr "실행 중"
+
+#: app/content/account_model.py:373
+msgid "此账号正在运行或等待轮流，暂时无法删除"
+msgstr "이 계정은 실행 중이거나 대기 중이어서 지금은 삭제할 수 없습니다."
+
+#: app/content/account_model.py:426
+msgid "此账号现在无法运行"
+msgstr "지금은 이 계정을 실행할 수 없습니다"
+
+#: app/accounts/panel.py:57
+msgid "每个账号使用自己的任务方案和完成状态，定时运行按下面的顺序依次切换"
+msgstr "각 계정의 계획과 진행 상황을 따로 관리합니다. 예약 실행은 아래 순서를 따릅니다."
+
+#: app/accounts_interface.py:108
+msgid "每个账号有自己的登录和任务方案，可以按顺序轮流运行"
+msgstr "계정마다 로그인과 작업 계획을 저장해 순서대로 실행할 수 있습니다."
+
+#: app/run/cards.py:337
+msgid "没有任务在运行"
+msgstr "실행 중인 작업 없음"
+
+#: app/accounts/detail.py:429
+msgid "没有完整运行"
+msgstr "전체 실행 기록 없음"
+
+#: app/pages/decorations.py:118
+msgid "没有恢复共享"
+msgstr "공유 설정을 복원하지 못했습니다"
+
+#: app/accounts/dialogs.py:103
+msgid "没有检测到登录"
+msgstr "로그인이 감지되지 않았습니다"
+
+#: module/accounts/reasons.py:5
+msgid "没有检测到账号登录"
+msgstr "로그인된 계정을 찾을 수 없습니다"
+
+#: app/accounts_interface.py:141
+msgid "没有登录快照"
+msgstr "로그인 스냅샷 없음"
+
+#: app/run/schedule.py:330
+msgid "添加后，到点会自动运行任务、流程或外部程序"
+msgstr "작업, 워크플로 또는 외부 프로그램을 지정한 시각에 자동으로 실행합니다."
+
+#: app/run/schedule.py:328
+msgid "添加定时计划"
+msgstr "일정 추가"
+
+#: app/accounts/dialogs.py:68
+msgid "添加账号"
+msgstr "계정 추가"
+
+#: app/accounts/dialogs.py:174
+msgid "清除"
+msgstr "지우기"
+
+#: app/accounts/detail.py:221
+msgid "清除保存的密码"
+msgstr "저장된 비밀번호 지우기"
+
+#: app/accounts_interface.py:242
+msgid "清除游戏登录信息"
+msgstr "게임 로그인 정보 지우기"
+
+#: app/accounts_interface.py:112
+msgid "清除游戏登录信息…"
+msgstr "게임 로그인 정보 지우기…"
+
+#: app/accounts/dialogs.py:174
+msgid "清除游戏登录信息？"
+msgstr "게임 로그인 정보를 지울까요?"
+
+#: module/accounts/reasons.py:5
+msgid "游戏仍在运行"
+msgstr "게임 실행 중"
+
+#: app/accounts/detail.py:262
+msgid "游戏客户端"
+msgstr "게임 클라이언트"
+
+#: app/accounts/dialogs.py:109
+msgid "游戏当前登录的账号"
+msgstr "게임에 로그인 중인 계정"
+
+#: app/content/account_model.py:412
+msgid "游戏或任务仍在运行，请结束后再切换登录"
+msgstr "게임을 종료하거나 작업이 끝난 뒤 로그인을 전환하세요."
+
+#: app/accounts/detail.py:268
+msgid "游戏每日刷新时间"
+msgstr "일일 초기화 시각"
+
+#: app/accounts/detail.py:242
+msgid "游戏登录快照"
+msgstr "게임 로그인 스냅샷"
+
+#: app/accounts/detail.py:472
+msgid "点击某天查看当次运行"
+msgstr "날짜를 선택하면 해당 실행을 볼 수 있습니다"
+
+#: app/accounts/detail.py:364
+msgid "独立方案"
+msgstr "독립 계획"
+
+#: app/accounts/detail.py:361
+msgid "独立方案从共享方案复制而来，只记录与共享方案不同的地方；共享方案更新时，未改动的项目会一起更新"
+msgstr "독립 계획은 공유 계획에서 변경한 항목만 저장합니다. 나머지 항목은 공유 계획의 변경을 따릅니다."
+
+#: app/run/history.py:318
+msgid "用时 {time}"
+msgstr "소요 시간: {time}"
+
+#: app/accounts/detail.py:232
+msgid "登录"
+msgstr "로그인"
+
+#: module/accounts/reasons.py:5
+msgid "登录信息写入失败"
+msgstr "로그인 정보를 쓰지 못했습니다"
+
+#: app/accounts_interface.py:228
+msgid "登录已保存"
+msgstr "로그인 정보를 저장했습니다"
+
+#: app/accounts/detail.py:236
+msgid "登录已过期。在游戏里重新登录这个账号，完全进入游戏后点「重新保存」。"
+msgstr "로그인이 만료되었습니다. 게임에 다시 로그인해 캐릭터가 보이면 다시 저장을 누르세요."
+
+#: module/accounts/reasons.py:5
+msgid "登录快照损坏或不属于这个账号"
+msgstr "로그인 스냅샷이 손상되었거나 다른 계정의 것입니다"
+
+#: module/accounts/reasons.py:5
+msgid "登录的 UID 与指定账号不符"
+msgstr "로그인된 UID가 지정한 계정과 일치하지 않습니다"
+
+#: app/content/account_model.py:264
+msgid "登录过期"
+msgstr "로그인 만료"
+
+#: app/accounts/detail.py:245
+msgid "登录过期时自动填写账号密码"
+msgstr "로그인 만료 시 계정과 비밀번호 자동 입력"
+
+#: app/run/schedule.py:403
+msgid "确定删除「{name}」吗？"
+msgstr "{name} 계정을 삭제할까요?"
+
+#: module/accounts/differences.py:31
+msgid "第 {level} 层"
+msgstr "{level}층"
+
+#: app/run/cards.py:28
+msgid "等待中"
+msgstr "대기 중"
+
+#: app/accounts/switcher.py:136
+msgid "管理账号与轮流顺序"
+msgstr "계정과 실행 순서 관리"
+
+#: app/run/cards.py:375
+msgid "继续"
+msgstr "계속"
+
+#: app/content/run_controller.py:2212
+msgid "继续执行：{task}"
+msgstr "계속 실행: {task}"
+
+#: app/schedule_dialog.py:111
+msgid "编辑定时计划"
+msgstr "일정 편집"
+
+#: app/accounts/detail.py:387
+msgid "编辑此账号的任务"
+msgstr "이 계정의 작업 편집"
+
+#: app/accounts_interface.py:97
+msgid "自动填写"
+msgstr "자동 입력"
+
+#: app/run/log_view.py:22
+msgid "警告"
+msgstr "경고"
+
+#: app/run/log_view.py:249
+msgid "警告和错误"
+msgstr "경고 및 오류"
+
+#: app/content/run_models.py:392
+msgid "计划未能启动，请查看运行日志"
+msgstr "일정을 시작하지 못했습니다. 실행 로그를 확인하세요."
+
+#: app/main_window.py:1396
+msgid "请为这个账号设置同一服务器的游戏路径"
+msgstr "이 계정과 같은 서버의 게임 경로를 지정하세요"
+
+#: app/accounts/dialogs.py:104
+msgid "请先启动游戏并登录要添加的账号，进入游戏后点「重新检测」。"
+msgstr "게임을 실행해 추가할 계정으로 로그인한 뒤 게임에 들어가 다시 확인을 누르세요."
+
+#: app/accounts/dialogs.py:93
+msgid "请先完全进入游戏（看到角色）再添加。否则读到的是上一个账号的 UID，保存的登录和账号会对不上。"
+msgstr ""
+"캐릭터가 보일 때까지 기다린 뒤 추가하세요. 그전에 추가하면 이전 UID를 읽어 저장한 로그인과 계정이 일치하지 않을 수 있습니다."
+
+#: app/pages/decorations.py:118
+msgid "请在账号页的任务方案里恢复"
+msgstr "계정 페이지의 작업 계획에서 공유 설정으로 복원하세요"
+
+#: app/accounts_interface.py:55
+msgid "调整顺序"
+msgstr "순서 변경"
+
+#: app/run/log_view.py:22
+msgid "调试"
+msgstr "디버그"
+
+#: module/accounts/reasons.py:5
+msgid "账号任务失败"
+msgstr "계정 작업 실패"
+
+#: app/accounts/account_list.py:132
+msgid "账号列表"
+msgstr "계정 목록"
+
+#: module/accounts/reasons.py:5
+msgid "账号和客户端服务器不符"
+msgstr "계정과 클라이언트의 서버가 다릅니다"
+
+#: app/content/account_model.py:356
+msgid "账号和密码都需要填写"
+msgstr "계정과 비밀번호를 모두 입력하세요"
+
+#: app/accounts_interface.py:96
+msgid "账号密码"
+msgstr "계정과 비밀번호"
+
+#: module/search/__init__.py:101
+msgid "账号密码自动填写"
+msgstr "로그인 자동 입력"
+
+#: app/accounts_interface.py:290
+msgid "账号已删除"
+msgstr "계정을 삭제했습니다"
+
+#: app/content/account_model.py:309
+msgid "账号操作未完成"
+msgstr "계정 처리를 완료하지 못했습니다"
+
+#: app/content/account_model.py:291
+msgid "账号资料当前只读"
+msgstr "계정 정보가 읽기 전용입니다"
+
+#: module/accounts/reasons.py:5
+msgid "账号运行超时"
+msgstr "계정 실행 시간 초과"
+
+#: app/schedule_dialog.py:308
+msgid "账号："
+msgstr "계정:"
+
+#: app/run/cards.py:28
+msgid "超时"
+msgstr "시간 초과"
+
+#: app/content/run_models.py:286
+msgid "超时 {minutes} 分钟"
+msgstr "제한 시간: {minutes}분"
+
+#: app/accounts/detail.py:271
+msgid "跟随设置（{hour}:00）"
+msgstr "설정 따름 ({hour}:00)"
+
+#: app/run/cards.py:320
+msgid "跳过当前账号"
+msgstr "현재 계정 건너뛰기"
+
+#: app/accounts_interface.py:110
+msgid "轮流运行全部"
+msgstr "모든 계정 순차 실행"
+
+#: module/accounts/reasons.py:5
+msgid "轮流运行收尾失败"
+msgstr "순차 실행 마무리에 실패했습니다"
+
+#: module/accounts/reasons.py:5
+msgid "轮流运行进程已退出"
+msgstr "순차 실행 프로세스가 종료되었습니다"
+
+#: app/accounts/switcher.py:96
+msgid "轮流运行：关"
+msgstr "순차 실행 꺼짐"
+
+#: app/accounts/switcher.py:96
+msgid "轮流运行：开"
+msgstr "순차 실행 켜짐"
+
+#: module/accounts/reasons.py:35
+msgid "运行未完成"
+msgstr "실행 미완료"
+
+#: app/navigation.py:78
+msgid "运行记录"
+msgstr "실행 기록"
+
+#: app/run/history.py:229
+msgid "运行过的任务会按天列在这里，可以查看步骤、原因和日志。"
+msgstr "실행한 작업을 날짜별로 표시합니다. 단계를 비롯해 결과의 원인과 로그를 확인할 수 있습니다."
+
+#: module/overview/run_data.py:193
+msgid "运行进程已退出"
+msgstr "실행 프로세스가 종료되었습니다"
+
+#: app/run/schedule.py:120
+msgid "还有 {count} 项"
+msgstr "{count}개 더 있음"
+
+#: app/accounts/detail.py:234
+msgid "还没有保存登录。在游戏里登录这个账号，完全进入游戏后点「保存」。"
+msgstr "저장된 로그인이 없습니다. 이 계정으로 로그인한 뒤 캐릭터가 보이면 저장을 누르세요."
+
+#: app/accounts/empty.py:82
+msgid "还没有保存账号"
+msgstr "저장된 계정 없음"
+
+#: app/content/run_models.py:320
+msgid "还没有启用的计划"
+msgstr "활성화된 일정 없음"
+
+#: app/accounts/detail.py:382
+msgid "还没有和共享方案不同的设置。在任务页修改的内容只对这个账号生效。"
+msgstr "공유 계획과 다른 설정이 아직 없습니다. 작업 페이지에서 변경하면 이 계정에만 적용됩니다."
+
+#: app/run/schedule.py:329
+msgid "还没有定时计划"
+msgstr "등록된 일정 없음"
+
+#: app/run/history.py:228
+msgid "还没有运行记录"
+msgstr "실행 기록 없음"
+
+#: app/pages/tasks.py:90
+msgid "这个账号改过，和共享方案不同"
+msgstr "이 계정에서 변경한 설정"
+
+#: app/accounts/detail.py:261
+msgid "这个账号是{server}，和「运行方式」里的游戏客户端不同，需要单独选择。"
+msgstr "이 계정은 {server}이며 실행 모드에 설정한 클라이언트와 서버가 다릅니다. 별도 클라이언트를 선택하세요."
+
+#: app/accounts/detail.py:380
+msgid "这个账号有 {count} 项独立设置，切回独立方案后会恢复。"
+msgstr "이 계정에는 개별 설정이 {count}개 있습니다. 독립 계획으로 돌아가면 복원됩니다."
+
+#: app/navigation.py:78
+msgid "这条运行记录已清理"
+msgstr "이 실행 기록은 삭제되었습니다"
+
+#: app/accounts/panel.py:74
+msgid "这里保存的是本地客户端的登录快照，换号时不用重新登录。打开上面的开关后，可以按顺序轮流运行。"
+msgstr ""
+"로컬 클라이언트의 로그인을 저장하면 다시 로그인하지 않고 계정을 바꿀 수 있습니다. 순차 실행을 켜면 목록 순서대로 실행합니다."
+
+#: module/overview/labels.py:10
+msgid "退出游戏"
+msgstr "게임 종료"
+
+#: app/accounts/detail.py:267
+msgid "选择…"
+msgstr "선택…"
+
+#: app/accounts_interface.py:232
+msgid "选择游戏客户端"
+msgstr "게임 클라이언트 선택"
+
+#: app/accounts/detail.py:428
+msgid "部分完成"
+msgstr "일부 완료"
+
+#: app/accounts/detail.py:243
+msgid "重新保存"
+msgstr "다시 저장"
+
+#: app/accounts/detail.py:220
+msgid "重新填写…"
+msgstr "다시 입력…"
+
+#: app/accounts/dialogs.py:76
+msgid "重新检测"
+msgstr "다시 확인"
+
+#: app/run/log_view.py:247
+msgid "重要信息"
+msgstr "중요 정보"
+
+#: app/run/schedule.py:332
+msgid "链式任务失败后"
+msgstr "연결 작업 실패 시"
+
+#: module/accounts/differences.py:79
+msgid "队伍 {number}"
+msgstr "{number}번 파티"
+
+#: module/accounts/reasons.py:5
+msgid "需要先完成首次使用确认"
+msgstr "먼저 최초 사용 확인을 완료하세요"
+
+#: module/accounts/status.py:15
+msgid "需要设置游戏路径"
+msgstr "게임 경로 설정 필요"
+
+#: app/accounts/detail.py:247
+msgid "需要重新保存"
+msgstr "다시 저장 필요"
+
+#: app/run/cards.py:357
+msgid "（{index} / {total}）"
+msgstr "({index}/{total})"
+
+#: app/accounts/detail.py:241
+msgid "，运行结束后自动更新"
+msgstr ". 실행이 끝나면 자동 갱신됩니다."
+
+#: module/accounts/store.py:22
+msgid "账号列表曾经损坏，已按登录快照重建，损坏的副本留在账号文件夹里"
+msgstr "계정 목록이 손상되어 로그인 스냅샷으로 다시 만들었습니다. 손상된 사본은 계정 폴더에 남아 있습니다."
+
+#: module/accounts/store.py:23
+msgid "{account} 的 {name} 曾经损坏，已从空数据开始，损坏的副本留在账号文件夹里"
+msgstr "{account}의 {name} 파일이 손상되어 빈 데이터로 시작했습니다. 손상된 사본은 계정 폴더에 남아 있습니다."
+
+#: module/accounts/store.py:24
+msgid "旧账号名称无法读取，可重新命名"
+msgstr "이전 계정 이름을 읽을 수 없습니다. 이름을 다시 지정하세요."
+
+#: module/accounts/store.py:25
+msgid "部分登录快照无法校验，请在客户端重新保存"
+msgstr "일부 로그인 스냅샷을 확인할 수 없습니다. 게임 클라이언트에서 다시 저장하세요."
+
+#: module/accounts/store.py:26
+msgid "旧快照损坏，已保留此前可用的备份"
+msgstr "이전 스냅샷이 손상되었습니다. 사용 가능한 이전 백업을 유지했습니다."
+
+#: module/accounts/store.py:27
+msgid "暂时无法整理账号目录，本次按只读方式显示资料"
+msgstr "지금은 계정 폴더를 정리할 수 없어 읽기 전용으로 표시합니다."
+
+#: module/accounts/store.py:28
+msgid "部分旧账号文件尚未转换，原件已保留，下次打开时重试"
+msgstr "일부 이전 계정 파일을 변환하지 못했습니다. 원본은 그대로 두었으며 다음에 열 때 다시 시도합니다."
+
+#: module/accounts/store.py:29
+msgid "旧账号缺少登录快照，相关文件已保留"
+msgstr "이전 계정에 로그인 스냅샷이 없습니다. 관련 파일은 그대로 두었습니다."
+
+#: module/accounts/store.py:30
+msgid "{name} 损坏，已按空数据读取"
+msgstr "{name} 파일이 손상되어 빈 데이터로 읽었습니다."
+
+#: module/accounts/store.py:31
+msgid "{name} 暂时无法留存损坏副本，请稍后重试"
+msgstr "지금은 {name}의 손상된 사본을 보관할 수 없습니다. 나중에 다시 시도하세요."

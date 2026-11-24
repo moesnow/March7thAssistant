@@ -58,24 +58,12 @@ msgstr "日誌"
 msgid "任务日志"
 msgstr "任務日誌"
 
-#: app/log_interface.py:434
-msgid "等待任务..."
-msgstr "等待任務..."
-
 #: app/log_interface.py:1809
 msgid "清空日志"
 msgstr "清空日誌"
 
 msgid "配置定时任务"
 msgstr "設定排程任務"
-
-#: app/log_interface.py:996
-msgid "尚未配置定时任务"
-msgstr "尚未設定排程任務"
-
-#: app/log_interface.py:2357
-msgid "任务完成"
-msgstr "任務完成"
 
 #: app/log_interface.py:2360
 msgid "任务已停止"
@@ -1126,10 +1114,6 @@ msgstr "正在啟動遊戲(❁´◡`❁)"
 msgid "程序已最小化到托盘"
 msgstr "程式已縮小至系統匣"
 
-#: app/log_interface.py:449
-msgid "停止任务"
-msgstr "停止任務"
-
 msgid "更换背景图片"
 msgstr "更換背景圖片"
 
@@ -1527,30 +1511,6 @@ msgstr "停止任務（全域熱鍵，支援背景）"
 msgid "按键设置"
 msgstr "按鍵設定"
 
-#: app/sub_interfaces/accounts_interface.py:31
-msgid "重要：请完全进入游戏（看到角色）后再进行导出，否则会读取前一个账号的UID，导致文件和账号不对应"
-msgstr "重要：請完全進入遊戲（看到角色）後再進行匯出，否則會讀取前一個帳號的 UID，導致檔案和帳號不符"
-
-#: app/sub_interfaces/accounts_interface.py:34
-msgid "该功能不支持云·星穹铁道"
-msgstr "該功能不支援雲·星穹鐵道"
-
-#: app/sub_interfaces/accounts_interface.py:41
-msgid "导出当前游戏账户"
-msgstr "匯出目前遊戲帳戶"
-
-#: app/sub_interfaces/accounts_interface.py:42
-msgid "导入选中的账户"
-msgstr "匯入選取的帳戶"
-
-#: app/sub_interfaces/accounts_interface.py:43
-msgid "删除账户"
-msgstr "刪除帳戶"
-
-#: app/sub_interfaces/accounts_interface.py:44
-msgid "账户更名"
-msgstr "帳戶更名"
-
 #: app/sub_interfaces/accounts_interface.py:45
 msgid "自动登录"
 msgstr "自動登入"
@@ -1559,97 +1519,13 @@ msgstr "自動登入"
 msgid "刷新"
 msgstr "重新整理"
 
-#: app/sub_interfaces/accounts_interface.py:47
-msgid "清除注册表"
-msgstr "清除登錄檔"
-
-#: app/sub_interfaces/accounts_interface.py:72
-msgid "账户列表刷新成功"
-msgstr "帳戶列表重新整理成功"
-
 #: app/sub_interfaces/accounts_interface.py:77
 msgid "导出"
 msgstr "匯出"
 
-#: app/sub_interfaces/accounts_interface.py:77
-msgid "账户导出成功"
-msgstr "帳戶匯出成功"
-
-#: app/sub_interfaces/accounts_interface.py:82
-msgid "请选择要删除的账户"
-msgstr "請選擇要刪除的帳戶"
-
-#: app/sub_interfaces/accounts_interface.py:84
-msgid "确定要删除选中的账户吗？"
-msgstr "確定要刪除選取的帳戶嗎？"
-
-#: app/sub_interfaces/accounts_interface.py:94
-msgid "请选择要更名的账户"
-msgstr "請選擇要更名的帳戶"
-
-#: app/sub_interfaces/accounts_interface.py:97
-msgid "只能选择一个账户"
-msgstr "只能選擇一個帳戶"
-
-#: app/sub_interfaces/accounts_interface.py:101
-msgid "请输入新的账户名"
-msgstr "請輸入新的帳戶名"
-
 #: app/sub_interfaces/accounts_interface.py:105
 msgid "账户名不能为空"
 msgstr "帳戶名不能為空"
-
-#: app/sub_interfaces/accounts_interface.py:113
-msgid "请选择要使用的账户"
-msgstr "請選擇要使用的帳戶"
-
-#: app/sub_interfaces/accounts_interface.py:124
-msgid ""
-"当登录过期时尝试自动重新填写账号密码\n"
-" *此功能存在一定风险，请谨慎使用*"
-msgstr ""
-"當登入過期時嘗試自動重新填寫帳號密碼\n"
-" *此功能存在一定風險，請謹慎使用*"
-
-#: app/sub_interfaces/accounts_interface.py:131
-msgid "请输入用户名"
-msgstr "請輸入使用者名稱"
-
-#: app/sub_interfaces/accounts_interface.py:135
-msgid "用户名不能为空"
-msgstr "使用者名稱不能為空"
-
-#: app/sub_interfaces/accounts_interface.py:138
-msgid "请输入密码"
-msgstr "請輸入密碼"
-
-#: app/sub_interfaces/accounts_interface.py:142
-msgid "密码不能为空"
-msgstr "密碼不能為空"
-
-#: app/sub_interfaces/accounts_interface.py:150
-msgid "导入"
-msgstr "匯入"
-
-#: app/sub_interfaces/accounts_interface.py:158
-msgid "账户导入成功"
-msgstr "帳戶匯入成功"
-
-#: app/sub_interfaces/accounts_interface.py:161
-msgid "确定要清除注册表中的账户信息吗？"
-msgstr "確定要清除登錄檔中的帳戶資訊嗎？"
-
-#: app/sub_interfaces/accounts_interface.py:164
-msgid "注册表中的账户信息已清除"
-msgstr "登錄檔中的帳戶資訊已清除"
-
-#: app/sub_interfaces/accounts_interface.py:184
-msgid "账户设置"
-msgstr "帳戶設定"
-
-#: app/schedule_dialog.py:113
-msgid "添加/编辑定时任务"
-msgstr "新增/編輯排程任務"
 
 #: app/schedule_dialog.py:134
 msgid "例如：完整运行"
@@ -1722,14 +1598,6 @@ msgstr "可執行檔 (*.exe *.bat *.ps1);;所有檔案 (*.*)"
 msgid "{exe} 的完整路径"
 msgstr "{exe} 的完整路徑"
 
-#: app/schedule_dialog.py:725
-msgid "定时任务配置"
-msgstr "排程任務設定"
-
-#: app/schedule_dialog.py:745
-msgid "参数/任务"
-msgstr "參數/任務"
-
 #: app/schedule_dialog.py:745
 msgid "通知"
 msgstr "通知"
@@ -1786,30 +1654,6 @@ msgstr ""
 "定時啟動：到達設定時間後，直接啟動目前任務。\n"
 "鏈式啟動：不會單獨按時間觸發，需要放在前一個任務後面；當前一個任務正常結束後，會依列表順序立即啟動。\n"
 "立即運行：從目前任務開始，後面連續的鏈式任務也會跟隨執行。"
-
-#: app/schedule_dialog.py:1052
-msgid "请先选择要编辑的任务"
-msgstr "請先選擇要編輯的任務"
-
-#: app/schedule_dialog.py:1068
-msgid "请先选择要删除的任务"
-msgstr "請先選擇要刪除的任務"
-
-#: app/schedule_dialog.py:1073
-msgid "确认删除选中的定时任务？"
-msgstr "確認刪除選取的排程任務？"
-
-#: app/schedule_dialog.py:1086
-msgid "请先选择要运行的任务"
-msgstr "請先選擇要運行的任務"
-
-#: app/schedule_dialog.py:1093
-msgid "确认立即运行任务 \"{name}\" 吗？"
-msgstr "確認立即運行任務 \"{name}\" 嗎？"
-
-#: app/schedule_dialog.py:1126
-msgid "无法运行任务：父组件不支持 runScheduledTask"
-msgstr "無法運行任務：父組件不支援 runScheduledTask"
 
 #: app/card/autoplot_setting_card.py:64
 msgid "自动跳过 (当出现跳过按钮时自动点击)"
@@ -3235,14 +3079,6 @@ msgstr "手動選擇圖片"
 #: app/card/messagebox_custom.py:1170
 msgid "上移"
 msgstr "上移"
-
-#: app/schedule_dialog.py:1033
-msgid "请先选择要上移的任务"
-msgstr "請先選擇要上移的任務"
-
-#: app/schedule_dialog.py:1039
-msgid "当前任务已经位于最上方"
-msgstr "當前任務已經位於最上方"
 
 #: app/setting_interface.py:2479
 msgid "优先使用后台截图"
@@ -5558,18 +5394,6 @@ msgstr "選擇流程："
 msgid "启动参数："
 msgstr "啟動參數："
 
-#: app/schedule_dialog.py:780
-msgid "冲突："
-msgstr "衝突："
-
-#: app/schedule_dialog.py:802
-msgid "链式失败后："
-msgstr "鏈式失敗後："
-
-#: app/schedule_dialog.py:1131
-msgid "启动任务失败：{error}"
-msgstr "啟動任務失敗：{error}"
-
 msgid "执行完成(＾∀＾●)"
 msgstr "執行完成（＾∀＾●）"
 
@@ -5728,14 +5552,6 @@ msgstr "已暫停"
 #: app/log_interface.py:212
 msgid "按下 {stop} 停止 · {pause} 暂停"
 msgstr "按下 {stop} 停止 · {pause} 暫停"
-
-#: app/log_interface.py:458
-msgid "暂停任务"
-msgstr "暫停任務"
-
-#: app/log_interface.py:463
-msgid "仅内置任务支持暂停，暂停后脚本将停止一切操作"
-msgstr "僅內建任務支援暫停，暫停後腳本將停止一切操作"
 
 #: app/log_interface.py:1750
 msgid "继续任务"
@@ -6144,10 +5960,6 @@ msgstr "此通路的版本與目標版本不符，請稍後再試"
 msgid "未选择"
 msgstr "尚未選擇"
 
-#: app/log_interface.py:989
-msgid "{date}（{weekday}）{time}"
-msgstr "{date}（{weekday}）{time}"
-
 #: app/schedule_dialog.py:269
 msgid "执行星期："
 msgstr "執行星期："
@@ -6174,20 +5986,8 @@ msgstr ""
 "接續啟動：不會單獨依時間觸發，必須排在另一項任務之後。前一項任務正常結束後，便會依清單順序立即啟動，不另外判斷星期。\n"
 "立即執行：不受星期限制，從目前任務開始，後方連續的接續任務也會一併執行。"
 
-#: app/schedule_dialog.py:745
-msgid "执行计划"
-msgstr "執行排程"
-
 msgid "游戏内日志"
 msgstr "遊戲內記錄"
-
-#: app/log_interface.py:975
-msgid "定时任务({count})"
-msgstr "定時任務（{count}）"
-
-#: app/log_interface.py:977
-msgid "已启用 {count} 个按时任务，点击配置"
-msgstr "已啟用 {count} 個定時任務，按一下進行設定"
 
 #: app/log_interface.py:994
 msgid "下次：{time}"
@@ -7779,21 +7579,9 @@ msgstr "貪歡的神顱"
 msgid "星神★阿哈·群星乐透"
 msgstr "星神★阿哈·群星樂透"
 
-#: app/sub_interfaces/accounts_interface.py:80
-msgid "账户导出失败，请确认已登录游戏后重试。"
-msgstr "帳戶匯出失敗，請確認已登入遊戲後再試。"
-
-#: app/sub_interfaces/accounts_interface.py:166
-msgid "账户导入失败，请重试。"
-msgstr "帳戶匯入失敗，請再試一次。"
-
 #: app/sub_interfaces/accounts_interface.py:171
 msgid "这会清除该游戏的登录信息和画质、分辨率等设置。确定继续吗？"
 msgstr "這會清除該遊戲的登入資訊以及畫質、解析度等設定。確定要繼續嗎？"
-
-#: app/sub_interfaces/accounts_interface.py:177
-msgid "清除失败，请重试。"
-msgstr "清除失敗，請再試一次。"
 
 #: app/sub_interfaces/accounts_interface.py:179
 msgid "游戏登录信息和设置已清除"
@@ -9974,9 +9762,6 @@ msgstr "代理"
 msgid "任务完成或失败时通知你。先添加一个常用的渠道，再点「测试」确认能收到。"
 msgstr "任務完成或失敗時通知你。先新增一個常用的渠道，再點「測試」確認能收到。"
 
-msgid "保存本地客户端的登录状态，换号时直接导入，不用每次重新登录。只支持本地客户端。"
-msgstr "儲存本地客戶端的登入狀態，換號時直接匯入，不用每次重新登入。只支援本地客戶端。"
-
 msgid "全部"
 msgstr "全部"
 
@@ -10225,9 +10010,6 @@ msgstr "工具"
 
 msgid "页面"
 msgstr "頁面"
-
-msgid "“退出”会关闭游戏。需要定时运行时，请打开「运行」页的「定时任务」。"
-msgstr "「退出」會關閉遊戲。需要定時執行時，請開啟「執行」頁的「定時任務」。"
 
 #: module/docs/catalog.py:22
 msgid "每日实训对照表"
@@ -10980,3 +10762,1079 @@ msgstr "已複製躍遷紀錄連結"
 #: app/warp_interface.py:350
 msgid "链接里有临时登录凭据，只发给你信任的工具"
 msgstr "連結含有臨時登入憑證，請只提供給信任的工具"
+
+#: app/run/history.py:83
+msgid "{count} 个账号"
+msgstr "{count} 個帳號"
+
+#: app/accounts/detail.py:449
+msgid "{day} 日"
+msgstr "{day} 日"
+
+#: module/overview/snapshot.py:40
+msgid "{name} · 第 {index} / {total} 个账号"
+msgstr "{name} · 第 {index} / {total} 個帳號"
+
+#: module/accounts/differences.py:46
+msgid "{name} · 队伍 {number}"
+msgstr "{name} · 隊伍 {number}"
+
+#: module/accounts/differences.py:54
+msgid "{name} × {count}"
+msgstr "{name} × {count}"
+
+#: utils/runs.py:418
+msgid "{name} 第 {index} / {total} 次"
+msgstr "{name} 第 {index} / {total} 次"
+
+#: module/overview/run_data.py:190
+msgid "{name}（{reason}）"
+msgstr "{name}（{reason}）"
+
+#: app/content/run_models.py:362
+msgid "{name}（副本）"
+msgstr "{name}（副本）"
+
+#: module/accounts/messages.py:86
+msgid "{result}（{reason}）"
+msgstr "{result}（{reason}）"
+
+#: app/accounts/dialogs.py:159
+msgid "· 「{name}」沿用现在的完成状态，其他账号从空的状态开始。"
+msgstr "· 「{name}」沿用現在的完成狀態，其他帳號從空的狀態開始。"
+
+#: app/accounts/dialogs.py:160
+msgid "· 现在的任务设置成为共享方案，每个账号可以改用独立方案。"
+msgstr "· 現在的任務設定成為共享方案，每個帳號可以改用獨立方案。"
+
+#: app/accounts/dialogs.py:161
+msgid "· 轮流运行时按顺序切换：关闭游戏、写回登录、重新启动并核对 UID。"
+msgstr "· 輪流執行時按順序切換：關閉遊戲、寫回登入、重新啟動並核對 UID。"
+
+#: app/content/settings/after_run.py:42
+msgid "“退出”会关闭游戏。需要定时运行时，请打开「运行」页的「定时计划」。"
+msgstr "「退出」會關閉遊戲。若要定時執行，請開啟「執行」頁的「定時計畫」。"
+
+#: app/accounts/editing.py:37
+msgid "「{name}」使用共享方案"
+msgstr "「{name}」使用共享方案"
+
+#: app/accounts/dialogs.py:136
+msgid "「{name}」的登录过期时，小助手会在登录界面自动输入下面的账号密码。"
+msgstr "「{name}」的登入過期時，小助手會在登入介面自動輸入下面的帳號密碼。"
+
+#: app/content/run_models.py:274
+msgid "上一项完成后"
+msgstr "上一項完成後"
+
+#: app/run_interface.py:112
+msgid "上次：{detail}"
+msgstr "上次：{detail}"
+
+#: app/content/run_models.py:315
+msgid "下次定时：{time} {name}"
+msgstr "下次定時：{time} {name}"
+
+#: app/accounts/detail.py:174
+msgid "不参与轮流"
+msgstr "不參與輪流"
+
+#: app/run/cards.py:363
+msgid "不执行完成后操作"
+msgstr "不執行完成後操作"
+
+#: app/run/cards.py:27
+msgid "中断"
+msgstr "中斷"
+
+#: module/accounts/reasons.py:5
+msgid "临时画质尚未恢复"
+msgstr "臨時畫質尚未恢復"
+
+#: app/run/history.py:27
+msgid "今天"
+msgstr "今天"
+
+#: module/accounts/status.py:15
+msgid "今日失败"
+msgstr "今日失敗"
+
+#: module/accounts/status.py:135
+msgid "今日失败（{reason}）"
+msgstr "今日失敗（{reason}）"
+
+#: module/accounts/status.py:15
+msgid "今日完成"
+msgstr "今日完成"
+
+#: module/accounts/status.py:15
+msgid "今日未运行"
+msgstr "今日未執行"
+
+#: module/accounts/status.py:15
+msgid "今日部分完成"
+msgstr "今日部分完成"
+
+#: app/accounts_interface.py:111
+msgid "从另一个游戏客户端导入…"
+msgstr "從另一個遊戲客戶端匯入…"
+
+#: app/accounts/switcher.py:134
+msgid "从当前游戏登录导入"
+msgstr "從目前遊戲登入匯入"
+
+#: app/content/account_model.py:302
+msgid "任务或账号操作正在运行，请稍后再试"
+msgstr "任務或帳號操作正在執行，請稍後再試"
+
+#: app/accounts/detail.py:359
+msgid "任务方案"
+msgstr "任務方案"
+
+#: app/accounts/detail.py:154
+msgid "任务方案：共享"
+msgstr "任務方案：共享"
+
+#: app/accounts/detail.py:154
+msgid "任务方案：独立"
+msgstr "任務方案：獨立"
+
+#: app/content/account_model.py:328
+msgid "任务正在运行，结束后才能更改多账号开关"
+msgstr "任務正在執行，結束後才能更改多帳號開關"
+
+#: app/run_interface.py:57
+msgid "任务运行时，日志会显示在这里"
+msgstr "任務執行時，日誌會顯示在這裡"
+
+#: app/accounts/detail.py:160
+msgid "任务页和总览改为查看、编辑这个账号；游戏没在运行时，同时切换登录"
+msgstr "任務頁和總覽改為檢視、編輯這個帳號；遊戲沒在執行時，同時切換登入"
+
+#: app/accounts/dialogs.py:168
+msgid "会删除它的登录快照、保存的密码、独立方案和完成状态。抽卡记录和运行记录不受影响，游戏账号本身也不受影响。"
+msgstr "會刪除它的登入快照、儲存的密碼、獨立方案和完成狀態。躍遷紀錄和執行紀錄不受影響，遊戲帳號本身也不受影響。"
+
+#: app/accounts/detail.py:246
+msgid "使用 Windows 加密保存在本机，仅当前 Windows 用户可以解密"
+msgstr "使用 Windows 加密儲存在本機，僅目前 Windows 使用者可以解密"
+
+#: app/accounts/dialogs.py:142
+msgid "使用 Windows 加密保存在本机，仅当前 Windows 用户可以解密。自动输入密码有一定风险，需要验证码时仍要你自己处理。"
+msgstr "使用 Windows 加密儲存在本機，僅目前 Windows 使用者可以解密。自動輸入密碼有一定風險，需要驗證碼時仍要你自己處理。"
+
+#: app/accounts/detail.py:259
+msgid "使用「运行方式」里设置的游戏路径"
+msgstr "使用「執行方式」裡設定的遊戲路徑"
+
+#: app/accounts/detail.py:360
+msgid "使用哪套任务设置"
+msgstr "使用哪套任務設定"
+
+#: app/accounts/dialogs.py:90
+msgid "例如：小号"
+msgstr "例如：小號"
+
+#: app/run/log_view.py:22
+msgid "信息"
+msgstr "資訊"
+
+#: app/accounts/dialogs.py:120
+msgid "修改备注名"
+msgstr "修改暱稱"
+
+#: app/run/cards.py:323
+msgid "停止整轮；箭头里可以只跳过当前账号"
+msgstr "停止整輪；箭頭裡可以只跳過目前帳號"
+
+#: app/accounts_interface.py:218
+msgid "先添加至少一个账号，再打开多账号轮流"
+msgstr "先新增至少一個帳號，再開啟多帳號輪流"
+
+#: app/run/cards.py:363
+msgid "全部完成后：{action}"
+msgstr "全部完成後：{action}"
+
+#: app/run/history.py:252
+msgid "全部结果"
+msgstr "全部結果"
+
+#: app/run/history.py:248
+msgid "全部账号"
+msgstr "全部帳號"
+
+#: app/content/run_models.py:272
+msgid "全部账号轮流"
+msgstr "全部帳號輪流"
+
+#: app/accounts/detail.py:363
+msgid "共享方案"
+msgstr "共享方案"
+
+#: app/accounts/detail.py:311
+msgid "共享方案：{value}"
+msgstr "共享方案：{value}"
+
+#: app/pages/decorations.py:91
+msgid "共享方案：{value}。悬停卡片可以恢复共享"
+msgstr "共享方案：{value}。將滑鼠移到卡片上可以恢復共享"
+
+#: app/content/run_controller.py:2216
+msgid "关闭助手"
+msgstr "關閉助手"
+
+#: app/accounts/detail.py:268
+msgid "其他服务器的刷新时间换算成本机时间后可能不同"
+msgstr "不同伺服器的重置時間換算為本機時間後可能不同"
+
+#: app/content/run_controller.py:2220
+msgid "切换到「{name}」继续"
+msgstr "切換到「{name}」繼續"
+
+#: app/content/run_controller.py:2219
+msgid "切换到「{name}」继续，最后{action}"
+msgstr "切換到「{name}」繼續，最後{action}"
+
+#: app/accounts/detail.py:158
+msgid "切换到此账号"
+msgstr "切換到此帳號"
+
+#: app/accounts/detail.py:163
+msgid "切换登录"
+msgstr "切換登入"
+
+#: module/accounts/reasons.py:5
+msgid "切换登录失败"
+msgstr "切換登入失敗"
+
+#: app/content/account_model.py:400
+msgid "切换登录需要 Windows 本地客户端"
+msgstr "切換登入需要 Windows 本機客戶端"
+
+#: app/accounts/switcher.py:93
+msgid "切换要查看和编辑的账号"
+msgstr "切換要檢視和編輯的帳號"
+
+#: app/accounts/editing.py:39
+msgid "切换账号"
+msgstr "切換帳號"
+
+#: app/accounts/detail.py:239
+msgid "切换账号时写回游戏的登录信息 · 上次保存于{time}"
+msgstr "切換帳號時寫回遊戲的登入資訊 · 上次儲存於{time}"
+
+#: app/run/schedule.py:420
+msgid "删除…"
+msgstr "刪除…"
+
+#: app/accounts/dialogs.py:167
+msgid "删除「{name}」？"
+msgstr "刪除「{name}」？"
+
+#: app/run/schedule.py:403
+msgid "删除定时计划"
+msgstr "刪除定時計畫"
+
+#: app/accounts_interface.py:290
+msgid "删除账号"
+msgstr "刪除帳號"
+
+#: app/accounts/detail.py:178
+msgid "删除账号…"
+msgstr "刪除帳號…"
+
+#: app/accounts_interface.py:100
+msgid "刷新时间"
+msgstr "重置時間"
+
+#: module/accounts/differences.py:86
+msgid "助燃券连续挑战"
+msgstr "助燃券連續挑戰"
+
+#: app/accounts/detail.py:174
+msgid "参与轮流"
+msgstr "參與輪流"
+
+#: app/accounts/detail.py:167
+msgid "只运行此账号"
+msgstr "只執行此帳號"
+
+#: module/accounts/reasons.py:5
+msgid "启动或运行账号时出错"
+msgstr "啟動或執行帳號時出錯"
+
+#: module/overview/labels.py:4
+msgid "启动时自动运行"
+msgstr "啟動時自動執行"
+
+#: app/accounts/empty.py:84
+msgid "启动游戏，登录要添加的账号，完全进入游戏（看到角色）"
+msgstr "啟動遊戲，登入要新增的帳號，完全進入遊戲（看到角色）"
+
+#: app/run/log_view.py:217
+msgid "回到最新"
+msgstr "回到最新"
+
+#: app/accounts/empty.py:85
+msgid "回到这里点「添加账号」，保存它的登录"
+msgstr "回到這裡點「新增帳號」，儲存它的登入"
+
+#: app/accounts/account_list.py:24
+msgid "国服"
+msgstr "國服"
+
+#: app/accounts/account_list.py:24
+msgid "国际服"
+msgstr "國際服"
+
+#: app/accounts/empty.py:86
+msgid "在游戏里换一个账号，再添加一次；全部添加好后打开多账号轮流"
+msgstr "在遊戲裡換一個帳號，再新增一次；全部新增好後開啟多帳號輪流"
+
+#: app/accounts/detail.py:251
+msgid "填写账号密码"
+msgstr "填寫帳號密碼"
+
+#: app/accounts/dialogs.py:92
+msgid "备注名"
+msgstr "暱稱"
+
+#: app/run/schedule.py:418
+msgid "复制一份"
+msgstr "複製一份"
+
+#: app/content/run_models.py:280
+msgid "外部程序 {name}"
+msgstr "外部程式 {name}"
+
+#: module/search/__init__.py:100
+msgid "多账号轮流"
+msgstr "多帳號輪流"
+
+#: app/content/account_model.py:234
+msgid "多账号轮流仅支持 Windows 本地客户端，当前按单账号运行"
+msgstr "多帳號輪流僅支援 Windows 本機客戶端，目前按單帳號執行"
+
+#: app/accounts/panel.py:56
+msgid "多账号轮流运行"
+msgstr "多帳號輪流執行"
+
+#: module/accounts/messages.py:79
+msgid "多账号轮流运行结束"
+msgstr "多帳號輪流執行結束"
+
+#: app/run/history.py:253
+msgid "失败和异常"
+msgstr "失敗和異常"
+
+#: module/accounts/differences.py:86
+msgid "姬子试用"
+msgstr "姬子試用"
+
+#: module/accounts/reasons.py:5
+msgid "子运行记录缺失"
+msgstr "找不到子執行紀錄"
+
+#: module/accounts/reasons.py:5
+msgid "子进程意外退出"
+msgstr "子程序意外結束"
+
+#: app/content/run_models.py:282
+msgid "完成后{action}"
+msgstr "完成後{action}"
+
+#: app/run_interface.py:106
+msgid "完成后操作：{action}，{seconds} 秒后执行"
+msgstr "完成後操作：{action}，{seconds} 秒後執行"
+
+#: app/content/run_models.py:388
+msgid "定时计划已删除"
+msgstr "定時計畫已刪除"
+
+#: app/accounts/dialogs.py:141
+msgid "密码"
+msgstr "密碼"
+
+#: module/accounts/differences.py:86
+msgid "差分宇宙队伍类型"
+msgstr "差分宇宙隊伍類型"
+
+#: app/accounts/detail.py:247
+msgid "已保存"
+msgstr "已儲存"
+
+#: app/accounts/switcher.py:93
+msgid "已保存的账号"
+msgstr "已儲存的帳號"
+
+#: app/content/account_model.py:411
+msgid "已切换查看的账号，下次运行时切换登录"
+msgstr "已切換檢視的帳號，下次執行時切換登入"
+
+#: app/content/account_model.py:418
+msgid "已切换登录"
+msgstr "已切換登入"
+
+#: app/accounts_interface.py:277
+msgid "已加密保存"
+msgstr "已加密儲存"
+
+#: app/content/run_models.py:319
+msgid "已启用 {count} 个按时计划"
+msgstr "已啟用 {count} 個定時執行計畫"
+
+#: module/accounts/reasons.py:5
+msgid "已有任务在运行"
+msgstr "已有任務在執行"
+
+#: app/run/schedule.py:331
+msgid "已有任务在运行时"
+msgstr "已有任務在執行時"
+
+#: app/accounts/dialogs.py:109
+msgid "已经保存过，会更新它的登录快照"
+msgstr "已經儲存過，會更新它的登入快照"
+
+#: app/run/cards.py:384
+msgid "已运行 {time}"
+msgstr "已執行 {time}"
+
+#: app/content/account_model.py:268
+msgid "开拓者"
+msgstr "開拓者"
+
+#: module/accounts/differences.py:86
+msgid "开拓者名称"
+msgstr "開拓者名稱"
+
+#: app/content/account_model.py:432
+msgid "当前没有可轮流运行的账号"
+msgstr "目前沒有可輪流執行的帳號"
+
+#: app/accounts/detail.py:163
+msgid "当前登录"
+msgstr "目前登入"
+
+#: app/run_interface.py:182
+msgid "当前运行"
+msgstr "目前執行"
+
+#: module/accounts/reasons.py:5
+msgid "当前运行方式不支持按账号运行"
+msgstr "目前執行方式不支援按帳號執行"
+
+#: app/run/stepper.py:18
+msgid "待执行"
+msgstr "待執行"
+
+#: app/run/cards.py:364
+msgid "恢复"
+msgstr "恢復"
+
+#: app/accounts/detail.py:312
+msgid "恢复共享"
+msgstr "恢復共享"
+
+#: app/accounts/dialogs.py:138
+msgid "手机号、邮箱或用户名"
+msgstr "手機號碼、電子郵件或使用者名稱"
+
+#: app/accounts/dialogs.py:157
+msgid "打开多账号轮流？"
+msgstr "開啟多帳號輪流？"
+
+#: app/run/history.py:232
+msgid "打开日志文件"
+msgstr "開啟日誌檔案"
+
+#: app/accounts/detail.py:176
+msgid "打开账号文件夹"
+msgstr "開啟帳號資料夾"
+
+#: app/content/account_model.py:387
+msgid "找不到指定账号"
+msgstr "找不到指定帳號"
+
+#: app/accounts/empty.py:79
+msgid "把登录保存下来，换号时不用重新登录；保存两个以上就可以按顺序轮流运行。只支持本地客户端。"
+msgstr "把登入儲存下來，切換帳號時不用重新登入；儲存兩個以上就可以按順序輪流執行。只支援本機客戶端。"
+
+#: app/accounts/detail.py:165
+msgid "把这个账号的登录信息写回游戏，需要先退出游戏"
+msgstr "把這個帳號的登入資訊寫回遊戲，需要先退出遊戲"
+
+#: app/accounts/panel.py:73
+msgid "拖动调整顺序。一个账号失败后会记录原因并继续下一个账号，全部结束后合并发送一条通知。多账号只支持本地客户端。"
+msgstr "拖曳調整順序。一個帳號失敗後會記錄原因並繼續下一個帳號，全部結束後合併傳送一條通知。多帳號只支援本機客戶端。"
+
+#: module/accounts/differences.py:86
+msgid "拟造花萼（金）偏好地区"
+msgstr "擬造花萼（金）偏好地區"
+
+#: app/schedule_dialog.py:320
+msgid "指定的账号不可用"
+msgstr "指定的帳號不可用"
+
+#: app/content/run_controller.py:606
+msgid "指定的账号不可用，本次任务已跳过"
+msgstr "指定的帳號不可用，本次任務已跳過"
+
+#: app/content/run_models.py:270
+msgid "指定的账号不可用，计划将跳过"
+msgstr "指定的帳號不可用，計畫將跳過"
+
+#: app/content/run_models.py:284
+msgid "推送通知"
+msgstr "推播通知"
+
+#: app/accounts_interface.py:193
+msgid "操作没有完成，详情见日志"
+msgstr "操作沒有完成，詳情請見日誌"
+
+#: app/run/cards.py:26
+msgid "收尾中"
+msgstr "收尾中"
+
+#: app/content/account_model.py:286
+msgid "无法读写账号文件或登录信息：{error}"
+msgstr "無法讀寫帳號檔案或登入資訊：{error}"
+
+#: app/accounts/detail.py:238
+msgid "时间未知"
+msgstr "時間未知"
+
+#: app/run/history.py:29
+msgid "昨天"
+msgstr "昨天"
+
+#: app/run/schedule.py:226
+msgid "更多"
+msgstr "更多"
+
+#: app/accounts/detail.py:471
+msgid "最近 7 天"
+msgstr "最近 7 天"
+
+#: app/content/account_model.py:272
+msgid "未保存账号"
+msgstr "未儲存帳號"
+
+#: module/overview/run_data.py:190
+msgid "未完成"
+msgstr "未完成"
+
+#: app/run/cards.py:364
+msgid "本次不执行"
+msgstr "本次不執行"
+
+#: app/pages/decorations.py:100
+msgid "本账号独有"
+msgstr "此帳號專用"
+
+#: app/run/history.py:226
+msgid "查看截图"
+msgstr "檢視截圖"
+
+#: app/run/history.py:227
+msgid "查看整轮"
+msgstr "檢視整輪"
+
+#: app/run_interface.py:113
+msgid "查看记录"
+msgstr "檢視記錄"
+
+#: app/content/account_model.py:231
+msgid "桌面分身中账号页只读，请在主桌面管理账号"
+msgstr "桌面分身中帳號頁唯讀，請在主桌面管理帳號"
+
+#: app/accounts/detail.py:158
+msgid "正在使用"
+msgstr "正在使用"
+
+#: app/run/cards.py:25
+msgid "正在停止"
+msgstr "正在停止"
+
+#: app/content/account_model.py:313
+msgid "正在处理账号操作"
+msgstr "正在處理帳號操作"
+
+#: app/content/account_model.py:293
+msgid "正在处理账号操作，请稍后再试"
+msgstr "正在處理帳號操作，請稍後再試"
+
+#: app/run/cards.py:25
+msgid "正在暂停"
+msgstr "正在暫停"
+
+#: app/main_window.py:850
+msgid "正在查看「{name}」"
+msgstr "正在檢視「{name}」"
+
+#: app/accounts/editing.py:37
+msgid "正在编辑「{name}」的独立方案"
+msgstr "正在編輯「{name}」的獨立方案"
+
+#: module/accounts/status.py:15
+msgid "正在运行"
+msgstr "正在執行"
+
+#: app/content/account_model.py:373
+msgid "此账号正在运行或等待轮流，暂时无法删除"
+msgstr "此帳號正在執行或等待輪流，暫時無法刪除"
+
+#: app/content/account_model.py:426
+msgid "此账号现在无法运行"
+msgstr "此帳號現在無法執行"
+
+#: app/accounts/panel.py:57
+msgid "每个账号使用自己的任务方案和完成状态，定时运行按下面的顺序依次切换"
+msgstr "每個帳號使用自己的任務方案和完成狀態，定時執行按下面的順序依次切換"
+
+#: app/accounts_interface.py:108
+msgid "每个账号有自己的登录和任务方案，可以按顺序轮流运行"
+msgstr "每個帳號有自己的登入和任務方案，可以按順序輪流執行"
+
+#: app/run/cards.py:337
+msgid "没有任务在运行"
+msgstr "沒有任務在執行"
+
+#: app/accounts/detail.py:429
+msgid "没有完整运行"
+msgstr "沒有完整執行"
+
+#: app/pages/decorations.py:118
+msgid "没有恢复共享"
+msgstr "沒有恢復共享"
+
+#: app/accounts/dialogs.py:103
+msgid "没有检测到登录"
+msgstr "沒有偵測到登入"
+
+#: module/accounts/reasons.py:5
+msgid "没有检测到账号登录"
+msgstr "沒有偵測到帳號登入"
+
+#: app/accounts_interface.py:141
+msgid "没有登录快照"
+msgstr "沒有登入快照"
+
+#: app/run/schedule.py:330
+msgid "添加后，到点会自动运行任务、流程或外部程序"
+msgstr "新增後，到時會自動執行任務、流程或外部程式"
+
+#: app/run/schedule.py:328
+msgid "添加定时计划"
+msgstr "新增定時計畫"
+
+#: app/accounts/dialogs.py:68
+msgid "添加账号"
+msgstr "新增帳號"
+
+#: app/accounts/dialogs.py:174
+msgid "清除"
+msgstr "清除"
+
+#: app/accounts/detail.py:221
+msgid "清除保存的密码"
+msgstr "清除儲存的密碼"
+
+#: app/accounts_interface.py:242
+msgid "清除游戏登录信息"
+msgstr "清除遊戲登入資訊"
+
+#: app/accounts_interface.py:112
+msgid "清除游戏登录信息…"
+msgstr "清除遊戲登入資訊…"
+
+#: app/accounts/dialogs.py:174
+msgid "清除游戏登录信息？"
+msgstr "清除遊戲登入資訊？"
+
+#: module/accounts/reasons.py:5
+msgid "游戏仍在运行"
+msgstr "遊戲仍在執行"
+
+#: app/accounts/detail.py:262
+msgid "游戏客户端"
+msgstr "遊戲客戶端"
+
+#: app/accounts/dialogs.py:109
+msgid "游戏当前登录的账号"
+msgstr "遊戲目前登入的帳號"
+
+#: app/content/account_model.py:412
+msgid "游戏或任务仍在运行，请结束后再切换登录"
+msgstr "遊戲或任務仍在執行，請結束後再切換登入"
+
+#: app/accounts/detail.py:268
+msgid "游戏每日刷新时间"
+msgstr "遊戲每日重置時間"
+
+#: app/accounts/detail.py:242
+msgid "游戏登录快照"
+msgstr "遊戲登入快照"
+
+#: app/accounts/detail.py:472
+msgid "点击某天查看当次运行"
+msgstr "點選某天檢視當次執行"
+
+#: app/accounts/detail.py:364
+msgid "独立方案"
+msgstr "獨立方案"
+
+#: app/accounts/detail.py:361
+msgid "独立方案从共享方案复制而来，只记录与共享方案不同的地方；共享方案更新时，未改动的项目会一起更新"
+msgstr "獨立方案沿用共享方案，只儲存這個帳號修改過的設定。共享方案更新時，其餘設定也會更新。"
+
+#: app/run/history.py:318
+msgid "用时 {time}"
+msgstr "用時 {time}"
+
+#: app/accounts/detail.py:232
+msgid "登录"
+msgstr "登入"
+
+#: module/accounts/reasons.py:5
+msgid "登录信息写入失败"
+msgstr "登入資訊寫入失敗"
+
+#: app/accounts_interface.py:228
+msgid "登录已保存"
+msgstr "登入已儲存"
+
+#: app/accounts/detail.py:236
+msgid "登录已过期。在游戏里重新登录这个账号，完全进入游戏后点「重新保存」。"
+msgstr "登入已過期。在遊戲裡重新登入這個帳號，完全進入遊戲後點「重新儲存」。"
+
+#: module/accounts/reasons.py:5
+msgid "登录快照损坏或不属于这个账号"
+msgstr "登入快照損壞或不屬於這個帳號"
+
+#: module/accounts/reasons.py:5
+msgid "登录的 UID 与指定账号不符"
+msgstr "登入的 UID 與指定帳號不符"
+
+#: app/content/account_model.py:264
+msgid "登录过期"
+msgstr "登入過期"
+
+#: app/accounts/detail.py:245
+msgid "登录过期时自动填写账号密码"
+msgstr "登入過期時自動填寫帳號密碼"
+
+#: app/run/schedule.py:403
+msgid "确定删除「{name}」吗？"
+msgstr "確定刪除「{name}」嗎？"
+
+#: module/accounts/differences.py:31
+msgid "第 {level} 层"
+msgstr "第 {level} 層"
+
+#: app/run/cards.py:28
+msgid "等待中"
+msgstr "等待中"
+
+#: app/accounts/switcher.py:136
+msgid "管理账号与轮流顺序"
+msgstr "管理帳號與輪流順序"
+
+#: app/run/cards.py:375
+msgid "继续"
+msgstr "繼續"
+
+#: app/content/run_controller.py:2212
+msgid "继续执行：{task}"
+msgstr "繼續執行：{task}"
+
+#: app/schedule_dialog.py:111
+msgid "编辑定时计划"
+msgstr "編輯定時計畫"
+
+#: app/accounts/detail.py:387
+msgid "编辑此账号的任务"
+msgstr "編輯此帳號的任務"
+
+#: app/accounts_interface.py:97
+msgid "自动填写"
+msgstr "自動填寫"
+
+#: app/run/log_view.py:22
+msgid "警告"
+msgstr "警告"
+
+#: app/run/log_view.py:249
+msgid "警告和错误"
+msgstr "警告和錯誤"
+
+#: app/content/run_models.py:392
+msgid "计划未能启动，请查看运行日志"
+msgstr "計畫未能啟動，請檢視執行日誌"
+
+#: app/main_window.py:1396
+msgid "请为这个账号设置同一服务器的游戏路径"
+msgstr "請為這個帳號設定同一伺服器的遊戲路徑"
+
+#: app/accounts/dialogs.py:104
+msgid "请先启动游戏并登录要添加的账号，进入游戏后点「重新检测」。"
+msgstr "請先啟動遊戲並登入要新增的帳號，進入遊戲後點選「重新偵測」。"
+
+#: app/accounts/dialogs.py:93
+msgid "请先完全进入游戏（看到角色）再添加。否则读到的是上一个账号的 UID，保存的登录和账号会对不上。"
+msgstr "請先完全進入遊戲（看到角色）再新增。否則讀到的是上一個帳號的 UID，儲存的登入和帳號會對不上。"
+
+#: app/pages/decorations.py:118
+msgid "请在账号页的任务方案里恢复"
+msgstr "請在帳號頁的任務方案裡恢復"
+
+#: app/accounts_interface.py:55
+msgid "调整顺序"
+msgstr "調整順序"
+
+#: app/run/log_view.py:22
+msgid "调试"
+msgstr "除錯"
+
+#: module/accounts/reasons.py:5
+msgid "账号任务失败"
+msgstr "帳號任務失敗"
+
+#: app/accounts/account_list.py:132
+msgid "账号列表"
+msgstr "帳號清單"
+
+#: module/accounts/reasons.py:5
+msgid "账号和客户端服务器不符"
+msgstr "帳號和客戶端伺服器不符"
+
+#: app/content/account_model.py:356
+msgid "账号和密码都需要填写"
+msgstr "帳號和密碼都需要填寫"
+
+#: app/accounts_interface.py:96
+msgid "账号密码"
+msgstr "帳號密碼"
+
+#: module/search/__init__.py:101
+msgid "账号密码自动填写"
+msgstr "帳號密碼自動填寫"
+
+#: app/accounts_interface.py:290
+msgid "账号已删除"
+msgstr "帳號已刪除"
+
+#: app/content/account_model.py:309
+msgid "账号操作未完成"
+msgstr "帳號操作未完成"
+
+#: app/content/account_model.py:291
+msgid "账号资料当前只读"
+msgstr "帳號資料目前唯讀"
+
+#: module/accounts/reasons.py:5
+msgid "账号运行超时"
+msgstr "帳號執行逾時"
+
+#: app/schedule_dialog.py:308
+msgid "账号："
+msgstr "帳號："
+
+#: app/run/cards.py:28
+msgid "超时"
+msgstr "逾時"
+
+#: app/content/run_models.py:286
+msgid "超时 {minutes} 分钟"
+msgstr "逾時 {minutes} 分鐘"
+
+#: app/accounts/detail.py:271
+msgid "跟随设置（{hour}:00）"
+msgstr "跟隨設定（{hour}:00）"
+
+#: app/run/cards.py:320
+msgid "跳过当前账号"
+msgstr "跳過目前帳號"
+
+#: app/accounts_interface.py:110
+msgid "轮流运行全部"
+msgstr "輪流執行全部"
+
+#: module/accounts/reasons.py:5
+msgid "轮流运行收尾失败"
+msgstr "輪流執行收尾失敗"
+
+#: module/accounts/reasons.py:5
+msgid "轮流运行进程已退出"
+msgstr "輪流執行程序已結束"
+
+#: app/accounts/switcher.py:96
+msgid "轮流运行：关"
+msgstr "輪流執行：關"
+
+#: app/accounts/switcher.py:96
+msgid "轮流运行：开"
+msgstr "輪流執行：開"
+
+#: module/accounts/reasons.py:35
+msgid "运行未完成"
+msgstr "執行未完成"
+
+#: app/navigation.py:78
+msgid "运行记录"
+msgstr "執行紀錄"
+
+#: app/run/history.py:229
+msgid "运行过的任务会按天列在这里，可以查看步骤、原因和日志。"
+msgstr "執行過的任務會按天列在這裡，可以檢視步驟、原因和日誌。"
+
+#: module/overview/run_data.py:193
+msgid "运行进程已退出"
+msgstr "執行程序已結束"
+
+#: app/run/schedule.py:120
+msgid "还有 {count} 项"
+msgstr "還有 {count} 項"
+
+#: app/accounts/detail.py:234
+msgid "还没有保存登录。在游戏里登录这个账号，完全进入游戏后点「保存」。"
+msgstr "還沒有儲存登入。在遊戲裡登入這個帳號，完全進入遊戲後點「儲存」。"
+
+#: app/accounts/empty.py:82
+msgid "还没有保存账号"
+msgstr "還沒有儲存帳號"
+
+#: app/content/run_models.py:320
+msgid "还没有启用的计划"
+msgstr "還沒有啟用的計畫"
+
+#: app/accounts/detail.py:382
+msgid "还没有和共享方案不同的设置。在任务页修改的内容只对这个账号生效。"
+msgstr "還沒有和共享方案不同的設定。在任務頁修改的內容只對這個帳號生效。"
+
+#: app/run/schedule.py:329
+msgid "还没有定时计划"
+msgstr "還沒有定時計畫"
+
+#: app/run/history.py:228
+msgid "还没有运行记录"
+msgstr "還沒有執行紀錄"
+
+#: app/pages/tasks.py:90
+msgid "这个账号改过，和共享方案不同"
+msgstr "這個帳號改過，和共享方案不同"
+
+#: app/accounts/detail.py:261
+msgid "这个账号是{server}，和「运行方式」里的游戏客户端不同，需要单独选择。"
+msgstr "這個帳號是{server}，和「執行方式」裡的遊戲客戶端不同，需要單獨選擇。"
+
+#: app/accounts/detail.py:380
+msgid "这个账号有 {count} 项独立设置，切回独立方案后会恢复。"
+msgstr "這個帳號有 {count} 項獨立設定，切回獨立方案後會恢復。"
+
+#: app/navigation.py:78
+msgid "这条运行记录已清理"
+msgstr "這條執行紀錄已清理"
+
+#: app/accounts/panel.py:74
+msgid "这里保存的是本地客户端的登录快照，换号时不用重新登录。打开上面的开关后，可以按顺序轮流运行。"
+msgstr "這裡儲存的是本機客戶端的登入快照，切換帳號時不用重新登入。開啟上面的開關後，可以按順序輪流執行。"
+
+#: module/overview/labels.py:10
+msgid "退出游戏"
+msgstr "退出遊戲"
+
+#: app/accounts/detail.py:267
+msgid "选择…"
+msgstr "選擇…"
+
+#: app/accounts_interface.py:232
+msgid "选择游戏客户端"
+msgstr "選擇遊戲客戶端"
+
+#: app/accounts/detail.py:428
+msgid "部分完成"
+msgstr "部分完成"
+
+#: app/accounts/detail.py:243
+msgid "重新保存"
+msgstr "重新儲存"
+
+#: app/accounts/detail.py:220
+msgid "重新填写…"
+msgstr "重新填寫…"
+
+#: app/accounts/dialogs.py:76
+msgid "重新检测"
+msgstr "重新偵測"
+
+#: app/run/log_view.py:247
+msgid "重要信息"
+msgstr "重要資訊"
+
+#: app/run/schedule.py:332
+msgid "链式任务失败后"
+msgstr "鏈式任務失敗後"
+
+#: module/accounts/differences.py:79
+msgid "队伍 {number}"
+msgstr "隊伍 {number}"
+
+#: module/accounts/reasons.py:5
+msgid "需要先完成首次使用确认"
+msgstr "需要先完成首次使用確認"
+
+#: module/accounts/status.py:15
+msgid "需要设置游戏路径"
+msgstr "需要設定遊戲路徑"
+
+#: app/accounts/detail.py:247
+msgid "需要重新保存"
+msgstr "需要重新儲存"
+
+#: app/run/cards.py:357
+msgid "（{index} / {total}）"
+msgstr "（{index} / {total}）"
+
+#: app/accounts/detail.py:241
+msgid "，运行结束后自动更新"
+msgstr "，執行結束後自動更新"
+
+#: module/accounts/store.py:22
+msgid "账号列表曾经损坏，已按登录快照重建，损坏的副本留在账号文件夹里"
+msgstr "帳號列表曾經損壞，已按登入快照重建，損壞的副本留在帳號資料夾裡"
+
+#: module/accounts/store.py:23
+msgid "{account} 的 {name} 曾经损坏，已从空数据开始，损坏的副本留在账号文件夹里"
+msgstr "{account} 的 {name} 曾經損壞，已從空資料開始，損壞的副本留在帳號資料夾裡"
+
+#: module/accounts/store.py:24
+msgid "旧账号名称无法读取，可重新命名"
+msgstr "舊帳號名稱無法讀取，可重新命名"
+
+#: module/accounts/store.py:25
+msgid "部分登录快照无法校验，请在客户端重新保存"
+msgstr "部分登入快照無法校驗，請在客戶端重新儲存"
+
+#: module/accounts/store.py:26
+msgid "旧快照损坏，已保留此前可用的备份"
+msgstr "舊快照損壞，已保留此前可用的備份"
+
+#: module/accounts/store.py:27
+msgid "暂时无法整理账号目录，本次按只读方式显示资料"
+msgstr "暫時無法整理帳號目錄，本次以唯讀方式顯示資料"
+
+#: module/accounts/store.py:28
+msgid "部分旧账号文件尚未转换，原件已保留，下次打开时重试"
+msgstr "部分舊帳號檔案尚未轉換，原件已保留，下次開啟時重試"
+
+#: module/accounts/store.py:29
+msgid "旧账号缺少登录快照，相关文件已保留"
+msgstr "舊帳號缺少登入快照，相關檔案已保留"
+
+#: module/accounts/store.py:30
+msgid "{name} 损坏，已按空数据读取"
+msgstr "{name} 損壞，已按空資料讀取"
+
+#: module/accounts/store.py:31
+msgid "{name} 暂时无法留存损坏副本，请稍后重试"
+msgstr "{name} 暫時無法留存損壞副本，請稍後重試"

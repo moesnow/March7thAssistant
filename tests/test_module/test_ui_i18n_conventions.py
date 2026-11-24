@@ -42,6 +42,7 @@ UI_INFO_KW = {"text", "title", "content", "caption", "label", "placeholder",
 
 # ---- 约定 2 的允许例外 ----
 WRAPPER_ALLOWLIST = {
+    ("module/accounts/differences.py", "value_text"),          # 只接收持久化的原始设置值和副本名
     ("module/overview/legacy_cards.py", "display_label"),      # 入参是 msgid，本就是由它解析
     ("module/localization/__init__.py", "trc"),              # 无 msgctxt 条目时回退 tr()
     ("module/search/terms.py", "_label"),                    # 只接收内置同义词和建议词的 msgid
