@@ -10,6 +10,7 @@ from app.overview.style import accent, text_color, tone, with_alpha
 from app.overview.widgets import Pill
 from module.localization import tr
 from utils.desktop_twin import in_desktop_twin
+from .style import solid
 from .common import border_color, icon_of, is_evernight, secondary, surface_color
 
 TAGS = {"local": ("仅 Windows", "可后台"), "cloud": ("Windows / macOS / Linux", "无窗口"),
@@ -108,7 +109,7 @@ class ChoiceCard(QWidget):
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(color)
             painter.drawEllipse(center, 9, 9)
-            painter.setBrush(tone("neutral")[0] if isDarkTheme() else Qt.GlobalColor.white)
+            painter.setBrush(solid()[1] if isDarkTheme() else Qt.GlobalColor.white)
             painter.drawEllipse(center, 3.6, 3.6)
         else:
             painter.setBrush(Qt.BrushStyle.NoBrush)
