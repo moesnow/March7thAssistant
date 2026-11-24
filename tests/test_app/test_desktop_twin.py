@@ -1098,3 +1098,214 @@ def test_twin_notice_icon_uses_theme_color(qtbot):
         close = all(abs(a - b) < 40 for a, b in ((color.red(), expected.red()), (color.green(), expected.green()),
                                                  (color.blue(), expected.blue())))
         assert close is accent
+
+
+@pytest.mark.parametrize("twin", [True, False])
+def test_startup_checks_follow_desktop_twin_mode(qtbot, monkeypatch, tmp_path, twin):
+    """桌面分身子会话里不重复检查更新与公告；主会话保持原有启动检查。"""
+    from copy import deepcopy
+
+    from app import main_window as module
+    from module.config import cfg
+    from tasks import tool
+
+    monkeypatch.setattr(cfg, "config", deepcopy(cfg.config))
+    monkeypatch.setattr(cfg, "config_path", str(tmp_path / "config.yaml"))
+    monkeypatch.setattr(cfg, "save_config", Mock())
+    monkeypatch.setattr(cfg, "writes_suspended", False)
+    monkeypatch.setattr(tool, "start", Mock())
+    monkeypatch.setattr(tool, "stop_plot", Mock())
+    monkeypatch.setattr(module, "checkThemeChange", lambda _: Mock())
+    monkeypatch.setattr(module, "disclaimer", lambda *args, **kwargs: None)
+    monkeypatch.setattr(module.MainWindow, "initSystemTray",
+                        lambda self: setattr(self, "_tray_actions", [Mock() for _ in range(4)]))
+    monkeypatch.setattr(module.MainWindow, "closeEvent", lambda self, event: event.accept())
+    monkeypatch.setattr(module.LogInterface, "_LogInterface__initShortcut", lambda _: None)
+    monkeypatch.setattr(module.LogInterface, "_migrate_legacy_schedule", lambda _: None)
+    monkeypatch.setattr(module.LogInterface, "_startScheduleTimer", lambda _: None)
+    monkeypatch.setattr(module.LogInterface, "_initOverlayMonitor", lambda _: None)
+    check_update = Mock()
+    check_announcement = Mock()
+    monkeypatch.setattr(module, "checkUpdate", check_update)
+    monkeypatch.setattr(module, "checkAnnouncement", check_announcement)
+    monkeypatch.setattr(module, "in_desktop_twin", lambda: twin)
+
+    window = module.MainWindow(start_minimized_to_tray=False)
+    qtbot.addWidget(window)
+    window.show()
+    qtbot.wait(30)
+
+    assert check_update.called is not twin
+    assert check_announcement.called is not twin
+
+
+def _make_twin_dialog(qtbot):
+    from PySide6.QtWidgets import QWidget
+    from app.tools import desktop_twin as ui
+    from utils.windows_session import SessionIdentity
+
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    dialog = ui.DesktopTwinDialog(parent, Mock())
+    dialog._test_parent = parent  # pytest-qt 只持有弱引用，这里保住父窗口
+
+    def detach(widget):
+        # 关闭窗口会按“注销分身”流程询问；测试结束时先解除会话状态
+        widget._session = None
+        widget._connected = False
+        widget._preview_paused = False
+
+    qtbot.addWidget(dialog, before_close_func=detach)
+    dialog._session = SessionIdentity(2, 200)
+    dialog._connected = True
+    dialog._rdp.suspend = Mock(return_value=True)
+    dialog._rdp.resume = Mock()
+    return ui, dialog
+
+
+def test_hide_pauses_preview_and_show_resumes(qtbot, monkeypatch):
+    ui, dialog = _make_twin_dialog(qtbot)
+    monkeypatch.setattr(ui, "read_active_run", lambda: None)
+    monkeypatch.setattr(ui, "session_exists", lambda _: True)
+
+    dialog.show()
+    dialog.hide()
+    qtbot.wait(20)
+
+    assert dialog._preview_paused
+    dialog._rdp.suspend.assert_called_once()
+
+    dialog.show()
+    qtbot.wait(20)
+
+    assert not dialog._preview_paused
+    dialog._rdp.resume.assert_called_once()
+
+
+def test_hide_keeps_preview_when_pause_disabled(qtbot, monkeypatch):
+    ui, dialog = _make_twin_dialog(qtbot)
+    monkeypatch.setattr(ui, "cfg", SimpleNamespace(get_value=lambda key, default=None: False))
+    monkeypatch.setattr(ui, "read_active_run", lambda: None)
+
+    dialog.show()
+    dialog.hide()
+    qtbot.wait(20)
+
+    assert not dialog._preview_paused
+    dialog._rdp.suspend.assert_not_called()
+
+
+def test_hide_keeps_preview_while_task_runs(qtbot, monkeypatch):
+    ui, dialog = _make_twin_dialog(qtbot)
+    monkeypatch.setattr(ui, "read_active_run", lambda: {"run_id": "20261118-000000-abcd"})
+    monkeypatch.setattr(ui, "session_exists", lambda _: True)
+
+    dialog.show()
+    dialog.hide()
+    qtbot.wait(20)
+
+    assert not dialog._preview_paused
+    dialog._rdp.suspend.assert_not_called()
+
+
+def test_paused_preview_resumes_when_task_starts(qtbot, monkeypatch):
+    ui, dialog = _make_twin_dialog(qtbot)
+    dialog._preview_paused = True
+    monkeypatch.setattr(ui, "read_active_run", lambda: {"run_id": "20261118-000000-abcd"})
+    monkeypatch.setattr(ui, "session_exists", lambda _: True)
+
+    dialog._poll()
+
+    assert not dialog._preview_paused
+    dialog._rdp.resume.assert_called_once()
+
+
+def test_paused_preview_ignores_disconnect_error(qtbot, monkeypatch):
+    ui, dialog = _make_twin_dialog(qtbot)
+    dialog._preview_paused = True
+    dialog._rdp._events.error = 2308
+    dialog._cancel_connection = Mock()
+    monkeypatch.setattr(ui, "read_active_run", lambda: None)
+    monkeypatch.setattr(ui, "session_exists", lambda _: True)
+
+    dialog._poll()
+
+    dialog._cancel_connection.assert_not_called()
+    assert dialog._preview_paused
+
+
+def test_pause_skipped_while_not_connected(qtbot, monkeypatch):
+    ui, dialog = _make_twin_dialog(qtbot)
+    dialog._connected = False
+    monkeypatch.setattr(ui, "read_active_run", lambda: None)
+
+    dialog.show()
+    dialog.hide()
+    qtbot.wait(20)
+
+    assert not dialog._preview_paused
+    dialog._rdp.suspend.assert_not_called()
+
+
+def test_hidden_preview_notifies_twin_to_idle_pause(qtbot, monkeypatch):
+    ui, dialog = _make_twin_dialog(qtbot)
+    monkeypatch.setattr(ui, "read_active_run", lambda: None)
+    monkeypatch.setattr(ui, "session_exists", lambda _: True)
+    contact = Mock(return_value=True)
+    dialog._contact_assistant = contact
+
+    dialog.show()
+    dialog.hide()
+    qtbot.wait(20)
+
+    contact.assert_any_call(b'{"action":"idle-pause"}')
+
+    dialog.show()
+    qtbot.wait(20)
+
+    contact.assert_any_call(b'{"action":"idle-resume"}')
+
+
+def test_hidden_preview_pauses_again_after_task_ends(qtbot, monkeypatch):
+    ui, dialog = _make_twin_dialog(qtbot)
+    monkeypatch.setattr(ui, "read_active_run", lambda: None)
+    monkeypatch.setattr(ui, "session_exists", lambda _: True)
+    dialog.show()
+    dialog.hide()
+    qtbot.wait(20)
+    assert dialog._preview_paused
+
+    # 模拟任务期间画面已恢复（任务运行时不停画面），任务结束后应重新暂停
+    dialog._preview_paused = False
+    dialog._rdp.suspend = Mock(return_value=True)
+    dialog._contact_assistant = Mock(return_value=True)
+
+    dialog._poll()
+
+    assert dialog._preview_paused
+    dialog._rdp.suspend.assert_called_once()
+    dialog._contact_assistant.assert_called_once_with(b'{"action":"idle-pause"}')
+
+
+def test_rdp_control_suspend_and_resume_toggle_client(qtbot):
+    from PySide6.QtWidgets import QWidget
+    from app.tools.rdp_control import RdpControl
+
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    control = RdpControl(parent)
+    assert control.suspend() is False  # 控件未连接
+
+    client = Mock()
+    client.Connected = True
+    control._client = client
+    control._events.logged_on = True
+    control._events.error = 2308
+
+    assert control.suspend() is True
+    client.Disconnect.assert_called_once()
+    assert control._events.logged_on is False
+    assert control._events.error is None
+
+    control.resume()
+    client.Connect.assert_called_once()

@@ -100,6 +100,7 @@ def _wait_for_local_foreground(controller, timeout):
 def _wait_for_local_window(controller, timeout):
     if getattr(auto.input_handler, "is_background", False) is not True:
         _wait_for_local_foreground(controller, timeout)
+        _lower_twin_game_priority(controller)
         return
     try:
         auto.input_handler.wait_for_window(min(WINDOW_WAIT_SECONDS, timeout))
@@ -110,6 +111,20 @@ def _wait_for_local_window(controller, timeout):
     except InputInterrupted as error:
         raise GameStartupUnavailable(f"游戏窗口持续不可用，已保留游戏现场：{error}") from error
     pause_ctl.checkpoint()
+    _lower_twin_game_priority(controller)
+
+
+def _lower_twin_game_priority(controller):
+    """桌面分身里把游戏进程降到低于正常优先级，减少与主桌面抢 CPU。"""
+    if not in_desktop_twin() or not cfg.get_value("desktop_twin_low_priority", True):
+        return
+    try:
+        from utils.twin_resource import lower_game_process_priority
+        lowered = lower_game_process_priority(getattr(controller, "process_name", ""))
+        if lowered:
+            log.debug(f"桌面分身：游戏进程已降为低于正常优先级（{lowered} 个）")
+    except Exception as error:
+        log.debug(f"桌面分身：调整游戏进程优先级失败：{error}")
 
 
 def prepare_local_takeover():

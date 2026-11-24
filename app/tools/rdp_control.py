@@ -156,6 +156,26 @@ class RdpControl(QWidget):
         apply_saved_credential(self._client)
         self._client.Connect()
 
+    def suspend(self):
+        """暂停画面传输：断开当前预览连接，分身会话本身保持运行。
+
+        返回是否真正执行了断开；控件未就绪或已经断开时返回 False。
+        """
+        if self._client is None or not self._client.Connected:
+            return False
+        self._client.Disconnect()
+        self._events.logged_on = False
+        self._events.error = None
+        return True
+
+    def resume(self):
+        """重新连接预览；会话状态由调用方继续用 _poll_connection 校验。"""
+        if self._client is None:
+            raise RuntimeError("分身画面控件未就绪")
+        self._events.logged_on = False
+        self._events.error = None
+        self._client.Connect()
+
     def dispose(self):
         try:
             if self._connection is not None:

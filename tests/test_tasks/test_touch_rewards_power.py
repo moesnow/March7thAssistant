@@ -392,7 +392,7 @@ def test_unreadable_ornament_stock_uses_power_and_keeps_running_the_plan(monkeyp
     monkeypatch.setattr(ornament, "_start_challenge", Mock(return_value=True))
 
     assert power.run()
-    assert recognition.call_count == (1 if ocr_error else 3)
+    assert recognition.call_count == (1 if ocr_error else 6)
     assert config.set_value.call_args_list == [call("power_plan", [next_item]), call("power_plan", [])]
 
 

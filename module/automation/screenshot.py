@@ -1,10 +1,38 @@
 import sys
+import threading
 
 from PIL import Image
 from .background_input import GameWindowLost
 from .windows_input import WindowsInputApi
 from module.config import cfg
 from module.config.platform import get_control_backend, get_ui_profile
+
+
+# mss 抓屏句柄按线程缓存：每次截图都新建 mss 会重复初始化 GDI 设备上下文。
+# mss 实例不是线程安全的，因此不能跨线程共享。
+_MSS_LOCAL = threading.local()
+
+
+def _mss_instance():
+    """返回当前线程复用的 mss 实例。"""
+    instance = getattr(_MSS_LOCAL, "instance", None)
+    if instance is None:
+        import mss
+        factory = getattr(mss, "MSS", None) or mss.mss
+        instance = factory()
+        _MSS_LOCAL.instance = instance
+    return instance
+
+
+def reset_mss_cache():
+    """释放当前线程缓存的 mss 实例（连接重建与测试使用）。"""
+    instance = getattr(_MSS_LOCAL, "instance", None)
+    if instance is None:
+        return
+    _MSS_LOCAL.instance = None
+    close = getattr(instance, "close", None)
+    if callable(close):
+        close()
 
 
 class Screenshot:
@@ -64,11 +92,13 @@ class Screenshot:
 
     @staticmethod
     def capture_screen_with_mss(region):
-        import mss
-
-        with mss.mss() as sct:
-            screenshot = sct.grab(region)
-            return Image.frombytes('RGB', screenshot.size, screenshot.rgb)
+        try:
+            screenshot = _mss_instance().grab(region)
+        except Exception:
+            # 缓存的实例可能在睡眠、切换会话或显示配置变化后失效，重建一次再试。
+            reset_mss_cache()
+            screenshot = _mss_instance().grab(region)
+        return Image.frombytes('RGB', screenshot.size, screenshot.rgb)
 
     @staticmethod
     def capture_window_background(hwnd, region, crop_params, offset=(0, 0)):
@@ -90,42 +120,51 @@ class Screenshot:
         hwndDC = win32gui.GetWindowDC(hwnd)
         mfcDC = win32ui.CreateDCFromHandle(hwndDC)
         saveDC = mfcDC.CreateCompatibleDC()
+        saveBitMap = None
+        bitmap_ready = False
+        try:
+            # 创建位图对象
+            saveBitMap = win32ui.CreateBitmap()
+            saveBitMap.CreateCompatibleBitmap(mfcDC, width, height)
+            bitmap_ready = True
+            saveDC.SelectObject(saveBitMap)
 
-        # 创建位图对象
-        saveBitMap = win32ui.CreateBitmap()
-        saveBitMap.CreateCompatibleBitmap(mfcDC, width, height)
-        saveDC.SelectObject(saveBitMap)
+            # 使用 PrintWindow 截取后台内容
+            win32gui.SendMessage(hwnd, win32con.WM_PAINT, 0, 0)  # 触发重绘
+            import ctypes
+            # 0	默认模式，抓取整个窗口（含边框）
+            # 1	只抓取客户区，不含标题栏
+            # 2	强制完整渲染（部分游戏需要这个标志）
+            # 3	强制渲染 + 只抓客户区
+            result = ctypes.windll.user32.PrintWindow(hwnd, saveDC.GetSafeHdc(), 3)
+            if result != 1:
+                return None  # 截图失败
 
-        # 使用 PrintWindow 截取后台内容
-        win32gui.SendMessage(hwnd, win32con.WM_PAINT, 0, 0)  # 触发重绘
-        import ctypes
-        # 0	默认模式，抓取整个窗口（含边框）
-        # 1	只抓取客户区，不含标题栏
-        # 2	强制完整渲染（部分游戏需要这个标志）
-        # 3	强制渲染 + 只抓客户区
-        result = ctypes.windll.user32.PrintWindow(hwnd, saveDC.GetSafeHdc(), 3)
+            # 转换为 PIL 图像
+            bmpinfo = saveBitMap.GetInfo()
+            bmpstr = saveBitMap.GetBitmapBits(True)
+            img = Image.frombuffer('RGB', (bmpinfo['bmWidth'], bmpinfo['bmHeight']), bmpstr, 'raw', 'BGRX', 0, 1)
 
-        # 转换为 PIL 图像
-        bmpinfo = saveBitMap.GetInfo()
-        bmpstr = saveBitMap.GetBitmapBits(True)
-        img = Image.frombuffer('RGB', (bmpinfo['bmWidth'], bmpinfo['bmHeight']), bmpstr, 'raw', 'BGRX', 0, 1)
+            # 执行原来的 crop 逻辑
+            crop_left = int(width * crop_params[0] + offset[0])
+            crop_top = int(height * crop_params[1] + offset[1])
+            crop_width = int(width * crop_params[2])
+            crop_height = int(height * crop_params[3])
 
-        # 清理内存
-        win32gui.DeleteObject(saveBitMap.GetHandle())
-        saveDC.DeleteDC()
-        mfcDC.DeleteDC()
-        win32gui.ReleaseDC(hwnd, hwndDC)
-
-        if result != 1:
-            return None  # 截图失败
-
-        # 执行原来的 crop 逻辑
-        crop_left = int(width * crop_params[0] + offset[0])
-        crop_top = int(height * crop_params[1] + offset[1])
-        crop_width = int(width * crop_params[2])
-        crop_height = int(height * crop_params[3])
-
-        return img.crop((crop_left, crop_top, crop_left + crop_width, crop_top + crop_height))
+            return img.crop((crop_left, crop_top, crop_left + crop_width, crop_top + crop_height))
+        finally:
+            # 位图与设备上下文必须无条件释放：截图失败或中途异常都不能漏 GDI 句柄。
+            try:
+                if bitmap_ready:
+                    win32gui.DeleteObject(saveBitMap.GetHandle())
+            finally:
+                try:
+                    saveDC.DeleteDC()
+                finally:
+                    try:
+                        mfcDC.DeleteDC()
+                    finally:
+                        win32gui.ReleaseDC(hwnd, hwndDC)
 
     @staticmethod
     def take_screenshot(title, crop=(0, 0, 1, 1), use_background_screenshot=None, prefer_frame_screenshot=True, require_background=None):

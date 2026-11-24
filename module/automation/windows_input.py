@@ -485,4 +485,8 @@ class WindowsInputApi:
 
     def scroll(self, direction, pause):
         import pyautogui
-        pyautogui.scroll(direction, _pause=pause)
+        # 本模块不依赖 pyautogui.PAUSE 的全局默认值（本地输入后端会把它设为 0），
+        # 后台滚轮需要时自行保留每格间隔。
+        pyautogui.scroll(direction, _pause=False)
+        if pause:
+            time.sleep(0.1)
