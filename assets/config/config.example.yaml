@@ -511,7 +511,7 @@ window_memory: size # 记忆窗口大小和位置，可选值："size"（记忆�
 
 # 窗口尺寸和位置设置（自动保存，一般无需手动修改）
 window_width: 1320 # 窗口宽度
-window_height: 640 # 窗口高度
+window_height: 758 # 窗口高度
 window_x: null # 窗口左上角 X 坐标
 window_y: null # 窗口左上角 Y 坐标
 window_maximized: false # 窗口是否最大化

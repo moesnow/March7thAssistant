@@ -232,7 +232,7 @@ def window_size_case(request, monkeypatch):
 
 
 @pytest.mark.parametrize('window_size_case', [
-    ('size', None, 640), ('size', 680, 680), ('none', None, 640),
+    ('size', None, 758), ('size', 640, 640), ('size', 680, 680), ('none', None, 640),
 ], indirect=True)
 def test_default_size_memory_and_navigation(window_size_case, window):
     assert window.height() == window_size_case

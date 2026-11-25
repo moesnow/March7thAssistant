@@ -290,11 +290,11 @@ def test_sidebar_search_text_is_never_cut(window):
     assert box.shownText() == "搜索"
 
 
-def test_default_window_size_is_the_minimum():
+def test_default_window_size_matches_config():
     from ruamel.yaml import YAML
-    from app.main_window import MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH
+    from app.main_window import DEFAULT_WINDOW_HEIGHT, MIN_WINDOW_WIDTH
     example = YAML(typ="safe").load(Path(cfg.example_path))
-    assert (example["window_width"], example["window_height"]) == (MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT)
+    assert (example["window_width"], example["window_height"]) == (MIN_WINDOW_WIDTH, DEFAULT_WINDOW_HEIGHT)
 
 
 @pytest.mark.parametrize("component", ["task", "accounts"])

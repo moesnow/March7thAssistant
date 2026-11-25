@@ -200,9 +200,10 @@ class EasterEggClickFilter(QObject):
         return super().eventFilter(obj, event)
 
 
-# 所有设置卡和任务卡都能完整显示的最小窗口尺寸，也是新安装的默认尺寸（见 config.example.yaml）。
+# 所有设置卡和任务卡都能完整显示的最小窗口尺寸。
 MIN_WINDOW_WIDTH = 1320
 MIN_WINDOW_HEIGHT = 640
+DEFAULT_WINDOW_HEIGHT = 758
 
 
 class NavIconDecoration(EveyControlDecoration):
@@ -341,7 +342,7 @@ class MainWindow(FluentWindow):
         # 从配置文件读取窗口尺寸，确保不低于最小值
         if window_memory in ('size', 'size_and_position'):
             saved_width = cfg.get_value('window_width', min_width)
-            saved_height = cfg.get_value('window_height', min_height)
+            saved_height = cfg.get_value('window_height', DEFAULT_WINDOW_HEIGHT)
             window_width = max(saved_width, min_width)
             window_height = max(saved_height, min_height)
             self.resize(window_width, window_height)
