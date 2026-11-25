@@ -691,7 +691,6 @@ class MessageBoxDate(MessageBox):
 class MessageBoxInstance(MessageBox):
     def __init__(self, title: str, content: dict, parent=None):
         super().__init__(title, "", parent)
-        self.content = content
 
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
@@ -726,7 +725,7 @@ class MessageBoxInstance(MessageBox):
                 comboBox.addItem(item_name)
                 item_list.append(item_name)
                 raw_type, raw_name = instance_display_to_raw(type, name)
-                if self.content[instance_display_to_raw(type)] == raw_name:
+                if content[instance_display_to_raw(type)] == raw_name:
                     comboBox.setCurrentText(item_name)
                     has_default = True
             if not has_default:
@@ -791,7 +790,6 @@ class MessageBoxInstance(MessageBox):
 class MessageBoxInstanceChallengeCount(MessageBox):
     def __init__(self, title: str, content: dict, parent=None):
         super().__init__(title, "", parent)
-        self.content = content
 
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
@@ -824,7 +822,7 @@ class MessageBoxInstanceChallengeCount(MessageBox):
 
             # 创建滑块组件
             sliderLayout = SliderWithSpinBox(1, count, 1, self)
-            sliderLayout.setValue(self.content[type])
+            sliderLayout.setValue(content[type])
             horizontalLayout.addLayout(sliderLayout)
             self.slider_dict[type] = sliderLayout
 
@@ -834,7 +832,6 @@ class MessageBoxInstanceChallengeCount(MessageBox):
 class MessageBoxNotifyTemplate(MessageBox):
     def __init__(self, title: str, content: dict, parent=None):
         super().__init__(title, "", parent)
-        self.content = content
 
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
@@ -849,7 +846,7 @@ class MessageBoxNotifyTemplate(MessageBox):
         self.textLayout.setSpacing(4)
 
         self.lineEdit_dict = {}
-        for id, template in self.content.items():
+        for id, template in content.items():
             lineEdit = LineEdit(self)
             lineEdit.setText(template.replace("\n", r"\n"))
             lineEdit.setFont(font)
@@ -866,9 +863,8 @@ class MessageBoxNotifyTemplate(MessageBox):
 
 
 class MessageBoxTeam(MessageBox):
-    def __init__(self, title: str, content: dict, template: dict, parent=None):
+    def __init__(self, title: str, content: list, template: dict, parent=None):
         super().__init__(title, "", parent)
-        self.content = content
 
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
@@ -899,14 +895,14 @@ class MessageBoxTeam(MessageBox):
             charComboBox = EditableComboBox()
             charComboBox.setMinimumWidth(130)
             charComboBox.addItems(self.template.values())
-            charComboBox.setCurrentText(self.template[self.content[i - 1][0]])
+            charComboBox.setCurrentText(self.template[content[i - 1][0]])
             setup_completer(charComboBox, list(self.template.values()))
             horizontalLayout.addWidget(charComboBox)
 
             techComboBox = ComboBox()
             techComboBox.setMinimumWidth(130)
             techComboBox.addItems(self.tech_map.values())
-            techComboBox.setCurrentText(self.tech_map[self.content[i - 1][1]])
+            techComboBox.setCurrentText(self.tech_map[content[i - 1][1]])
             horizontalLayout.addWidget(techComboBox)
 
             self.textLayout.addLayout(horizontalLayout)
@@ -970,9 +966,8 @@ class MessageBoxTeam(MessageBox):
 
 
 class MessageBoxFriends(MessageBox):
-    def __init__(self, title: str, content: dict, template: dict, parent=None):
+    def __init__(self, title: str, content: list, template: dict, parent=None):
         super().__init__(title, "", parent)
-        self.content = content
 
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
@@ -993,12 +988,12 @@ class MessageBoxFriends(MessageBox):
             charComboBox = EditableComboBox()
             charComboBox.setMaximumWidth(150)
             charComboBox.addItems(self.template.values())
-            charComboBox.setCurrentText(self.template[self.content[i - 1][0]])
+            charComboBox.setCurrentText(self.template[content[i - 1][0]])
             setup_completer(charComboBox, list(self.template.values()))
 
             nameLineEdit = LineEdit()
             nameLineEdit.setMaximumWidth(150)
-            nameLineEdit.setText(self.content[i - 1][1])
+            nameLineEdit.setText(content[i - 1][1])
 
             horizontalLayout = QHBoxLayout()
             horizontalLayout.addWidget(charComboBox)
@@ -1051,9 +1046,8 @@ class MessageBoxFriends(MessageBox):
 class MessageBoxPowerPlan(MessageBox):
     """体力计划配置对话框"""
 
-    def __init__(self, title: str, content: list, parent=None, keep_plan: bool = False, *, continue_after_plan: bool = True):
+    def __init__(self, title: str, content: list | None, parent=None, keep_plan: bool = False, *, continue_after_plan: bool = True):
         super().__init__(title, "", parent)
-        self.content = content if content else []
 
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
@@ -1096,7 +1090,7 @@ class MessageBoxPowerPlan(MessageBox):
         self.textLayout.addLayout(self.planLayout)
 
         # 根据已有内容添加计划行
-        for plan in self.content:
+        for plan in content or ():
             if (isinstance(plan, (list, tuple)) and len(plan) == 3
                     and isinstance(plan[0], str) and isinstance(plan[1], str)
                     and tr(plan[1]) in self._valid_instance_names(tr(plan[0]))

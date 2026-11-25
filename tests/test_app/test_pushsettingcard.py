@@ -1,7 +1,35 @@
 import sys
 import pytest
 
+from app.card import pushsettingcard1 as cards
 from app.card.pushsettingcard1 import get_key_from_value, PushSettingCardKey
+
+
+@pytest.mark.parametrize(("card_type", "key"), [
+    (cards.PushSettingCardInstance, "instance_names"),
+    (cards.PushSettingCardInstanceChallengeCount, "instance_names_challenge_count"),
+    (cards.PushSettingCardNotifyTemplate, "notify_template"),
+    (cards.PushSettingCardTeam, "daily_memory_one_team"),
+    (cards.PushSettingCardFriends, "borrow_friends"),
+    (cards.PushSettingCardPowerPlan, "power_plan"),
+])
+def test_settings_dialog_follows_window_resize(qtbot, monkeypatch, page_config, card_type, key):
+    from PySide6.QtWidgets import QWidget
+    from qfluentwidgets import FluentIcon, MessageBox
+
+    page_config()
+    window = QWidget()
+    qtbot.addWidget(window)
+    window.show()
+    card = card_type("修改", FluentIcon.EDIT, key, key, window)
+    monkeypatch.setattr(MessageBox, "exec", MessageBox.show)
+    card.button.click()
+    dialog = window.findChild(MessageBox)
+    assert dialog.isVisible()
+
+    window.resize(1024, 768)
+    assert dialog.size() == window.size()
+    assert dialog.contentLabel.text() == ""
 
 
 def test_power_plan_preserves_yaml_integer_counts_and_uneditable_rows(qtbot):
