@@ -1,5 +1,7 @@
 import re
 
+import pytest
+
 import build
 
 # 已发布旧版客户端内置的推广块清理正则（按文案 + \r\n\r\n 锚点匹配）。
@@ -11,12 +13,21 @@ _LEGACY_PROMO_RE = re.compile(
 
 
 class TestGenerateChangelog:
-    def _generate(self, tmp_path, monkeypatch):
+    def _generate(self, tmp_path, monkeypatch, version="v0.0.0"):
         monkeypatch.setattr(build, "get_changelog", lambda version: "- 更新内容")
         out = tmp_path / "changelog.md"
-        build.generate_changelog("v0.0.0", out)
+        build.generate_changelog(version, out)
         # 模拟 GitHub API 的换行归一化
         return out.read_text(encoding="utf-8").replace("\n", "\r\n")
+
+    @pytest.mark.parametrize(("version", "channel"), [
+        ("v0.0.0", "stable"),
+        ("v0.0.0-beta", "beta"),
+        ("v0.0.0-beta2", "beta"),
+    ])
+    def test_mirrorchyan_link_uses_release_channel(self, tmp_path, monkeypatch, version, channel):
+        body = self._generate(tmp_path, monkeypatch, version)
+        assert f"&channel={channel}&" in body
 
     def test_promo_block_wrapped_in_hidden_markers(self, tmp_path, monkeypatch):
         body = self._generate(tmp_path, monkeypatch)

@@ -29,6 +29,7 @@ def generate_changelog(version: str, output_file: Path) -> None:
     """生成并输出日志内容"""
     log.info(f"[*] 生成版本 {version} 的日志内容...")
     log_content = get_changelog(version)
+    mirror_channel = "beta" if "beta" in version.lower() else "stable"
 
     # 生成最终内容
     # 推广块用 m7a:hide 标记包裹，GitHub 网页照常展示，应用内更新弹窗整块剥离。
@@ -36,7 +37,7 @@ def generate_changelog(version: str, output_file: Path) -> None:
     # 已发布的旧版客户端按 \r\n\r\n 锚点清理推广块，需保持该形状以兼容。
     final_output = f"""{log_content}<!-- m7a:hide -->
 
-[已有 Mirror酱 CDK？前往 Mirror酱 高速下载](https://mirrorchyan.com/zh/download?rid=March7thAssistant&os=&arch=&channel=stable&source=m7a-release)
+[已有 Mirror酱 CDK？前往 Mirror酱 高速下载](https://mirrorchyan.com/zh/download?rid=March7thAssistant&os=&arch=&channel={mirror_channel}&source=m7a-release)
 <!-- /m7a:hide -->"""
 
     output_file.write_text(final_output, encoding="utf-8")
