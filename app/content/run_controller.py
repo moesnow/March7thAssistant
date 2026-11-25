@@ -759,6 +759,7 @@ class RunController(QObject):
             now = QDateTime.currentDateTime()
         self.scheduleChanged.emit()
 
+        taken = None  # 这一分钟已经启动或排队的计划
         for task in tasks:
             if not task.get('enabled', True) or task_trigger_mode(task) != 'time':
                 continue
@@ -770,6 +771,9 @@ class RunController(QObject):
                 continue
             if task_id:
                 self._last_triggered_ts[task_id] = slot
+            if taken is not None:
+                self.appendLog(f"计划「{task.get('name', '未命名')}」和「{taken.get('name', '未命名')}」时间相同，没有启动\n")
+                continue
             task_dict = self._buildScheduledTaskPayload(task)
             if self.isTaskRunning() and (reason := self._launch_problem(task_dict)):
                 self._reportBlockedTaskLaunch(reason)
@@ -805,10 +809,11 @@ class RunController(QObject):
                         self._pending_start_task_after_stop = None
                         self._suppress_chain_continuation_once = False
                         self.appendLog(f"停止当前任务失败: {error}\n")
-                    return
+                    taken = task
+                    continue
             try:
                 self.runScheduledTask(task, tasks=tasks, manual=False)
-                return
+                taken = task
             except Exception as error:
                 self.appendLog(f"启动任务失败: {error}\n")
 

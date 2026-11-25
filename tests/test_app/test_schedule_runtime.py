@@ -127,6 +127,22 @@ def test_conflict_policy_is_preserved(schedule_runtime, monkeypatch, conflict_mo
     assert schedule_runtime.stopTask.called == (conflict_mode == 'stop')
 
 
+@pytest.mark.parametrize('running', [False, True])
+def test_second_plan_of_the_same_minute_is_logged_once(schedule_runtime, schedule_clock, running):
+    schedule_runtime.settings.update(scheduled_on_conflict='stop', scheduled_tasks=[
+        scheduled_task('off', enabled=False), scheduled_task('first'), scheduled_task('second', time='04:00:05'),
+        scheduled_task('child', trigger_mode='chain'), scheduled_task('later', time='05:00')])
+    schedule_runtime.stopTask = Mock()
+    if running:
+        schedule_runtime.process = SimpleNamespace(state=lambda: QProcess.Running)
+    schedule_runtime._checkScheduledTime()
+    schedule_runtime._checkScheduledTime()
+    assert schedule_runtime.startTask.call_count == (not running) and schedule_runtime.stopTask.call_count == running
+    assert [line for line in schedule_runtime.logs if '时间相同' in line] == ['计划「second」和「first」时间相同，没有启动\n']
+    if running:
+        assert schedule_runtime._pending_start_task_after_stop[0]['id'] == 'first'
+
+
 def test_unsupported_timed_task_cannot_stop_active_task(schedule_runtime, schedule_clock):
     blocked = scheduled_task(args='currencywars', kill_processes=['game.exe'], post_action='Shutdown')
     old = scheduled_task('old')

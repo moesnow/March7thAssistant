@@ -12377,3 +12377,7 @@ msgstr ""
 #: app/overview/cards.py:471
 msgid "当前连接方式没有可用的快捷启动"
 msgstr ""
+
+#: app/content/run_models.py:377
+msgid "复制定时计划"
+msgstr ""

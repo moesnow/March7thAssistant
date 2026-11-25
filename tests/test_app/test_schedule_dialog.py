@@ -136,6 +136,12 @@ def test_schedule_page_refresh_reuses_rows_without_saving(qtbot, monkeypatch):
     assert page.rows == rows
     item = model.items()[1]
     assert item.name == "edited" and not item.enabled and schedule_dialog.format_task_weekdays(tasks[1]) in item.detail
+    menus = []
+    monkeypatch.setattr("app.run.schedule.popup_menu", lambda page, menu, position: menus.append(menu))
+    model.duplicate = Mock()
+    page._menu("1", rows[1][0].moreButton)
+    next(action for action in menus[0].actions() if action.text() == schedule_dialog.tr("复制一份")).trigger()
+    model.duplicate.assert_called_once_with("1", parent)
     save.assert_not_called()
 
 

@@ -418,7 +418,7 @@ class SchedulePage(QWidget):
         down.setEnabled(self.model.can_move(item_id, 1))
         menu.addAction(up)
         menu.addAction(down)
-        menu.addAction(Action(FluentIcon.COPY, tr("复制一份"), triggered=lambda: self.model.duplicate(item_id)))
+        menu.addAction(Action(FluentIcon.COPY, tr("复制一份"), triggered=lambda: self.model.duplicate(item_id, self.window())))
         menu.addSeparator()
         menu.addAction(Action(FluentIcon.DELETE, tr("删除…"), triggered=lambda: self._remove(item_id)))
         popup_menu(self, menu, button.mapToGlobal(button.rect().bottomLeft()))

@@ -12594,3 +12594,7 @@ msgstr "中途接管"
 #: app/overview/cards.py:471
 msgid "当前连接方式没有可用的快捷启动"
 msgstr "目前的連線方式沒有可用的快速啟動"
+
+#: app/content/run_models.py:377
+msgid "复制定时计划"
+msgstr "複製定時計畫"

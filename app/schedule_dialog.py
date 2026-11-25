@@ -107,9 +107,9 @@ except Exception:
 class AddEditScheduleDialog(MessageBox):
     """基于 MessageBox 的添加/编辑定时任务弹窗"""
 
-    def __init__(self, parent=None, task=None, scheduled_tasks=None):
+    def __init__(self, parent=None, task=None, scheduled_tasks=None, title=None):
         # 使用 MessageBox 的风格初始化（不显示默认内容）
-        super().__init__(tr("编辑定时计划") if task else tr("添加定时计划"), "", parent)
+        super().__init__(title or (tr("编辑定时计划") if task else tr("添加定时计划")), "", parent)
         self.task = deepcopy(task) if task else {}
         self._editing_task = task
         self._timeout_edited = False

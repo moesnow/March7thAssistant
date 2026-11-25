@@ -354,13 +354,30 @@ class ScheduleModel(QObject):
             tasks.insert(i + delta, tasks.pop(i))
             self.controller._saveScheduledTasks(tasks)
 
-    def duplicate(self, item_id):
+    @staticmethod
+    def _copy_index(tasks, i, copy):
+        """副本放在原计划和它的链式任务之后，不截断原来的链。链式任务的链式副本紧跟在它后面。"""
+        if i < 0:
+            return len(tasks)
+        end = i + 1
+        if not (task_trigger_mode(tasks[i]) == task_trigger_mode(copy) == "chain"):
+            while end < len(tasks) and task_trigger_mode(tasks[end]) == "chain":
+                end += 1
+        return end
+
+    def duplicate(self, item_id, window):
+        """打开填好同样内容的编辑窗口，确认后才新增。"""
+        from app.schedule_dialog import AddEditScheduleDialog
         tasks = self._tasks()
         i = self._index(tasks, item_id)
-        if i >= 0:
-            item = deepcopy(tasks[i])
-            item.update(id=str(uuid.uuid4()), name=tr("{name}（副本）").format(name=self._name(item)))
-            tasks.insert(i+1, item)
+        if i < 0:
+            return
+        copy = deepcopy(tasks[i])
+        copy.update(id=str(uuid.uuid4()), name=tr("{name}（副本）").format(name=self._name(copy)))
+        dialog = AddEditScheduleDialog(window, copy, scheduled_tasks=tasks, title=tr("复制定时计划"))
+        if dialog.exec():
+            copy, tasks = dialog.get_task(), self._tasks()
+            tasks.insert(self._copy_index(tasks, self._index(tasks, item_id), copy), copy)
             self.controller._saveScheduledTasks(tasks)
 
     def remove(self, item_id):

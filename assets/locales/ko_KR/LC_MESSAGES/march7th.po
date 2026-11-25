@@ -12688,3 +12688,7 @@ msgstr "중간 인수"
 #: app/overview/cards.py:471
 msgid "当前连接方式没有可用的快捷启动"
 msgstr "현재 연결에서 쓸 수 있는 바로가기가 없습니다"
+
+#: app/content/run_models.py:377
+msgid "复制定时计划"
+msgstr "일정 복제"

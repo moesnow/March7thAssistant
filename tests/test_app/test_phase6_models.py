@@ -189,8 +189,9 @@ def test_schedule_account_parameters_order_and_per_account_timeout(host, monkeyp
     args = module.QProcess.start.call_args.args[-1]
     assert args[args.index("--account")+1] == "all" and args[args.index("--account-timeout")+1] == "5400"
     assert timer.call_args.args[-1] == 0
-    model.duplicate("b")
-    assert len(model.items()) == 3 and model.items()[2].id != "b"
+    monkeypatch.setattr("app.schedule_dialog.AddEditScheduleDialog.exec", lambda self: True)
+    model.duplicate("b", host)
+    assert len(model.items()) == 3 and model.items()[2].id != "b" and model.items()[2].account_text == "虚构乙"
     model.move("b", -1)
     assert model.items()[0].id == "b"
     model.set_enabled("b", False)
@@ -200,6 +201,63 @@ def test_schedule_account_parameters_order_and_per_account_timeout(host, monkeyp
     assert host.accountModel.set_enabled(False).ok
     assert model.items()[-1].account_problem
     assert not c.runScheduledTask(tasks[1], manual=True)
+
+
+@pytest.mark.parametrize(("source", "mode", "order"), [
+    ("a", None, ["a", "b", "c", "copy", "d"]), ("a", "chain", ["a", "b", "c", "copy", "d"]),
+    ("b", None, ["a", "b", "copy", "c", "d"]), ("b", "time", ["a", "b", "c", "copy", "d"]),
+    ("d", None, ["a", "b", "c", "d", "copy"]), ("gone", None, ["a", "b", "c", "d", "copy"]),
+])
+def test_copied_schedule_is_confirmed_first_and_never_cuts_a_chain(host, monkeypatch, source, mode, order):
+    from PySide6.QtCore import QTime
+    from app import schedule_dialog
+    from module.config import cfg
+    model = host.scheduleModel
+    tasks = [{"id": "a", "name": "计划甲", "program": "self", "args": "main", "time": "04:10", "timeout": 90},
+             {"id": "b", "name": "计划乙", "program": "self", "args": "fight", "trigger_mode": "chain"},
+             {"id": "c", "name": "计划丙", "program": "self", "args": "divergent", "trigger_mode": "chain", "enabled": False},
+             {"id": "d", "name": "计划丁", "program": "self", "args": "daily", "time": "05:00"}]
+    cfg.set_value("scheduled_tasks", tasks)
+    original = next((task for task in tasks if task["id"] == source), tasks[3])
+    item_id = original["id"]
+    Dialog = schedule_dialog.AddEditScheduleDialog
+    accept, message = Mock(), Mock(return_value=Mock())
+    monkeypatch.setattr(Dialog.__mro__[1], "accept", accept)
+    monkeypatch.setattr(schedule_dialog, "MessageBox", message)
+    titles = []
+
+    def answer(dialog, change):
+        titles.append((dialog.titleLabel.text(), dialog.name_edit.text()))
+        change(dialog)
+        dialog.accept()
+        return accept.called
+
+    # 取消，或按时计划没改时间就确认，都不会新增
+    monkeypatch.setattr(Dialog, "exec", lambda dialog: False)
+    model.duplicate(item_id, host)
+    if original.get("trigger_mode") != "chain":
+        monkeypatch.setattr(Dialog, "exec", lambda dialog: answer(dialog, lambda _: None))
+        model.duplicate(item_id, host)
+        assert original["name"] in message.call_args.args[1] and original["time"] in message.call_args.args[1]
+    assert model._tasks() == tasks and not accept.called
+
+    def change(dialog):
+        dialog.time_picker.setTime(QTime(6, 30))
+        if mode:
+            dialog._set_trigger_mode(mode)
+        if source == "gone":
+            model.remove(item_id)
+            tasks.remove(original)
+            order.remove("d")
+    monkeypatch.setattr(Dialog, "exec", lambda dialog: answer(dialog, change))
+    model.duplicate(item_id, host)
+    saved = model._tasks()
+    assert ["copy" if task["id"] not in "abcd" else task["id"] for task in saved] == order
+    copy = saved.pop(order.index("copy"))
+    assert saved == tasks
+    assert (copy["name"], copy["time"], copy["args"]) == (f"{original['name']}（副本）", "06:30", original["args"])
+    assert copy["timeout"] == original.get("timeout", 0) and copy["enabled"]
+    assert set(titles) == {("复制定时计划", copy["name"])}
 
 
 @pytest.mark.parametrize("finished_in_wait", [False, True])
