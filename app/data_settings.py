@@ -32,7 +32,7 @@ def show_migration(window, result):
         bar = InfoBar.success(tr("数据已移到 userdata 文件夹"),
                               tr("设置、账号、流程编排和记录现在都保存在这个文件夹里，迁移前的副本在 userdata\\backup。"), **options)
         button = PushButton(tr("打开文件夹"), bar)
-        button.clicked.connect(lambda: open_data(parent.window()))
+        button.clicked.connect(lambda: open_data(window))
         bar.addWidget(button)
         bar.adjustSize()
     elif status == "pending":

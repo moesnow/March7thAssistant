@@ -1,11 +1,12 @@
 import os
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import Mock
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt, QUrl
+from PySide6.QtGui import QDesktopServices, QIcon
 from PySide6.QtWidgets import QApplication
-from qfluentwidgets import FluentIcon, FluentWindow, Theme, qconfig, setTheme, setThemeColor
+from qfluentwidgets import FluentIcon, FluentWindow, PushButton, Theme, qconfig, setTheme, setThemeColor
 
 from app.common.design_tokens import MARCH7TH_PINK
 
@@ -70,6 +71,10 @@ def test_settings_and_migration_notices(qtbot, tmp_path, monkeypatch):
         qtbot.wait(400)
         assert bar.isVisible()
         assert window.grab().save(str(output / "迁移成功提示.png"))
+        open_url = Mock(return_value=True)
+        monkeypatch.setattr(QDesktopServices, "openUrl", open_url)
+        qtbot.mouseClick(bar.findChild(PushButton), Qt.MouseButton.LeftButton)
+        open_url.assert_called_once_with(QUrl.fromLocalFile(str(install / paths.USERDATA)))
         bar.close()
         failed = tmp_path / "old"
         failed.mkdir()
@@ -90,7 +95,6 @@ def test_settings_and_migration_notices(qtbot, tmp_path, monkeypatch):
 
 
 def test_data_card_buttons_use_selected_files(qtbot, tmp_path, monkeypatch):
-    from unittest.mock import Mock
     from PySide6.QtWidgets import QWidget
     from app import data_settings
     from module.config import cfg
