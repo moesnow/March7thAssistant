@@ -1,6 +1,5 @@
 """Exercise the Easter egg and theme preferences through the real window."""
 import sys
-from copy import deepcopy
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -496,8 +495,8 @@ def test_custom_background_and_shortcut_survive_language_and_evernight(window, q
     custom.fill(Qt.GlobalColor.blue)
     path = str(tmp_path / "my-picture.png")
     assert custom.save(path)
-    legacy = [{"title": "我的运行按钮", "icon": path, "task_id": "main", "action_type": "single"}]
-    cfg.config.update(home_cards=deepcopy(legacy), overview_shortcuts=None, banner_path=path)
+    shortcuts = [{"id": "main", "name": "我的运行按钮", "icon": "FIF.PLAY"}]
+    cfg.config.update(overview_shortcuts=shortcuts, banner_path=path)
     monkeypatch.setattr(cfg, 'set_value', Mock(side_effect=lambda key, value: cfg.config.__setitem__(key, value)))
     page = window.homeInterface
     page.model.refresh()
@@ -513,9 +512,9 @@ def test_custom_background_and_shortcut_survive_language_and_evernight(window, q
         assert page.greeting._mode() == theme
         assert page.greeting._background.pixelColor(0, 0).blue() == 255
         button, = page.shortcutsCard._buttons
-        assert button.text() == '我的运行按钮' and button.icon().pixmap(16, 16).toImage().pixelColor(8, 8).blue() == 255
-    assert cfg.config['home_cards'] == legacy
-    assert not any(c.args[0] in ('banner_path', 'home_cards', 'overview_shortcuts') for c in cfg.set_value.call_args_list)
+        assert button.text() == '我的运行按钮' and not button.icon().isNull()
+    assert cfg.config['overview_shortcuts'] == shortcuts
+    assert not any(c.args[0] in ('banner_path', 'overview_shortcuts') for c in cfg.set_value.call_args_list)
 
 
 def test_floating_sprite_is_transparent_moves_and_releases_itself(qtbot):

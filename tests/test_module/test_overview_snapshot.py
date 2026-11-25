@@ -137,6 +137,19 @@ def test_each_check_and_isolated_failure():
     assert snapshot.daily and snapshot.weekly and snapshot.greeting
 
 
+@pytest.mark.parametrize("backend,saved,shown,hidden", [
+    ("local", None, 4, False), ("adb", None, 2, False), ("nonsense", None, 0, True),
+    ("adb", [{"id": "currencywars"}], 0, True), ("local", [{"id": "currencywars"}], 1, False),
+    ("nonsense", [], 0, False), ("nonsense", [{"id": "menu", "name": "空菜单", "menu": []}], 0, False),
+])
+def test_shortcuts_hidden_by_the_connection_are_not_reported_as_missing(backend, saved, shown, hidden):
+    cfg = _Config(**YAML(typ="safe").load(Path("assets/config/config.example.yaml")))
+    cfg.control_backend, cfg.overview_shortcuts = backend, saved
+    snapshot = build_snapshot(cfg, now=datetime(2026, 11, 23, 13), is_file=lambda _: False,
+                              connection=("local", False, None), history_reader=lambda _: history.History())
+    assert (len(snapshot.shortcuts), snapshot.shortcuts_hidden, snapshot.unavailable) == (shown, hidden, ())
+
+
 def test_recording_does_not_change_action_result(monkeypatch):
     session = runs.RunSession({"run_id": "20261123-100000-abcd"})
     monkeypatch.setattr(runs, "_current_session", session)

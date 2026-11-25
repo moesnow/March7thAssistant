@@ -125,7 +125,6 @@ class Shortcut:
     id: str
     name: str
     icon: str
-    image: str | None = None
     menu: tuple[ShortcutAction, ...] = ()
 
 
@@ -144,3 +143,4 @@ class OverviewSnapshot:
     background: str
     show_mascot: bool
     unavailable: tuple[str, ...]
+    shortcuts_hidden: bool = False  # 有快捷启动，但当前连接方式都不支持

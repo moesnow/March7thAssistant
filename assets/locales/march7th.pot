@@ -882,7 +882,7 @@ msgstr ""
 msgid "三月七小助手"
 msgstr ""
 
-#: app/overview/shortcut_dialog.py:70
+#: app/content/settings/appearance.py:19
 msgid "选择图片"
 msgstr ""
 
@@ -4831,7 +4831,7 @@ msgstr ""
 msgid "切换界面"
 msgstr ""
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "原版运行"
 msgstr ""
 
@@ -4855,51 +4855,51 @@ msgstr ""
 msgid "差分宇宙循环"
 msgstr ""
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "差分宇宙循环运行 ⭐"
 msgstr ""
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "差分宇宙运行一次 ⭐"
 msgstr ""
 
-#: module/overview/legacy_cards.py:19
+#: module/overview/labels.py:10
 msgid "循环运行"
 msgstr ""
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "快速启动 ⭐"
 msgstr ""
 
-#: module/overview/legacy_cards.py:6
+#: module/overview/shortcuts.py:12
 msgid "打开模拟宇宙目录"
 msgstr ""
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "打开模拟宇宙目录（停止维护）"
 msgstr ""
 
-#: module/overview/legacy_cards.py:6
+#: module/overview/shortcuts.py:12
 msgid "打开模拟宇宙项目主页"
 msgstr ""
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "打开模拟宇宙项目主页（停止维护）"
 msgstr ""
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "打开程序目录"
 msgstr ""
 
-#: module/overview/legacy_cards.py:6
+#: module/overview/shortcuts.py:12
 msgid "打开锄大地程序目录"
 msgstr ""
 
-#: module/overview/legacy_cards.py:6
+#: module/overview/shortcuts.py:12
 msgid "打开锄大地项目主页"
 msgstr ""
 
-#: module/overview/legacy_cards.py:19
+#: module/search/setting_text.py:3
 msgid "打开项目主页"
 msgstr ""
 
@@ -4923,7 +4923,7 @@ msgstr ""
 msgid "更新三月七小助手"
 msgstr ""
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "更新模拟宇宙（停止维护）"
 msgstr ""
 
@@ -4931,7 +4931,7 @@ msgstr ""
 msgid "更新游戏"
 msgstr ""
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "更新锄大地"
 msgstr ""
 
@@ -4951,7 +4951,7 @@ msgstr ""
 msgid "查找文字"
 msgstr ""
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "模拟宇宙原版运行（停止维护）"
 msgstr ""
 
@@ -4959,7 +4959,7 @@ msgstr ""
 msgid "模拟宇宙原生界面"
 msgstr ""
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "模拟宇宙快速启动（停止维护）"
 msgstr ""
 
@@ -5023,15 +5023,15 @@ msgstr ""
 msgid "货币战争循环"
 msgstr ""
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "运行一次"
 msgstr ""
 
-#: module/overview/legacy_cards.py:6
+#: module/overview/shortcuts.py:12
 msgid "重置模拟宇宙配置文件"
 msgstr ""
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "重置模拟宇宙配置文件（停止维护）"
 msgstr ""
 
@@ -5039,7 +5039,7 @@ msgstr ""
 msgid "重置配置文件"
 msgstr ""
 
-#: module/overview/legacy_cards.py:6
+#: module/overview/shortcuts.py:12
 msgid "重置锄大地配置文件"
 msgstr ""
 
@@ -8446,16 +8446,8 @@ msgstr ""
 msgid "星星"
 msgstr ""
 
-#: app/overview/shortcut_dialog.py:72
-msgid "清除图片"
-msgstr ""
-
 #: app/overview/shortcut_dialog.py:38
 msgid "编辑快捷启动"
-msgstr ""
-
-#: app/overview/shortcut_dialog.py:80
-msgid "自选图片"
 msgstr ""
 
 #: app/overview/style.py:104
@@ -12376,4 +12368,12 @@ msgstr ""
 
 #: module/search/setting_text.py:3
 msgid "按列表里的副本和次数刷，排在培养目标和默认副本前面"
+msgstr ""
+
+#: module/overview/shortcuts.py:23
+msgid "中途接管"
+msgstr ""
+
+#: app/overview/cards.py:471
+msgid "当前连接方式没有可用的快捷启动"
 msgstr ""

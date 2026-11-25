@@ -120,8 +120,7 @@ class OverviewModel(QObject):
         return True
 
     def launch_shortcut(self, action_id):
-        from module.overview.legacy_cards import HOME_EXTRA_TASKS
-        from module.overview.shortcuts import available_actions
+        from module.overview.shortcuts import HOME_EXTRA_TASKS, available_actions
         if action_id not in available_actions(self.config) or getattr(self.window, "_desktop_twin_hosting", False):
             return False
         if action_id == "autoplot":

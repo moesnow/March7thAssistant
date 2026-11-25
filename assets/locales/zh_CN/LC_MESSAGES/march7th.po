@@ -1119,30 +1119,30 @@ msgstr "恢复默认图片"
 msgid "三月七小助手"
 msgstr "三月七小助手"
 
-#: app/overview/shortcut_dialog.py:70
+#: app/content/settings/appearance.py:19
 msgid "选择图片"
 msgstr "选择图片"
 
 msgid "任务 >"
 msgstr "任务 >"
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "运行一次"
 msgstr "运行一次"
 
-#: module/overview/legacy_cards.py:19
+#: module/overview/labels.py:10
 msgid "循环运行"
 msgstr "循环运行"
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "快速启动 ⭐"
 msgstr "快速启动 ⭐"
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "原版运行"
 msgstr "原版运行"
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "更新锄大地"
 msgstr "更新锄大地"
 
@@ -1150,11 +1150,11 @@ msgstr "更新锄大地"
 msgid "重置配置文件"
 msgstr "重置配置文件"
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "打开程序目录"
 msgstr "打开程序目录"
 
-#: module/overview/legacy_cards.py:19
+#: module/search/setting_text.py:3
 msgid "打开项目主页"
 msgstr "打开项目主页"
 
@@ -3781,35 +3781,35 @@ msgstr "差分宇宙循环"
 msgid "差分宇宙中途接管"
 msgstr "差分宇宙中途接管"
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "差分宇宙运行一次 ⭐"
 msgstr "差分宇宙运行一次 ⭐"
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "差分宇宙循环运行 ⭐"
 msgstr "差分宇宙循环运行 ⭐"
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "模拟宇宙快速启动（停止维护）"
 msgstr "模拟宇宙快速启动（停止维护）"
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "模拟宇宙原版运行（停止维护）"
 msgstr "模拟宇宙原版运行（停止维护）"
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "更新模拟宇宙（停止维护）"
 msgstr "更新模拟宇宙（停止维护）"
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "重置模拟宇宙配置文件（停止维护）"
 msgstr "重置模拟宇宙配置文件（停止维护）"
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "打开模拟宇宙目录（停止维护）"
 msgstr "打开模拟宇宙目录（停止维护）"
 
-#: module/overview/legacy_cards.py:19
+#: module/task_catalog.py:40
 msgid "打开模拟宇宙项目主页（停止维护）"
 msgstr "打开模拟宇宙项目主页（停止维护）"
 
@@ -3897,27 +3897,27 @@ msgstr "零号 / 千星"
 msgid "鎏金追忆"
 msgstr "鎏金追忆"
 
-#: module/overview/legacy_cards.py:6
+#: module/overview/shortcuts.py:12
 msgid "重置模拟宇宙配置文件"
 msgstr "重置模拟宇宙配置文件"
 
-#: module/overview/legacy_cards.py:6
+#: module/overview/shortcuts.py:12
 msgid "打开模拟宇宙目录"
 msgstr "打开模拟宇宙目录"
 
-#: module/overview/legacy_cards.py:6
+#: module/overview/shortcuts.py:12
 msgid "打开模拟宇宙项目主页"
 msgstr "打开模拟宇宙项目主页"
 
-#: module/overview/legacy_cards.py:6
+#: module/overview/shortcuts.py:12
 msgid "重置锄大地配置文件"
 msgstr "重置锄大地配置文件"
 
-#: module/overview/legacy_cards.py:6
+#: module/overview/shortcuts.py:12
 msgid "打开锄大地程序目录"
 msgstr "打开锄大地程序目录"
 
-#: module/overview/legacy_cards.py:6
+#: module/overview/shortcuts.py:12
 msgid "打开锄大地项目主页"
 msgstr "打开锄大地项目主页"
 
@@ -8669,17 +8669,9 @@ msgstr "列表"
 msgid "星星"
 msgstr "星星"
 
-#: app/overview/shortcut_dialog.py:72
-msgid "清除图片"
-msgstr "清除图片"
-
 #: app/overview/shortcut_dialog.py:38
 msgid "编辑快捷启动"
 msgstr "编辑快捷启动"
-
-#: app/overview/shortcut_dialog.py:80
-msgid "自选图片"
-msgstr "自选图片"
 
 #: app/overview/style.py:104
 msgid "不到 1 分钟"
@@ -12593,3 +12585,11 @@ msgstr "按体力计划、培养目标、默认副本的顺序消耗开拓力。
 #: module/search/setting_text.py:3
 msgid "按列表里的副本和次数刷，排在培养目标和默认副本前面"
 msgstr "按列表里的副本和次数刷，排在培养目标和默认副本前面"
+
+#: module/overview/shortcuts.py:23
+msgid "中途接管"
+msgstr "中途接管"
+
+#: app/overview/cards.py:471
+msgid "当前连接方式没有可用的快捷启动"
+msgstr "当前连接方式没有可用的快捷启动"

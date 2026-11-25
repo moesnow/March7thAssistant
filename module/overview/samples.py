@@ -1,5 +1,4 @@
 """使用发行模板和内存数据的离屏示例，不连接游戏或读取用户目录。"""
-from dataclasses import replace
 from datetime import datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
@@ -11,7 +10,7 @@ from .history import History
 from .cards import preview
 from .plan import STEP_NAMES, STEPS
 from .snapshot import build_snapshot
-from .shortcuts import defaults
+from .shortcuts import ACTIONS, display_shortcuts
 from .types import LiveRun, RunInfo, StepResult
 
 
@@ -62,9 +61,9 @@ def sample_snapshot(state: str, *, now=None):
     last = RunInfo(run_id, "main", tr("完整运行"), start, end, (end - start).total_seconds(), "scheduled", result,
                    tuple(items), tr("连续几次未能识别副本结算画面，已保存日志供检查。") if state == "failed" else None, f"run:{run_id}")
     live = LiveRun("main", tr("完整运行"), "execute", "power", True, True, started_at=now - timedelta(minutes=22)) if state == "running" else None
-    example_shortcuts = tuple(replace(item, name=tr(item.name)) for item in defaults())
     if state == "running":
         config.scheduled_tasks[0]["name"] = tr("完整运行后检查每周积分奖励与日常领取情况")
     return build_snapshot(config, now=now, live=live, connection=("local", False, None),
                           history_reader=lambda _: History(None if state == "setup" else last, last if state == "completed" else None),
-                          is_file=lambda _: state != "setup", shortcuts_reader=lambda _: example_shortcuts)
+                          is_file=lambda _: state != "setup",
+                          shortcuts_reader=lambda cfg: display_shortcuts(cfg, choices=ACTIONS))

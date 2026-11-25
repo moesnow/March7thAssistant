@@ -5,7 +5,7 @@ from pathlib import Path
 from module.localization import tr
 from . import cards, plan
 from .history import game_day, read_history
-from .shortcuts import display_shortcuts
+from .shortcuts import display_shortcuts, load_shortcuts
 from .readings import daily_training, power_reading
 from .types import Button, Greeting, OverviewSnapshot
 
@@ -136,7 +136,9 @@ def build_snapshot(config, *, now=None, live=None, history_reader=read_history, 
     checks = block("checks", lambda: cards.checks(config, now, setup, backend, history.last if history else None,
                                                 schedule, schedule_available="schedule" not in unavailable))
     shortcuts = block("shortcuts", lambda: shortcuts_reader(config))
+    hidden = shortcuts == () and block(
+        "shortcuts", lambda: any(item.menu or item.id != "menu" for item in load_shortcuts(config)), False)
     background = block("background", lambda: cards.background_path(config), "")
     mascot = block("show_mascot", lambda: bool(config.get_value("overview_show_mascot", True)), True)
     return OverviewSnapshot(now, greeting, power, daily, weekly, schedule, rows, history.last if history else None,
-                            checks, shortcuts, background, mascot, tuple(unavailable))
+                            checks, shortcuts, background, mascot, tuple(unavailable), hidden)

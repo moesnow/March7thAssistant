@@ -253,20 +253,17 @@ TABLE_SOURCES = [
     ("module/accounts/status.py", (("LABELS", None),)),
     ("module/accounts/differences.py", (("_HIDDEN", None),)),
     ("module/overview/labels.py", (("TRIGGERS", None), ("RESULTS", None), ("POST_ACTIONS", None))),
-    ("module/overview/shortcuts.py", (("TOOLS", None),)),
+    ("module/overview/shortcuts.py", (("HOME_EXTRA_TASKS", None), ("TOOLS", None), ("MENUS", None))),
+    ("module/task_catalog.py", (("TASK_MENUS", None),)),
     ("module/overview/plan.py", (("STEP_NAMES", None),)),
     ("module/overview/cards.py", (("STATUS_TEXT", None), ("SUMMARY_TEXT", None), ("OPTIONS", None))),
     ("module/overview/snapshot.py", (("PHASE_NAMES", None),)),
     ("utils/data_migration.py", (("REASONS", None),)),
     ("module/workflow/__init__.py", (("STEP_TYPE_LABELS", None), ("CONDITION_TYPE_LABELS", None))),
     ("module/update/version_check.py", (("_CDK_ERROR_MESSAGES", None),)),
-    # 任务名与主页卡片文案：常量里存的是中文原文（msgid），显示时才 tr()
+    # 任务名常量存中文原文（msgid），显示时才 tr()
     ("utils/tasks.py", (("AVAILABLE_TASKS", None), ("CLI_ONLY_TASKS", None), ("UNSUPPORTED_TASK", None))),
     ("tasks/weekly/currency_wars_strategy.py", (("STRATEGY_NAMES", None),)),
-    ("module/overview/legacy_cards.py", (
-        ("HOME_EXTRA_TASKS", None),
-        ("DEFAULT_CARDS", ("title", "label", "menu_items")),
-    )),
 ]
 
 # 取值会经 tr() 传入的数据文件（display_name 等展示字段即 msgid）

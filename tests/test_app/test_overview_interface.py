@@ -93,6 +93,39 @@ def test_run_one_task_menu_matches_backend(page, monkeypatch):
     assert page.model.start_task.call_args_list == [call(key) for key in actions]
 
 
+def test_default_shortcuts_launch_the_selected_task(page):
+    page.render(sample_snapshot("ready"))
+    routine, power, currency_wars, divergent = page.shortcutsCard._buttons
+    routine.click()
+    power.click()
+    for button, name in ((currency_wars, "货币战争"), (divergent, "差分宇宙")):
+        assert button.text() == tr(name)
+        actions = button.menu().actions()
+        assert [action.text() for action in actions] == [tr("运行一次"), tr("循环运行"), tr("中途接管")]
+        for action in actions:
+            action.trigger()
+    assert page.model.launch_shortcut.call_args_list == [
+        call("routine"), call("power"),
+        call("currencywars"), call("currencywarsloop"), call("currencywarstemp"),
+        call("divergent"), call("divergentloop"), call("divergenttemp"),
+    ]
+
+
+def test_empty_shortcuts_card_tells_why(page):
+    snapshot = sample_snapshot("ready")
+    card = page.shortcutsCard
+    for values, text in (
+        ({"shortcuts_hidden": True}, "当前连接方式没有可用的快捷启动"),
+        ({}, "还没有快捷启动，点「编辑」添加常用操作"),
+        ({"unavailable": ("shortcuts",)}, "暂时读不到快捷启动"),
+    ):
+        page.render(replace(snapshot, shortcuts=(), **values))
+        assert card.emptyLabel.isVisible() and card.emptyLabel.text() == tr(text) and not card._buttons
+        assert card.editLink.isVisible() == ("unavailable" not in values)
+    page.render(snapshot)
+    assert not card.emptyLabel.isVisible() and len(card._buttons) == 4
+
+
 def test_retry_without_step_starts_original_task(page):
     snapshot = sample_snapshot("failed")
     retry = Button("start_task", tr("重新运行"), target="power")

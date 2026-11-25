@@ -1,10 +1,9 @@
 """总览页的卡片：四张状态卡、完整运行清单、上次运行、快捷启动、建议检查。"""
 from datetime import timedelta
 import math
-import os
 
 from PySide6.QtCore import QElapsedTimer, QPointF, QRectF, QTimer, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QFontMetrics, QIcon, QPainter
+from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter
 from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QSizePolicy, QVBoxLayout, QWidget
 from qfluentwidgets import Action, CaptionLabel, DropDownPushButton, FluentIcon as FIF, IconWidget, InfoBarIcon, \
     PushButton, RoundMenu, SimpleCardWidget, StrongBodyLabel, BodyLabel, getFont, isDarkTheme, setFont
@@ -454,7 +453,7 @@ class ShortcutsCard(OverviewCard):
         self.titleLabel.setText(tr("快捷启动"))
         self.editLink.setText(tr("编辑"))
 
-    def setShortcuts(self, shortcuts, *, unavailable=False, evernight=False, editable=True):
+    def setShortcuts(self, shortcuts, *, hidden=False, unavailable=False, evernight=False, editable=True):
         for button in self._buttons:
             self.grid.removeWidget(button)
             button.hide()
@@ -468,6 +467,8 @@ class ShortcutsCard(OverviewCard):
         self._arrangeButtons()
         if unavailable:
             self.emptyLabel.setText(tr("暂时读不到快捷启动"))
+        elif hidden:
+            self.emptyLabel.setText(tr("当前连接方式没有可用的快捷启动"))
         else:
             self.emptyLabel.setText(tr("还没有快捷启动，点「编辑」添加常用操作") if editable else tr("还没有快捷启动"))
         self.emptyLabel.setVisible(not shortcuts)
@@ -491,10 +492,6 @@ class ShortcutsCard(OverviewCard):
 
     def _makeButton(self, shortcut):
         icon = resolve_icon(shortcut.icon)
-        if shortcut.image and os.path.isfile(shortcut.image):
-            image = QIcon(shortcut.image)
-            if not image.isNull():
-                icon = image
         if shortcut.menu:
             button = DropDownPushButton(icon, shortcut.name, self)
             menu = RoundMenu(parent=button)

@@ -2,8 +2,7 @@
 from dataclasses import replace
 
 from PySide6.QtCore import QSignalBlocker, Qt
-from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QFileDialog, QFormLayout, QHBoxLayout, QTreeWidgetItem, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QFormLayout, QHBoxLayout, QTreeWidgetItem, QVBoxLayout, QWidget
 from qfluentwidgets import (
     Action, BodyLabel, ComboBox, DropDownPushButton, FluentIcon as FIF, InfoBar, InfoBarPosition,
     LineEdit, MessageBoxBase, PushButton, RoundMenu, SubtitleLabel, ToolButton, TreeWidget,
@@ -11,8 +10,9 @@ from qfluentwidgets import (
 
 from module.config import cfg
 from module.localization import tr
-from module.overview.legacy_cards import stored_label
-from module.overview.shortcuts import ACTIONS, ICONS, ShortcutEditor, available_actions, display_name, icon_for
+from module.overview.shortcuts import (
+    ACTIONS, ICONS, MENU_NAMES, ShortcutEditor, available_actions, display_name, icon_for, stored_label,
+)
 from module.overview.types import Shortcut, ShortcutAction
 from utils.tasks import UNSUPPORTED_TASK
 from .style import resolve_icon
@@ -42,7 +42,7 @@ class ShortcutEditDialog(MessageBoxBase):
 
         self.tree = TreeWidget(self.widget)
         self.tree.setHeaderHidden(True)
-        self.tree.setMinimumHeight(min(280, max(150, parent.height() - 300)))
+        self.tree.setMinimumHeight(min(340, max(150, parent.height() - 300)))
         self.tree.currentItemChanged.connect(self._show_selection)
         self.addButton = self._add_menu(tr("添加"), self._add_shortcut)
         self.upButton = self._tool(FIF.UP, tr("上移"), lambda: self._move(-1))
@@ -68,23 +68,15 @@ class ShortcutEditDialog(MessageBoxBase):
         names = _icon_names()
         for key in ICONS:
             self.iconCombo.addItem(names[key], resolve_icon(key), key)
-        self.imageButton = PushButton(FIF.PHOTO, tr("选择图片"), self.fields)
-        self.clearImage = self._tool(FIF.CANCEL, tr("清除图片"), lambda: self._set_image(None))
-        image_row = QHBoxLayout()
-        image_row.addWidget(self.imageButton, 1)
-        image_row.addWidget(self.clearImage)
         self.childButton = self._add_menu(tr("添加菜单项"), self._add_child)
         for label, widget in ((tr("名称"), self.nameEdit), (tr("操作类型"), self.typeCombo),
                               (tr("任务"), self.actionCombo), (tr("图标"), self.iconCombo)):
             form.addRow(BodyLabel(label, self.fields), widget)
-        form.addRow(BodyLabel(tr("自选图片"), self.fields), image_row)
-        self.imageRow = form.rowCount() - 1
         form.addRow(self.childButton)
         self.nameEdit.textEdited.connect(self._rename)
         self.typeCombo.activated.connect(self._change_type)
         self.actionCombo.activated.connect(self._change_action)
         self.iconCombo.activated.connect(lambda: self._update(icon=self.iconCombo.currentData()))
-        self.imageButton.clicked.connect(self._choose_image)
 
         content = QHBoxLayout()
         content.setSpacing(16)
@@ -123,10 +115,8 @@ class ShortcutEditDialog(MessageBoxBase):
 
     @staticmethod
     def _paint_node(node, item):
-        icon = QIcon(item.image) if isinstance(item, Shortcut) and item.image else QIcon()
-        if icon.isNull():
-            icon = resolve_icon(item.icon if isinstance(item, Shortcut) else icon_for(item.id)).icon()
-        node.setIcon(0, icon)
+        icon = item.icon if isinstance(item, Shortcut) else icon_for(item.id)
+        node.setIcon(0, resolve_icon(icon).icon())
         node.setText(0, display_name(item.name))
 
     def _rebuild(self, index, child=None):
@@ -163,12 +153,9 @@ class ShortcutEditDialog(MessageBoxBase):
         self.nameEdit.setText(display_name(entry.name))
         self.typeCombo.setCurrentIndex(int(menu))
         self.iconCombo.setCurrentIndex(self.iconCombo.findData(item.icon))
-        self.clearImage.setEnabled(bool(item.image))
-        self.imageButton.setToolTip(item.image or "")
         self.form.setRowVisible(self.typeCombo, top)
         self.form.setRowVisible(self.actionCombo, not menu)
         self.form.setRowVisible(self.iconCombo, top)
-        self.form.setRowVisible(self.imageRow, top)
         self.form.setRowVisible(self.childButton, menu)
         self.actionCombo.clear()
         if not menu:
@@ -191,7 +178,7 @@ class ShortcutEditDialog(MessageBoxBase):
         self._paint_node(self.tree.currentItem(), entry)
 
     def _rename(self, text):
-        self._update(name=stored_label(text, self._source_name, display=display_name))
+        self._update(name=stored_label(text, self._source_name))
 
     def _change_action(self):
         key = self.actionCombo.currentData()
@@ -199,7 +186,7 @@ class ShortcutEditDialog(MessageBoxBase):
         item = self.editor.items[index]
         entry = item if child is None else item.menu[child]
         changes = {"id": key}
-        if entry.name == ACTIONS[entry.id]:
+        if entry.name in (ACTIONS[entry.id], MENU_NAMES.get(entry.id)):
             changes["name"] = ACTIONS[key]
         self._update(**changes)
         self._show_selection()
@@ -216,15 +203,6 @@ class ShortcutEditDialog(MessageBoxBase):
             key = item.menu[0].id if item.menu else next(iter(self.actions))
             self.editor.replace(index, replace(item, id=key, menu=()))
         self._rebuild(index)
-
-    def _choose_image(self):
-        path, _ = QFileDialog.getOpenFileName(self, tr("选择图片"), "", "Images (*.png *.jpg *.jpeg *.bmp *.webp)")
-        if path:
-            self._set_image(path)
-
-    def _set_image(self, path):
-        self._update(image=path)
-        self._show_selection()
 
     def _add_shortcut(self, key):
         self.editor.add(Shortcut(key, ACTIONS[key], icon_for(key)))

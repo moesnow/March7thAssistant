@@ -20,7 +20,7 @@ _EXTRA = {
     Scope.SECRET: "telemetry_secret",
     Scope.GLOBAL: (
         "no_run_immediately ocr_slow_threshold window_y universe_requirements python_exe_path "
-        "scheduled_chain_continue_on_failure setup_wizard_pending home_cards redemption_code window_maximized log_overlay_enable "
+        "scheduled_chain_continue_on_failure setup_wizard_pending redemption_code window_maximized log_overlay_enable "
         "launcher_process_name autoplot_click_enable autoplot_battle_detect_enable pypi_mirror_urls locales "
         "scheduled_time scheduled_run_time autoplot_skip_enable genshin_starRail_fps_unlocker_allow "
         "overview_shortcuts loop_mode telemetry_id fight_requirements autoplot_remember_enable "

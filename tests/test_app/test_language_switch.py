@@ -514,11 +514,13 @@ def test_config_reload_refreshes_overview_and_tools_for_new_backend(window, monk
     runtime_calls = Mock()
     monkeypatch.setattr(module.auto, "reload_connection", runtime_calls.bind_input)
     monkeypatch.setattr(module.screen, "reload_profile", runtime_calls.reload_screen)
-    config.config.update(control_backend="local", ui_profile="pc_1080", home_cards=None, overview_shortcuts=None)
+    config.config.update(control_backend="local", ui_profile="pc_1080", overview_shortcuts=None)
     window.refreshBackendTasks()
     page = window.homeInterface
     qtbot.waitUntil(lambda: len(page.shortcutsCard._buttons) == 4)
-    assert [s.id for s in page._snapshot.shortcuts] == ["currencywarsloop", "divergentloop", "autoplot", "screenshot"]
+    assert [s.id for s in page._snapshot.shortcuts] == ["routine", "power", "menu", "menu"]
+    labels = ("日常", "清体力", "货币战争", "差分宇宙")
+    assert [button.text() for button in page.shortcutsCard._buttons] == [module.tr(name) for name in labels]
     runtime_calls.reset_mock()
     monkeypatch.setattr(notification, "init_notifiers", Mock())
     monkeypatch.setattr(config, "_load_config", lambda *_a, **_kw: config.config.update(
@@ -526,8 +528,8 @@ def test_config_reload_refreshes_overview_and_tools_for_new_backend(window, monk
     window._on_config_file_changed()
 
     assert window.settingInterface.pages["run_mode"].chooser.cards["adb"].isSelected()
-    qtbot.waitUntil(lambda: [s.id for s in page._snapshot.shortcuts] == ["screenshot"])
-    assert [button.text() for button in page.shortcutsCard._buttons] == [module.tr("游戏截图")]
+    qtbot.waitUntil(lambda: [s.id for s in page._snapshot.shortcuts] == ["routine", "power"])
+    assert [button.text() for button in page.shortcutsCard._buttons] == [module.tr("日常"), module.tr("清体力")]
     assert window.toolsInterface.cloudTouchCard.isHidden()
     assert not window.toolsInterface.gameScreenshotCard.isHidden()
     assert runtime_calls.method_calls == [call.bind_input(), call.reload_screen()]

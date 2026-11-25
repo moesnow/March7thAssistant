@@ -5,7 +5,6 @@ from datetime import datetime
 from module.content_pages import PAGE_BY_ID
 from module.localization import get_raw_instance_names, tr
 from module.overview import plan
-from module.overview.legacy_cards import DEFAULT_CARDS
 from module.overview.readings import POWER_CAP, power_now, power_reading
 from module.settings_registry import SETTINGS, Scope, find_setting
 
@@ -38,9 +37,37 @@ class Task:
         return self.page.icon
 
 
-def _menu(name):
-    card = next(card for card in DEFAULT_CARDS if card["title"] == name)
-    return tuple((item["task_id"], item["label"]) for item in card["menu_items"])
+TASK_MENUS = {
+    "fight": {
+        "fight": "快速启动 ⭐",
+        "fight_gui": "原版运行",
+        "fight_update": "更新锄大地",
+        "_reset_fight_config": "重置配置文件",
+        "_open_fight_dir": "打开程序目录",
+        "_open_fight_homepage": "打开项目主页",
+    },
+    "currencywars": {
+        "currencywars": "运行一次",
+        "currencywarsloop": "循环运行",
+        "currencywarstemp": "中途接管",
+    },
+    "universe": {
+        "divergent": "差分宇宙运行一次 ⭐",
+        "divergentloop": "差分宇宙循环运行 ⭐",
+        "divergenttemp": "差分宇宙中途接管",
+        "universe": "模拟宇宙快速启动（停止维护）",
+        "universe_gui": "模拟宇宙原版运行（停止维护）",
+        "universe_update": "更新模拟宇宙（停止维护）",
+        "_reset_universe_config": "重置模拟宇宙配置文件（停止维护）",
+        "_open_universe_dir": "打开模拟宇宙目录（停止维护）",
+        "_open_universe_homepage": "打开模拟宇宙项目主页（停止维护）",
+    },
+    "challenge": {
+        "forgottenhall": "混沌回忆",
+        "purefiction": "虚构叙事",
+        "apocalyptic": "末日幻影",
+    },
+}
 
 
 TASKS = (
@@ -48,16 +75,16 @@ TASKS = (
     Task("daily", "完成当天的每日实训。", ("daily_enable",), "daily", ("daily",), touch=True),
     Task("activity", "检查签到、双倍掉落和活动热点。", ("activity_enable",), "activity", ("activity",)),
     Task("reward", "检查并领取已选的日常奖励。", ("reward_enable",), "reward", ("reward", "redemption"), touch=True),
-    Task("fight", "按地图路线清理大世界敌人。", ("fight_enable",), "fight", ("fight",), _menu("锄大地"),
+    Task("fight", "按地图路线清理大世界敌人。", ("fight_enable",), "fight", ("fight",), tuple(TASK_MENUS["fight"].items()),
          (("ranged", "远程一号位锄地"), ("acheron", "黄泉一号位锄地"), ("reward_only", "仅获取特殊物品"))),
     Task("echo", "按所选星期挑战历战余响。", ("echo_of_war_enable",), "echo", ("echo",), touch=True),
     Task("currencywars", "参加货币战争并获取每周积分。", ("currencywars_enable",), "currencywars", ("currencywars",),
-         _menu("货币战争"), (("weekly", "刷周积分"), ("promotion", "刷晋升点"), ("rank", "冲职级"))),
+         tuple(TASK_MENUS["currencywars"].items()), (("weekly", "刷周积分"), ("promotion", "刷晋升点"), ("rank", "冲职级"))),
     Task("universe", "获取差分宇宙积分，或按配置运行模拟宇宙。", ("weekly_divergent_enable",), "divergent",
-         ("weekly_divergent", "divergent_count", "universe"), _menu("差分宇宙")),
+         ("weekly_divergent", "divergent_count", "universe"), tuple(TASK_MENUS["universe"].items())),
     Task("challenge", "分别配置混沌回忆、虚构叙事和末日幻影。",
          ("forgottenhall_enable", "purefiction_enable", "apocalyptic_enable"), "forgottenhall",
-         ("forgottenhall", "purefiction", "apocalyptic"), _menu("逐光捡金")),
+         ("forgottenhall", "purefiction", "apocalyptic"), tuple(TASK_MENUS["challenge"].items())),
     Task("assets", "处理每月兑换、光锥叠加和遗器清理。", ("asset_manager_enable",), "assets",
          ("resin", "ember", "lc3", "relic_cleanup")),
 )

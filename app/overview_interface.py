@@ -139,7 +139,8 @@ class OverviewInterface(ScrollArea):
         self._renderSchedule(snapshot.schedule, now, "schedule" in unavailable)
         self.planCard.setItems(snapshot.plan, unavailable="plan" in unavailable, evernight=evernight)
         self.lastRunCard.setRun(snapshot.last_run, now, unavailable="last_run" in unavailable, evernight=evernight)
-        self.shortcutsCard.setShortcuts(snapshot.shortcuts, unavailable="shortcuts" in unavailable,
+        self.shortcutsCard.setShortcuts(snapshot.shortcuts, hidden=snapshot.shortcuts_hidden,
+                                        unavailable="shortcuts" in unavailable,
                                         evernight=evernight, editable=self._canEditShortcuts())
         self.checksCard.setChecks(snapshot.checks, unavailable="checks" in unavailable, evernight=evernight)
         self.checksCard.setVisible(bool(snapshot.checks) or "checks" in unavailable)

@@ -16,7 +16,7 @@
    若包装器对入参再 `tr()` 一次，调用点已翻译的文本会二次查表、命中不到条目，
    既浪费又会在 DEBUG 日志里刷「缺失翻译」。
    例外（有意为之）：
-   - `module/overview/legacy_cards.py::display_label()`：入参本身就是 msgid（常量/配置里存的中文原文），
+   - `module/overview/shortcuts.py::display_name()`：内置名称是常量或配置中保存的 msgid，
      由它负责解析成当前语言；
    - `module/localization/trc()`：无 msgctxt 条目时回退 `tr()`。
    - `module/search/terms.py::_label()`：输入是搜索词表和建议词的原文，需要按查询语言翻译。
@@ -43,7 +43,7 @@ UI_INFO_KW = {"text", "title", "content", "caption", "label", "placeholder",
 # ---- 约定 2 的允许例外 ----
 WRAPPER_ALLOWLIST = {
     ("module/accounts/differences.py", "value_text"),          # 只接收持久化的原始设置值和副本名
-    ("module/overview/legacy_cards.py", "display_label"),      # 入参是 msgid，本就是由它解析
+    ("module/overview/shortcuts.py", "display_name"),         # 内置快捷启动名称在显示时翻译
     ("module/localization/__init__.py", "trc"),              # 无 msgctxt 条目时回退 tr()
     ("module/search/terms.py", "_label"),                    # 只接收内置同义词和建议词的 msgid
 }

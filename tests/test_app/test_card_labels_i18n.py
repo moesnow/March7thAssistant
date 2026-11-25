@@ -3,7 +3,7 @@
 
 背景：模块级常量在 import 期求值，若存 `tr()` 的结果会被冻结在启动语言，
 并且会被写进 config.yaml 变成用户数据。因此常量只存中文原文（msgid），
-显示时用 `display_label()` 解析、持久化时用 `stored_label()` 还原。
+显示时用 `display_name()` 解析、持久化时用 `stored_label()` 还原。
 """
 import re
 
@@ -47,26 +47,23 @@ class TestTaskConstants:
 
 
 class TestCardLabels:
-    def test_default_cards_hold_msgids(self):
+    def test_shortcut_labels_are_registered_msgids(self):
         import polib
-        from module.overview.legacy_cards import DEFAULT_CARDS, BUILTIN_LABELS
+        from module.overview.shortcuts import BUILTIN_LABELS, defaults
         from tools.i18n.po import pot_path
         keys = po_keyset(polib.pofile(str(pot_path())))
-        for card in DEFAULT_CARDS:
-            assert CJK.search(card["title"]), f"{card['title']!r} 应是中文原文"
-            assert card["title"] in keys, f"{card['title']!r} 未登记进 .pot"
-            for item in card["menu_items"]:
-                assert item["label"] in keys, f"{item['label']!r} 未登记进 .pot"
-        assert DEFAULT_CARDS[0]["title"] in BUILTIN_LABELS
+        for item in defaults():
+            assert CJK.search(item.name) and item.name in BUILTIN_LABELS
+        assert BUILTIN_LABELS <= keys
 
-    def test_display_label_follows_language(self, switch_lang):
-        from module.overview.legacy_cards import display_label
+    def test_display_name_follows_language(self, switch_lang):
+        from module.overview.shortcuts import display_name
         switch_lang("en_US")
-        assert display_label("完整运行") != "完整运行"
-        assert display_label("完整运行") == tr("完整运行")
+        assert display_name("完整运行") != "完整运行"
+        assert display_name("完整运行") == tr("完整运行")
         # 用户自定义文案原样显示
-        assert display_label("My Own Card") == "My Own Card"
-        assert display_label("") == ""
+        assert display_name("My Own Card") == "My Own Card"
+        assert display_name("") == ""
 
     def test_stored_label_roundtrip(self, switch_lang):
         """界面显示译文 -> 持久化必须还原成中文原文（语言无关）。
@@ -74,35 +71,20 @@ class TestCardLabels:
         只做正向比较（msgid -> 显示 -> msgid），因为不同原文可能有相同译文
         （如日文的「更新锄大地」与「锄大地更新」），按译文反查会串味。
         """
-        from module.overview.legacy_cards import BUILTIN_LABELS, display_label, stored_label
+        from module.overview.shortcuts import BUILTIN_LABELS, display_name, stored_label
         for lang in LOCALES:
             switch_lang(lang)
             for msgid in sorted(BUILTIN_LABELS):
                 assert stored_label(msgid, msgid) == msgid
-                assert stored_label(display_label(msgid), msgid) == msgid, f"{lang} 下 {msgid!r} 无法还原"
+                assert stored_label(display_name(msgid), msgid) == msgid, f"{lang} 下 {msgid!r} 无法还原"
 
     def test_stored_label_keeps_user_text(self, switch_lang):
-        from module.overview.legacy_cards import stored_label
+        from module.overview.shortcuts import stored_label
         switch_lang("en_US")
         # 用户自定义（msgid 为 None）原样保存
         assert stored_label("My Own Card", None) == "My Own Card"
         # 用户改动过的内置文案按用户输入保存
         assert stored_label("我的卡片", "完整运行") == "我的卡片"
-
-    def test_no_translation_persisted_after_edit(self, switch_lang):
-        """在英文界面下「不改动」保存，落盘的仍是中文原文。"""
-        from module.overview.legacy_cards import DEFAULT_CARDS, display_label, stored_label
-        switch_lang("en_US")
-        card = DEFAULT_CARDS[1]  # 带 menu_items 的卡片
-        persisted = {
-            "title": stored_label(display_label(card["title"]), card["title"]),
-            "menu_items": [
-                {"label": stored_label(display_label(i["label"]), i["label"]), "task_id": i["task_id"]}
-                for i in card["menu_items"]
-            ],
-        }
-        assert persisted["title"] == card["title"]
-        assert [i["label"] for i in persisted["menu_items"]] == [i["label"] for i in card["menu_items"]]
 
 
 def test_toolbox_labels_follow_the_active_language(switch_lang):

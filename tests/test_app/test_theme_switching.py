@@ -8,7 +8,7 @@ import sys
 import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon, QPixmap
-from qfluentwidgets import Theme, isDarkTheme, setTheme
+from qfluentwidgets import FluentIcon, Theme, isDarkTheme, setTheme
 
 from app.common.mascot import Mascot
 from module.config import cfg
@@ -204,7 +204,7 @@ def test_theme_setting_preserves_custom_assets_and_does_not_start_tasks(window, 
         assert isDarkTheme() is (key == 'dark')
         assert page.greeting._background.pixelColor(0, 0).red() == 255
         button, = page.shortcutsCard._buttons
-        assert button.icon().pixmap(16, 16).toImage().pixelColor(8, 8).red() == 255
+        assert button.icon().pixmap(16, 16).toImage() == FluentIcon.PLAY.icon().pixmap(16, 16).toImage()
         assert window.windowTitle() == 'March7th Assistant'
     switch_language(qtbot, window, 'en_US')
     combo = window.settingInterface.themeCard.comboBox

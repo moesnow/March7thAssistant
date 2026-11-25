@@ -1,18 +1,35 @@
-"""快捷启动的存储、迁移和编辑。配置只保存操作 ID、中文原文和用户输入。"""
+"""总览快捷启动的读取、显示和编辑。"""
 from contextlib import contextmanager
-from copy import deepcopy
 from dataclasses import asdict, replace
-import os
 from pathlib import Path
 
 from module.localization import tr
+from module.task_catalog import TASKS
 from utils.tasks import AVAILABLE_TASKS
-from .legacy_cards import DEFAULT_CARDS, HOME_EXTRA_TASKS, display_label, migrate_home_cards
 from .types import Shortcut, ShortcutAction
 
 KEY = "overview_shortcuts"
+HOME_EXTRA_TASKS = {
+    "_reset_universe_config": "重置模拟宇宙配置文件",
+    "_open_universe_dir": "打开模拟宇宙目录",
+    "_open_universe_homepage": "打开模拟宇宙项目主页",
+    "_reset_fight_config": "重置锄大地配置文件",
+    "_open_fight_dir": "打开锄大地程序目录",
+    "_open_fight_homepage": "打开锄大地项目主页",
+}
 TOOLS = {"autoplot": "自动对话", "screenshot": "游戏截图"}
 ACTIONS = AVAILABLE_TASKS | HOME_EXTRA_TASKS | TOOLS
+# 两个默认菜单：按钮写玩法名，菜单项写运行方式，和任务页的叫法一致。
+MENUS = {
+    "currencywars": {"currencywars": "运行一次", "currencywarsloop": "循环运行", "currencywarstemp": "中途接管"},
+    "divergent": {"divergent": "运行一次", "divergentloop": "循环运行", "divergenttemp": "中途接管"},
+}
+MENU_NAMES = {key: name for menu in MENUS.values() for key, name in menu.items()}
+BUILTIN_LABELS = (
+    frozenset(ACTIONS.values()) | frozenset(MENU_NAMES.values()) | {"任务菜单"}
+    | {task.name for task in TASKS if task.menu}
+    | {label for task in TASKS for _, label in task.menu}
+)
 ACTION_ICONS = {
     "main": "FIF.PLAY", "routine": "UiIcon.CLIPBOARD_TASK", "daily": "UiIcon.CLIPBOARD_TASK",
     "power": "UiIcon.BATTERY_CHARGE", "currencywars": "UiIcon.COIN_STACK", "divergent": "UiIcon.PLANET",
@@ -24,7 +41,6 @@ ACTION_ICONS = {
     "mobileui_update": "UiIcon.REFRESH",
 }
 ICONS = tuple(sorted(set(ACTION_ICONS.values()) | {"UiIcon.TOOLBOX", "UiIcon.GIFT", "UiIcon.LIST", "UiIcon.STAR"}))
-PORTRAITS = ("March7th", "JingYuan", "Yanqing", "Herta", "SilverWolf", "Bronya")
 
 
 def icon_for(action):
@@ -37,96 +53,50 @@ def icon_for(action):
 
 
 def defaults():
-    return tuple(Shortcut(key, ACTIONS[key], icon_for(key)) for key in
-                 ("currencywarsloop", "divergentloop", "autoplot", "screenshot"))
-
-
-def _builtin_image(path):
-    # 文件选择器可能写入绝对路径。仅识别安装目录中这 13 个文件。
-    root = Path("assets/app/images")
-    allowed = [root / f"{name}.jpg" for name in PORTRAITS]
-    allowed.extend(root / "dark" / f"{name}.png" for name in (*PORTRAITS, "Evernight"))
-    candidate = os.path.normcase(os.path.abspath(path.replace("\\", "/")))
-    return any(candidate == os.path.normcase(os.path.abspath(p)) for p in allowed)
+    shortcuts = [Shortcut(key, ACTIONS[key], icon_for(key)) for key in ("routine", "power")]
+    for task, names in MENUS.items():
+        menu = tuple(ShortcutAction(key, name) for key, name in names.items())
+        shortcuts.append(Shortcut("menu", ACTIONS[task], icon_for(task), menu))
+    return tuple(shortcuts)
 
 
 def _name(value, fallback):
     return value if isinstance(value, str) and value.strip() else fallback
 
 
-def _decode(row, legacy=False):
+def _decode(row):
     if not isinstance(row, dict):
         return None
-    action = row.get("task_id" if legacy else "id", "main" if legacy else None)
+    action = row.get("id")
     menu = ()
-    if (row.get("action_type") == "menu" if legacy else action == "menu"):
-        entries = row.get("menu_items" if legacy else "menu")
+    if action == "menu":
+        entries = row.get("menu")
         children = []
         for entry in entries if isinstance(entries, (list, tuple)) else ():
             if not isinstance(entry, dict):
                 continue
-            child = entry.get("task_id" if legacy else "id")
+            child = entry.get("id")
             if isinstance(child, str) and child in ACTIONS:
-                children.append(ShortcutAction(child, _name(entry.get("label" if legacy else "name"), ACTIONS[child])))
-        action, menu = "menu", tuple(children)
+                children.append(ShortcutAction(child, _name(entry.get("name"), ACTIONS[child])))
+        menu = tuple(children)
     elif not isinstance(action, str) or action not in ACTIONS:
         return None
-    name = _name(row.get("title" if legacy else "name"), ACTIONS.get(action, "任务菜单"))
+    name = _name(row.get("name"), ACTIONS.get(action, "任务菜单"))
     fallback = icon_for(menu[0].id if menu else action)
-    image = row.get("icon" if legacy else "image")
-    image = image if isinstance(image, str) and image.strip() else None
-    if legacy and image and _builtin_image(image):
-        image = None
     icon = row.get("icon")
-    return Shortcut(action, name, icon if not legacy and icon in ICONS else fallback, image, menu)
+    return Shortcut(action, name, icon if icon in ICONS else fallback, menu)
 
 
-def _matches_defaults(cards):
-    if cards == DEFAULT_CARDS:
-        return True
-    if not isinstance(cards, list) or len(cards) != len(DEFAULT_CARDS):
-        return False
-    from module.localization import translations_of
-
-    def matches_label(value, expected):
-        return value == expected or isinstance(value, str) and value in translations_of(expected).values()
-
-    for card, default in zip(cards, DEFAULT_CARDS):
-        if not isinstance(card, dict) or card.keys() != default.keys():
-            return False
-        if any(card[key] != default[key] for key in ("icon", "task_id", "action_type")):
-            return False
-        if not matches_label(card["title"], default["title"]):
-            return False
-        menu, expected = card["menu_items"], default["menu_items"]
-        if not isinstance(menu, list) or len(menu) != len(expected):
-            return False
-        for item, old in zip(menu, expected):
-            if (not isinstance(item, dict) or item.keys() != old.keys() or item["task_id"] != old["task_id"]
-                    or not matches_label(item["label"], old["label"])):
-                return False
-    return True
-
-
-def migrate(cards):
-    if cards is None or _matches_defaults(cards):
-        return defaults()
-    if not isinstance(cards, list):
-        return defaults()
-    copied = deepcopy(cards)
-    migrate_home_cards(copied)
-    return _decode_list(copied, legacy=True)
-
-
-def _decode_list(raw, *, legacy=False):
+def load_shortcuts(config):
+    raw = config.get_value(KEY)
     if not isinstance(raw, list):
         return defaults()
-    items = tuple(item for row in raw if (item := _decode(row, legacy)) is not None)
+    items = tuple(item for row in raw if (item := _decode(row)) is not None)
     return items if items or not raw else defaults()
 
 
 def _encode(cards):
-    return [{"id": card.id, "name": card.name, "icon": card.icon, "image": card.image,
+    return [{"id": card.id, "name": card.name, "icon": card.icon,
              "menu": [asdict(child) for child in card.menu]} for card in cards]
 
 
@@ -139,23 +109,6 @@ def _edit_lock(config):
             yield
     else:
         yield
-
-
-def load_shortcuts(config):
-    raw = config.get_value(KEY)
-    if raw is not None:
-        return _decode_list(raw)
-    legacy = config.get_value("home_cards")
-    # Each config may reload (or edit) its legacy list in place. Keep an independent
-    # copy for comparison and reuse the immutable conversion between refreshes.
-    cache = getattr(config, "__dict__", None)
-    previous = cache.get("_overview_legacy_shortcuts") if cache is not None else None
-    if previous is not None and previous[0] == legacy:
-        return previous[1]
-    items = migrate(legacy)
-    if cache is not None:
-        cache["_overview_legacy_shortcuts"] = deepcopy(legacy), items
-    return items
 
 
 def available_actions(config):
@@ -174,13 +127,17 @@ def available_actions(config):
 
 
 def display_name(name):
-    if name == "任务菜单":
-        return tr("任务菜单")
-    return display_label(name, TOOLS.values())
+    return tr(name) if name in BUILTIN_LABELS else name
 
 
-def display_shortcuts(config):
-    choices = available_actions(config)
+def stored_label(text: str, msgid: str | None) -> str:
+    """编辑器保留未改名项的原文键，其他名称按用户输入保存。"""
+    return msgid if msgid is not None and text == display_name(msgid) else text
+
+
+def display_shortcuts(config, *, choices=None):
+    if choices is None:
+        choices = available_actions(config)
     result = []
     for item in load_shortcuts(config):
         if item.id == "menu":
@@ -221,7 +178,6 @@ class ShortcutEditor:
         for item in items:
             if (not isinstance(item, Shortcut) or not isinstance(item.name, str) or not item.name.strip()
                     or item.icon not in ICONS or item.id not in (*ACTIONS, "menu")
-                    or item.image is not None and not isinstance(item.image, str)
                     or item.id != "menu" and item.menu):
                 raise ValueError(tr("快捷启动的名称、图标或操作无效。"))
             for child in item.menu:
@@ -232,5 +188,6 @@ class ShortcutEditor:
         with _edit_lock(self._config):
             if load_shortcuts(self._config) != self._original:
                 raise ValueError(tr("快捷启动已在其他窗口修改，请重新打开编辑。"))
-            self._config.set_value(KEY, _encode(items))
+            # 和默认项相同时存空值，以后调整默认项也会跟着变。
+            self._config.set_value(KEY, None if items == defaults() else _encode(items))
         self._original = items
