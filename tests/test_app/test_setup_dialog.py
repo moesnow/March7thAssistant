@@ -477,7 +477,8 @@ def test_full_window_from_disclaimer_to_saved_setup(qtbot, isolated_layout, tmp_
         reopened = window._setup_dialog
         pending = saved()
         pending["browser_type"] = "edge"
-        YAML().dump(pending, path)
+        with path.open("w", encoding="utf-8") as stream:
+            YAML().dump(pending, stream)
         with qtbot.waitSignal(reopened.model.changed):
             window.config_watcher._emit_change()
         assert reopened.model.cloud().browser == "edge"

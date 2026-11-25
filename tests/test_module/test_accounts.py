@@ -3,6 +3,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
@@ -61,23 +62,28 @@ def config(tmp_path, store, monkeypatch):
     return instance
 
 
-@pytest.mark.parametrize("encoding", ["utf-8", "gb18030"])
+@pytest.mark.parametrize(("encoding", "system_encoding", "name"), [
+    ("utf-8", "cp1252", "虚构名称"),
+    ("gb18030", "utf-8", "虚构名称"),
+    ("cp1252", "cp1252", "Renée"),
+], ids=["utf-8", "gb18030-fallback", "windows-code-page"])
 @pytest.mark.skipif(sys.platform != "win32", reason="旧密码转换使用 Windows DPAPI")
-def test_legacy_conversion_and_readonly(tmp_path, encoding):
+def test_legacy_conversion_and_readonly(tmp_path, encoding, system_encoding, name, monkeypatch):
+    monkeypatch.setattr("module.accounts.store.locale", SimpleNamespace(getencoding=lambda: system_encoding))
     root = tmp_path / "accounts"
     root.mkdir()
     (root / (A + ".reg")).write_bytes(snapshot(server="global"))
-    (root / (A + ".name")).write_bytes("虚构名称".encode(encoding))
+    (root / (A + ".name")).write_bytes(name.encode(encoding))
     text = xor_encrypt_to_base64("fictional,example,only")
     (root / (A + ".acc")).write_text(text, encoding="ascii")
     observer = AccountStore(root)
-    assert observer.index()["accounts"][0]["name"] == "虚构名称"
+    assert observer.index()["accounts"][0]["name"] == name
     assert not observer.index_path.exists()
     with pytest.raises(PermissionError):
         observer.update(A, rotate=False)
     store = AccountStore(root, role="ui")
     row = store.index()["accounts"][0]
-    assert row["name"] == "虚构名称" and row["server"] == "global" and row["auto_login"]
+    assert row["name"] == name and row["server"] == "global" and row["auto_login"]
     assert store.credentials(A) == ("fictional", "example,only")
     assert b"fictional" not in store.path(A, "secret.bin").read_bytes()
     assert not (root / (A + ".acc")).exists()

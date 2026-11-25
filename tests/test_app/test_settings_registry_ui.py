@@ -139,9 +139,11 @@ def test_restore_real_controls_and_change_keys(pages, monkeypatch):
 def test_external_reload_emits_actual_keys(pages):
     _, hosts = pages
     cfg.save_config()
-    data = YAML(typ="safe").load(Path(cfg.config_path))
+    path = Path(cfg.config_path)
+    data = YAML(typ="safe").load(path)
     data["play_audio"] = not data["play_audio"]
-    YAML().dump(data, Path(cfg.config_path))
+    with path.open("w", encoding="utf-8") as stream:
+        YAML().dump(data, stream)
     from PySide6.QtTest import QSignalSpy
     spy = QSignalSpy(config_events().changed)
     cfg._load_config(save=False)
