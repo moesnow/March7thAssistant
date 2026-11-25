@@ -17,7 +17,7 @@ import time
 import os
 import re
 from tasks.power.power import Power
-from tasks.weekly.weekly_reward import wait_for_weekly_reward
+from tasks.weekly.weekly_reward import claim_weekly_reward
 
 
 class DivergentUniverse:
@@ -129,15 +129,13 @@ class DivergentUniverse:
         with optional_reward("差分宇宙周期奖励"):
             if not auto.click_element("./assets/images/share/base/RedExclamationMark.png", "image", 0.9, crop=(0 / 1920, 877.0 / 1080, 422.0 / 1920, 202.0 / 1080)):
                 return False
-            if not auto.click_element("./assets/images/zh_CN/universe/one_key_receive.png", "image", 0.9, max_retries=10):
-                return False
-            claimed = wait_for_weekly_reward()
-            if claimed:
-                time.sleep(2)
+            def notify(image):
                 with optional_reward("差分宇宙周期奖励通知"):
-                    Base.send_notification_with_screenshot(cfg.notify_template['SimulatedUniverseRewardClaimed'], NotificationLevel.ALL)
-                auto.click_element("./assets/images/zh_CN/base/click_close.png", "image", 0.8, max_retries=10)
-                time.sleep(1)
+                    Base.send_notification_with_screenshot(
+                        cfg.notify_template['SimulatedUniverseRewardClaimed'], NotificationLevel.ALL, image)
+
+            claimed = claim_weekly_reward(on_receipt=notify)
+            if claimed:
                 auto.press_key("esc")
         return claimed
 

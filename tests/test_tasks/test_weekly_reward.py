@@ -1,265 +1,249 @@
-import importlib.util
-import sys
-import unittest
-from pathlib import Path
-from types import ModuleType
-from unittest.mock import Mock, patch
+"""复现两个差分宇宙入口的积分面板、弹窗、导航与实际输入回执。"""
+
+from types import SimpleNamespace
+from unittest.mock import Mock
+
+from PIL import Image, ImageDraw
+import pytest
+
+from tasks.weekly import divergent_universe as divergent
+from tasks.weekly import universe
+from tasks.weekly import weekly_reward as reward
+from utils.pause import RunStopRequested
 
 
-def load_task(filename, stubs):
-    path = Path(__file__).parents[2] / "tasks" / "weekly" / filename
-    spec = importlib.util.spec_from_file_location(f"test_{path.stem}_isolated", path)
-    module = importlib.util.module_from_spec(spec)
-    with patch.dict(sys.modules, stubs):
-        spec.loader.exec_module(module)
-    return module
+def ocr_rows(*entries):
+    return [([(x - 20, y - 10), (x + 20, y - 10), (x + 20, y + 10), (x - 20, y + 10)],
+             (text, 0.99)) for text, x, y in entries]
 
 
-def stub_modules(attributes):
-    modules = {}
-    for name, values in attributes.items():
-        module = ModuleType(name)
-        module.__dict__.update(values)
-        modules[name] = module
-    return modules
+@pytest.fixture
+def scene(monkeypatch):
+    canvas = Image.new("RGB", (1920, 1080), (35, 30, 74))
+    pending = canvas.copy()
+    ImageDraw.Draw(pending).rectangle(reward.WEEKLY_CLAIM, fill=(244, 184, 65))
+    claimed = canvas.copy()
+    mark = Image.open("assets/images/screen/currency_wars/s2_points_claimed.png").convert("RGB")
+    tiers = tuple((str(index * 3000), 150 + (index - 1) * 300, 590) for index in range(1, 7))
+    for _, x, _ in tiers:
+        claimed.paste(mark, (x - mark.width // 2, 517 - mark.height // 2))
+    points = (("积分奖励", 145, 330), ("18000/18000", 273, 740))
+    frames = {
+        "pending": (pending, ocr_rows(*points, ("一键领取", 1640, 728))),
+        "claimed": (claimed, ocr_rows(*points, *tiers)),
+        "receipt": (canvas, ocr_rows(("点击空白处关闭", 960, 910))),
+        "partial": (canvas, ocr_rows(("点击空白处关闭", 960, 910))),
+        "limit": (canvas, ocr_rows(("背 包 内助燃券持有数量已达上限。", 956, 580),
+                                 ("清理", 774, 708), ("前往使用", 1188, 708))),
+        "destroy": (canvas, ocr_rows(("此次销毁将无物品返还，销毁物品如下：", 953, 418),
+                                   ("已销毁的物品无法复原", 960, 686), ("取消", 770, 754), ("确认", 1187, 754))),
+        "other": (canvas, ocr_rows(("背包内遗器持有数量已达上限。", 956, 580), ("清理", 774, 708))),
+        "unknown": (canvas, ocr_rows(("确认清理", 960, 708))),
+    }
+    state = SimpleNamespace(page="pending", flow="auto", fault=None, cleaned=False, confirmed=False,
+                            now=0.0, misses=0, release=None, clicks=[], keys=[], frames=frames)
+    auto = Mock()
+    auto.input_handler = SimpleNamespace(reports_dispatch=False)
+    config = SimpleNamespace(
+        universe_bonus_enable=False, weekly_divergent_bonus_enable=False, weekly_divergent_timestamp=1,
+        refresh_hour=4, save_timestamp=Mock(), get_game_hotkey=lambda _, default: default,
+        notify_template={"SimulatedUniverseRewardClaimed": "模拟宇宙奖励已领取",
+                         "SimulatedUniverseCompleted": "模拟宇宙已完成"},
+    )
+
+    def sleep(seconds):
+        state.now += seconds
+        if state.release and state.now >= state.release[0]:
+            state.page = state.release[1]
+            state.release = None
+
+    def screenshot(*args, **kwargs):
+        if state.fault == "persistent_capture" or state.fault == "capture_once" and not state.misses:
+            state.misses += 1
+            raise OSError("截图暂时不可用")
+        auto.screenshot = frames[state.page][0]
+        return True
+
+    def ocr(**kwargs):
+        if state.fault == "ocr_once" and not state.misses:
+            state.misses += 1
+            raise OSError("OCR 暂时不可用")
+        auto.ocr_result = frames[state.page][1]
+
+    def find(target, *args, **kwargs):
+        if not isinstance(target, tuple):
+            return None
+        x, y = round(target[0] * 1920), round(target[1] * 1080)
+        if (x, y) == (774, 708):
+            if state.fault == "mapping_once" and not state.misses:
+                state.misses += 1
+                return None
+            if state.fault == "deadline_map":
+                state.now = 75
+            if state.fault == "stop_map":
+                reward.pause_ctl.checkpoint.side_effect = RunStopRequested()
+        return ((x, y), (x, y))
+
+    def click(pos, **kwargs):
+        point = pos[0]
+        state.clicks.append((state.page, point))
+        if state.page == "pending" and point == (1640, 728):
+            if state.cleaned:
+                state.page = "receipt"
+            elif state.flow == "normal":
+                state.page = "receipt"
+            else:
+                state.page = "partial" if state.flow == "after_receipt" else "limit"
+        elif state.page == "limit" and point == (774, 708):
+            assert not state.cleaned
+            state.cleaned = True
+            if state.fault == "persistent_limit":
+                pass
+            else:
+                state.page = "unknown" if state.fault == "unknown_confirmation" else "destroy"
+        elif state.page == "destroy" and point == (1187, 754):
+            assert not state.confirmed
+            state.confirmed = True
+            target = {"auto": "claimed", "receipt": "receipt", "reclaim": "pending",
+                      "after_receipt": "receipt"}[state.flow]
+            if state.fault in ("late_receipt", "transition"):
+                state.release = (state.now + (11 if state.fault == "late_receipt" else 2), target)
+                state.page = "destroy" if state.fault == "late_receipt" else "unknown"
+            elif state.fault != "persistent_confirm":
+                state.page = target
+            if state.fault == "missing_ack":
+                raise OSError("输入已送达，回执丢失")
+        elif state.page == "partial" and point == (960, 910):
+            state.page = "limit"
+        elif state.page == "receipt" and point == (960, 910):
+            state.page = "claimed"
+        else:
+            pytest.fail(f"非预期输入：{state.page} {point}")
+        return True
+
+    def open_points(*args, **kwargs):
+        assert args[0] == "./assets/images/share/base/RedExclamationMark.png"
+        state.page = "pending"
+        return True
+
+    auto.take_screenshot.side_effect = screenshot
+    auto.perform_ocr.side_effect = ocr
+    auto.find_element.side_effect = find
+    auto.click_element.side_effect = open_points
+    auto.click_element_with_pos.side_effect = click
+    auto.press_key.side_effect = state.keys.append
+    notify = Mock()
+    for module in (divergent, universe, reward):
+        monkeypatch.setattr(module, "auto", auto)
+    for module in (divergent, universe):
+        monkeypatch.setattr(module, "cfg", config)
+        monkeypatch.setattr(module, "screen", Mock())
+        monkeypatch.setattr(module.Base, "send_notification_with_screenshot", notify)
+        monkeypatch.setattr(module, "time", SimpleNamespace(sleep=sleep))
+    monkeypatch.setattr(reward, "time", SimpleNamespace(sleep=sleep, monotonic=lambda: state.now))
+    monkeypatch.setattr(reward, "pause_ctl", Mock())
+    monkeypatch.setattr(reward, "log", Mock())
+    monkeypatch.setattr(reward, "save_error_screenshot", Mock())
+
+    def run(entry):
+        if entry == "builtin":
+            return divergent.DivergentUniverse().get_reward()
+        if entry == "thirdparty":
+            universe.Universe.get_reward("divergent")
+            return "esc" in state.keys
+        return reward.claim_weekly_reward()
+
+    state.run, state.notify, state.auto, state.config, state.sleep = run, notify, auto, config, sleep
+    return state
 
 
-class TestWeeklyReward(unittest.TestCase):
-    def setUp(self):
-        self.auto = Mock()
-        self.module = load_task("weekly_reward.py", stub_modules({
-            "module.automation": {"auto": self.auto},
-            "module.logger": {"log": Mock()},
-            "utils.screenshot_util": {"save_error_screenshot": Mock()},
-        }))
-        self.frame = 0
-        self.frames = []
-        self.auto.find_element.side_effect = lambda *a, **k: self.current == "reward"
-        self.auto.click_element.side_effect = self.click
-        self.auto.perform_ocr.side_effect = self.ocr
-        sleep = patch.object(self.module.time, "sleep", side_effect=self.advance)
-        sleep.start()
-        self.addCleanup(sleep.stop)
-
-    @property
-    def current(self):
-        return self.frames[min(self.frame, len(self.frames) - 1)]
-
-    def advance(self, _):
-        self.frame += 1
-
-    def ocr(self):
-        texts = {
-            "full": ["背包内", "助燃券", "持有数量已达上限。"],
-            "other": ["背包内遗器持有数量已达上限。"],
-            "reward": [], "page": [], "loading": [], "confirm": ["确认清理"],
-        }[self.current]
-        self.auto.ocr_result = [(None, (text, 0.99)) for text in texts]
-
-    def click(self, target, *args, **kwargs):
-        if target == "清理":
-            self.assertEqual(self.current, "full")
-            self.assertEqual(kwargs["crop"], self.module.CLEANUP_BUTTON_CROP)
-            self.assertFalse(kwargs["include"])
-            return True
-        if target == self.module.ONE_KEY_RECEIVE:
-            return self.current == "page"
-        self.fail(f"Unexpected action: {target}")
-
-    def cleanup_count(self):
-        return sum(call.args[0] == "清理" for call in self.auto.click_element.call_args_list)
-
-    def test_normal_reward_does_not_ocr_or_clean(self):
-        self.frames = ["reward"]
-        self.assertTrue(self.module.wait_for_weekly_reward())
-        self.auto.perform_ocr.assert_not_called()
-        self.auto.click_element.assert_not_called()
-        self.module.save_error_screenshot.assert_not_called()
-
-    def test_delayed_normal_reward_does_not_clean(self):
-        self.frames = ["loading", "loading", "reward"]
-        self.assertTrue(self.module.wait_for_weekly_reward())
-        self.auto.click_element.assert_not_called()
-
-    def test_cleanup_auto_claims_after_transition(self):
-        self.frames = ["full", "full", "loading", "reward"]
-        self.assertTrue(self.module.wait_for_weekly_reward())
-        self.assertEqual(self.cleanup_count(), 1)
-        self.module.save_error_screenshot.assert_not_called()
-
-    def test_cleanup_returns_to_page_and_retries_claim_once(self):
-        self.frames = ["full", "page", "page", "reward"]
-        self.assertTrue(self.module.wait_for_weekly_reward())
-        self.assertEqual(self.cleanup_count(), 1)
-        claims = [call for call in self.auto.click_element.call_args_list
-                  if call.args[0] == self.module.ONE_KEY_RECEIVE]
-        self.assertEqual(len(claims), 1)
-
-    def test_limit_on_last_initial_check_has_fresh_cleanup_budget(self):
-        self.frames = ["loading"] * 9 + ["full", "reward"]
-        self.assertTrue(self.module.wait_for_weekly_reward())
-        self.assertEqual(self.cleanup_count(), 1)
-        self.module.save_error_screenshot.assert_not_called()
-
-    def test_claim_on_last_initial_check_has_fresh_reward_budget(self):
-        self.frames = ["loading"] * 8 + ["full", "page", "reward"]
-        self.assertTrue(self.module.wait_for_weekly_reward())
-        self.assertEqual(self.cleanup_count(), 1)
-        self.module.save_error_screenshot.assert_not_called()
-
-    def test_each_stage_can_use_its_full_wait_budget(self):
-        self.frames = (["loading"] * 9 + ["full"] + ["loading"] * 9
-                       + ["page"] + ["loading"] * 9 + ["reward"])
-        self.assertTrue(self.module.wait_for_weekly_reward())
-        self.assertEqual(self.frame, 29)
-        self.assertEqual(self.cleanup_count(), 1)
-        self.module.save_error_screenshot.assert_not_called()
-
-    def test_wait_budget_still_expires_after_cleanup_and_retry(self):
-        self.frames = (["loading"] * 9 + ["full"] + ["loading"] * 9
-                       + ["page"] + ["loading"] * 10)
-        self.assertFalse(self.module.wait_for_weekly_reward())
-        self.assertEqual(self.frame, 30)
-        self.assertEqual(self.cleanup_count(), 1)
-        self.module.save_error_screenshot.assert_called_once()
-
-    def test_unrelated_inventory_limit_never_cleans(self):
-        self.frames = ["other"]
-        self.assertFalse(self.module.wait_for_weekly_reward())
-        self.auto.click_element.assert_not_called()
-        self.module.save_error_screenshot.assert_called_once()
-
-    def test_missing_or_unclickable_cleanup_button_fails(self):
-        self.frames = ["full"]
-        self.auto.click_element.side_effect = None
-        self.auto.click_element.return_value = False
-        self.assertFalse(self.module.wait_for_weekly_reward())
-        self.assertEqual(self.cleanup_count(), 1)
-        self.assertEqual(self.frame, 0)
-        self.module.save_error_screenshot.assert_called_once()
-
-    def test_persistent_limit_does_not_clean_again(self):
-        self.frames = ["full"]
-        self.assertFalse(self.module.wait_for_weekly_reward())
-        self.assertEqual(self.cleanup_count(), 1)
-        self.assertEqual(self.frame, 11)
-        self.module.save_error_screenshot.assert_called_once()
-
-    def test_unknown_confirmation_is_not_clicked(self):
-        self.frames = ["full", "confirm"]
-        self.assertFalse(self.module.wait_for_weekly_reward())
-        self.assertEqual(self.cleanup_count(), 1)
-        self.assertNotIn("确认", [call.args[0] for call in self.auto.click_element.call_args_list])
-
-    def test_retry_does_not_invent_claim_success(self):
-        self.frames = ["full", "page"]
-        self.assertFalse(self.module.wait_for_weekly_reward())
-        self.assertEqual(self.cleanup_count(), 1)
-        self.module.save_error_screenshot.assert_called_once()
-
-    def test_split_ocr_with_whitespace_matches_limit(self):
-        self.auto.perform_ocr.side_effect = None
-        self.auto.ocr_result = [(None, (text, 0.99)) for text in (
-            "背 包 内", "助燃券", "持有数量\n已达上限。")]
-        self.assertTrue(self.module._fuel_ticket_limit_visible())
-
-    def test_empty_ocr_does_not_match_limit(self):
-        self.auto.perform_ocr.side_effect = None
-        self.auto.ocr_result = []
-        self.assertFalse(self.module._fuel_ticket_limit_visible())
+@pytest.mark.parametrize("entry", ("builtin", "thirdparty"))
+@pytest.mark.parametrize("flow", ("normal", "auto", "receipt", "reclaim", "after_receipt"))
+def test_all_universe_entries_share_the_complete_reward_flow(scene, entry, flow):
+    scene.flow = flow
+    assert scene.run(entry)
+    assert scene.page == "claimed"
+    assert sum(point == (1640, 728) for _, point in scene.clicks) == (2 if flow == "reclaim" else 1)
+    assert sum(point == (774, 708) for _, point in scene.clicks) == int(flow != "normal")
+    assert sum(point == (1187, 754) for _, point in scene.clicks) == int(flow != "normal")
+    assert scene.keys == ["esc"]
+    assert sum(call.args[0] == "模拟宇宙奖励已领取" for call in scene.notify.call_args_list) == 1
 
 
-class TestWeeklyRewardEntrypoints(unittest.TestCase):
-    def load_entrypoint(self, filename):
-        self.wait = Mock()
-        self.auto = Mock()
-        self.base = Mock()
-        self.cfg = Mock()
-        self.cfg.universe_bonus_enable = False
-        self.cfg.notify_template = {
-            "SimulatedUniverseRewardClaimed": "模拟宇宙奖励已领取",
-            "SimulatedUniverseCompleted": "模拟宇宙已完成",
-        }
-        return load_task(filename, stub_modules({
-            "module.screen": {"screen": Mock()},
-            "module.automation": {"auto": self.auto},
-            "module.automation.screenshot": {"Screenshot": Mock()},
-            "module.config": {"cfg": self.cfg, "asu_config": Mock()},
-            "module.logger": {"log": Mock()},
-            "module.notification.notification": {"NotificationLevel": Mock()},
-            "tasks.base.base": {"Base": self.base},
-            "tasks.base.pythonchecker": {"PythonChecker": Mock()},
-            "tasks.power.power": {"Power": Mock()},
-            "tasks.weekly.weekly_reward": {"wait_for_weekly_reward": self.wait},
-            "utils.date": {"Date": Mock()},
-            "utils.command": {"subprocess_with_timeout": Mock()},
-            "utils.console": {"pause_on_error": Mock(), "pause_and_retry": Mock()},
-            "numpy": {},
-        }))
-
-    def test_universe_entrypoints_wait_before_success_notification(self):
-        for filename, class_name in (
-            ("divergent_universe.py", "DivergentUniverse"),
-            ("universe.py", "Universe"),
-        ):
-            for received in (True, False):
-                with self.subTest(entrypoint=class_name, received=received):
-                    module = self.load_entrypoint(filename)
-                    self.wait.return_value = received
-                    with patch.object(module.time, "sleep"):
-                        if class_name == "Universe":
-                            module.Universe.get_reward("divergent")
-                            # 此入口始终发出原有的任务完成通知，领取成功另发一次。
-                            expected = 2 if received else 1
-                        else:
-                            task = getattr(module, class_name)()
-                            self.assertEqual(task.get_reward(), received)
-                            expected = 1 if received else 0
-                    self.wait.assert_called_once_with()
-                    self.assertEqual(self.base.send_notification_with_screenshot.call_count, expected)
-                    if received:
-                        self.auto.press_key.assert_called_with("esc")
-                    else:
-                        self.assertNotIn("esc", [call.args[0] for call in self.auto.press_key.call_args_list])
-
-    def test_divergent_reaches_weekly_score_check_when_reward_receipt_is_unreadable(self):
-        module = self.load_entrypoint("divergent_universe.py")
-        task = module.DivergentUniverse()
-        task.run = Mock(return_value=True)
-        task.process_ornament = Mock()
-        self.cfg.weekly_divergent_bonus_enable = True
-        self.wait.side_effect = RuntimeError("周期奖励回执未识别")
-        self.auto.find_element.return_value = None
-        self.auto.get_single_line_text.return_value = "18000/18000"
-
-        self.assertTrue(task.start())
-
-        module.screen.change_to.assert_called_once_with("divergent_main", max_recursion=1)
-        self.cfg.save_timestamp.assert_called_once_with("weekly_divergent_timestamp")
-        self.assertEqual(self.auto.click_element.call_count, 2)
-        task.process_ornament.assert_not_called()
-
-    def test_universe_finishes_even_when_receipt_cannot_be_read(self):
-        module = self.load_entrypoint("universe.py")
-        self.wait.side_effect = RuntimeError("周期奖励回执未识别")
-        with patch.object(module.time, "sleep"):
-            module.Universe.finalize_simulation(True, "universe")
-        self.cfg.save_timestamp.assert_called_once_with("universe_timestamp")
-        self.base.send_notification_with_screenshot.assert_called_once_with(
-            "模拟宇宙已完成", module.NotificationLevel.ALL,
-        )
-        self.assertEqual(self.auto.click_element.call_count, 2)
-
-    def test_universe_attempts_ornament_after_confirmed_reward_close_fails(self):
-        module = self.load_entrypoint("universe.py")
-        self.cfg.universe_bonus_enable = True
-        self.wait.return_value = True
-        self.auto.click_element.side_effect = [True, True, RuntimeError("关闭奖励弹窗时截图失败")]
-        with patch.object(module.time, "sleep"), patch.object(module.Universe, "process_ornament") as ornament:
-            module.Universe.get_reward("divergent")
-        ornament.assert_called_once_with()
-        self.assertEqual(self.base.send_notification_with_screenshot.call_count, 2)
+@pytest.mark.parametrize("entry", ("builtin", "thirdparty"))
+@pytest.mark.parametrize("fault", ("capture_once", "ocr_once", "mapping_once", "late_receipt", "transition", "missing_ack"))
+def test_universe_reward_local_faults_recover_in_the_same_call(scene, entry, fault):
+    scene.fault = fault
+    assert scene.run(entry)
+    assert scene.page == "claimed"
+    assert sum(point == (774, 708) for _, point in scene.clicks) == 1
+    assert sum(point == (1187, 754) for _, point in scene.clicks) == 1
 
 
-if __name__ == "__main__":
-    unittest.main()
+@pytest.mark.parametrize("entry", ("builtin", "thirdparty"))
+@pytest.mark.parametrize("fault", ("persistent_limit", "persistent_confirm", "unknown_confirmation", "persistent_capture"))
+def test_universe_reward_failure_is_bounded_and_not_reported_as_claimed(scene, entry, fault):
+    scene.fault = fault
+    assert not scene.run(entry)
+    assert not scene.keys
+    assert sum(point == (774, 708) for _, point in scene.clicks) <= 1
+    assert sum(point == (1187, 754) for _, point in scene.clicks) <= 1
+    assert scene.now < 76
+    assert not any(call.args[0] == "模拟宇宙奖励已领取" for call in scene.notify.call_args_list)
+    scene.config.save_timestamp.assert_not_called()
+
+
+@pytest.mark.parametrize("entry", ("builtin", "thirdparty"))
+@pytest.mark.parametrize("fault", ("deadline_map", "stop_map"))
+def test_universe_reward_stops_before_dispatch_after_mapping(scene, entry, fault):
+    scene.fault = fault
+    if fault == "stop_map":
+        with pytest.raises(RunStopRequested):
+            scene.run(entry)
+    else:
+        assert not scene.run(entry)
+    assert scene.clicks == [("pending", (1640, 728))]
+    assert not scene.keys
+    scene.config.save_timestamp.assert_not_called()
+
+
+@pytest.mark.parametrize("page", ("destroy", "other", "unknown"))
+def test_unrelated_dialogs_do_not_start_cleanup(scene, page):
+    scene.page = page
+    assert not scene.run("direct")
+    assert not scene.clicks
+
+
+def test_empty_weekly_reward_page_is_not_reported_as_a_new_claim(scene):
+    scene.page = "claimed"
+    assert not scene.run("direct")
+    assert not scene.clicks
+
+
+def test_divergent_keeps_match_result_and_checks_score_after_reward_failure(scene, monkeypatch):
+    task = divergent.DivergentUniverse()
+    task.run = Mock(return_value=True)
+    task.process_ornament = Mock()
+    monkeypatch.setattr(divergent, "claim_weekly_reward", Mock(side_effect=RuntimeError("领奖识别失败")))
+    monkeypatch.setattr(divergent.Date, "is_next_mon_x_am", lambda *args: True)
+    scene.auto.get_single_line_text.return_value = "18000/18000"
+    assert task.start()
+    scene.config.save_timestamp.assert_called_once_with("weekly_divergent_timestamp")
+    task.process_ornament.assert_not_called()
+
+
+def test_universe_attempts_ornament_after_confirmed_reward_exit_fails(scene, monkeypatch):
+    scene.config.universe_bonus_enable = True
+    monkeypatch.setattr(scene.auto, "press_key", Mock(side_effect=OSError("退出积分页失败")))
+    ornament = Mock()
+    monkeypatch.setattr(universe.Universe, "process_ornament", ornament)
+    universe.Universe.get_reward("divergent")
+    ornament.assert_called_once_with()
+    assert any(call.args[0] == "模拟宇宙奖励已领取" for call in scene.notify.call_args_list)
+
+
+def test_universe_keeps_match_completion_when_reward_is_unreadable(scene, monkeypatch):
+    monkeypatch.setattr(universe, "claim_weekly_reward", Mock(side_effect=RuntimeError("领奖识别失败")))
+    universe.Universe.finalize_simulation(True, "universe")
+    scene.config.save_timestamp.assert_called_once_with("universe_timestamp")
+    scene.notify.assert_called_once_with("模拟宇宙已完成", universe.NotificationLevel.ALL)

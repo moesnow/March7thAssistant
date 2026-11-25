@@ -235,14 +235,17 @@ def test_weekly_reward_diagnostic_distinguishes_exit_from_a_temporary_window(mon
     monkeypatch.setattr(divergent_universe.Date, "is_next_mon_x_am", Mock(return_value=True))
     for module in (game_config, automation, divergent_universe):
         monkeypatch.setattr(module, "cfg", config)
-    monkeypatch.setattr(weekly_reward, "time", SimpleNamespace(sleep=Mock()))
+    now = [0.0]
+    monkeypatch.setattr(weekly_reward, "time", SimpleNamespace(
+        monotonic=lambda: now[0], sleep=lambda seconds: now.__setitem__(0, now[0] + seconds)))
     auto = weekly_reward.auto
     monkeypatch.setattr(auto, "find_element", Mock(return_value=None))
     monkeypatch.setattr(auto, "click_element", Mock(return_value=True))
-    monkeypatch.setattr(auto, "perform_ocr", lambda: setattr(auto, "ocr_result", []))
+    monkeypatch.setattr(auto, "perform_ocr", lambda **kwargs: setattr(auto, "ocr_result", []))
     monkeypatch.setattr(auto, "_is_debug_enabled", lambda: False)
     window = object.__new__(BackgroundInput)
-    window.window_problem = Mock(side_effect=[None] * 10 + [window_problem, None])
+    problems = [None, None, window_problem]
+    window.window_problem = Mock(side_effect=lambda: problems.pop(0) if problems else None)
     window.release_all = Mock()
     window.logger = None
     window._window_wait_expired = False
@@ -256,11 +259,11 @@ def test_weekly_reward_diagnostic_distinguishes_exit_from_a_temporary_window(mon
     if window_problem == WINDOW_EXITED:
         with pytest.raises(GameWindowLost):
             instance.start()
-        assert capture.call_count == 10
+        assert capture.call_count == 2
         check_score.assert_not_called()
     else:
         assert instance.start() is True
-        assert capture.call_count == 11
+        assert 3 <= capture.call_count < 30
         check_score.assert_called_once_with()
 
     window.release_all.assert_called_once_with()

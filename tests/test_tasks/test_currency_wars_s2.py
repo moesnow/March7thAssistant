@@ -3772,6 +3772,244 @@ def test_visible_fight_remains_usable_when_only_the_deployment_count_raises(monk
     assert state.clicks == [(Page.BOARD, (1817, 751))]
 
 
+@pytest.fixture
+def fuel_ticket_reward(monkeypatch, world):
+    monkeypatch.setattr(task, "TASK_SECONDS", 60)
+    monkeypatch.setattr(task.screen, "change_to", Mock())
+    lobby = home()
+    pending = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: True)
+    credited = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: False)
+    receipt = page(Page.REWARD_RECEIPT, ("点击空白处关闭", 960, 910))
+    partial = page(Page.REWARD_RECEIPT, ("点击空白处关闭", 960, 910))
+    message = ("背包内助燃券持有数量已达上限。", 956, 580)
+    limit = Frame(CANVAS, labels(message, ("清理", 774, 708), ("前往使用", 1188, 708), ("X", 1462, 378)))
+    missing_button = Frame(CANVAS, labels(message, ("前往使用", 1188, 708), ("X", 1462, 378)))
+    destroy_labels = labels(("提示", 959, 331), ("此次销毁将无物品返还，销毁物品如下：", 953, 418),
+                            ("已销毁的物品无法复原", 960, 686), ("取消", 770, 754), ("确认", 1187, 754))
+    confirmation = Frame(CANVAS, destroy_labels)
+    missing_confirmation = Frame(CANVAS, destroy_labels[:-1])
+    unknown = page(Page.UNKNOWN, ("确认清理", 960, 708))
+    result = page(Page.MATCH_RESULT, ("对局胜利", 960, 233), ("返回货币战争", 960, 899))
+    ready = page(Page.BOARD, stage="3-7")
+    scene = SimpleNamespace(flow="auto", fault=None, cleaned=False, confirm=False, confirmed=False,
+                            release=None, misses=0, following=[])
+
+    def click(state, point):
+        if state.frame is lobby and point == (381, 961):
+            state.frame = pending
+        elif state.frame is pending and point == (1640, 728):
+            if scene.cleaned:
+                state.frame = pending if scene.fault == "reclaim_stalls" else receipt
+            else:
+                state.frame = partial if scene.flow == "after_receipt" else limit
+        elif state.frame is partial and point == (960, 910):
+            state.frame = limit
+        elif state.frame is limit and point == (774, 708):
+            assert not scene.cleaned
+            scene.cleaned = True
+            target = pending if scene.flow == "reclaim" else receipt
+            if scene.confirm:
+                state.frame = confirmation
+                return
+            if scene.fault in ("late_receipt", "transition"):
+                scene.release = (world.now[0] + (11 if scene.fault == "late_receipt" else 2), target)
+                state.frame = limit if scene.fault == "late_receipt" else unknown
+            elif scene.fault == "persistent_limit":
+                pass
+            elif scene.fault == "unknown_confirmation":
+                state.frame = unknown
+            else:
+                state.frame = target
+            if scene.fault == "missing_input_receipt":
+                raise OSError("清理已送达，但输入回执丢失")
+        elif state.frame is confirmation and point == (1187, 754):
+            assert not scene.confirmed
+            scene.confirmed = True
+            if scene.fault != "confirmation_stalls":
+                state.frame = pending if scene.flow == "reclaim" else receipt
+            if scene.fault == "missing_confirmation_receipt":
+                raise OSError("销毁确认已送达，但输入回执丢失")
+        elif state.frame is receipt and point == (960, 910):
+            state.frame = credited
+        elif state.frame is limit and point == (1462, 378):
+            state.frame = pending
+        elif state.frame is result and point == (960, 899):
+            state.frame = lobby
+        else:
+            pytest.fail(f"非预期输入：{state.frame.page} {point}")
+
+    state = drive(monkeypatch, world, lobby, click)
+    # 保留任务的真实观察重试、导航、输入与回执处理，只替换游戏提供的画面。
+    monkeypatch.setattr(world.war, "_observe", task.CurrencyWars._observe.__get__(world.war))
+
+    def capture():
+        if scene.release and world.now[0] >= scene.release[0]:
+            state.frame = scene.release[1]
+            scene.release = None
+        if state.frame is limit:
+            if scene.fault == "persistent_capture" or scene.fault == "capture_once" and not scene.misses:
+                scene.misses += 1
+                raise OSError("截图暂不可用")
+            if scene.fault == "ocr_once" and not scene.misses:
+                scene.misses += 1
+                raise task.CurrencyWarsReadTimeout("OCR 识别暂时失败")
+            if scene.fault == "button_once" and not scene.misses:
+                scene.misses += 1
+                return missing_button
+        if state.frame is confirmation and scene.fault == "confirmation_button_once" and not scene.misses:
+            scene.misses += 1
+            return missing_confirmation
+        return state.frame
+
+    monkeypatch.setattr(world.war, "_capture", capture)
+
+    def map_point(target, *args, **kwargs):
+        point = tuple(round(value * scale) for value, scale in zip(target[:2], (1920, 1080)))
+        if point == (774, 708):
+            if scene.fault == "mapping_once" and not scene.misses:
+                scene.misses += 1
+                return None
+            if scene.fault == "timeout_in_mapping":
+                world.now[0] = world.war.deadline
+            if scene.fault == "stop_in_mapping":
+                task.pause_ctl.checkpoint.side_effect = RunStopRequested("用户停止")
+        if point == (1187, 754):
+            if scene.fault == "confirmation_timeout_in_mapping":
+                world.now[0] = world.war.deadline
+            if scene.fault == "confirmation_stop_in_mapping":
+                task.pause_ctl.checkpoint.side_effect = RunStopRequested("用户停止")
+        return point
+
+    world.auto.find_element.side_effect = map_point
+    world.auto.press_key.side_effect = lambda key: (
+        state.keys.append((state.frame.page, key)), setattr(state, "frame", lobby))
+
+    def run(entry="weekly"):
+        if entry != "weekly":
+            state.frame = ready
+
+            def finish_battle(frame):
+                assert frame is ready
+                state.frame = result
+                return result
+
+            monkeypatch.setattr(world.war, "_prepare", finish_battle)
+        if entry == "full":
+            from tasks.daily import daily
+            monkeypatch.setattr(daily, "CurrencyWars", lambda: world.war)
+            monkeypatch.setattr(daily.plan, "select_steps", lambda order, cfg, actions, **kwargs: [
+                ("货币战争", actions["currencywars"]),
+                ("后续任务", lambda: scene.following.append(True)),
+            ])
+            return daily.Daily.start()
+        return world.war.start(weekly=entry == "weekly", loop=entry == "loop", resume=entry == "resume")
+
+    scene.state, scene.run = state, run
+    return scene
+
+
+@pytest.mark.parametrize("entry", ("weekly", "single", "loop", "resume", "full"))
+@pytest.mark.parametrize("flow", ("auto", "reclaim", "after_receipt"))
+@pytest.mark.parametrize("confirmation", (False, True))
+def test_fuel_ticket_limit_cleans_and_finishes_reward(world, fuel_ticket_reward, entry, flow, confirmation):
+    scene = fuel_ticket_reward
+    scene.flow = flow
+    scene.confirm = confirmation
+    assert scene.run(entry)
+    assert scene.state.clicks.count((Page.REWARD_LIMIT, (774, 708))) == 1
+    assert scene.state.clicks.count((Page.WEEKLY, (1640, 728))) == (2 if flow == "reclaim" else 1)
+    assert not any(point in ((1462, 378), (1188, 708)) for _, point in scene.state.clicks)
+    assert scene.confirmed is confirmation
+    assert sum(point == (1187, 754) for _, point in scene.state.clicks) == int(confirmation)
+    assert not world.war.weekly_reward_pending
+    world.cfg.save_timestamp.assert_called_once_with("currencywars_timestamp")
+    assert sum(call.args[0] == "货币战争奖励已领取"
+               for call in task.Base.send_notification_with_screenshot.call_args_list) == 1
+    if entry == "full":
+        assert scene.following == [True]
+    if entry != "weekly":
+        assert world.war.result is True
+
+
+@pytest.mark.parametrize("fault", (
+    "capture_once", "ocr_once", "button_once", "mapping_once", "late_receipt", "transition", "missing_input_receipt",
+))
+def test_fuel_ticket_reward_recovers_local_faults(world, fuel_ticket_reward, fault):
+    scene = fuel_ticket_reward
+    scene.fault = fault
+    assert scene.run()
+    assert scene.state.clicks.count((Page.REWARD_LIMIT, (774, 708))) == 1
+    assert scene.state.clicks.count((Page.WEEKLY, (1640, 728))) == 1
+    assert not world.war.weekly_reward_pending
+    world.cfg.save_timestamp.assert_called_once_with("currencywars_timestamp")
+
+
+@pytest.mark.parametrize("fault", ("confirmation_button_once", "missing_confirmation_receipt", "confirmation_stalls"))
+def test_fuel_ticket_reward_confirmation_is_bounded(world, fuel_ticket_reward, fault):
+    scene = fuel_ticket_reward
+    scene.confirm = True
+    scene.fault = fault
+    assert scene.run() is (fault != "confirmation_stalls")
+    assert scene.state.clicks.count((Page.REWARD_LIMIT, (774, 708))) == 1
+    assert sum(point == (1187, 754) for _, point in scene.state.clicks) == 1
+    assert world.war.weekly_reward_pending is (fault == "confirmation_stalls")
+    assert world.cfg.save_timestamp.call_count == int(fault != "confirmation_stalls")
+
+
+@pytest.mark.parametrize("fault,exception", (
+    ("confirmation_timeout_in_mapping", task.CurrencyWarsBudgetExceeded),
+    ("confirmation_stop_in_mapping", RunStopRequested),
+))
+def test_fuel_ticket_reward_confirmation_honors_stop_and_budget(world, fuel_ticket_reward, fault, exception):
+    scene = fuel_ticket_reward
+    scene.confirm = True
+    scene.fault = fault
+    with pytest.raises(exception):
+        scene.run()
+    assert scene.cleaned and not scene.confirmed
+    assert len(scene.state.clicks) == 3
+    world.cfg.save_timestamp.assert_not_called()
+
+
+def test_unrelated_destruction_confirmation_is_not_accepted(monkeypatch, world):
+    confirmation = Frame(CANVAS, labels(
+        ("此次销毁将无物品返还，销毁物品如下：", 953, 418),
+        ("已销毁的物品无法复原", 960, 686), ("取消", 770, 754), ("确认", 1187, 754)))
+    state = drive(monkeypatch, world, confirmation)
+    world.war._check_weekly_reward(confirmation)
+    assert state.clicks == state.keys == []
+    world.cfg.save_timestamp.assert_not_called()
+
+
+@pytest.mark.parametrize("fault", ("persistent_limit", "unknown_confirmation", "reclaim_stalls"))
+def test_fuel_ticket_reward_failure_stays_pending_without_repeated_cleanup(world, fuel_ticket_reward, fault):
+    scene = fuel_ticket_reward
+    scene.fault = fault
+    if fault == "reclaim_stalls":
+        scene.flow = "reclaim"
+    assert not scene.run()
+    assert scene.state.clicks.count((Page.REWARD_LIMIT, (774, 708))) == 1
+    assert scene.state.clicks.count((Page.WEEKLY, (1640, 728))) == (2 if fault == "reclaim_stalls" else 1)
+    assert world.war.weekly_reward_pending
+    assert world.now[0] < 60
+    world.cfg.save_timestamp.assert_not_called()
+
+
+@pytest.mark.parametrize("fault,exception", (
+    ("persistent_capture", task.CurrencyWarsUnavailable),
+    ("timeout_in_mapping", task.CurrencyWarsBudgetExceeded),
+    ("stop_in_mapping", RunStopRequested),
+))
+def test_fuel_ticket_reward_stops_before_further_input(monkeypatch, world, fuel_ticket_reward, fault, exception):
+    scene = fuel_ticket_reward
+    scene.fault = fault
+    monkeypatch.setattr(task, "TASK_SECONDS", 30)
+    with pytest.raises(exception):
+        scene.run()
+    assert scene.state.clicks == [(Page.HOME, (381, 961)), (Page.WEEKLY, (1640, 728))]
+    world.cfg.save_timestamp.assert_not_called()
+
+
 def test_failed_reward_does_not_write_completed_timestamp(monkeypatch, world):
     lobby = home()
     weekly = page(Page.WEEKLY, ("18000/18000", 273, 740))
@@ -3787,7 +4025,7 @@ def test_failed_reward_does_not_write_completed_timestamp(monkeypatch, world):
 
 
 @pytest.mark.parametrize("layout", ("confirm", "right_confirm", "close", "close_without_ocr"))
-def test_full_weekly_score_with_reward_limit_does_not_start_a_match(monkeypatch, world, layout):
+def test_full_weekly_score_with_unresolved_reward_limit_does_not_start_a_match(monkeypatch, world, layout):
     lobby = home()
     weekly = page(Page.WEEKLY, ("18000/18000", 273, 740), claim_available=lambda: True)
     message = ("背包内助燃券持有数量已达上限。", 956, 526 if layout == "right_confirm" else 580)
@@ -3809,6 +4047,7 @@ def test_full_weekly_score_with_reward_limit_does_not_start_a_match(monkeypatch,
         receipt = page(Page.REWARD_RECEIPT, ("点击空白处关闭", 960, 910))
         routes[weekly, (1640, 728)] = receipt
         routes[receipt, (960, 910)] = limit
+        routes[limit, (774, 708)] = limit
     routes[limit, close_point] = weekly
     state = drive(monkeypatch, world, lobby, lambda s, point: setattr(s, "frame", routes[s.frame, point]))
     world.auto.press_key.side_effect = lambda key: setattr(state, "frame", lobby)
@@ -10008,7 +10247,7 @@ def test_weekly_claim_retries_coordinate_mapping_before_any_input(monkeypatch, w
 
     assert world.war.start(weekly=True)
     assert state.clicks == [(Page.WEEKLY, (1640, 728))]
-    assert world.war.reward_claim_score is None
+    assert not world.war.reward_state.claim_sent
     assert not world.war.weekly_reward_pending
     world.cfg.save_timestamp.assert_called_once_with("currencywars_timestamp")
 

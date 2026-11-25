@@ -794,7 +794,7 @@ def test_universe_bonus_delegates_to_immersifier_only_power_task(monkeypatch, en
         monkeypatch.setattr(divergent.Date, "is_next_mon_x_am", Mock(return_value=False))
         assert task.start()
     else:
-        monkeypatch.setattr(universe, "wait_for_weekly_reward", Mock(return_value=True))
+        monkeypatch.setattr(universe, "claim_weekly_reward", Mock(return_value=True))
         monkeypatch.setattr(universe, "time", SimpleNamespace(sleep=Mock()))
         universe.Universe.get_reward("divergent")
 

@@ -25,6 +25,7 @@ from tasks.weekly import currency_wars_strategy as strategy
 from tasks.weekly.currency_wars_equipment import EquipmentOption, equipment_order
 from tasks.weekly import currency_wars_ui as ui
 from tasks.weekly.currency_wars_ui import Page
+from tasks.weekly.weekly_reward import RewardPage, RewardState, WeeklyRewardError, collect_weekly_reward
 from utils.date import Date
 from utils.game_options import game_option_enabled
 from utils.pause import pause_ctl
@@ -314,8 +315,7 @@ class CurrencyWars:
         self.battle_auto_attempts = 0
         self.battle_auto_retry_at = None
         self.deferred_operations = set()
-        self.reward_claim_score = None
-        self.reward_claim_notified = False
+        self.reward_state = RewardState()
         self.weekly_score = None
         self.weekly_reward_pending = False
         self._start_match_sent = False
@@ -5678,52 +5678,34 @@ class CurrencyWars:
 
         frame = self._expect(read_status, 7, "积分或领奖状态未识别")
         score_observed_at = datetime.now().timestamp()
-        receipt = None
-        if available:
-            def credited(f):
-                return f.page == Page.WEEKLY and f.claim_available() is False and f.ratio(ui.WEEKLY_SCORE) == score
+        def credited(f):
+            return f.page == Page.WEEKLY and f.claim_available() is False and f.ratio(ui.WEEKLY_SCORE) == score
 
-            if self.reward_claim_score is not None:
-                raise CurrencyWarsReceiptTimeout("上次领奖尚待核对，保留当前奖励")
+        def claim_button(f):
+            return (1640, 728) if f.claim_available() is True and f.ratio(ui.WEEKLY_SCORE) == score else None
 
-            def claim_button(f):
-                return (1640, 728) if f.claim_available() is True and f.ratio(ui.WEEKLY_SCORE) == score else None
+        pages = {Page.HOME: RewardPage.HOME, Page.WEEKLY: RewardPage.POINTS,
+                 Page.REWARD_RECEIPT: RewardPage.RECEIPT, Page.REWARD_LIMIT: RewardPage.LIMIT,
+                 Page.REWARD_CLEANUP_CONFIRM: RewardPage.CLEANUP_CONFIRM}
 
-            def mark_claim():
-                self.reward_claim_score = score
+        def button(f, action):
+            if action == "claim":
+                return claim_button(f)
+            return {"cleanup": f.reward_limit_cleanup, "confirm": f.reward_cleanup_confirm,
+                    "close": f.reward_close}[action]()
 
-            frame = self._click_to(
-                frame, claim_button,
-                lambda f: f.page in (Page.REWARD_RECEIPT, Page.REWARD_LIMIT) or credited(f),
-                "货币战争积分奖励未确认领取", seconds=12, attempts=1, before_click=mark_claim,
+        try:
+            frame, claimed, more_rewards_available = collect_weekly_reward(
+                frame, state=self.reward_state, available=available, claim_key=score,
+                kind=lambda f: pages.get(f.page, RewardPage.UNKNOWN), button=button,
+                credited=credited, remaining=lambda f: f.claim_button_visible(), click_to=self._click_to,
+                on_receipt=lambda image: self._notify("货币战争奖励已领取", NotificationLevel.ALL, image),
             )
-            if frame.page == Page.REWARD_LIMIT:
-                raise CurrencyWarsReceiptTimeout("助燃券已达上限，货币战争积分奖励仍待领取")
-            receipt = frame.image
-        elif self.reward_claim_score is not None and self.reward_claim_score == score:
-            # 回执可能漏读。积分一致且可领档位已清空时采用新画面确认。
-            receipt = frame.image
-
-        claimed = receipt is not None
-        if claimed and not self.reward_claim_notified:
-            self.reward_claim_score = score
-            self.reward_claim_notified = True
-            self._notify("货币战争奖励已领取", NotificationLevel.ALL, receipt)
-
-        more_rewards_available = False
-        if frame.page == Page.REWARD_RECEIPT:
-            frame = self._click_to(
-                frame, lambda f: f.reward_close(), lambda f: f.page in REWARD_PAGES - {Page.REWARD_RECEIPT},
-                "领奖后未确认返回积分页", seconds=12,
-            )
-            if frame.page == Page.REWARD_LIMIT:
-                raise CurrencyWarsReceiptTimeout("助燃券已达上限，货币战争积分奖励仍待领取")
-            # 一键领取已确认到账。仅在画面明确显示还有奖励时保留本周待办。
-            more_rewards_available = frame.page == Page.WEEKLY and frame.claim_button_visible()
+        except WeeklyRewardError as error:
+            raise CurrencyWarsReceiptTimeout(str(error)) from error
         if frame.page != Page.HOME:
             frame = self._go_back(frame, Page.HOME)
-        self.reward_claim_score = None
-        self.reward_claim_notified = False
+        self.reward_state = RewardState()
         if Date.is_next_mon_x_am(score_observed_at, cfg.refresh_hour):
             self.weekly_score = None
             raise CurrencyWarsActionUnready("货币战争积分处理期间跨周重置，请重新核对本周积分")
@@ -5829,8 +5811,7 @@ class CurrencyWars:
         limit = task_limit_seconds(cfg.get_value("currencywars_time_limit"))
         self.deadline = None if limit is None else started + limit
         log.info("货币战争总时限：不限" if limit is None else f"货币战争总时限：{limit // 60} 分钟")
-        self.reward_claim_score = None
-        self.reward_claim_notified = False
+        self.reward_state = RewardState()
         self.weekly_score = None
         self.weekly_reward_pending = False
         self.result = None

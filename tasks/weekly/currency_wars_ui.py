@@ -11,6 +11,7 @@ import numpy as np
 from PIL import Image
 
 from module.logger import log
+from tasks.weekly import weekly_reward as reward_ui
 from tasks.weekly.currency_wars_equipment import Equipment, ITEMS, RECIPES
 from tasks.weekly.currency_wars_strategy import Offer, Point, Slot
 
@@ -36,10 +37,10 @@ RANK_DOWN = (900, 809, 1021, 885)
 RANK_STEP_UP = (960, 148)
 RANK_STEP_DOWN = (960, 845)
 RANK_RETURN = (1250, 925, 1495, 998)
-WEEKLY_TITLE = (55, 302, 260, 364)
-WEEKLY_SCORE = (135, 710, 415, 780)
-WEEKLY_CLAIM = (1450, 686, 1840, 765)
-REWARD_DISMISS = (535, 625, 1390, 1065)
+WEEKLY_TITLE = reward_ui.WEEKLY_TITLE
+WEEKLY_SCORE = reward_ui.WEEKLY_SCORE
+WEEKLY_CLAIM = reward_ui.WEEKLY_CLAIM
+REWARD_DISMISS = reward_ui.REWARD_DISMISS
 BOARD_STAGE = (226, 25, 558, 122)
 BOARD_CAPACITY = (850, 215, 1050, 290)
 BOARD_CAPACITY_DIGITS = (894, 219, 1047, 290)
@@ -226,6 +227,7 @@ class Page(Enum):
     WEEKLY = "积分奖励"
     REWARD_RECEIPT = "奖励展示"
     REWARD_LIMIT = "助燃券容量提示"
+    REWARD_CLEANUP_CONFIRM = "物品销毁确认"
     BOARD = "备战"
     EMPTY_FRONT = "前台未部署提示"
     BENCH_FULL = "备战席溢出"
@@ -621,9 +623,10 @@ class Frame:
         if (self.find("连接中断") and self.find("退出游戏")) or (
                 self.find("加载失败", contains=True) and self.find("立即切换")):
             return Page.DISCONNECTED
-        if "背包内助燃券持有数量已达上限" in "".join(
-                label.text for label in self.texts((385, 323, 1540, 650))):
+        if reward_ui.fuel_ticket_limit(self):
             return Page.REWARD_LIMIT
+        if reward_ui.cleanup_confirmation(self):
+            return Page.REWARD_CLEANUP_CONFIRM
         cancel = self.find("取消", area=(552, 631, 930, 720))
         halo_replace = cancel and self.has("替换该角色原有光环", area=(713, 453, 1210, 565), contains=True)
         fight_prompt = self.find("本局不再提示", area=(730, 480, 1150, 730)) and self.find(
@@ -1249,10 +1252,16 @@ class Frame:
         return min(3, round(width / 41.5))
 
     def reward_close(self) -> Point | None:
-        if label := self.find("点击空白处关闭", area=REWARD_DISMISS, contains=True):
-            return label.point
-        if self.has("获得物品", "获得奖励", "获得道具", area=(570, 105, 1350, 610)):
-            return self.match("zh_CN/base/click_close.png", REWARD_DISMISS, 0.80)
+        return reward_ui.reward_close(self)
+
+    def reward_limit_cleanup(self) -> Point | None:
+        if self.page == Page.REWARD_LIMIT:
+            return reward_ui.cleanup_button(self)
+        return None
+
+    def reward_cleanup_confirm(self) -> Point | None:
+        if self.page == Page.REWARD_CLEANUP_CONFIRM:
+            return reward_ui.confirmation_button(self)
         return None
 
     def reward_limit_close(self) -> Point | None:
@@ -1276,34 +1285,10 @@ class Frame:
         return self.has("无法上阵同名角色", "同名角色无法上阵", area=(580, 215, 1345, 455), contains=True)
 
     def claim_button_visible(self) -> bool:
-        text = "".join(label.text for label in sorted(self.texts(WEEKLY_CLAIM), key=lambda item: item.point[0]))
-        patch = self.crop(WEEKLY_CLAIM)
-        yellow = (patch[:, :, 0] > 204) & (patch[:, :, 1] > 141) & (patch[:, :, 2] < 140)
-        return "键领取" in text and float(yellow.mean()) > 0.18
+        return reward_ui.claim_button_visible(self)
 
     def claim_available(self) -> bool | None:
-        if self.claim_button_visible():
-            return True
-
-        # 全部可领取奖励到账后，正式服会隐藏按钮。以积分档位与已领标志为证据。
-        score = self.ratio(WEEKLY_SCORE)
-        if score is None:
-            return None
-        tiers = sorted(
-            (label.point[0], int(label.text)) for label in self.texts((72, 562, 1834, 624))
-            if re.fullmatch(r"\d{1,7}", label.text)
-        )
-        if (len(tiers) < 2 or tiers[0][0] > 230 or tiers[-1][0] < 1600
-                or tiers[-1][1] != score[1]):
-            return None
-        gaps = np.diff([x for x, _ in tiers])
-        if gaps.max() > 1.45 * np.median(gaps) or any(
-                left[1] >= right[1] for left, right in zip(tiers, tiers[1:])):
-            return None
-        if all(self.match("screen/currency_wars/s2_points_claimed.png", (x - 40, 481, x + 40, 553), 0.88)
-               for x, threshold in tiers if threshold <= score[0]):
-            return False
-        return None
+        return reward_ui.claim_available(self)
 
     def disassembly_tool(self) -> Point | None:
         area = (1540, 111, 1890, 206)
