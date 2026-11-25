@@ -14,7 +14,7 @@
                 "target_screen": "guide2",
                 "actions_list": [
                     "auto.click_element((1521 / 1920, 59 / 1080, 0, 0), 'crop')",
-                    "auto.find_element('星际和平指南', 'text', crop=(75 / 1920, 15 / 1080, 240 / 1920, 41 / 1080), max_retries=6, retry_delay=0.3) and auto.click_element((283 / 1920, 169 / 1080, 0, 0), 'crop')"
+                    "auto.find_element('星际和平指南', 'text', crop=(75 / 1920, 15 / 1080, 240 / 1920, 41 / 1080), max_retries=6, retry_delay=0.3) and auto.click_element('./assets/touch_720/images/guide/enter_guide2.png', 'image', 0.88, crop=(90 / 1280, 84 / 720, 1108 / 1280, 60 / 720), max_retries=3, retry_delay=0.3)"
                 ]
             }
         ]
@@ -247,6 +247,7 @@
         "name": "星际和平指南-每日实训",
         "id": "guide2",
         "image_path": "./assets/touch_720/images/screen/guide2.png",
+        "image_crop": [90, 84, 1198, 144],
         "actions": [
             {
                 "target_screen": "main",
@@ -259,25 +260,25 @@
             {
                 "target_screen": "guide3",
                 "actions_list": [
-                    "auto.click_element((419 / 1920, 169 / 1080, 0, 0), 'crop')"
+                    "auto.click_element('./assets/touch_720/images/guide/enter_guide3.png', 'image', 0.88, crop=(90 / 1280, 84 / 720, 1108 / 1280, 60 / 720), max_retries=3, retry_delay=0.3)"
                 ]
             },
             {
                 "target_screen": "guide5",
                 "actions_list": [
-                    "auto.click_element((553 / 1920, 169 / 1080, 0, 0), 'crop')"
+                    "auto.click_element('./assets/touch_720/images/guide/enter_guide5.png', 'image', 0.88, crop=(90 / 1280, 84 / 720, 1108 / 1280, 60 / 720), max_retries=3, retry_delay=0.3)"
                 ]
             },
             {
                 "target_screen": "guide4",
                 "actions_list": [
-                    "auto.click_element((688 / 1920, 169 / 1080, 0, 0), 'crop')"
+                    "auto.click_element('./assets/touch_720/images/guide/enter_guide4.png', 'image', 0.88, crop=(90 / 1280, 84 / 720, 1108 / 1280, 60 / 720), max_retries=3, retry_delay=0.3)"
                 ]
             },
             {
                 "target_screen": "guide6",
                 "actions_list": [
-                    "auto.click_element((822 / 1920, 169 / 1080, 0, 0), 'crop')"
+                    "auto.click_element('./assets/touch_720/images/guide/enter_guide6.png', 'image', 0.88, crop=(90 / 1280, 84 / 720, 1108 / 1280, 60 / 720), max_retries=3, retry_delay=0.3)"
                 ]
             }
         ]
@@ -286,11 +287,12 @@
         "name": "星际和平指南-生存索引",
         "id": "guide3",
         "image_path": "./assets/touch_720/images/screen/guide3.png",
+        "image_crop": [90, 84, 1198, 144],
         "actions": [
             {
                 "target_screen": "guide2",
                 "actions_list": [
-                    "auto.click_element((283 / 1920, 169 / 1080, 0, 0), 'crop')"
+                    "auto.click_element('./assets/touch_720/images/guide/enter_guide2.png', 'image', 0.88, crop=(90 / 1280, 84 / 720, 1108 / 1280, 60 / 720), max_retries=3, retry_delay=0.3)"
                 ]
             }
         ]
@@ -299,11 +301,12 @@
         "name": "星际和平指南-旷宇纷争",
         "id": "guide5",
         "image_path": "./assets/touch_720/images/screen/guide5.png",
+        "image_crop": [90, 84, 1198, 144],
         "actions": [
             {
                 "target_screen": "guide2",
                 "actions_list": [
-                    "auto.click_element((283 / 1920, 169 / 1080, 0, 0), 'crop')"
+                    "auto.click_element('./assets/touch_720/images/guide/enter_guide2.png', 'image', 0.88, crop=(90 / 1280, 84 / 720, 1108 / 1280, 60 / 720), max_retries=3, retry_delay=0.3)"
                 ]
             }
         ]
@@ -312,11 +315,12 @@
         "name": "星际和平指南-逐光捡金",
         "id": "guide4",
         "image_path": "./assets/touch_720/images/screen/guide4.png",
+        "image_crop": [90, 84, 1198, 144],
         "actions": [
             {
                 "target_screen": "guide2",
                 "actions_list": [
-                    "auto.click_element((283 / 1920, 169 / 1080, 0, 0), 'crop')"
+                    "auto.click_element('./assets/touch_720/images/guide/enter_guide2.png', 'image', 0.88, crop=(90 / 1280, 84 / 720, 1108 / 1280, 60 / 720), max_retries=3, retry_delay=0.3)"
                 ]
             }
         ]
@@ -325,11 +329,12 @@
         "name": "星际和平指南-开拓历程",
         "id": "guide6",
         "image_path": "./assets/touch_720/images/screen/guide6.png",
+        "image_crop": [90, 84, 1198, 144],
         "actions": [
             {
                 "target_screen": "guide2",
                 "actions_list": [
-                    "auto.click_element((283 / 1920, 169 / 1080, 0, 0), 'crop')"
+                    "auto.click_element('./assets/touch_720/images/guide/enter_guide2.png', 'image', 0.88, crop=(90 / 1280, 84 / 720, 1108 / 1280, 60 / 720), max_retries=3, retry_delay=0.3)"
                 ]
             }
         ]

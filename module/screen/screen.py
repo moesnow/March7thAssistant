@@ -10,6 +10,7 @@ import numpy as np
 
 from utils.color import green
 from utils.singleton import SingletonMeta
+from utils.image_utils import ImageUtils
 from utils.logger.logger import Logger
 from typing import Optional
 from module.automation import auto
@@ -60,6 +61,7 @@ class Screen(metaclass=SingletonMeta):
                 config["id"]: {
                     "name": config["name"],
                     "image_path": config["image_path"],
+                    "image_crop": config.get("image_crop"),
                     "actions": config["actions"],
                     "text_fallback": config.get("text_fallback"),
                 }
@@ -175,8 +177,8 @@ class Screen(metaclass=SingletonMeta):
             if found_event.is_set():
                 return None
             try:
-                result = self._find_image(
-                    screen['image_path'],
+                result = self._find_screen_image(
+                    screen,
                     "image_threshold",
                     self.SCREEN_MATCH_THRESHOLD,
                     take_screenshot=False,
@@ -194,8 +196,8 @@ class Screen(metaclass=SingletonMeta):
                 self.logger.debug(f"识别界面出错：{e}")
             return None
 
-        if self.current_screen is not None and self._find_image(
-            screen_map[self.current_screen]['image_path'],
+        if self.current_screen is not None and self._find_screen_image(
+            screen_map[self.current_screen],
             "image_threshold",
             self.SCREEN_MATCH_THRESHOLD,
         ):
@@ -326,12 +328,36 @@ class Screen(metaclass=SingletonMeta):
         if take_screenshot and definition.get("text_fallback"):
             auto.take_screenshot()
             take_screenshot = False
-        if (self._find_image(definition["image_path"], "image", self.SCREEN_MATCH_THRESHOLD,
+        if (self._find_screen_image(definition, "image", self.SCREEN_MATCH_THRESHOLD,
                              take_screenshot=take_screenshot)
                 or self._matches_text_fallback(definition)):
             self.current_screen = target_screen
             return True
         return False
+
+    def _find_screen_image(self, definition, find_type, threshold=None, *, take_screenshot=True):
+        region = definition.get("image_crop")
+        if region is None:
+            return self._find_image(definition["image_path"], find_type, threshold,
+                                    take_screenshot=take_screenshot)
+
+        # 导航栏里的选中态只在导航栏核对，避免命中行动摘要内容区的同形图标。
+        # 对当前完整帧作局部副本，不改变并发识别和后续操作共用的截图。
+        if take_screenshot:
+            auto.take_screenshot()
+        frame = auto.screenshot
+        if frame is None or frame.size != get_ui_profile(cfg).resolution:
+            return None
+        path = get_ui_profile(cfg).resolve_image_path(definition["image_path"])
+        template = ImageUtils.read_image(path)
+        if template is None:
+            raise ProfileAssetNotFoundError(tr("触屏素材文件不存在：{path}").format(path=path))
+        pixels = np.asarray(frame.crop(tuple(region)).convert("RGB"))[:, :, ::-1].copy()
+        score, _ = ImageUtils.scale_and_match_template(pixels, template)
+        self.logger.debug(f"目标图片：{path} 导航栏相似度：{score:.2f} 匹配阈值：{threshold}")
+        if threshold is None or score >= threshold:
+            return score if find_type == "image_threshold" else True
+        return None
 
     def _matches_text_fallback(self, definition):
         regions = definition.get("text_fallback")
