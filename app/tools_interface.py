@@ -1,92 +1,90 @@
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSpacerItem, QScroller, QScrollerProperties, QFileDialog
-from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import SettingCardGroup, PushSettingCard, ScrollArea, InfoBar, InfoBarPosition, MessageBox, PushButton
-from .card.pushsettingcard1 import PushSettingCardCode
-from .card.autoplot_setting_card import AutoPlotSettingCard
-from .common.style_sheet import StyleSheet
-from .common.icon import UiIcon
-import tasks.tool as tool
-import base64
-import subprocess
-from utils import clipboard
-from utils.desktop_twin import in_desktop_twin
-from module.config import cfg
-from app.tools.adb_service import display_connection
-from tasks.base.tasks import start_task
-from utils.tasks import task_is_supported
+"""工具箱：分组卡片，每张卡一个工具。"""
 import os
+import subprocess
 import sys
 import traceback
 
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QFileDialog, QHBoxLayout, QVBoxLayout, QWidget
+from qfluentwidgets import (BodyLabel, FluentIcon as FIF, InfoBar, InfoBarPosition, MessageBox, PushButton, ScrollArea,
+                            TitleLabel, qconfig)
 
+import tasks.tool as tool
+from app.tools.adb_service import display_connection
+from module.config import cfg
 from module.localization import tr
 from module.logger import log
+from tasks.base.tasks import start_task
+from utils import clipboard
+from utils.desktop_twin import in_desktop_twin
+from utils.tasks import task_is_supported
+from .common.icon import UiIcon
+from .common.mascot import Mascot
+from .components.mascot_dialog import add_mascot
+from .overview.widgets import Pill
+from .pages.common import is_evernight, secondary
+from .toolbox.autoplot import AutoPlotCard
+from .toolbox.cards import ScreenshotCard, ToolCard, ToolGrid
+from .toolbox.redemption import RedemptionCodeCard
 
 
 class ToolsInterface(ScrollArea):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.parent = parent
+        self.setObjectName('toolsInterface')
+        self.setWidgetResizable(True)
+        self.enableTransparentBackground()
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.scrollWidget = QWidget()
-        self.vBoxLayout = QVBoxLayout(self.scrollWidget)
+        self.scrollWidget.setObjectName("view")
+        self.scrollWidget.setStyleSheet("#view{background: transparent}")
+        self.setWidget(self.scrollWidget)
 
-        self.toolsLabel = QLabel(tr("工具箱"), self)
-
-        self.ToolsGroup = SettingCardGroup(tr('工具箱'), self.scrollWidget)
-        self.automaticPlotCard = AutoPlotSettingCard(
-            FIF.CHAT,
-            tr("自动对话"),
-            tr("进入剧情页面后自动开始运行，支持大于等于 1920*1080 的 16:9 分辨率，不支持云·星穹铁道")
-        )
-        self.gameScreenshotCard = PushSettingCard(
-            tr('捕获'),
-            FIF.CAMERA,
-            tr("游戏截图"),
-            tr("检查程序获取的图像是否正确，支持OCR识别文字（可用于自行排查异常）")
-        )
-        self.unlockfpsCard = PushSettingCard(
-            tr('解锁'),
-            FIF.SPEED_HIGH,
-            tr("解锁帧率"),
-            tr("通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（支持国服和国际服）")
-        )
-        self.redemptionCodeCard = PushSettingCardCode(
-            tr('执行'),
-            UiIcon.TICKET,
-            tr("兑换码"),
-            "redemption_code",
-            self
-        )
-        self.cloudTouchCard = PushSettingCard(
-            tr('启动'),
-            UiIcon.TAP,
-            tr("触屏模式"),
-            tr("以云游戏移动端 UI 的方式启动游戏，可搭配 UU远程 平板触控模式，启动后会将命令复制到剪贴板内")
-        )
-        self.screenTestCard = PushSettingCard(
-            tr('测试'),
-            UiIcon.BEAKER,
-            tr("界面可切换性测试"),
-            tr("以最短路径遍历所有可达界面，验证界面切换是否正常")
-        )
-        self.characterExportCard = PushSettingCard(
-            tr('导出'),
-            FIF.PEOPLE,
-            tr("角色面板导出"),
-            tr("读取全部角色的属性、光锥、星魂、技能和遗器，保存到程序目录的 characters.json")
-        )
-        self.desktopTwinCard = PushSettingCard(
-            tr("打开"),
-            FIF.APPLICATION,
-            tr("桌面分身"),
-            tr("在独立的 Windows 桌面中运行小助手和游戏")
-        )
+        self.toolsLabel = TitleLabel(self.scrollWidget)
+        self.subtitleLabel = secondary(BodyLabel(self.scrollWidget))
+        self.automaticPlotCard = AutoPlotCard(FIF.CHAT, self.scrollWidget)
+        self.unlockfpsCard = ToolCard(FIF.SPEED_HIGH, self.scrollWidget)
+        self.cloudTouchCard = ToolCard(UiIcon.TAP, self.scrollWidget)
+        self.thirdPartyPill = Pill(self.cloudTouchCard)
+        self.cloudTouchCard.head.addWidget(self.thirdPartyPill)
+        self.gameScreenshotCard = ScreenshotCard(FIF.CAMERA, self.scrollWidget)
+        self.screenTestCard = ToolCard(UiIcon.BEAKER, self.scrollWidget)
+        self.redemptionCodeCard = RedemptionCodeCard(UiIcon.TICKET, self)
+        self.characterExportCard = ToolCard(FIF.PEOPLE, self.scrollWidget)
+        self.desktopTwinCard = ToolCard(FIF.APPLICATION, self.scrollWidget)
+        self.twinPill = Pill(self.desktopTwinCard)
+        self.desktopTwinCard.head.addWidget(self.twinPill)
         self._desktop_twin = None
         self._desktop_twin_hosting = False
 
-        self.__initWidget()
+        self.grid = ToolGrid(self.scrollWidget)
+        self.groupLabels = (
+            self.grid.addGroup(self.automaticPlotCard, self.unlockfpsCard, self.cloudTouchCard),
+            self.grid.addGroup(self.gameScreenshotCard, self.screenTestCard),
+            self.grid.addGroup(self.redemptionCodeCard, self.characterExportCard),
+            self.grid.addGroup(self.desktopTwinCard, beside=True),
+        )
+        head = QHBoxLayout()
+        head.setSpacing(16)
+        head.addWidget(self.toolsLabel)
+        head.addWidget(self.subtitleLabel, 1, Qt.AlignmentFlag.AlignBottom)
+        self.vBoxLayout = QVBoxLayout(self.scrollWidget)
+        self.vBoxLayout.setContentsMargins(20, 14, 24, 24)
+        self.vBoxLayout.setSpacing(14)
+        self.vBoxLayout.addLayout(head)
+        self.vBoxLayout.addWidget(self.grid, 1)
+
+        if sys.platform != 'win32':
+            for card in (self.automaticPlotCard, self.unlockfpsCard, self.cloudTouchCard, self.desktopTwinCard):
+                card.setDisabled(True)
+        self.gameScreenshotCard.setVisible(True)
+        self.desktopTwinCard.setHidden(sys.platform == 'win32' and in_desktop_twin())
+        self._setTexts()
+        self.__connectSignalToSlot()
         self.refreshBackendTasks()
+        qconfig.themeChanged.connect(self._restyle)
+        qconfig.themeColorChanged.connect(self._restyle)
 
         if sys.platform == 'win32' and not self.automaticPlotCard.isHidden() and self.automaticPlotCard.getSwitchState():
             self.__startAutoPlot()
@@ -98,106 +96,54 @@ class ToolsInterface(ScrollArea):
         card = getattr(self, tool.widget, None) if tool else None
         if card is None or card.isHidden():
             return False
-        target = getattr(card, "card", card)
         bar = self.verticalScrollBar()
-        center = target.mapTo(self.viewport(), target.rect().center())
+        center = card.mapTo(self.viewport(), card.rect().center())
         bar.setValue(bar.value() + center.y() - self.viewport().rect().center().y())
-        highlight(target)
+        highlight(card)
         return True
 
     def retranslateUi(self):
         """保留自动对话开关及其运行状态，不再次启动后台工具。"""
-        StyleSheet.TOOLS_INTERFACE.apply(self)
-        self.toolsLabel.setText(tr('工具箱'))
-        self.toolsLabel.adjustSize()
-        self.ToolsGroup.titleLabel.setText(tr('工具箱'))
-        self.automaticPlotCard.card.setTitle(tr('自动对话'))
-        self.automaticPlotCard.card.setContent(tr('进入剧情页面后自动开始运行，支持大于等于 1920*1080 的 16:9 分辨率，不支持云·星穹铁道'))
+        self._setTexts()
         self.automaticPlotCard.retranslateUi()
-        self.gameScreenshotCard.setTitle(tr('游戏截图'))
-        self.gameScreenshotCard.setContent(tr('检查程序获取的图像是否正确，支持OCR识别文字（可用于自行排查异常）'))
-        self._refreshScreenshotButton(display_connection(cfg))
-        self.unlockfpsCard.setTitle(tr('解锁帧率'))
-        self.unlockfpsCard.setContent(tr('通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（支持国服和国际服）'))
-        self.unlockfpsCard.button.setText(tr('解锁'))
-        self.redemptionCodeCard.setTitle(tr('兑换码'))
-        self.redemptionCodeCard.title = tr('兑换码')
-        self.redemptionCodeCard.setContent(tr('批量使用兑换码，每行一个，自动过滤空格等无效字符'))
-        self.redemptionCodeCard.button.setText(tr('执行'))
-        self.cloudTouchCard.setTitle(tr('触屏模式'))
-        self.cloudTouchCard.setContent(tr('以云游戏移动端 UI 的方式启动游戏，可搭配 UU远程 平板触控模式，启动后会将命令复制到剪贴板内'))
-        self.cloudTouchCard.button.setText(tr('启动'))
-        self.screenTestCard.setTitle(tr('界面可切换性测试'))
-        self.screenTestCard.setContent(tr('以最短路径遍历所有可达界面，验证界面切换是否正常'))
-        self.screenTestCard.button.setText(tr('测试'))
-        self.characterExportCard.setTitle(tr('角色面板导出'))
-        self.characterExportCard.setContent(tr('读取全部角色的属性、光锥、星魂、技能和遗器，保存到程序目录的 characters.json'))
-        self.characterExportCard.button.setText(tr('导出'))
-        self._refreshDesktopTwinCard()
         if self._desktop_twin is not None:
             self._desktop_twin.retranslateUi()
 
+    def _setTexts(self):
+        self.toolsLabel.setText(tr('工具箱'))
+        self.subtitleLabel.setText(tr('不参与完整运行，需要时单独打开'))
+        for label, text in zip(self.groupLabels, (tr('游戏辅助'), tr('排查'), tr('数据'), tr('高级'))):
+            label.setText(text)
+        self.automaticPlotCard.setTexts(
+            tr('自动对话'), tr('进入剧情页面后自动开始运行，支持大于等于 1920*1080 的 16:9 分辨率，不支持云·星穹铁道'), tr('选项'))
+        self.unlockfpsCard.setTexts(
+            tr('解锁帧率'), tr('通过修改注册表解锁120帧率，如已解锁，再次点击将恢复60帧率（支持国服和国际服）'), tr('解锁'))
+        self.cloudTouchCard.setTexts(
+            tr('触屏模式'), tr('以云游戏移动端 UI 的方式启动游戏，可搭配 UU远程 平板触控模式，启动后会将命令复制到剪贴板内'), tr('启动'))
+        self.gameScreenshotCard.setTexts(
+            tr('游戏截图'), tr('检查程序获取的图像是否正确，支持OCR识别文字（可用于自行排查异常）'), tr('捕获游戏窗口'))
+        self.gameScreenshotCard.fileButton.setText(tr('手动选择图片'))
+        self.screenTestCard.setTexts(
+            tr('界面可切换性测试'), tr('以最短路径遍历所有可达界面，验证界面切换是否正常'), tr('测试'))
+        self.redemptionCodeCard.setTexts(
+            tr('兑换码'), tr('批量使用兑换码，每行一个，自动过滤空格等无效字符'), tr('执行'))
+        self.characterExportCard.setTexts(
+            tr('角色面板导出'), tr('读取全部角色的属性、光锥、星魂、技能和遗器，保存到程序目录的 characters.json'), tr('导出'))
+        self._refreshDesktopTwinCard()
+        self._restyle()
+
+    def _restyle(self, *_):
+        evernight = is_evernight()
+        self.thirdPartyPill.setPill(tr('第三方程序'), 'warning', evernight=evernight)
+        self.twinPill.setPill(tr('运行中'), 'success', evernight=evernight)
+
     def _refreshDesktopTwinCard(self):
-        self.desktopTwinCard.setTitle(tr("桌面分身"))
-        if self._desktop_twin_hosting:
-            self.desktopTwinCard.setContent(tr("分身正在运行，打开窗口可查看分身画面或注销分身"))
-        else:
-            self.desktopTwinCard.setContent(tr("在独立的 Windows 桌面中运行小助手和游戏"))
-        self.desktopTwinCard.button.setText(tr("打开"))
-
-    def __initWidget(self):
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setViewportMargins(0, 80, 0, 20)
-        self.setWidget(self.scrollWidget)
-        self.setWidgetResizable(True)
-        self.setObjectName('toolsInterface')
-
-        self.scrollWidget.setObjectName('scrollWidget')
-        self.toolsLabel.setObjectName('toolsLabel')
-        StyleSheet.TOOLS_INTERFACE.apply(self)
-
-        self.__initLayout()
-        self.__connectSignalToSlot()
-
-        QScroller.grabGesture(self.viewport(), QScroller.ScrollerGestureType.LeftMouseButtonGesture)
-        scroller = QScroller.scroller(self.viewport())
-        scroller_props = scroller.scrollerProperties()
-        scroller_props.setScrollMetric(QScrollerProperties.ScrollMetric.OvershootDragDistanceFactor, 0.05)
-        scroller_props.setScrollMetric(QScrollerProperties.ScrollMetric.OvershootScrollDistanceFactor, 0.05)
-        scroller_props.setScrollMetric(QScrollerProperties.ScrollMetric.DecelerationFactor, 0.5)
-        scroller.setScrollerProperties(scroller_props)
-
-    def __initLayout(self):
-        self.toolsLabel.move(36, 30)
-
-        self.ToolsGroup.addSettingCard(self.automaticPlotCard)
-        self.ToolsGroup.addSettingCard(self.gameScreenshotCard)
-        self.ToolsGroup.addSettingCard(self.unlockfpsCard)
-        self.ToolsGroup.addSettingCard(self.redemptionCodeCard)
-        self.ToolsGroup.addSettingCard(self.cloudTouchCard)
-        self.ToolsGroup.addSettingCard(self.desktopTwinCard)
-        self.ToolsGroup.addSettingCard(self.characterExportCard)
-        self.ToolsGroup.addSettingCard(self.screenTestCard)
-
-        if sys.platform != 'win32':
-            self.automaticPlotCard.setDisabled(True)
-            self.unlockfpsCard.setDisabled(True)
-            self.cloudTouchCard.setDisabled(True)
-            self.desktopTwinCard.setDisabled(True)
-        elif in_desktop_twin():
-            self.desktopTwinCard.hide()
-
-        self.ToolsGroup.titleLabel.setHidden(True)
-
-        self.vBoxLayout.setSpacing(28)
-        self.vBoxLayout.setContentsMargins(36, 10, 36, 0)
-        self.vBoxLayout.addWidget(self.ToolsGroup)
-
-        for i in range(self.ToolsGroup.vBoxLayout.count()):
-            item = self.ToolsGroup.vBoxLayout.itemAt(i)
-            if isinstance(item, QSpacerItem):
-                self.ToolsGroup.vBoxLayout.removeItem(item)
-                break
+        active = self._desktop_twin_hosting
+        self.desktopTwinCard.setTexts(
+            tr("桌面分身"),
+            tr("分身正在运行，打开窗口可查看分身画面或注销分身") if active else tr("在独立的 Windows 桌面中运行小助手和游戏"),
+            tr("打开"))
+        self.twinPill.setVisible(active)
 
     def __onUnlockfpsCardClicked(self):
         from utils.registry.star_rail_setting import get_game_fps, set_game_fps, MissingFPSSettingError  # 延迟导入，避免非 Windows 平台报错
@@ -251,7 +197,6 @@ class ToolsInterface(ScrollArea):
         game_path = os.path.abspath(cfg.game_path)
         try:
             if cfg.genshin_starRail_fps_unlocker_allow is False:
-                from qfluentwidgets import MessageBox
                 # 依次展示多次确认对话框，每次提示更严肃，任意一次取消即返回
                 confirm_messages = [
                     (tr('此功能依赖第三方程序实现'),
@@ -263,10 +208,10 @@ class ToolsInterface(ScrollArea):
                 ]
 
                 for title, message in confirm_messages:
-                    from qfluentwidgets import MessageBox
                     step_confirm = MessageBox(title, message, self.window())
                     step_confirm.yesButton.setText(tr('确认'))
                     step_confirm.cancelButton.setText(tr('取消'))
+                    add_mascot(step_confirm, Mascot.SERIOUS)
                     if not step_confirm.exec():
                         return
 
@@ -334,7 +279,7 @@ class ToolsInterface(ScrollArea):
             )
 
     def __onGameScreenshotCardClicked(self):
-        """点击截图卡片后先选择来源：游戏窗口或本地图片。"""
+        """从总览的快捷启动打开时，先选择来源：游戏窗口或本地图片。"""
         connection = display_connection(cfg)
         if connection.error or connection.control_backend == "adb":
             self.__openScreenshotFile()
@@ -362,7 +307,10 @@ class ToolsInterface(ScrollArea):
         if action["value"] == "file":
             self.__openScreenshotFile()
         elif accepted:
-            tool.start("screenshot")
+            self.__captureScreenshot()
+
+    def __captureScreenshot(self):
+        tool.start("screenshot")
 
     def __openScreenshotFile(self):
         file_path, _ = QFileDialog.getOpenFileName(
@@ -373,6 +321,8 @@ class ToolsInterface(ScrollArea):
 
     def __connectSignalToSlot(self):
         self.gameScreenshotCard.clicked.connect(self.__onGameScreenshotCardClicked)
+        self.gameScreenshotCard.captureClicked.connect(self.__captureScreenshot)
+        self.gameScreenshotCard.fileClicked.connect(self.__openScreenshotFile)
         self.automaticPlotCard.switchChanged.connect(self.__onAutoPlotSwitchChanged)
         self.automaticPlotCard.optionsChanged.connect(self.__onAutoPlotOptionsChanged)
         self.unlockfpsCard.clicked.connect(self.__onUnlockfpsCardClicked)
@@ -413,21 +363,18 @@ class ToolsInterface(ScrollArea):
         return self._desktop_twin is None or self._desktop_twin.close()
 
     def setDesktopTwinHosting(self, active):
+        if self._desktop_twin_hosting == active:
+            return
         self._desktop_twin_hosting = active
         self._refreshDesktopTwinCard()
-        for card in (
-            self.automaticPlotCard, self.gameScreenshotCard, self.unlockfpsCard, self.redemptionCodeCard,
-            self.cloudTouchCard, self.screenTestCard, self.characterExportCard,
-        ):
+        for card in (self.automaticPlotCard, self.unlockfpsCard, self.cloudTouchCard):
+            card.setDisabled(active or sys.platform != "win32")
+        for card in (self.gameScreenshotCard, self.redemptionCodeCard, self.screenTestCard, self.characterExportCard):
             card.setDisabled(active)
         if active:
             tool.stop_plot()
-        elif not self.automaticPlotCard.isHidden() and self.automaticPlotCard.getSwitchState():
+        elif self.automaticPlotCard.isEnabled() and not self.automaticPlotCard.isHidden() and self.automaticPlotCard.getSwitchState():
             self.__startAutoPlot()
-
-    def _refreshScreenshotButton(self, connection):
-        file_only = connection.error or connection.control_backend == "adb"
-        self.gameScreenshotCard.button.setText(tr("手动选择图片") if file_only else tr("捕获"))
 
     def refreshBackendTasks(self, *, connection_changed=False):
         connection = display_connection(cfg)
@@ -437,7 +384,7 @@ class ToolsInterface(ScrollArea):
             card.setVisible(not adb)
         can_run_plot = not adb and connection.error is None
         self.automaticPlotCard.setVisible(can_run_plot)
-        self._refreshScreenshotButton(connection)
+        self.gameScreenshotCard.setFileOnly(bool(connection.error or adb))
         if not can_run_plot:
             tool.stop_plot()
         elif (sys.platform == "win32" and (was_hidden or connection_changed) and not self._desktop_twin_hosting
@@ -446,6 +393,7 @@ class ToolsInterface(ScrollArea):
         self.redemptionCodeCard.setVisible(task_is_supported("redemption", connection))
         self.screenTestCard.setVisible(task_is_supported("screen_test", connection))
         self.characterExportCard.setVisible(task_is_supported("character_export", connection))
+        self.grid.arrange()
 
     def __onScreenTestCardClicked(self):
         start_task("screen_test")
@@ -492,7 +440,7 @@ class ToolsInterface(ScrollArea):
 
     def toggleAutoPlot(self):
         """切换自动对话状态（供全局热键调用）"""
-        if self.automaticPlotCard.isHidden():
+        if self.automaticPlotCard.isHidden() or not self.automaticPlotCard.isEnabled():
             return
         current_state = self.automaticPlotCard.getSwitchState()
         new_state = not current_state

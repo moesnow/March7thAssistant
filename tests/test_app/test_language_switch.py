@@ -533,13 +533,15 @@ def test_config_reload_refreshes_overview_and_tools_for_new_backend(window, monk
     assert runtime_calls.method_calls == [call.bind_input(), call.reload_screen()]
     monkeypatch.setattr(tools, "tr", lambda text: "Choose local image" if text == "手动选择图片" else text)
     window.toolsInterface.retranslateUi()
-    assert window.toolsInterface.gameScreenshotCard.button.text() == "Choose local image"
+    screenshot = window.toolsInterface.gameScreenshotCard
+    assert screenshot.button.isHidden() and not screenshot.fileButton.isHidden()
+    assert screenshot.fileButton.text() == "Choose local image"
     from_file = Mock()
     capture = Mock()
     monkeypatch.setattr(tools.QFileDialog, 'getOpenFileName', Mock(return_value=('saved.png', '')))
     monkeypatch.setattr(tools.tool, 'start_screenshot_from_file', from_file)
     monkeypatch.setattr(tools.tool, 'start', capture)
-    window.toolsInterface.gameScreenshotCard.button.click()
+    screenshot.fileButton.click()
     from_file.assert_called_once_with('saved.png')
     capture.assert_not_called()
 
@@ -559,7 +561,7 @@ def test_config_reload_refreshes_overview_and_tools_for_new_backend(window, monk
 @pytest.mark.parametrize('checked', [False, True])
 def test_switch_button_visible_text_refreshes_without_toggling(log_page, qtbot, monkeypatch, checked):
     from app.content import run_controller
-    from app.card import autoplot_setting_card
+    from app.toolbox import autoplot
     from module.config import cfg
     from qfluentwidgets import FluentIcon
 
@@ -568,14 +570,14 @@ def test_switch_button_visible_text_refreshes_without_toggling(log_page, qtbot, 
     monkeypatch.setattr(cfg, 'config', deepcopy(cfg.config))
     monkeypatch.setattr(cfg, 'set_value', Mock())
     monkeypatch.setattr(cfg, 'set_values', Mock())
-    automatic = autoplot_setting_card.AutoPlotSettingCard(FluentIcon.CHAT, '自动对话')
+    automatic = autoplot.AutoPlotCard(FluentIcon.CHAT)
     qtbot.addWidget(automatic)
     automatic.show()
     log_page.widget.show()
     qtbot.wait(1)
     from app.run import cards
     monkeypatch.setattr(cards, 'tr', lambda text: 'new:' + text)
-    monkeypatch.setattr(autoplot_setting_card, 'tr', lambda text: 'new:' + text)
+    monkeypatch.setattr(autoplot, 'tr', lambda text: 'new:' + text)
     card = log_page.widget.currentPage.card
     log_page._overlay_enabled = checked
     switches = [automatic.switchButton, card.overlaySwitch]
@@ -589,7 +591,9 @@ def test_switch_button_visible_text_refreshes_without_toggling(log_page, qtbot, 
     automatic.retranslateUi()
     for switch in switches:
         assert switch.isChecked() == checked
-    assert automatic.switchButton.label.text() == 'new:' + ('开' if checked else '关')
+    assert automatic.switchButton.label.isHidden()
+    assert automatic.switchButton.accessibleName() == 'new:自动对话'
+    assert automatic.rememberStateCheckBox.text() == 'new:记住自动对话开关状态'
     assert card.overlaySwitch.accessibleName() == 'new:在游戏内显示日志'
     toggled.assert_not_called()
     cfg.set_value.assert_not_called()

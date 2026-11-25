@@ -9,6 +9,8 @@ from qfluentwidgets import (Action, DropDownPushButton, FluentIcon as FIF, Indet
 
 from app.common.design_tokens import PAGE_MARGIN
 from app.common.icon import UiIcon
+from app.common.mascot import Mascot
+from app.components.mascot_dialog import add_mascot
 from app.content.gacha_dialogs import clear_dialog, export_dialog, import_dialog
 from app.content.gacha_update import GachaUpdater
 from app.gacha import style
@@ -316,10 +318,7 @@ class WarpInterface(QWidget):
             self.reload(outcome.uids[0] if outcome.uids else None)
             self._info("success", tr("导入成功"), tr("UID {uids}").format(uids=", ".join(outcome.uids)))
         elif outcome.status == "failed":
-            box = MessageBox(tr("导入失败"), outcome.reason, self.window())
-            box.cancelButton.hide()
-            box.yesButton.setText(tr("确定"))
-            box.exec()
+            self._transferFailed(tr("导入失败"), outcome.reason)
 
     def exportRecords(self, fmt, every=False):
         selected = self.summary.selected if self.summary is not None else None
@@ -329,7 +328,14 @@ class WarpInterface(QWidget):
         if outcome.status == "success":
             self._info("success", tr("导出成功"), outcome.reason or str(outcome.path or ""))
         elif outcome.status == "failed":
-            self._info("error", tr("导出失败"), outcome.reason)
+            self._transferFailed(tr("导出失败"), outcome.reason)
+
+    def _transferFailed(self, title, reason):
+        box = MessageBox(title, reason, self.window())
+        box.cancelButton.hide()
+        box.yesButton.setText(tr("确定"))
+        add_mascot(box, Mascot.STARTLED)
+        box.exec()
 
     def clearRecords(self, *args):
         selected = self.summary.selected if self.summary is not None else None

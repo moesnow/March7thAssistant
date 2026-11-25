@@ -962,10 +962,6 @@ msgstr "QQ 그룹"
 msgid "检查更新"
 msgstr "업데이트 확인"
 
-#: app/setting_interface.py:2558
-msgid "当前版本："
-msgstr "현재 버전:"
-
 #: app/setting_interface.py:2563
 msgid "更新源"
 msgstr "업데이트 소스"
@@ -1205,10 +1201,6 @@ msgstr "자동 대화"
 #: app/tools_interface.py:37
 msgid "进入剧情页面后自动开始运行，支持大于等于 1920*1080 的 16:9 分辨率，不支持云·星穹铁道"
 msgstr "스토리 화면 진입 후 자동 실행, 1920*1080 이상 16:9 해상도 지원, 클라우드·붕괴: 스타레일 미지원"
-
-#: app/tools_interface.py:40
-msgid "捕获"
-msgstr "캡처"
 
 #: app/tools_interface.py:42
 msgid "游戏截图"
@@ -1952,14 +1944,6 @@ msgstr "Mirror짱 CDK 유형과 다운로드할 리소스가 일치하지 않음
 #: module/update/version_check.py:194
 msgid "Mirror酱 CDK 已被封禁"
 msgstr "Mirror짱 CDK 차단됨"
-
-#: app/tools/check_update.py:149
-msgid ""
-"发现新版本：{cfg.version} ——> {version}\n"
-"更新日志 |･ω･)"
-msgstr ""
-"새 버전 발견: {cfg.version} ——> {version}\n"
-"업데이트 로그 |･ω･)"
 
 #: app/tools/check_update.py:237
 msgid "尚未配置 Mirror酱 更新源 (╥╯﹏╰╥)"
@@ -12556,3 +12540,43 @@ msgid "游戏已启动，但后台虚拟屏持续没有新帧，请导出本轮�
 msgstr ""
 "게임이 시작되었지만 백그라운드 가상 디스플레이에서 새 프레임이 들어오지 않고 있습니다. 이번 실행 로그를 내보낸 뒤 문제를 신고할 때 "
 "첨부해 주세요."
+
+#: app/tools_interface.py:114
+msgid "不参与完整运行，需要时单独打开"
+msgstr "전체 실행에 포함되지 않습니다. 필요할 때 따로 여세요."
+
+#: app/tools_interface.py:115
+msgid "游戏辅助"
+msgstr "게임 보조"
+
+#: app/tools_interface.py:115
+msgid "排查"
+msgstr "문제 해결"
+
+#: app/tools_interface.py:118
+msgid "选项"
+msgstr "옵션"
+
+#: app/toolbox/autoplot.py:174
+msgid "快捷键 {hotkey}"
+msgstr "단축키 {hotkey}"
+
+#: app/tools_interface.py:137
+msgid "第三方程序"
+msgstr "외부 프로그램"
+
+#: module/content_pages.py:64
+msgid "社区与工具"
+msgstr "커뮤니티 및 도구"
+
+#: app/pages/about.py:33
+msgid "崩坏：星穹铁道自动化助手，免费开源"
+msgstr "붕괴: 스타레일용 무료 오픈 소스 자동화 도우미"
+
+#: app/tools/check_update.py:149
+msgid "发现新版本"
+msgstr "새 버전이 있습니다"
+
+#: app/card/messagebox_custom.py:274
+msgid "更新日志 |･ω･)"
+msgstr "업데이트 로그 |･ω･)"

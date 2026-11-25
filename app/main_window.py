@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QLabel, QHBoxLayout
 from .components.evey_decoration import EveyControlDecoration, EveyTitleDecoration
 from .common.accent import MARCH7TH_PINK, EVERNIGHT_RED, set_accent_color
 
-from qfluentwidgets import NavigationItemPosition, FluentWindow, SplashScreen, setThemeColor, themeColor, qconfig
+from qfluentwidgets import NavigationItemPosition, FluentWindow, SplashScreen, isDarkTheme, setThemeColor, themeColor, qconfig
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import InfoBar, InfoBarIcon, InfoBarPosition, PrimaryPushButton, SystemTrayMenu, ToolTipFilter, ToolTipPosition
 from app.tools.game_starter import GameStartStatus, GameLaunchThread
@@ -661,7 +661,7 @@ class MainWindow(FluentWindow):
             lambda: MessageBoxSupport(
                 tr('支持作者🥰'),
                 tr('此程序为免费开源项目，如果你付了钱请立刻退款\n如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕\n您的支持就是作者开发和维护项目的动力🚀'),
-                './assets/app/images/sponsor.jpg',
+                './assets/app/images/sponsor_dark.jpg' if isDarkTheme() else './assets/app/images/sponsor.jpg',
                 self
             ).exec(),
             selectable=False, position=NavigationItemPosition.BOTTOM

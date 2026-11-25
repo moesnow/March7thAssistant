@@ -47,3 +47,16 @@ def test_unlock_fps_missing_setting_explains_custom_quality(value):
         ToolsInterface._ToolsInterface__onUnlockfpsCardClicked(object())
     assert warning.call_args.kwargs["content"] == "请将游戏图像质量修改为自定义后重试"
     write.assert_not_called()
+
+
+@pytest.mark.parametrize("current,target", [(60, 120), (120, 60)])
+def test_fps_button_toggles_registered_value(qtbot, current, target):
+    from app.tools_interface import ToolsInterface
+
+    with patch("utils.registry.star_rail_setting.get_game_fps", return_value=current), \
+            patch("utils.registry.star_rail_setting.set_game_fps") as write, \
+            patch("app.tools_interface.InfoBar.info"), patch("app.tools_interface.InfoBar.success"):
+        page = ToolsInterface()
+        qtbot.addWidget(page)
+        page.unlockfpsCard.button.click()
+    write.assert_called_once_with(target)

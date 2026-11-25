@@ -1004,10 +1004,6 @@ msgstr "QQ Group"
 msgid "检查更新"
 msgstr "Check for Updates"
 
-#: app/setting_interface.py:2558
-msgid "当前版本："
-msgstr "Current Version:"
-
 #: app/setting_interface.py:2563
 msgid "更新源"
 msgstr "Update Source"
@@ -1251,10 +1247,6 @@ msgid "进入剧情页面后自动开始运行，支持大于等于 1920*1080 �
 msgstr ""
 "Auto run in story page. Supports >= 1920*1080 16:9 resolution. Not supported"
 " in Cloud StarRail."
-
-#: app/tools_interface.py:40
-msgid "捕获"
-msgstr "Capture"
 
 #: app/tools_interface.py:42
 msgid "游戏截图"
@@ -2007,14 +1999,6 @@ msgstr "MirrorChan CDK type mismatch"
 #: module/update/version_check.py:194
 msgid "Mirror酱 CDK 已被封禁"
 msgstr "MirrorChan CDK banned"
-
-#: app/tools/check_update.py:149
-msgid ""
-"发现新版本：{cfg.version} ——> {version}\n"
-"更新日志 |･ω･)"
-msgstr ""
-"New version found: {cfg.version} -> {version}\n"
-"Changelog |･ω･)"
 
 #: app/tools/check_update.py:237
 msgid "尚未配置 Mirror酱 更新源 (╥╯﹏╰╥)"
@@ -12986,3 +12970,43 @@ msgstr ""
 "The game has started, but no new frames are coming from the background "
 "virtual display. Please export the log for this run and attach it to your "
 "report."
+
+#: app/tools_interface.py:114
+msgid "不参与完整运行，需要时单独打开"
+msgstr "Open these tools separately from Full Run"
+
+#: app/tools_interface.py:115
+msgid "游戏辅助"
+msgstr "Game tools"
+
+#: app/tools_interface.py:115
+msgid "排查"
+msgstr "Diagnostics"
+
+#: app/tools_interface.py:118
+msgid "选项"
+msgstr "Options"
+
+#: app/toolbox/autoplot.py:174
+msgid "快捷键 {hotkey}"
+msgstr "Hotkey {hotkey}"
+
+#: app/tools_interface.py:137
+msgid "第三方程序"
+msgstr "Third-party app"
+
+#: module/content_pages.py:64
+msgid "社区与工具"
+msgstr "Community and tools"
+
+#: app/pages/about.py:33
+msgid "崩坏：星穹铁道自动化助手，免费开源"
+msgstr "Free, open-source automation for Honkai: Star Rail"
+
+#: app/tools/check_update.py:149
+msgid "发现新版本"
+msgstr "Update available"
+
+#: app/card/messagebox_custom.py:274
+msgid "更新日志 |･ω･)"
+msgstr "Changelog |･ω･)"

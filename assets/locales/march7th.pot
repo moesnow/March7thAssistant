@@ -3247,10 +3247,6 @@ msgstr ""
 msgid "检查更新"
 msgstr ""
 
-#: app/setting_interface.py:2558
-msgid "当前版本："
-msgstr ""
-
 #: app/setting_interface.py:2563
 msgid "更新源"
 msgstr ""
@@ -3567,12 +3563,6 @@ msgstr ""
 msgid "历史更新记录暂时无法加载，仍可正常更新"
 msgstr ""
 
-#: app/tools/check_update.py:149
-msgid ""
-"发现新版本：{cfg.version} ——> {version}\n"
-"更新日志 |･ω･)"
-msgstr ""
-
 #: app/tools/check_update.py:204
 msgid "该渠道版本与目标版本不一致，请稍后重试"
 msgstr ""
@@ -3687,10 +3677,6 @@ msgstr ""
 
 #: app/tools_interface.py:37
 msgid "进入剧情页面后自动开始运行，支持大于等于 1920*1080 的 16:9 分辨率，不支持云·星穹铁道"
-msgstr ""
-
-#: app/tools_interface.py:40
-msgid "捕获"
 msgstr ""
 
 #: app/tools_interface.py:42
@@ -12242,4 +12228,44 @@ msgstr ""
 
 #: module/game/adb_startup_frames.py:111
 msgid "游戏已启动，但后台虚拟屏持续没有新帧，请导出本轮日志反馈"
+msgstr ""
+
+#: app/tools_interface.py:114
+msgid "不参与完整运行，需要时单独打开"
+msgstr ""
+
+#: app/tools_interface.py:115
+msgid "游戏辅助"
+msgstr ""
+
+#: app/tools_interface.py:115
+msgid "排查"
+msgstr ""
+
+#: app/tools_interface.py:118
+msgid "选项"
+msgstr ""
+
+#: app/toolbox/autoplot.py:174
+msgid "快捷键 {hotkey}"
+msgstr ""
+
+#: app/tools_interface.py:137
+msgid "第三方程序"
+msgstr ""
+
+#: module/content_pages.py:64
+msgid "社区与工具"
+msgstr ""
+
+#: app/pages/about.py:33
+msgid "崩坏：星穹铁道自动化助手，免费开源"
+msgstr ""
+
+#: app/tools/check_update.py:149
+msgid "发现新版本"
+msgstr ""
+
+#: app/card/messagebox_custom.py:274
+msgid "更新日志 |･ω･)"
 msgstr ""

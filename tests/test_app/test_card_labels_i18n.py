@@ -103,3 +103,13 @@ class TestCardLabels:
         }
         assert persisted["title"] == card["title"]
         assert [i["label"] for i in persisted["menu_items"]] == [i["label"] for i in card["menu_items"]]
+
+
+def test_toolbox_labels_follow_the_active_language(switch_lang):
+    labels = ("游戏辅助", "排查", "第三方程序", "选项", "社区与工具", "发现新版本")
+    for lang in LOCALES:
+        switch_lang(lang)
+        for msgid in labels:
+            value = tr(msgid)
+            assert value and (lang not in ("en_US", "ko_KR", "ja_JP") or value != msgid)
+        assert "F9" in tr("快捷键 {hotkey}").format(hotkey="F9")

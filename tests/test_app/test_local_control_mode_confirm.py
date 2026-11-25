@@ -91,14 +91,11 @@ def confirm_mode(qapp, monkeypatch, content_window):
     from PySide6.QtWidgets import QWidget
     state = SimpleNamespace(boxes=[], answer=1)
 
-    def make_box(title, content, parent):
-        box = MagicMock()
-        box.title, box.content, box.parent = title, content, parent
-        box.exec.return_value = state.answer
+    def respond(box):
         state.boxes.append(box)
-        return box
+        return state.answer
 
-    monkeypatch.setattr(module, 'MessageBox', make_box)
+    monkeypatch.setattr(module.MessageBox, 'exec', respond)
     host = PageHost(content_window, QWidget(content_window))
     module.build(host)
     state.parent = content_window
@@ -116,9 +113,12 @@ def test_switching_to_background_explains_limits_and_follows_choice(confirm_mode
     confirm_mode.answer = answer
     assert confirm_mode.call('background') is bool(answer)
     box = confirm_mode.boxes[0]
-    assert box.parent is confirm_mode.parent
+    from app.common.mascot import Mascot
+    from tests.test_app.mascot_assertions import assert_pose
+    assert box.parentWidget() is confirm_mode.parent
+    assert_pose(box.mascotLabel.pixmap(), Mascot.SERIOUS)
     for limit in ('借用鼠标', '不能最小化', '保持系统解锁', '独立程序'):
         assert limit in box.content
     assert '需要滚轮时会临时把游戏切到前台' not in box.content
-    box.yesButton.setText.assert_called_once()
-    box.cancelButton.setText.assert_called_once()
+    assert box.yesButton.text() == '我已了解，启用后台模式'
+    assert box.cancelButton.text() == '取消'

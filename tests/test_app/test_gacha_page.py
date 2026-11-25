@@ -10,6 +10,7 @@ from qfluentwidgets import InfoBar, Theme, qconfig, setTheme, setThemeColor
 
 from app import warp_interface
 from app.common.design_tokens import EVERNIGHT_RED, MARCH7TH_PINK
+from app.common.mascot import Mascot
 from app.content.gacha_dialogs import Outcome
 from app.content.gacha_model import Column, Role
 from app.gacha import detail, style
@@ -264,12 +265,11 @@ def test_transfer_menu_outcomes(make_page, monkeypatch, operation, status):
     outcome = Outcome(status, affected, reason if status == "failed" else "", page.store.path(uid))
     dialog = Mock(return_value=outcome)
     monkeypatch.setattr(warp_interface, operation + "_dialog", dialog)
+    seen = (answer(monkeypatch, [True], expected_poses=(Mascot.STARTLED,))
+            if status == "failed" and operation in ("import", "export") else [])
     if operation == "import":
-        seen = answer(monkeypatch, [True]) if status == "failed" else []
         action(page.transferMenu, "导入 UIGF / SRGF 文件…").trigger()
         dialog.assert_called_once_with(page.window(), store=page.store)
-        if status == "failed":
-            assert [entry[:2] for entry in seen] == [("导入失败", reason)]
     elif operation == "export":
         action(page.transferMenu, "导出全部 2 个 UID（UIGF）").trigger()
         dialog.assert_called_once_with(page.window(), "uigf", None, store=page.store)
@@ -279,9 +279,10 @@ def test_transfer_menu_outcomes(make_page, monkeypatch, operation, status):
 
     if status != "success":
         assert page.summary is original
-        expected = [] if status == "cancelled" or operation == "import" else [
-            ("导出失败" if operation == "export" else "清空失败", reason)]
-        assert messages(page) == expected
+        if status == "failed" and operation in ("import", "export"):
+            title = "导入失败" if operation == "import" else "导出失败"
+            assert [entry[:2] for entry in seen] == [(title, reason)]
+        assert messages(page) == ([("清空失败", reason)] if (operation, status) == ("clear", "failed") else [])
     elif operation == "export":
         assert page.summary is original and ("导出成功", str(outcome.path)) in messages(page)
     else:

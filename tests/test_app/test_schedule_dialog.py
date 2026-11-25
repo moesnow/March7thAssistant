@@ -219,3 +219,27 @@ class TestStripJsoncComments:
         text = '"hello /* not a comment */ world"'
         result = _strip_jsonc_comments(text)
         assert "/* not a comment */" in result
+
+
+@pytest.mark.parametrize("accepted", [True, False])
+def test_remove_schedule_shows_box_and_preserves_cancel_focus(qtbot, monkeypatch, accepted):
+    from types import SimpleNamespace
+    from qfluentwidgets import MessageBox
+    from app.common.mascot import Mascot
+    from app.run.schedule import SchedulePage
+    from tests.test_app.mascot_assertions import assert_pose
+
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    model = Mock()
+    model.items.return_value = [SimpleNamespace(id="one", name="每日任务")]
+    def answer(box):
+        assert_pose(box.mascotLabel.pixmap(), Mascot.BOX)
+        assert box.focusWidget() is box.cancelButton and "每日任务" in box.content
+        return accepted
+    monkeypatch.setattr(MessageBox, "exec", answer)
+    SchedulePage._remove(SimpleNamespace(model=model, window=lambda: parent), "one")
+    if accepted:
+        model.remove.assert_called_once_with("one")
+    else:
+        model.remove.assert_not_called()

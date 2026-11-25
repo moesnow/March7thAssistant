@@ -51,6 +51,7 @@ def test_history_failure_keeps_release_note_and_download_available(qapp, monkeyp
     def inspect_dialog(dlg):
         assert '最新发布说明' in dlg.contentLabel.text()
         assert dlg.githubUpdateCard.isEnabled()
+        assert (dlg.banner.currentPill.text(), dlg.banner.targetPill.text()) == ('v1.0', 'v3.0')
         pump_until(qapp, lambda: '暂时无法加载' in dlg.historyStatusLabel.text())
         assert '最新发布说明' in dlg.contentLabel.text()
         assert dlg.githubUpdateCard.isEnabled()
@@ -108,6 +109,24 @@ def test_mirror_version_mismatch_does_not_offer_wrong_package(monkeypatch, updat
     assert thread.mirror_version_mismatch
     assert not thread.mirrorchyan_assert_url
     assert thread.github_assert_url == info.url
+
+
+    # 再走一次真实弹窗入口，检查不同版本的卡片和按钮都禁用。
+    monkeypatch.setattr(check_update, 'check_for_update', Mock(side_effect=[info, mirror]))
+    monkeypatch.setattr(check_update, 'fetch_changelog', Mock(return_value=''))
+    seen = []
+    def inspect(dlg):
+        card = dlg.mirrorchyanUpdateCard
+        assert not card.isEnabled() and not card.button.isEnabled()
+        assert dlg.githubUpdateCard.isEnabled()
+        assert card.contentLabel.text() == check_update.tr("该渠道版本与目标版本不一致，请稍后重试")
+        assert "QPushButton:disabled" in card.button.styleSheet()
+        seen.append(True)
+        dlg.done(0)
+        return False
+    monkeypatch.setattr(check_update.MessageBoxUpdate, 'exec', inspect)
+    check_update.checkUpdate(parent)
+    assert seen == [True]
 
 
 def test_successful_history_is_appended_after_latest_note(qapp, monkeypatch, update_env):

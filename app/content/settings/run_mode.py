@@ -10,6 +10,8 @@ from app.card.rangesettingcard1 import RangeSettingCard1
 from app.card.pushsettingcard1 import PushSettingCardEval
 from app.card.expandable_switch_setting_card import ExpandableSwitchSettingCard, ExpandableComboBoxSettingCard
 from module.config import cfg
+from app.common.mascot import Mascot
+from app.components.mascot_dialog import add_mascot
 from module.localization import tr
 from app.content.backend import block_while_running
 
@@ -43,6 +45,7 @@ def build(host):
         )
         confirm.yesButton.setText(tr("我已了解，启用后台模式"))
         confirm.cancelButton.setText(tr("取消"))
+        add_mascot(confirm, Mascot.SERIOUS)
         return bool(confirm.exec())
 
     host.gamePathCard = GamePathSettingCard(parent=host.card_parent)

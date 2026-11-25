@@ -6,6 +6,8 @@ from app.card.switchsettingcard1 import SwitchSettingCard1
 from app.card.rangesettingcard1 import RangeSettingCard1
 from app.card.expandable_switch_setting_card import ExpandableSwitchSettingCard
 from app.card.stationprioritysettingcard import StationPrioritySettingCard
+from app.common.mascot import Mascot
+from app.components.mascot_dialog import add_mascot
 from module.localization import tr, translations_of
 from module.search.setting_text import choice_texts
 from module.config import cfg
@@ -20,6 +22,7 @@ def confirm_external_enable(window):
     )
     confirm.yesButton.setText(tr("我已了解，继续开启"))
     confirm.cancelButton.setText(tr("取消"))
+    add_mascot(confirm, Mascot.SERIOUS)
 
     return bool(confirm.exec())
 

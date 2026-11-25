@@ -59,12 +59,16 @@ def test_desktop_twin_manual_launch_skips_battle_setting_write():
 @pytest.mark.skipif(sys.platform != "win32", reason="原生设置界面仅在 Windows 验证")
 def test_grouping_toggle_and_enable_dialog(qtbot, tmp_path, monkeypatch, page_config, content_window):
     import app.setting_interface as settings
-    from app.content.settings import game
     cfg = page_config("auto_battle_detect_enable: false\nauto_set_resolution_enable: true\n")
-    dialog = Mock()
-    dialog.exec.return_value = False
-    factory = Mock(return_value=dialog)
-    monkeypatch.setattr(game, "MessageBox", factory)
+    from qfluentwidgets import MessageBox
+    from app.common.mascot import Mascot
+    from tests.test_app.mascot_assertions import assert_pose
+    dialogs = []
+    def confirm(box):
+        dialogs.append(box)
+        assert_pose(box.mascotLabel.pixmap(), Mascot.SERIOUS)
+        return len(dialogs) == 2
+    monkeypatch.setattr(MessageBox, "exec", confirm)
     page = settings.SettingInterface(content_window)
     page.showCategory("game")
     interface = page.pages["game"].host
@@ -81,26 +85,22 @@ def test_grouping_toggle_and_enable_dialog(qtbot, tmp_path, monkeypatch, page_co
     children[2].switchButton.setChecked(True)
     assert cfg.auto_lower_graphics_enable is False
     assert not children[2].switchButton.isChecked()
-    assert "运行中的游戏不会立即恢复画面" in factory.call_args.args[1]
-    dialog.exec.return_value = True
+    assert "运行中的游戏不会立即恢复画面" in dialogs[0].content
     children[2].switchButton.setChecked(True)
     assert cfg.auto_lower_graphics_enable is True
     children[2].switchButton.setChecked(False)
     assert cfg.auto_lower_graphics_enable is False
-    assert factory.call_count == 2  # 关闭不弹窗，取消也不产生重入。
+    assert len(dialogs) == 2  # 关闭不弹窗，取消也不产生重入。
 
     # 原生 Qt 布局与绘制，确认展开区域和说明弹窗不裁切。
     from PySide6.QtWidgets import QVBoxLayout
-    from qfluentwidgets import MessageBox
     preview = content_window
     QVBoxLayout(preview).addWidget(page)
     preview.resize(1120, 680)
     preview.show()
     qtbot.wait(350)
     assert page.grab().save(str(tmp_path / "graphics-options.png"))
-    actual = MessageBox(factory.call_args.args[0], factory.call_args.args[1], preview)
-    actual.yesButton.setText(dialog.yesButton.setText.call_args.args[0])
-    actual.cancelButton.setText(dialog.cancelButton.setText.call_args.args[0])
+    actual = dialogs[-1]
     qtbot.addWidget(actual)
     actual.show()
     qtbot.wait(100)

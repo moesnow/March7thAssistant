@@ -146,9 +146,7 @@ class UpdateThread(QThread):
             # 构建更新日志（始终使用 GitHub 的 release notes）
             raw_note = self.latest_note
             clean_note = _parse_release_body(raw_note)
-            self.title = tr("发现新版本：{cfg.version} ——> {version}\n更新日志 |･ω･)").format(
-                cfg=cfg, version=github_info.version
-            )
+            self.title = tr("发现新版本")
             self.content = (
                 '<style>a {color: #f18cb9; font-weight: bold;}</style>'
                 + markdown.markdown(clean_note)

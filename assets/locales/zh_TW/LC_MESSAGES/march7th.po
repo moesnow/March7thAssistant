@@ -958,10 +958,6 @@ msgstr "QQ 群"
 msgid "检查更新"
 msgstr "檢查更新"
 
-#: app/setting_interface.py:2558
-msgid "当前版本："
-msgstr "目前版本："
-
 #: app/setting_interface.py:2563
 msgid "更新源"
 msgstr "更新來源"
@@ -1201,10 +1197,6 @@ msgstr "自動對話"
 #: app/tools_interface.py:37
 msgid "进入剧情页面后自动开始运行，支持大于等于 1920*1080 的 16:9 分辨率，不支持云·星穹铁道"
 msgstr "進入劇情頁面後自動開始運行，支援大於等於 1920*1080 的 16:9 解析度，不支援雲·星穹鐵道"
-
-#: app/tools_interface.py:40
-msgid "捕获"
-msgstr "捕捉"
 
 #: app/tools_interface.py:42
 msgid "游戏截图"
@@ -1945,14 +1937,6 @@ msgstr "Mirror醬 CDK 類型和待下載的資源不符"
 #: module/update/version_check.py:194
 msgid "Mirror酱 CDK 已被封禁"
 msgstr "Mirror醬 CDK 已被封禁"
-
-#: app/tools/check_update.py:149
-msgid ""
-"发现新版本：{cfg.version} ——> {version}\n"
-"更新日志 |･ω･)"
-msgstr ""
-"發現新版本：{cfg.version} ——> {version}\n"
-"更新日誌 |･ω･)"
 
 #: app/tools/check_update.py:237
 msgid "尚未配置 Mirror酱 更新源 (╥╯﹏╰╥)"
@@ -12462,3 +12446,43 @@ msgstr "遊戲已啟動，但背景虛擬屏持續輸出全黑畫面。請匯出
 #: module/game/adb_startup_frames.py:111
 msgid "游戏已启动，但后台虚拟屏持续没有新帧，请导出本轮日志反馈"
 msgstr "遊戲已啟動，但背景虛擬屏遲遲沒有輸出新畫面。請匯出本次執行的日誌，並在回報問題時附上。"
+
+#: app/tools_interface.py:114
+msgid "不参与完整运行，需要时单独打开"
+msgstr "需要時單獨開啟，不包含在完整運行中"
+
+#: app/tools_interface.py:115
+msgid "游戏辅助"
+msgstr "遊戲輔助"
+
+#: app/tools_interface.py:115
+msgid "排查"
+msgstr "疑難排解"
+
+#: app/tools_interface.py:118
+msgid "选项"
+msgstr "選項"
+
+#: app/toolbox/autoplot.py:174
+msgid "快捷键 {hotkey}"
+msgstr "快捷鍵 {hotkey}"
+
+#: app/tools_interface.py:137
+msgid "第三方程序"
+msgstr "第三方程式"
+
+#: module/content_pages.py:64
+msgid "社区与工具"
+msgstr "社群與工具"
+
+#: app/pages/about.py:33
+msgid "崩坏：星穹铁道自动化助手，免费开源"
+msgstr "《崩壞：星穹鐵道》的免費開源自動化助手"
+
+#: app/tools/check_update.py:149
+msgid "发现新版本"
+msgstr "發現新版本"
+
+#: app/card/messagebox_custom.py:274
+msgid "更新日志 |･ω･)"
+msgstr "更新日誌 |･ω･)"

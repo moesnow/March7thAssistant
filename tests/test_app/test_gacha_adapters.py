@@ -7,6 +7,8 @@ import pytest
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QWidget
 from qfluentwidgets import ComboBox, MessageBox, PlainTextEdit
+from app.common.mascot import Mascot
+from tests.test_app.mascot_assertions import assert_pose
 
 from app.content import gacha_dialogs as dialogs, gacha_update as worker
 from app.content.gacha_model import Column, GachaFilterProxy, GachaTableModel, Role
@@ -63,7 +65,7 @@ def test_proxy_ten_thousand(qtbot, capsys):
     assert max(elapsed) < 200
 
 
-def answer(monkeypatch, actions, mode=0):
+def answer(monkeypatch, actions, mode=0, *, expected_poses=None):
     observations = []
     execute = MessageBox.exec
     actions = iter(actions)
@@ -75,6 +77,14 @@ def answer(monkeypatch, actions, mode=0):
         summary = dialog.findChild(PlainTextEdit)
         content = dialog.contentLabel.text() + (summary.toPlainText() if summary is not None else "")
         cancel_focused = dialog.cancelButton.isDefault() and dialog.focusWidget() is dialog.cancelButton
+        if expected_poses is not None:
+            expected = expected_poses[len(observations)]
+            mascot = getattr(dialog, "mascotLabel", None)
+            if expected is None:
+                assert mascot is None
+            else:
+                assert_pose(mascot.pixmap(), expected)
+                assert summary is None or dialog.textLayout.indexOf(summary) >= 0
         observations.append((dialog.titleLabel.text(), content, cancel_focused))
         button = dialog.yesButton if next(actions) else dialog.cancelButton
         QTimer.singleShot(0, button.click)
@@ -94,7 +104,7 @@ def test_import_two_uids_confirmations(ui, tmp_path, monkeypatch, mode, actions,
         incoming["list"][0]["name"] = "March 7th"
     source = put(tmp_path / "import.json", uigf(incoming, data((9,), "222")))
     monkeypatch.setattr(dialogs.QFileDialog, "getOpenFileName", lambda *args: (str(source), ""))
-    seen = answer(monkeypatch, actions, mode)
+    seen = answer(monkeypatch, actions, mode, expected_poses=(None, Mascot.BOX if mode == 1 else None))
     result = dialogs.import_dialog(window, store=store)
     assert result.status == expected and seen[0][0] == "选择导入方式"
     if len(actions) == 2:
@@ -143,7 +153,7 @@ def test_clear_dialog_only_selected(ui, monkeypatch, ok):
     for uid in ("111", "222"):
         store.write(uid, data(uid=uid))
     original = store.path("111").read_bytes()
-    seen = answer(monkeypatch, [ok])
+    seen = answer(monkeypatch, [ok], expected_poses=(Mascot.BOX,))
     outcome = dialogs.clear_dialog(window, "111", store=store)
     assert "111" in seen[0][1] and store.path("222").is_file()
     if ok:

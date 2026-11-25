@@ -5,7 +5,9 @@ from PySide6.QtWidgets import QHBoxLayout, QSizePolicy, QToolTip, QVBoxLayout, Q
 from qfluentwidgets import (Action, BodyLabel, CaptionLabel, ComboBox, FluentIcon, MessageBox, PrimaryPushButton,
                             RoundMenu, ScrollArea, SimpleCardWidget, StrongBodyLabel, TransparentToolButton, qconfig)
 
+from app.common.mascot import Mascot
 from app.common.schedule import schedule_weekday_labels
+from app.components.mascot_dialog import add_mascot
 from app.overview.style import format_when, with_alpha
 from app.overview.widgets import ElidedLabel, Pill
 from app.pages import style
@@ -403,6 +405,7 @@ class SchedulePage(QWidget):
         box = MessageBox(tr("删除定时计划"), tr("确定删除「{name}」吗？").format(name=item.name), self.window())
         box.yesButton.setText(tr("删除"))
         box.cancelButton.setText(tr("取消"))
+        add_mascot(box, Mascot.BOX)
         box.cancelButton.setFocus()
         if box.exec():
             self.model.remove(item_id)

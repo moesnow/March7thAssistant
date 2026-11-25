@@ -48,7 +48,8 @@ def test_every_registered_widget_and_every_built_card(pages):
                     (sys.platform == "win32" or s.id not in ("autostart_open_gui", "debug_mode_enable", "uacFreeCard"))}
         actual = set()
         for card in host.card_parent.findChildren(QWidget):
-            if not isinstance(card, (SettingCard, ExpandSettingCard)) or getattr(card.parentWidget(), "card", None) is card:
+            is_card = isinstance(card, (SettingCard, ExpandSettingCard))
+            if getattr(card.parentWidget(), "card", None) is card or (not is_card and not card.property("settingId")):
                 continue
             item = setting_for(card)
             assert item and item.page == page, (page, card)

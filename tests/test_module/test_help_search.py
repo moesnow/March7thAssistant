@@ -62,16 +62,19 @@ def test_translated_paths_use_catalog_names_and_keep_explicit_links(tmp_path, mo
     paths._label.cache_clear()
     paths._localized.cache_clear()
     try:
+        canonical = ("设置", "关于", "社区与工具", "AI 助手")
         for lang in ("en_US", "ja_JP", "ko_KR"):
-            labels = [localization.translations_of(k)[lang] for k in ("设置", "关于", "AI 助手")]
-            text = " → ".join(labels)
+            labels = [localization.translations_of(k)[lang] for k in canonical]
+            text = " → ".join((labels[0], labels[1], labels[-1]))
+            full = " → ".join(labels)
             file = tmp_path / f"{lang}.md"
-            file.write_text(f'# Title\n\n"{text}" [link](https://example.org/) `{text}`', encoding="utf-8")
+            file.write_text(f'# Title\n\n"{text}" [link](https://example.org/) `{full}`', encoding="utf-8")
             doc = load_file(file, language=lang)
             spans = [s for b in walk_blocks(doc.blocks) for s in block_spans(b)]
             buttons = [s for s in spans if isinstance(s, SettingPath)]
             assert len(buttons) == 2 and all(s.target == "setting:agentPromptCard" for s in buttons)
-            assert buttons[0].text == f'"{text}"' and buttons[0].labels == ("设置", "关于", "AI 助手")
+            assert buttons[0].text == f'"{text}"'
+            assert all(button.labels == canonical for button in buttons)
             assert any(getattr(s, "link", None) for s in spans)
     finally:
         paths._label.cache_clear()

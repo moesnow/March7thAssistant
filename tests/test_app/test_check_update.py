@@ -139,6 +139,7 @@ def test_public_beta_empty_response_reports_correct_gui_status(monkeypatch, reco
     if recovered:
         assert statuses == [UpdateStatus.UPDATE_AVAILABLE]
         assert thread.version == release["tag_name"]
+        assert thread.title == check_update.tr("发现新版本")
         assert thread.mirrorchyan_assert_url == "https://example.com/mirror.zip"
         mirror.assert_called_once()
     else:

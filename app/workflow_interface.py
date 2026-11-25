@@ -39,7 +39,9 @@ from qfluentwidgets import (
     CheckBox
 )
 
+from app.common.mascot import Mascot
 from app.components.ascii_spin_box import AsciiSpinBox, AsciiDoubleSpinBox
+from app.components.mascot_dialog import add_mascot
 
 import tasks.tool as tool
 from module.config import cfg
@@ -993,6 +995,7 @@ class WorkflowInterface(ScrollArea):
         box = MessageBox(tr("删除流程"), tr("确认删除当前流程吗？此操作会同时删除已保存的模板图片。"), self)
         box.yesButton.setText(tr("删除"))
         box.cancelButton.setText(tr("取消"))
+        add_mascot(box, Mascot.BOX)
         if not box.exec():
             return
 
@@ -1047,6 +1050,7 @@ class WorkflowInterface(ScrollArea):
         except Exception as e:
             box = MessageBox(tr("导出失败"), str(e), self)
             box.cancelButton.hide()
+            add_mascot(box, Mascot.STARTLED)
             box.exec()
 
     def _import_workflow(self):
@@ -1060,6 +1064,7 @@ class WorkflowInterface(ScrollArea):
         except Exception as e:
             box = MessageBox(tr("导入失败"), str(e), self)
             box.cancelButton.hide()
+            add_mascot(box, Mascot.STARTLED)
             box.exec()
             return
         existing_names = {w["name"] for w in self.workflows}

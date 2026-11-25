@@ -7,6 +7,8 @@ from app.card.switchsettingcard1 import SwitchSettingCard1
 from app.card.rangesettingcard1 import RangeSettingCard1
 from app.card.expandable_switch_setting_card import ExpandableSwitchSettingCard
 from module.config import cfg
+from app.common.mascot import Mascot
+from app.components.mascot_dialog import add_mascot
 from module.localization import tr
 import sys
 from app.content.keys import build_keys
@@ -38,6 +40,7 @@ def build(host):
         )
         confirm.yesButton.setText(tr("我已了解，继续开启"))
         confirm.cancelButton.setText(tr("取消"))
+        add_mascot(confirm, Mascot.SERIOUS)
         return bool(confirm.exec())
 
     host.startGameTimeoutCard = RangeSettingCard1(

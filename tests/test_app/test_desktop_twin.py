@@ -815,6 +815,9 @@ def test_host_window_explains_why_pages_are_disabled(main_window):
     assert notice.iconWidget.accent  # 与主按钮统一用主题色，而不是 InfoBar 默认的青色
     assert notice.geometry().bottom() < window.stackedWidget.geometry().top()
     assert window.toolsInterface.desktopTwinCard.isEnabled()
+    assert not window.toolsInterface.twinPill.isHidden()
+    assert window.toolsInterface.twinPill.text() == ui.tr("运行中")
+    assert not window.toolsInterface.gameScreenshotCard.fileButton.isEnabled()
     notice.openButton.click()
     window.toolsInterface.openDesktopTwin.assert_called_once()
 
@@ -830,6 +833,8 @@ def test_host_window_explains_why_pages_are_disabled(main_window):
 
     window.setDesktopTwinHosting(False)
     assert not notice.isVisible() and window.homeInterface.isEnabled()
+    assert window.toolsInterface.twinPill.isHidden()
+    assert window.toolsInterface.gameScreenshotCard.fileButton.isEnabled()
     window.hide()
 
 

@@ -197,3 +197,15 @@ def test_every_settings_link_respects_visibility_and_highlights(host, qtbot, mon
         target = getattr(target, "card", target)
         assert any(mark.isVisibleTo(host) for mark in target.findChildren(
             _CardHighlight, options=Qt.FindChildOption.FindDirectChildrenOnly)), item.id
+
+
+def test_about_search_and_stable_links_highlight_header_and_home_button(host, qtbot):
+    settings = host.settingInterface
+    header = settings.pages["about"].host.aboutCard
+    for query, link, target in (("检查更新", "setting:aboutCard", header),
+                                ("项目主页", "setting:githubCard", header.homeButton)):
+        results = settings.searchIndex.query(query, settings_only=True)
+        assert link in [row.link for row in results]
+        assert host.navigate(link) and settings.currentCategory() == "about"
+        qtbot.waitUntil(lambda: target.findChild(_CardHighlight, options=Qt.FindDirectChildrenOnly) is not None)
+        assert target.isVisible() and header.isAncestorOf(header.homeButton)

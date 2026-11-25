@@ -31,3 +31,10 @@ def test_keys_locations_and_scopes_are_consistent():
     assert find_setting('currencywars_timestamp').key_scope('currencywars_timestamp') == Scope.STATE
     assert find_setting('notify_telegram_token').scope == Scope.SECRET
     assert find_setting('github_token').key_scope('github_token') == Scope.SECRET
+
+
+def test_about_links_keep_their_ids_and_share_the_header():
+    header = find_setting("aboutCard")
+    home = find_setting("githubCard")
+    assert (header.page, header.section, header.widget) == ("about", "header", "aboutCard")
+    assert (home.page, home.section, home.widget) == ("about", "header", "aboutCard.homeButton")

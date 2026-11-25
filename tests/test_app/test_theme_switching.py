@@ -146,6 +146,18 @@ def test_overview_refresh_allows_window_to_apply_external_settings(qtbot, tmp_pa
     qtbot.waitUntil(lambda: window.homeInterface.greeting.mascot.isHidden(), timeout=2500)
 
 
+@pytest.mark.parametrize('theme,image', [(Theme.LIGHT, 'sponsor.jpg'), (Theme.DARK, 'sponsor_dark.jpg')])
+def test_sponsor_code_follows_theme(window, monkeypatch, theme, image):
+    from app import main_window as module
+    box = Mock()
+    monkeypatch.setattr(module, 'MessageBoxSupport', box)
+    setTheme(theme)
+    window.navigationInterface.widget('avatar').clicked.emit(True)
+    path = Path(box.call_args.args[2])
+    assert path.name == image and path.is_file()
+    box.return_value.exec.assert_called_once_with()
+
+
 def test_unrelated_config_reload_in_tray_does_not_reapply_theme(window, monkeypatch):
     from app.tools import check_theme_change
     from module import notification

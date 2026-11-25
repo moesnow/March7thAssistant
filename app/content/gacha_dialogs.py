@@ -7,6 +7,8 @@ from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QFileDialog
 from qfluentwidgets import ComboBox, MessageBox, PlainTextEdit
 
+from app.common.mascot import Mascot
+from app.components.mascot_dialog import add_mascot
 from module.gacha.store import GachaStore
 from module.gacha.transfer import export_records, prepare_import, save_import
 from module.localization import tr
@@ -46,6 +48,8 @@ def _confirm_import(parent, plans, mode):
     counts = "\n\n".join(_counts(plan) for plan in plans)
     box = MessageBox(tr("警告：替换现有抽卡记录") if replace else tr("确认导入抽卡记录"),
                      intro if len(plans) > 1 else intro + "\n\n" + counts, parent)
+    if replace:
+        add_mascot(box, Mascot.BOX)
     if len(plans) > 1:
         summary = PlainTextEdit(box.widget)
         summary.setReadOnly(True)
@@ -110,6 +114,7 @@ def clear_dialog(parent, uid, *, store=None):
                          tr("确定要清空抽卡记录吗？此操作不可撤销。"), parent.window())
         box.yesButton.setText(tr("确认"))
         box.cancelButton.setText(tr("取消"))
+        add_mascot(box, Mascot.BOX)
         if not box.exec():
             return Outcome("cancelled")
         backup = store.clear(uid, expected=original)

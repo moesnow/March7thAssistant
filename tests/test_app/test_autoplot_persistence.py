@@ -16,45 +16,62 @@ def qapp():
     return QApplication.instance() or QApplication([])
 
 
-@pytest.mark.parametrize("width", [600, 900])
-def test_autoplot_expand_collapse_leaves_no_blank_strip(qapp, qtbot, monkeypatch, width):
+def test_options_follow_the_card_and_save_each_change_once(qtbot, monkeypatch):
     from PySide6.QtWidgets import QVBoxLayout, QWidget
-    from qfluentwidgets import FluentIcon
+    from qfluentwidgets import FluentIcon, Theme, qconfig, setTheme
+    from app.toolbox import autoplot
 
-    import app.card.autoplot_setting_card as card_module
-
-    fake_config = Mock()
-    fake_config.get_value.side_effect = lambda key, default=None: default
-    monkeypatch.setattr(card_module, "cfg", fake_config)
-
+    config = Mock()
+    config.get_value.side_effect = lambda key, default=None: default
+    monkeypatch.setattr(autoplot, "cfg", config)
     host = QWidget()
     qtbot.addWidget(host)
-    layout = QVBoxLayout(host)
-    card = card_module.AutoPlotSettingCard(FluentIcon.CHAT, "自动对话", "说明")
-    layout.addWidget(card)
-    layout.addStretch()
-    host.resize(width, 800)
+    card = autoplot.AutoPlotCard(FluentIcon.CHAT, host)
+    QVBoxLayout(host).addWidget(card)
+    host.resize(350, 180)
     host.show()
-    qapp.processEvents()
-    initial_height = card.height()
-    assert initial_height == card.card.height()
-
-    # 同时覆盖快捷键提示显隐后的高度更新，以及多次展开/收起。
-    for show_hint in (False, True, False):
-        with qtbot.waitSignal(card.expandAni.finished):
-            card.setExpand(True)
-        card.hotkeyToggleCheckBox.setChecked(show_hint)
-        qapp.processEvents()
-        assert card.view.height() == card.viewLayout.sizeHint().height()
-        assert card.height() == card.card.height() + card.view.height()
-        with qtbot.waitSignal(card.expandAni.finished):
-            card.setExpand(False)
-        qapp.processEvents()
-        assert card.height() == initial_height
+    initial = card.geometry()
+    old_theme = qconfig.theme
+    try:
+        for enabled in (True, False, True):
+            card.button.click()
+            popup = card._flyout
+            assert popup.isVisible() and card.options.isVisibleTo(popup)
+            before = popup.height()
+            config.reset_mock()
+            with qtbot.waitSignal(autoplot.signalBus.hotkeyChangedSignal):
+                card.hotkeyToggleCheckBox.setChecked(enabled)
+            qtbot.waitUntil(lambda: popup.height() != before)
+            assert (popup.height() > before) == enabled
+            assert card.hotkeyHintLabel.isVisible() == enabled
+            config.set_value.assert_called_once_with("hotkey_toggle_autoplot_enable", enabled)
+            config.set_values.assert_not_called()
+            with qtbot.waitSignal(card.optionsChanged):
+                card.autoSkipCheckBox.click()
+            config.set_values.assert_called_once()
+            assert config.set_values.call_args.args[0]["autoplot_skip_enable"] == card.autoSkipCheckBox.isChecked()
+            setTheme(Theme.DARK if enabled else Theme.LIGHT, save=False)
+            with monkeypatch.context() as translation:
+                translation.setattr(autoplot, "tr", lambda source: "new " + source)
+                card.retranslateUi()
+                assert card.autoSkipCheckBox.text().startswith("new ")
+            card.retranslateUi()
+            assert card._flyout is popup and card.geometry() == initial
+            popup.close()
+            assert not popup.isVisible()
+        card.button.click()
+        host.showMinimized()
+        qtbot.waitUntil(lambda: not popup.isVisible())
+        host.showNormal()
+        card.button.click()
+        host.close()
+        assert not popup.isVisible()
+    finally:
+        setTheme(old_theme, save=False)
 
 
 def test_autoplot_switch_persists_and_restores_running_state(qapp, monkeypatch):
-    import app.card.autoplot_setting_card as card_module
+    from app.toolbox import autoplot as card_module
     import app.tools_interface as tools_module
 
     values = {}
@@ -106,13 +123,20 @@ def test_autoplot_switch_persists_and_restores_running_state(qapp, monkeypatch):
     assert start.call_count == 2
     assert update_options.call_count == 2
 
+    restored.setDesktopTwinHosting(True)
+    stop.assert_called_once_with()
+    restored.toggleAutoPlot()
+    assert restored.automaticPlotCard.getSwitchState() and start.call_count == 2
+    restored.setDesktopTwinHosting(False)
+    restored.setDesktopTwinHosting(False)
+    assert start.call_count == 3
     restored.toggleAutoPlot()
     assert values["autoplot_enable"] is False
-    stop.assert_called_once_with()
+    assert stop.call_count == 2
 
     disabled = tools_module.ToolsInterface()
     assert not disabled.automaticPlotCard.getSwitchState()
-    assert start.call_count == 2
+    assert start.call_count == 3
 
     disabled.toggleAutoPlot()
     assert values["autoplot_enable"] is True

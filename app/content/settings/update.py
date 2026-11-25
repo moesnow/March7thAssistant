@@ -4,6 +4,8 @@ from app.common.icon import UiIcon
 from app.card.switchsettingcard1 import SwitchSettingCard1
 from app.card.pushsettingcard1 import PushSettingCardMirrorchyan, PushSettingCardStr
 from app.card.expandable_switch_setting_card import ExpandableComboBoxSettingCardUpdateSource
+from app.common.mascot import Mascot
+from app.components.mascot_dialog import add_mascot
 from module.localization import tr
 
 
@@ -24,6 +26,7 @@ def build(host):
         )
         confirm.yesButton.setText(tr("我已了解，继续关闭"))
         confirm.cancelButton.setText(tr("取消"))
+        add_mascot(confirm, Mascot.SERIOUS)
 
         if confirm.exec():
             return

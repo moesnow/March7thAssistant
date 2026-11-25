@@ -60,7 +60,8 @@ PAGES = (
         Group("privacy", "隐私"),
     )),
     Page("about", "关于", "setting", "FIF.INFO", "", (
-        Group("project", "关于"),
+        Group("header", "关于"),
+        Group("project", "社区与工具"),
     )),
     Page("power", "清体力", "task", "UiIcon.BATTERY_CHARGE", "每天", (
         Group("header", "加入完整运行"),

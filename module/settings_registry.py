@@ -322,11 +322,11 @@ SETTINGS = (
     _global('diagnosticCard', '导出排查包', 'data', 'diagnostics', link_id='DataGroup.diagnosticCard'),
 
     # 关于
-    _global('githubCard', '项目主页', 'about', 'project'),
+    _global('aboutCard', '关于', 'about', 'header'),
+    _global('aboutCard.homeButton', '项目主页', 'about', 'header', link_id='githubCard'),
     _global('agentPromptCard', 'AI 助手', 'about', 'project'),
     _global('bilibiliCard', '哔哩哔哩', 'about', 'project'),
     _global('qqGroupCard', 'QQ群', 'about', 'project'),
-    _global('aboutCard', '关于', 'about', 'project'),
     _global('updateSourceCard', '更新源', 'update', 'source', ('update_source', 'update_prerelease_enable'), doc='doc:Tutorial#更新'),
     _global('checkUpdateCard', '启动时检测更新', 'update', 'source', ('check_update',)),
     _global('updateFullEnableCard', '更新时下载完整包', 'update', 'source', ('update_full_enable',)),

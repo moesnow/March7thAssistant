@@ -39,15 +39,15 @@ def _pump(qapp, seconds):
         time.sleep(0.01)
 
 
-def _build_dialog(qapp, content, theme=None):
+def _build_dialog(qapp, content, size=(952, 635)):
     from PySide6.QtWidgets import QWidget
 
     from app.card.messagebox_custom import MessageBoxUpdate
 
     parent = QWidget()
-    parent.resize(952, 635)
+    parent.resize(*size)
     parent.show()
-    dlg = MessageBoxUpdate("发现新版本：1.0 ——> 2.0", content, parent)
+    dlg = MessageBoxUpdate("发现新版本", content, parent)
     dlg.show()
     _pump(qapp, 0.6)  # 等淡入动画结束（opacity 回到 1）再断言/采样
     return dlg, parent
@@ -55,8 +55,12 @@ def _build_dialog(qapp, content, theme=None):
 
 class TestUpdateDialogLayout:
 
-    def test_long_changelog_keeps_buttons_and_cards_visible(self, qapp):
-        dlg, parent = _build_dialog(qapp, LONG_CHANGELOG)
+    @pytest.mark.parametrize("size", [(952, 635), (1280, 640)])
+    def test_long_changelog_keeps_buttons_and_cards_visible(self, qapp, size):
+        dlg, parent = _build_dialog(qapp, LONG_CHANGELOG, size)
+        assert dlg.banner.titleLabel.text() == "发现新版本"
+        assert dlg.banner.versions.isHidden()
+        assert dlg.rect().contains(dlg.widget.geometry())
         try:
             # 整体不超出遮罩窗口（遮罩尺寸跟随父窗口）
             assert dlg.widget.height() <= dlg.height()
@@ -158,13 +162,17 @@ class TestUpdateDialogHistory:
         dlg.prepareHistory('v1.0', 'v30.0', '- 最新说明\n' * 30)
         dlg.show()
         _pump(qapp, 0.3)
-        before = (dlg.githubUpdateCard.geometry(), dlg.buttonGroup.geometry(), dlg.widget.size())
+        assert dlg.banner.versions.isVisible()
+        assert [p.text() for p in (dlg.banner.currentPill, dlg.banner.targetPill)] == ["v1.0", "v30.0"]
+        fixed = (dlg.banner, dlg.githubUpdateCard, dlg.mirrorchyanUpdateCard, dlg.yesButton, dlg.cancelButton)
+        before = [w.geometry() for w in fixed]
         dlg._scroll.verticalScrollBar().setValue(20)
         assert dlg._scroll.verticalScrollBar().value() == 20
         sections = tuple(VersionNote(f'v{i}.0', f'- 第 {i} 版\n' * 10) for i in range(30, 0, -1))
         dlg.setHistory(UpdateNotes(sections))
         _pump(qapp, 0.1)
-        assert before == (dlg.githubUpdateCard.geometry(), dlg.buttonGroup.geometry(), dlg.widget.size())
+        assert before == [w.geometry() for w in fixed]
+        assert dlg.rect().contains(dlg.widget.geometry())
         assert dlg._scroll.verticalScrollBar().value() == 20
         assert 'v21.0' in dlg.contentLabel.text()
         assert 'v20.0' not in dlg.contentLabel.text()

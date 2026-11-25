@@ -26,6 +26,7 @@ class TestUiIconEnum:
         assert hasattr(UiIcon, 'FLASH')
         assert hasattr(UiIcon, 'GIFT')
         assert hasattr(UiIcon, 'PEOPLE_TEAM')
+        assert {UiIcon.TAP.value, UiIcon.TICKET.value, UiIcon.BEAKER.value} == {'tap-single', 'ticket-horizontal', 'beaker'}
 
     def test_path_returns_string(self, qapp):
         from app.common.icon import UiIcon

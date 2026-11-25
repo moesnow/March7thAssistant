@@ -115,7 +115,15 @@ def test_data_card_buttons_use_selected_files(qtbot, tmp_path, monkeypatch):
     current.path(paths.CONFIG).write_bytes(b"setting: different\n")
     choose = Mock(return_value=(str(out), ""))
     monkeypatch.setattr(data_settings.QFileDialog, "getOpenFileName", choose)
-    monkeypatch.setattr(data_settings.MessageBox, "exec", lambda self: True)
+    from app.common.mascot import Mascot
+    from tests.test_app.mascot_assertions import assert_pose
+    notices = []
+    def acknowledge(box):
+        assert_pose(box.mascotLabel.pixmap(), Mascot.STAMP)
+        assert box.cancelButton.isHidden()
+        notices.append(box.titleLabel.text())
+        return True
+    monkeypatch.setattr(data_settings.MessageBox, "exec", acknowledge)
     window.runController.isTaskRunning.return_value = True
     page.restoreCard.button.click()
     choose.assert_not_called()
@@ -124,3 +132,9 @@ def test_data_card_buttons_use_selected_files(qtbot, tmp_path, monkeypatch):
     assert current.path(paths.CONFIG).read_bytes() == b"setting: old\n"
     assert cfg.writes_suspended
     window.quitApp.assert_called_once()
+    monkeypatch.setattr(data_settings.QFileDialog, "getExistingDirectory", lambda *_: str(tmp_path))
+    importer = Mock()
+    monkeypatch.setattr(data_settings.data_backup, "import_folder", importer)
+    data_settings.restore_data(window, importing=True)
+    importer.assert_called_once_with(str(tmp_path))
+    assert notices == ["数据已恢复", "数据已导入"]

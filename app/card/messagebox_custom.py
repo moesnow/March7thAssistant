@@ -2,11 +2,16 @@ from PySide6.QtCore import Qt, QUrl, QSize, Signal, Slot
 from PySide6.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QCompleter, QSizePolicy, QWidget
 from PySide6.QtGui import QPixmap, QDesktopServices, QFont
 from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit,
-                            BodyLabel, FluentStyleSheet, TextEdit, Slider, FluentIcon, qconfig,
+                            BodyLabel, FluentStyleSheet, TextEdit, Slider, FluentIcon, qconfig, StrongBodyLabel,
                             isDarkTheme, PrimaryPushSettingCard, InfoBar, InfoBarPosition, PushButton, CheckBox, SimpleCardWidget,
                             TextBrowser, setCustomStyleSheet)
 from app.components.ascii_spin_box import AsciiSpinBox
 from app.common.accent import accent_html
+from app.common.mascot import Mascot
+from app.components.mascot_dialog import add_mascot
+from app.components.update_banner import UpdateBanner
+from app.overview.style import primary_button_qss
+from app.pages.common import is_evernight
 from qfluentwidgets import FluentIcon as FIF
 from typing import Optional
 from app.common.scroll_dialog import (SplitFadeDialogMixin, available_host_size,
@@ -189,6 +194,7 @@ class MessageBoxSupport(MessageBoxImage):
 
         self.yesButton.setText(tr('下次一定'))
         self.cancelButton.setHidden(True)
+        add_mascot(self, Mascot.LATER)
 
 
 class MessageBoxAnnouncement(MessageBoxImage):
@@ -225,6 +231,29 @@ class MessageBoxHtml(MessageBox):
         QDesktopServices.openUrl(QUrl(url))
 
 
+def style_card_button(card):
+    """设置卡上的主按钮换成和其他页面一致的深粉。"""
+    light, dark = primary_button_qss(is_evernight())
+    disabled = ("QPushButton:disabled { background-color: rgba(255, 255, 255, 0.16); border: none; color: rgba(255, 255, 255, 0.43); }"
+                if isDarkTheme() else
+                "QPushButton:disabled { background-color: rgb(205, 205, 205); border: none; color: rgba(255, 255, 255, 0.9); }")
+    card.button.setStyleSheet(
+        "QPushButton { border-radius: 5px; padding: 5px 18px; font: 14px 'Segoe UI', 'Microsoft YaHei', 'PingFang SC'; }"
+        + (dark if isDarkTheme() else light).replace("PrimaryPushButton", "QPushButton") + disabled)
+
+
+def style_plain(button):
+    """主操作在卡片上时，底部的主按钮用普通样式。"""
+    setCustomStyleSheet(
+        button,
+        "PrimaryPushButton { background: rgba(255, 255, 255, 0.7); border: 1px solid rgba(0, 0, 0, 0.073); color: black; }"
+        "PrimaryPushButton:hover { background: rgba(249, 249, 249, 0.5); }"
+        "PrimaryPushButton:pressed { background: rgba(249, 249, 249, 0.3); color: rgba(0, 0, 0, 0.63); }",
+        "PrimaryPushButton { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.053); color: white; }"
+        "PrimaryPushButton:hover { background: rgba(255, 255, 255, 0.084); }"
+        "PrimaryPushButton:pressed { background: rgba(255, 255, 255, 0.033); color: rgba(255, 255, 255, 0.786); }")
+
+
 class MessageBoxHtmlUpdate(SplitFadeDialogMixin, MessageBox):
     historyCancelled = Signal()
 
@@ -237,6 +266,15 @@ class MessageBoxHtmlUpdate(SplitFadeDialogMixin, MessageBox):
         self.textLayout.removeWidget(self.contentLabel)
         self.contentLabel.clear()
         self._scroll = None
+        host_width, host_height = available_host_size(parent)
+        self.textLayout.removeWidget(self.titleLabel)
+        self.titleLabel.hide()
+        self.banner = UpdateBanner(title, self.widget, height=92 if host_height < 720 else 116)
+        self.vBoxLayout.insertWidget(0, self.banner)
+        self.notesLabel = StrongBodyLabel(tr('更新日志 |･ω･)'), self.widget)
+        self.textLayout.addWidget(self.notesLabel)
+        self.textLayout.setContentsMargins(24, 16, 24, 20)
+        self.textLayout.setSpacing(10)
 
         self.contentLabel = BodyLabel(content, parent)
         self.contentLabel.setObjectName("contentLabel")
@@ -263,6 +301,9 @@ class MessageBoxHtmlUpdate(SplitFadeDialogMixin, MessageBox):
             tr('Mirror酱 服务 ⚡'),
             tr("Mirror酱 用户可以通过 CDK 高速更新（支持任意版本间增量更新）")
         )
+        for card in (self.githubUpdateCard, self.mirrorchyanUpdateCard):
+            style_card_button(card)
+        style_plain(self.yesButton)
 
         # 仅更新日志放进限高滚动区：日志再长也只在内部滚动，
         # 两张更新卡片固定在滚动区之外，始终可见可点。
@@ -294,11 +335,11 @@ class MessageBoxHtmlUpdate(SplitFadeDialogMixin, MessageBox):
         self.textLayout.addWidget(self.mirrorchyanUpdateCard, 0, Qt.AlignmentFlag.AlignTop)
         self.textLayout.activate()
 
-        host_width, host_height = available_host_size(parent)
-        # 非滚动部分的高度：布局边距 + 标题 + 两张更新卡片 + 按钮区 + 间距 + 余量
-        chrome = (self.textLayout.contentsMargins().top()
+        # 非滚动部分的高度：横幅 + 布局边距 + 小标题 + 两张更新卡片 + 按钮区 + 间距 + 余量
+        chrome = (self.banner.height()
+                  + self.textLayout.contentsMargins().top()
                   + self.textLayout.contentsMargins().bottom()
-                  + self.titleLabel.height()
+                  + self.notesLabel.sizeHint().height()
                   + self.githubUpdateCard.height()
                   + self.mirrorchyanUpdateCard.height()
                   + self.buttonGroup.height()
@@ -309,6 +350,7 @@ class MessageBoxHtmlUpdate(SplitFadeDialogMixin, MessageBox):
 
     def prepareHistory(self, current: str, target: str, latest_note: str):
         self._history_target = target
+        self.banner.setVersions(current, target)
         self._history_sections = (VersionNote(target, clean_release_body(latest_note)),)
         self.historyStatusLabel.setText(tr("正在加载历史更新记录……"))
         self.historyStatusLabel.show()
@@ -1319,6 +1361,7 @@ class MessageBoxCloseWindow(MessageBox):
 
         # 存储用户的选择
         self.action = None  # 'minimize' 或 'close'
+        add_mascot(self, Mascot.WAVE)
 
     def accept(self):
         """用户选择最小化到托盘"""

@@ -24,7 +24,6 @@ class StyleSheet(StyleSheetBase, Enum):
     NAVIGATION_VIEW_INTERFACE = "navigation_view_interface"
 
     Tutorial_INTERFACE = "tutorial_interface"
-    TOOLS_INTERFACE = "tools_interface"
     WORKFLOW_INTERFACE = "workflow_interface"
     DESKTOP_TWIN = "desktop_twin"
 

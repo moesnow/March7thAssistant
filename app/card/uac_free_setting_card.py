@@ -19,6 +19,8 @@ from qfluentwidgets import (
     SwitchButton,
 )
 
+from app.common.mascot import Mascot
+from app.components.mascot_dialog import add_mascot
 from module.localization import tr
 from utils import uac_free
 
@@ -59,6 +61,7 @@ class UacFreeSettingCard(SettingCard):
         )
         confirm.yesButton.setText(tr("我已了解，继续开启"))
         confirm.cancelButton.setText(tr("取消"))
+        add_mascot(confirm, Mascot.SERIOUS)
         return bool(confirm.exec())
 
     def __onCheckedChanged(self, isChecked: bool):

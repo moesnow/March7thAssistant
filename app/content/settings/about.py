@@ -1,16 +1,15 @@
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices
 from qfluentwidgets import FluentIcon as FIF
-from qfluentwidgets import InfoBar, InfoBarPosition, PrimaryPushSettingCard
+from qfluentwidgets import InfoBar, InfoBarPosition, PushSettingCard
 from app.common.icon import BrandIcon
+from app.pages.about import AboutHeader
 from module.config import cfg
 from module.docs.support import QQ_GROUP_URL
 from module.localization import tr
 from app.tools.check_update import checkUpdate
 from app.tools.agent_prompt import build_agent_prompt
 from utils import clipboard
-import sys
-import platform
 
 
 def build(host):
@@ -37,44 +36,32 @@ def build(host):
                 parent=host.card_parent
             )
 
-    host.githubCard = PrimaryPushSettingCard(
-        tr('项目主页'),
-        FIF.GITHUB,
-        tr('项目主页'),
-        "https://github.com/moesnow/March7thAssistant",
-        parent=host.card_parent,
-    )
-    host.agentPromptCard = PrimaryPushSettingCard(
+    host.aboutCard = AboutHeader(cfg.version, host.card_parent)
+    host.agentPromptCard = PushSettingCard(
         tr('复制提示词'),
         FIF.ROBOT,
         tr('AI 助手'),
         tr('复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作三月七小助手'),
         parent=host.card_parent,
     )
-    host.bilibiliCard = PrimaryPushSettingCard(
+    host.bilibiliCard = PushSettingCard(
         tr('立即前往'),
         BrandIcon.BILIBILI,
         tr('哔哩哔哩'),
         tr('欢迎关注我们的B站账号，获取最新动态和教程'),
         parent=host.card_parent,
     )
-    host.qqGroupCard = PrimaryPushSettingCard(
+    host.qqGroupCard = PushSettingCard(
         tr('加入群聊'),
         BrandIcon.QQ,
         tr('QQ群'),
         "",
         parent=host.card_parent,
     )
-    host.aboutCard = PrimaryPushSettingCard(
-        tr('检查更新'),
-        FIF.INFO,
-        tr('关于'),
-        tr('当前版本：') + " " + cfg.version + " | Python " + sys.version.split()[0] + " | " + platform.system() + " " + platform.machine(),
-        parent=host.card_parent,
-    )
-    host.githubCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant")))
+    host.aboutCard.homeClicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://github.com/moesnow/March7thAssistant")))
+    host.aboutCard.changelogClicked.connect(lambda: host.window.navigate("doc:Changelog"))
     host.agentPromptCard.clicked.connect(copy_prompt)
     host.qqGroupCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(QQ_GROUP_URL)))
     host.bilibiliCard.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://space.bilibili.com/3706960664857075")))
-    host.aboutCard.clicked.connect(lambda: checkUpdate(host.window))
+    host.aboutCard.updateClicked.connect(lambda: checkUpdate(host.window))
     return host.finish("about")

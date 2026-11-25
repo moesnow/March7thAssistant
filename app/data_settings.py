@@ -7,6 +7,8 @@ from PySide6.QtWidgets import QFileDialog
 from qfluentwidgets import (FluentIcon as FIF, InfoBar, InfoBarPosition, MessageBox, PushButton,
                             PushSettingCard)
 
+from app.common.mascot import Mascot
+from app.components.mascot_dialog import add_mascot
 from module.localization import tr
 from utils import data_backup, data_migration, paths
 
@@ -122,5 +124,6 @@ def restore_data(parent, importing):
                              tr("请重新启动小助手以使用这份数据。"), window)
         message.yesButton.setText(tr("关闭小助手"))
         message.cancelButton.hide()
+        add_mascot(message, Mascot.STAMP)
         message.exec()
         window.quitApp()
