@@ -45,6 +45,10 @@ class MessageTimeout(RewardError):
     """单个短信会话超时。"""
 
 
+class MessageNotVisible(RewardError):
+    """联系人有未读短信，但会话不在当前可视范围内。"""
+
+
 def _confirm_item_reward():
     if not auto.find_element(daily.REWARD_POPUP, "image", 0.9, crop=daily.REWARD_POPUP_CROP,
                              max_retries=15, retry_delay=0.25):
@@ -269,7 +273,7 @@ def _open_unread_message(avoid=()):
         if not thread:
             if avoid:
                 return False
-            raise RewardError("联系人有红点，但未找到待处理会话")
+            raise MessageNotVisible("联系人有红点，但未找到待处理会话")
     if not auto.click_element_with_pos(thread, offset=(24, 0)):
         raise RewardError("未读会话无法点击")
     if not auto.find_element(f"{IMAGE_ROOT}/message_pending.png", "image", 0.9, crop=MESSAGE_PENDING,
@@ -286,9 +290,17 @@ def claim_messages():
     timed_out = 0
     blocked_titles = set()
     drags = 0
+    search_error = None
     try:
         for _ in range(30):
-            if (not timed_out and _message_pending()) or _open_unread_message(blocked_titles):
+            try:
+                opened = (not timed_out and _message_pending()) or _open_unread_message(blocked_titles)
+            except MessageNotVisible as error:
+                # 联系人展开后可能把待回复会话挤到屏幕外，交给同一轮的有界下滑扫描。
+                search_error = error
+                opened = False
+            if opened:
+                search_error = None
                 try:
                     result = _finish_message()
                     received += bool(result)
@@ -324,6 +336,8 @@ def claim_messages():
     finally:
         if received:
             notify_reward(auto, f"处理了 {completed} 个短信会话，领取 {received} 次奖励")
+    if search_error is not None:
+        raise search_error
     log.info(f"本次已处理 {completed} 个短信会话" if completed else "本次未发现待处理短信")
     if timed_out:
         raise RewardError(f"有 {timed_out} 个短信会话超时")
