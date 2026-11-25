@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BooleanSupplier;
 
 /**
  * 在服务进程里直接注入触摸和按键，事件带目标 displayId。
@@ -308,17 +309,26 @@ final class InputInjector {
     }
 
     /**
-     * 让一块屏成为焦点屏：注入一次按下，紧接着取消。系统在按下时把焦点切过去，取消的手势不算点击。
+     * 尝试让一块屏成为焦点屏：注入一次按下，紧接着取消，不发送 UP。
      *
      * MuMu（Android 12）上，星铁在没有焦点的虚拟屏里不渲染，setFocusedTask 也切不动显示器焦点，只有触摸可以。
-     * 这块屏上已经有触点按着时说明焦点已经在这里，直接返回。
+     * 返回值只说明 DOWN 被接受（或已有手势），不能证明系统真的切换了焦点。
      */
     boolean focus(int displayId, float x, float y, Integer targetUid) throws CommandException {
+        return focusResult(displayId, x, y, targetUid, () -> true).delivered();
+    }
+
+    FocusInjection.Result focusResult(int displayId, float x, float y, Integer targetUid, BooleanSupplier allowed)
+            throws CommandException {
         synchronized (this) {
             requireOpen();
             Touches touches = displays.get(displayId);
             if (touches != null && !touches.pointers.isEmpty()) {
-                return true;
+                return FocusInjection.skipped("active_gesture");
+            }
+            // 等待输入锁期间可能收到停止指令或到达实验时限。
+            if (!allowed.getAsBoolean()) {
+                return FocusInjection.skipped("context_changed_or_stopped_or_deadline");
             }
             Touches poke = new Touches(targetUid);
             Pointer pointer = new Pointer();
@@ -329,13 +339,23 @@ final class InputInjector {
             MotionEvent down = buildEvent(poke, MotionEvent.ACTION_DOWN, 0, poke.downTime);
             MotionEvent cancel = buildEvent(poke, MotionEvent.ACTION_CANCEL, 0, SystemClock.uptimeMillis());
             try {
-                boolean delivered = inject(down, displayId, poke.targetUid);
-                inject(cancel, displayId, poke.targetUid);
-                return delivered;
+                FocusInjection.Result result = FocusInjection.send(() -> inject(down, displayId, poke.targetUid),
+                        () -> inject(cancel, displayId, poke.targetUid));
+                result.downDisplayId = eventDisplayId(down);
+                result.cancelDisplayId = eventDisplayId(cancel);
+                return result;
             } finally {
                 down.recycle();
                 cancel.recycle();
             }
+        }
+    }
+
+    private static Integer eventDisplayId(InputEvent event) {
+        try {
+            return (Integer) InputEvent.class.getMethod("getDisplayId").invoke(event);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return null; // OEM 没有公开 getter 时保留 unknown，不影响注入回执。
         }
     }
 

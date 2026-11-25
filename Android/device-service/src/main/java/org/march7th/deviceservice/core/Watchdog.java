@@ -10,6 +10,7 @@ import org.march7th.deviceservice.protocol.Protocol;
 import org.march7th.deviceservice.protocol.StackEntry;
 
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 /**
  * 回迁看门狗。
@@ -37,6 +38,8 @@ final class Watchdog {
         String inspector = TaskInspector.AUTO;
         /** 任务移回后、以及目标屏停止出帧时，是否自动把焦点切到目标屏。 */
         boolean autoFocus;
+        /** 仅实验 APK 显式请求：API 31 停帧时最多做一次带取证的焦点恢复。 */
+        boolean stallFocusOnce;
         /** 游戏进程退出后是否自动在目标屏重新启动。 */
         boolean relaunch;
         int maxRelaunches = 2;
@@ -67,6 +70,7 @@ final class Watchdog {
             config.stallMs = clamp(request.optInt("stall_ms", 10000), 0, 600000);
             config.inspector = request.optString("inspector", TaskInspector.AUTO);
             config.autoFocus = request.optBoolean("auto_focus", false);
+            config.stallFocusOnce = request.optBoolean("stall_focus_once", false);
             config.relaunch = request.optBoolean("relaunch", false);
             config.maxRelaunches = clamp(request.optInt("max_relaunches", 2), 0, 10);
             if (config.relaunch) {
@@ -99,11 +103,16 @@ final class Watchdog {
 
         /** 让一块屏成为焦点屏，返回触摸是否送达。 */
         boolean focusDisplay(int displayId) throws Exception;
+
+        JSONObject focusDisplayDiagnostic(int displayId, BooleanSupplier allowed) throws Exception;
+
+        JSONObject focusEvidence(int displayId) throws Exception;
     }
 
     interface Platform {
         long elapsedMs();
         long nanoTime();
+        int sdkInt();
         boolean interactive() throws Exception;
         boolean keyguardLocked() throws Exception;
         String processName(int pid);
@@ -128,6 +137,11 @@ final class Watchdog {
         @Override
         public long nanoTime() {
             return System.nanoTime();
+        }
+
+        @Override
+        public int sdkInt() {
+            return android.os.Build.VERSION.SDK_INT;
         }
 
         @Override
@@ -214,6 +228,22 @@ final class Watchdog {
     private int relaunches;
     private boolean recoveryFailed;
     private long lastErrorAt;
+    private boolean stallFocusAttempted;
+    private PendingFocus pendingFocus;
+    private static final int FOCUS_BUDGET_MS = 15000;
+    private static final int FOCUS_OBSERVE_MS = 5000;
+
+    private static final class PendingFocus {
+        final StackEntry task;
+        final long seq;
+        final long observeUntil;
+
+        PendingFocus(StackEntry task, long seq, long observeUntil) {
+            this.task = task;
+            this.seq = seq;
+            this.observeUntil = observeUntil;
+        }
+    }
 
     Watchdog(Config config, Host host) {
         this(config, host, new AndroidPlatform(config.inspector));
@@ -289,6 +319,8 @@ final class Watchdog {
             json.put("target_display_id", targetDisplay());
             json.put("inspector", platform.inspectorMode());
             json.put("auto_focus", config.autoFocus);
+            json.put("stall_focus_once", config.stallFocusOnce);
+            json.put("stall_focus_attempted", stallFocusAttempted);
             json.put("pid", pid);
             json.put("interactive", interactive);
             json.put("keyguard_locked", keyguardLocked);
@@ -335,6 +367,8 @@ final class Watchdog {
                 break;
             }
         }
+        running = false;
+        checkFocusObservation(null, -1, false);
         Logger.i("watchdog stopped");
     }
 
@@ -494,6 +528,7 @@ final class Watchdog {
         }
 
         checkStall(current, target, usable, platform.elapsedMs());
+        checkFocusObservation(current, target, usable);
         checkRelaunch(current, currentPid, target);
     }
 
@@ -607,8 +642,89 @@ final class Watchdog {
             }
             emit(nowStalled ? "frames_stalled" : "frames_resumed", fields("age_ms", age, "display_id", target));
             if (nowStalled) {
-                requestFocus(current, target, "frames_stalled");
+                if (config.stallFocusOnce && !config.autoFocus && platform.sdkInt() == 31 && target > 0) {
+                    experimentStallFocus(current, target, now);
+                } else {
+                    requestFocus(current, target, "frames_stalled");
+                }
             }
+        }
+    }
+
+    private void experimentStallFocus(StackEntry current, int target, long now) {
+        if (!running || stallFocusAttempted) return;
+        synchronized (stateLock) {
+            // 包括跳过和失败在内，每个看门狗生命周期只消耗一次实验机会。
+            stallFocusAttempted = true;
+        }
+        long deadline = now + FOCUS_BUDGET_MS;
+        FrameSequencer.Frame frame = host.latestFrame(target);
+        long seq = frame == null ? 0 : frame.seq;
+        try {
+            JSONObject before = host.focusEvidence(target);
+            emit("stall_focus_before", fields("display_id", target, "evidence", before));
+            String focus = before.optString("target_window_focus", "unknown");
+            if (!"none".equals(focus)) {
+                emit("stall_focus_skipped", fields("display_id", target, "reason", "target_focus_" + focus));
+                return;
+            }
+            // 诊断期间可能已恢复、移屏、进入登录页、锁屏或收到停止指令。
+            // 同一检查还会在拿到输入锁后、实际 DOWN 前再执行一次。
+            BooleanSupplier allowed = () -> canAttemptStallFocus(current, target, seq, deadline);
+            if (!allowed.getAsBoolean()) {
+                emit("stall_focus_skipped", fields("display_id", target, "reason", "context_changed_or_stopped_or_deadline"));
+                return;
+            }
+            JSONObject injection = host.focusDisplayDiagnostic(target, allowed);
+            emit("stall_focus_injected", fields("display_id", target, "injection", injection));
+            pendingFocus = new PendingFocus(current, seq, Math.min(deadline, platform.elapsedMs() + FOCUS_OBSERVE_MS));
+        } catch (Exception e) {
+            if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+            emit("stall_focus_skipped", fields("display_id", target, "reason", "experiment_error", "error", Logger.describe(e)));
+        }
+    }
+
+    private boolean canAttemptStallFocus(StackEntry original, int target, long seq, long deadline) {
+        if (!running || Thread.currentThread().isInterrupted() || platform.elapsedMs() >= deadline) return false;
+        try {
+            StackEntry current = findGame(platform.stacks());
+            if (target != host.currentDisplayId() || !sameFocusTask(original, current, target)
+                    || !current.visible || pid <= 0 || !config.packageName.equals(platform.processName(pid))
+                    || !platform.interactive() || platform.keyguardLocked()) return false;
+            FrameSequencer.Frame frame = host.latestFrame(target);
+            return (frame == null || (frame.seq <= seq && platform.elapsedMs() - frame.acquiredMs >= config.stallMs))
+                    && running && !Thread.currentThread().isInterrupted() && platform.elapsedMs() < deadline;
+        } catch (Exception e) {
+            if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+            emit("stall_focus_guard_failed", fields("display_id", target, "error", Logger.describe(e)));
+            return false;
+        }
+    }
+
+    private boolean sameFocusTask(StackEntry original, StackEntry current, int target) {
+        return current != null && current.displayId == target && current.stackId == original.stackId
+                && current.taskIdOf(config.packageName) == original.taskIdOf(config.packageName) && isMain(current);
+    }
+
+    private void checkFocusObservation(StackEntry current, int target, boolean usable) {
+        PendingFocus pending = pendingFocus;
+        if (pending == null) return;
+        boolean same = target == host.currentDisplayId() && sameFocusTask(pending.task, current, target) && usable;
+        if (same && running && platform.elapsedMs() < pending.observeUntil) return;
+        pendingFocus = null;
+        try {
+            JSONObject after = running && !Thread.currentThread().isInterrupted()
+                    ? host.focusEvidence(pending.task.displayId) : new JSONObject();
+            FrameSequencer.Frame frame = host.latestFrame(pending.task.displayId);
+            long seq = frame == null ? 0 : frame.seq;
+            String focus = after.optString("target_window_focus", "unknown");
+            emit("stall_focus_after", fields("display_id", pending.task.displayId, "evidence", after,
+                    "observation", !running ? "stopped" : same ? "completed" : "context_changed",
+                    "focus_acquired", "unknown".equals(focus) ? JSONObject.NULL : "game".equals(focus),
+                    "frame_seq_before", pending.seq, "frame_seq_after", seq, "frame_advanced", seq > pending.seq));
+        } catch (Exception e) {
+            if (e instanceof InterruptedException) Thread.currentThread().interrupt();
+            emit("stall_focus_after", fields("display_id", pending.task.displayId, "error", Logger.describe(e)));
         }
     }
 

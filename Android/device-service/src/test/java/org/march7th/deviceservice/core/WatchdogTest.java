@@ -13,6 +13,7 @@ import org.march7th.deviceservice.protocol.StackEntry;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 
 public class WatchdogTest {
     private static final String PACKAGE = "example.game";
@@ -214,6 +215,185 @@ public class WatchdogTest {
         assertTrue(platform.events.contains("frames_resumed"));
     }
 
+    @Test
+    public void focusExperimentIsExplicitAndDoesNotChangeTheDefaultConfig() throws Exception {
+        Watchdog.Config regular = Watchdog.Config.fromJson(new JSONObject().put("package", PACKAGE));
+        assertFalse(regular.autoFocus);
+        assertFalse(regular.stallFocusOnce);
+        assertTrue(Watchdog.Config.fromJson(new JSONObject().put("package", PACKAGE)
+                .put("stall_focus_once", true)).stallFocusOnce);
+    }
+
+    @Test
+    public void physicalAndroid12ObservesFocusAndFramesSeparatelyAndNeverRetries() throws Exception {
+        for (boolean enabled : new boolean[]{false, true}) {
+            for (boolean rendered : new boolean[]{false, true}) {
+                Fixture platform = new Fixture();
+                platform.setTask(TARGET, PACKAGE + "/.Main");
+                platform.publishFrame();
+                platform.produceOnFocus = rendered;
+                Watchdog.Config config = experimentConfig(enabled);
+                Watchdog dog = new Watchdog(config, platform, platform);
+                enterStall(dog, platform, config);
+                assertEquals(enabled ? 1 : 0, platform.focusCalls);
+                if (enabled) {
+                    assertEquals(List.of("DOWN@42", "CANCEL@42"), platform.actions);
+                    assertEquals("none", platform.details("stall_focus_before").getJSONObject("evidence").getString("target_window_focus"));
+                    assertTrue(platform.details("stall_focus_injected").getJSONObject("injection").getBoolean("down_accepted"));
+                    dog.poll();
+                    platform.now += 5001;
+                    dog.poll();
+                    JSONObject after = platform.details("stall_focus_after");
+                    // 注入被接受、窗口取得焦点，并不代表 Unity 开始出帧。
+                    assertTrue(after.getBoolean("focus_acquired"));
+                    assertEquals(rendered, after.getBoolean("frame_advanced"));
+                    assertTrue(after.getJSONObject("evidence").getJSONObject("game_layers").toString()
+                            .contains(rendered ? "1280x720 RGBA_8888" : "0x0 Unknown/None"));
+                }
+                for (int i = 0; i < 20; i++) {
+                    platform.publishFrame();
+                    dog.poll();
+                    platform.now += config.stallMs + 1;
+                    dog.poll();
+                }
+                assertEquals(enabled ? 1 : 0, platform.focusCalls);
+            }
+        }
+    }
+
+    @Test
+    public void experimentRechecksContextAfterDiagnosticsAndAfterWaitingForTheInputLock() throws Exception {
+        for (String fault : List.of("frame", "locked", "asleep", "moved", "sdk", "deadline", "stop")) {
+            for (boolean inputLock : new boolean[]{false, true}) {
+                Fixture platform = new Fixture();
+                platform.setTask(TARGET, PACKAGE + "/.Main");
+                platform.publishFrame();
+                Watchdog.Config config = experimentConfig(true);
+                Watchdog dog = new Watchdog(config, platform, platform);
+                Runnable injectFault = () -> {
+                    switch (fault) {
+                        case "frame": platform.publishFrame(); break;
+                        case "locked": platform.locked = true; break;
+                        case "asleep": platform.awake = false; break;
+                        case "moved": platform.setTask(0, PACKAGE + "/.Main"); break;
+                        case "sdk": platform.setTask(TARGET, SDK); break;
+                        case "deadline": platform.now += 15001; break;
+                        case "stop": dog.stop(); break;
+                        default: throw new AssertionError(fault);
+                    }
+                };
+                if (inputLock) platform.beforeInjection = injectFault;
+                else platform.beforeEvidence = injectFault;
+                enterStall(dog, platform, config);
+                assertEquals(fault + " inputLock=" + inputLock, 0, platform.focusCalls);
+                assertTrue(platform.actions.isEmpty());
+                assertTrue(dog.describe().getBoolean("stall_focus_attempted"));
+            }
+        }
+    }
+
+    @Test
+    public void unknownOrExistingFocusAndUnavailableDiagnosticsDoNotCauseATouch() throws Exception {
+        for (String focus : List.of("game", "other", "unknown", "dump_error")) {
+            Fixture platform = new Fixture();
+            platform.setTask(TARGET, PACKAGE + "/.Main");
+            platform.windowFocus = focus;
+            platform.evidenceUnavailable = focus.equals("dump_error");
+            Watchdog.Config config = experimentConfig(true);
+            Watchdog dog = new Watchdog(config, platform, platform);
+            enterStall(dog, platform, config);
+            for (int i = 0; i < 20; i++) {
+                platform.now += 1000;
+                dog.poll();
+            }
+            assertEquals(0, platform.focusCalls);
+            assertEquals(1, platform.evidenceCalls);
+            assertTrue(platform.events.contains("stall_focus_skipped"));
+        }
+    }
+
+    @Test
+    public void failedInjectionIsObservedWithoutClaimingFocusOrResending() throws Exception {
+        Fixture platform = new Fixture();
+        platform.setTask(TARGET, PACKAGE + "/.Main");
+        platform.focusAccepted = false;
+        Watchdog.Config config = experimentConfig(true);
+        Watchdog dog = new Watchdog(config, platform, platform);
+        enterStall(dog, platform, config);
+        platform.now += 5001;
+        dog.poll();
+        assertFalse(platform.details("stall_focus_injected").getJSONObject("injection").getBoolean("down_accepted"));
+        assertFalse(platform.details("stall_focus_after").getBoolean("focus_acquired"));
+        assertFalse(platform.details("stall_focus_after").getBoolean("frame_advanced"));
+        platform.publishFrame(); // 迟到的正常帧仍可推进，不再发一次恢复触摸。
+        dog.poll();
+        assertTrue(platform.events.contains("frames_resumed"));
+        platform.now += config.stallMs + 1;
+        dog.poll();
+        assertEquals(1, platform.focusCalls);
+    }
+
+    @Test
+    public void experimentLeavesOtherAndroidVersionsDisplayZeroAndEmulatorPolicyAlone() throws Exception {
+        for (int sdk : new int[]{29, 31, 32, 33, 34, 36}) {
+            Fixture platform = new Fixture();
+            platform.sdk = sdk;
+            platform.setTask(TARGET, PACKAGE + "/.Main");
+            Watchdog.Config config = experimentConfig(true);
+            Watchdog dog = new Watchdog(config, platform, platform);
+            enterStall(dog, platform, config);
+            assertEquals(sdk == 31 ? 1 : 0, platform.focusCalls);
+        }
+        Fixture primary = new Fixture();
+        primary.display = 0;
+        primary.setTask(0, PACKAGE + "/.Main");
+        Watchdog.Config config = experimentConfig(true);
+        config.displayId = 0;
+        enterStall(new Watchdog(config, primary, primary), primary, config);
+        assertEquals(0, primary.focusCalls);
+        for (boolean experiment : new boolean[]{false, true}) {
+            Fixture emulator = new Fixture();
+            emulator.setTask(TARGET, PACKAGE + "/.Main");
+            Watchdog.Config emulatorConfig = experimentConfig(experiment);
+            emulatorConfig.autoFocus = true;
+            enterStall(new Watchdog(emulatorConfig, emulator, emulator), emulator, emulatorConfig);
+            assertEquals(1, emulator.focusCalls);
+            assertEquals(0, emulator.evidenceCalls);
+            assertTrue(emulator.events.contains("focus_requested"));
+        }
+    }
+
+    @Test
+    public void transientStallsAndContinuousBlackBuffersDoNotTriggerTheExperiment() throws Exception {
+        Fixture platform = new Fixture();
+        platform.setTask(TARGET, PACKAGE + "/.Main");
+        Watchdog.Config config = experimentConfig(true);
+        Watchdog dog = new Watchdog(config, platform, platform);
+        dog.poll();
+        for (int i = 0; i < 100; i++) {
+            platform.now += config.stallMs / 2;
+            platform.publishFrame();
+            dog.poll();
+        }
+        assertEquals(0, platform.focusCalls);
+        assertEquals(0, platform.evidenceCalls);
+    }
+
+    private static void enterStall(Watchdog dog, Fixture platform, Watchdog.Config config) throws Exception {
+        dog.poll();
+        dog.poll();
+        platform.now += config.stallMs + 1;
+        dog.poll();
+    }
+
+    private static Watchdog.Config experimentConfig(boolean enabled) {
+        Watchdog.Config config = config();
+        config.autoFocus = false;
+        config.stallFocusOnce = enabled;
+        config.stallMs = 1000;
+        return config;
+    }
+
     private static Watchdog.Config config() {
         Watchdog.Config config = new Watchdog.Config();
         config.packageName = PACKAGE;
@@ -238,6 +418,16 @@ public class WatchdogTest {
         boolean sleepOnMove;
         boolean locked;
         boolean awake = true;
+        int sdk = 31;
+        int display = TARGET;
+        String windowFocus = "none";
+        String focusAfter = "game";
+        int evidenceCalls;
+        Runnable beforeEvidence = () -> {};
+        Runnable beforeInjection = () -> {};
+        boolean focusAccepted = true;
+        boolean evidenceUnavailable;
+        final List<String> actions = new ArrayList<>();
 
         Fixture() {
             frames.setActive(true);
@@ -267,6 +457,11 @@ public class WatchdogTest {
         @Override
         public long nanoTime() {
             return now * 1_000_000L;
+        }
+
+        @Override
+        public int sdkInt() {
+            return sdk;
         }
 
         @Override
@@ -318,7 +513,7 @@ public class WatchdogTest {
 
         @Override
         public int currentDisplayId() {
-            return TARGET;
+            return display;
         }
 
         @Override
@@ -345,10 +540,39 @@ public class WatchdogTest {
             assertEquals(TARGET, displayId);
             assertEquals(TARGET, task.displayId);
             focusCalls++;
+            actions.add("DOWN@" + displayId);
+            actions.add("CANCEL@" + displayId);
             if (produceOnFocus) {
                 publishFrame();
             }
             return true;
+        }
+
+        @Override
+        public JSONObject focusDisplayDiagnostic(int displayId, BooleanSupplier allowed) throws Exception {
+            beforeInjection.run();
+            if (!allowed.getAsBoolean()) return FocusInjection.skipped("context_changed_or_stopped_or_deadline").describe();
+            return FocusInjection.send(() -> {
+                focusCalls++;
+                actions.add("DOWN@" + displayId);
+                if (focusAccepted) {
+                    windowFocus = focusAfter;
+                    if (produceOnFocus) publishFrame();
+                }
+                return focusAccepted;
+            }, () -> { actions.add("CANCEL@" + displayId); return true; }).describe();
+        }
+
+        @Override
+        public JSONObject focusEvidence(int displayId) throws Exception {
+            evidenceCalls++;
+            beforeEvidence.run();
+            if (evidenceUnavailable) throw new CommandException("diagnostic_unavailable", "window dump unavailable");
+            String buffer = produceOnFocus && focusCalls > 0 ? "1280x720 RGBA_8888" : "0x0 Unknown/None";
+            return new JSONObject().put("target_window_focus", windowFocus)
+                    .put("frame", new JSONObject().put("seq", frames.latest()))
+                    .put("game_layers", StartupDiagnostics.gameLayers("  + BufferStateLayer (SurfaceView[" + PACKAGE
+                            + "/.Main](BLAST)#19953)\n    activeBuffer=[" + buffer + "]\n", PACKAGE));
         }
     }
 }

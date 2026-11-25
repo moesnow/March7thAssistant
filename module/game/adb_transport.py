@@ -78,6 +78,7 @@ class AdbEnvironment:
     display_size: tuple[int, int]
     game_installed: bool
     virtual_auto_focus: bool = False
+    virtual_stall_focus_once: bool = False
 
     def check_touch_injection(self) -> AdbTouchInjectionStatus:
         """读取当前设备的 shell 注入权限和 MIUI 安全设置。无法判断时 allowed 为 None。"""

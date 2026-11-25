@@ -306,7 +306,9 @@ class AdbGameController(GameControllerBase):
 
             # MuMu 的独立应用窗口可能把显式指定到 display 0 的启动重定向到外接屏。
             self._call("watchdog", package=GAME_PACKAGE, main_activity=_GAME_ACTIVITY, display_id=display_id,
-                       auto_focus=display_id != 0 and self._environment.virtual_auto_focus, subscribe=False)
+                       auto_focus=display_id != 0 and self._environment.virtual_auto_focus, subscribe=False,
+                       **({"stall_focus_once": True} if display_id > 0 and self._environment.sdk == 31
+                          and self._environment.virtual_stall_focus_once and not self._environment.virtual_auto_focus else {}))
             self._call("launch", timeout=17, timeout_ms=15000, display_id=display_id,
                        component=_GAME_COMPONENT)
             self._watching = True

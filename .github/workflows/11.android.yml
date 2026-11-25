@@ -3,7 +3,7 @@ name: Android CI
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, fix/android12-virtual-display-focus-1438]
     paths: &android_paths
       - 'Android/**'
       - 'module/**'
@@ -50,6 +50,8 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    env:
+      M7A_FOCUS_EXPERIMENT: ${{ github.ref == 'refs/heads/fix/android12-virtual-display-focus-1438' && !inputs.version-code && 'true' || 'false' }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -101,9 +103,13 @@ jobs:
           python=$(uv python find --no-project 3.14.8)
           "$python" app/prepare_wheels.py app/build/wheelhouse
           gradle_log="$RUNNER_TEMP/android-gradle.log"
+          experiment=()
+          if [[ "$M7A_FOCUS_EXPERIMENT" == true ]]; then
+            experiment=(-Pm7a.android12FocusExperiment=true)
+          fi
           refresh=()
           for attempt in 1 2 3; do
-            if ./gradlew --no-daemon "${refresh[@]}" "${tasks[@]}" "-Pm7a.hostPython=$python" "-Pm7a.versionCode=$APK_VERSION_CODE" 2>&1 | tee "$gradle_log"; then
+            if ./gradlew --no-daemon "${refresh[@]}" "${experiment[@]}" "${tasks[@]}" "-Pm7a.hostPython=$python" "-Pm7a.versionCode=$APK_VERSION_CODE" 2>&1 | tee "$gradle_log"; then
               break
             else
               status=$?
@@ -118,7 +124,7 @@ jobs:
           done
 
       - name: Upload CI packages
-        if: ${{ !inputs.version-code }}
+        if: ${{ !inputs.version-code && env.M7A_FOCUS_EXPERIMENT != 'true' }}
         uses: actions/upload-artifact@v7
         with:
           name: android-ci
@@ -129,6 +135,28 @@ jobs:
           compression-level: 0
           if-no-files-found: error
           overwrite: true
+
+      - name: Verify focus experiment APK
+        if: env.M7A_FOCUS_EXPERIMENT == 'true'
+        env:
+          ANDROID_BUILD_TOOLS: ${{ steps.sdk.outputs.tools }}
+        run: |
+          apk=Android/app/build/universal/outputs/apk/debug/app-debug.apk
+          java -jar "$ANDROID_BUILD_TOOLS/lib/apksigner.jar" verify --verbose "$apk"
+          badging=$("$ANDROID_BUILD_TOOLS/aapt" dump badging "$apk")
+          package=${badging%%$'\n'*}
+          [[ "$package" == "package: name='top.m7a.focus1438' "* && "$package" == *"-focus1438'"* ]]
+          cp "$apk" "$RUNNER_TEMP/March7thAssistant-focus1438.apk"
+          echo 'Issue #1438：API 31 真机停帧焦点实验，独立包名，debug 签名，可直接安装。' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload focus experiment APK
+        if: env.M7A_FOCUS_EXPERIMENT == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-focus1438
+          path: ${{ runner.temp }}/March7thAssistant-focus1438.apk
+          compression-level: 0
+          if-no-files-found: error
 
       - name: Sign and verify release APK
         if: inputs.version-code

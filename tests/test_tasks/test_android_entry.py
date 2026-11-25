@@ -207,6 +207,36 @@ def start(entry, task, bridge, **settings):
                      False, True, "zh_CN", bridge)
 
 
+@pytest.mark.parametrize(("sdk", "emulator", "experiment", "expected"), [
+    (29, False, True, False), (31, False, False, False), (31, False, True, True),
+    (31, True, True, False), (32, False, True, False), (34, False, True, False),
+])
+def test_focus_experiment_reaches_the_real_watchdog_request_only_for_api31_phones(
+    entry, device, monkeypatch, sdk, emulator, experiment, expected,
+):
+    controller = AdbGameController(SimpleNamespace(ui_profile="touch_720", adb_tap_ms=None), logger=log)
+    monkeypatch.setattr(module.game, "get_game_controller", lambda backend: controller)
+    monkeypatch.setattr(rewards, "run_daily_training", Mock(return_value=True))
+    client = module.game.adb_transport.ServiceClient.return_value
+    client.closed = False
+    client.close.side_effect = lambda: setattr(client, "closed", True)
+
+    def respond(command, **params):
+        if command == "create_display":
+            return {"display_id": 65}, None
+        if command == "events":
+            return {"events": [], "event_seq": 0}, None
+        return {"original_mode": "allowed"}, None
+
+    client.request.side_effect = respond
+    assert entry.run(str(ROOT), "token", sdk, "12", "OCE-AN10", emulator, "DAILY", payload(),
+                     False, False, "zh_CN", Bridge(), experiment) == "success"
+    watchdog = next(call.kwargs for call in client.request.call_args_list if call.args == ("watchdog",))
+    assert watchdog.get("stall_focus_once", False) is expected
+    assert watchdog["auto_focus"] is emulator
+    assert watchdog["display_id"] == 65
+
+
 @pytest.mark.parametrize("support", ["supported", "missing", "failed"])
 def test_keep_awake_is_requested_before_launch_only_if_supported(entry, device, monkeypatch, support):
     client = module.game.adb_transport.ServiceClient.return_value

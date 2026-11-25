@@ -15,6 +15,8 @@ if (!(versionCodeValue in 1..2_100_000_000)) {
     throw new GradleException('m7a.versionCode 必须在 1 到 2100000000 之间')
 }
 def hostPython = providers.gradleProperty('m7a.hostPython')
+// 仅 Issue #1438 的独立测试包启用，普通 debug/release 构建均保持关闭。
+def focusExperiment = providers.gradleProperty('m7a.android12FocusExperiment').getOrElse('false').toBoolean()
 def wheelhouse = providers.gradleProperty('m7a.wheelhouse').getOrElse('build/wheelhouse')
 def shizukuVersion = '13.1.5'
 def repo = rootProject.file('..')
@@ -41,12 +43,14 @@ android {
     packaging.jniLibs.useLegacyPackaging = true
 
     defaultConfig {
-        applicationId = 'top.m7a'
+        applicationId = focusExperiment ? 'top.m7a.focus1438' : 'top.m7a'
+        manifestPlaceholders = [appLabel: focusExperiment ? '三月七小助手 · 焦点实验1438' : '@string/app_name']
         minSdk = providers.gradleProperty('m7a.minApi').get().toInteger()
         targetSdk = 37
         versionCode = versionCodeValue
-        versionName = new File(repo, 'assets/config/version.txt').getText('UTF-8').trim()
+        versionName = new File(repo, 'assets/config/version.txt').getText('UTF-8').trim() + (focusExperiment ? '-focus1438' : '')
         buildConfigField 'String', 'SHIZUKU_SDK_VERSION', "\"${shizukuVersion}\""
+        buildConfigField 'boolean', 'ANDROID12_FOCUS_EXPERIMENT', focusExperiment.toString()
         ndk {
             abiFilters.addAll(abi == 'universal' ? supportedAbis : [abi])
         }

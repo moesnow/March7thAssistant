@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
 import java.util.regex.Pattern;
 
 /**
@@ -962,6 +963,43 @@ public final class DeviceService implements Watchdog.Host {
     @Override
     public boolean focusDisplay(int displayId) throws CommandException {
         return injector.focus(displayId, 1, 1, inputTargetUid(displayId));
+    }
+
+    @Override
+    public JSONObject focusDisplayDiagnostic(int displayId, BooleanSupplier allowed) throws CommandException, JSONException {
+        if (Build.VERSION.SDK_INT != 31 || displayId <= 0 || displayId != currentDisplayId()) {
+            return FocusInjection.skipped("unsupported_experiment_target").describe();
+        }
+        JSONObject beforeDown = new JSONObject();
+        BooleanSupplier checked = () -> {
+            if (!allowed.getAsBoolean()) return false;
+            try {
+                Watchdog dog = watchdog;
+                if (dog == null) return false;
+                StartupDiagnostics.collectFocus(beforeDown, dog.describe().getString("package"), displayId);
+                beforeDown.put("device_ms", SystemClock.elapsedRealtime());
+            } catch (JSONException e) {
+                return false;
+            }
+            // 输入锁内再读焦点；系统弹窗等后来取得焦点时不抢夺它。
+            return "none".equals(beforeDown.optString("target_window_focus")) && allowed.getAsBoolean();
+        };
+        JSONObject result = injector.focusResult(displayId, 1, 1, inputTargetUid(displayId), checked).describe();
+        result.put("before_down", beforeDown);
+        result.put("display_id", displayId);
+        result.put("x", 1).put("y", 1).put("mode", "WAIT_FOR_RESULT");
+        return result;
+    }
+
+    @Override
+    public JSONObject focusEvidence(int displayId) throws JSONException {
+        JSONObject out = new JSONObject();
+        if (displayId != currentDisplayId()) return out.put("target_window_focus", "unknown");
+        startupEvidence(out);
+        VirtualScreen current = screen;
+        if (current != null && current.displayId == displayId) out.put("frame", describeFrame(current));
+        out.put("device_ms", SystemClock.elapsedRealtime());
+        return out;
     }
 
     @Override

@@ -190,7 +190,8 @@ class _AppSession:
             self.client.close()
 
 
-def run(workdir, token, sdk, version, model, is_emulator, task, settings, panel_off, mute_game, language, bridge):
+def run(workdir, token, sdk, version, model, is_emulator, task, settings, panel_off, mute_game, language, bridge,
+        focus_experiment=False):
     os.chdir(workdir)
     if workdir not in sys.path:
         sys.path.insert(0, workdir)
@@ -264,7 +265,11 @@ def run(workdir, token, sdk, version, model, is_emulator, task, settings, panel_
         if type(preview_port) is int and 0 < preview_port <= 65535:
             bridge.previewReady(preview_port)
         environment = AdbEnvironment(None, AdbDevice("android", "device", model), sdk, version,
-                                     "physical", (0, 0), True, is_emulator)
+                                     "physical", (0, 0), True, is_emulator,
+                                     virtual_stall_focus_once=bool(focus_experiment and sdk == 31 and not is_emulator))
+        if focus_experiment:
+            log.info(f"Issue #1438 焦点实验：sdk={sdk} emulator={is_emulator} "
+                     f"stall_focus_once={environment.virtual_stall_focus_once}；每轮最多一次，不改变虚拟屏 flags")
         controller = get_game_controller("adb")
         controller.attach_virtual_session(environment, session, on_event=session.record_event)
         display_id = controller.prepare_display()

@@ -423,7 +423,7 @@ class TaskController private constructor(private val context: Context) {
             val result = module.callAttr(
                 "run", workspace.path, token, Build.VERSION.SDK_INT, Build.VERSION.RELEASE, Build.MODEL,
                 "x86_64" in Build.SUPPORTED_ABIS, snapshot.task.name, settings, config.panelOff, config.muteGame,
-                language, this
+                language, this, BuildConfig.ANDROID12_FOCUS_EXPERIMENT
             ).toString()
             return if (result == "runtime_error") deviceError ?: result else result
         }
