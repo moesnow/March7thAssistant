@@ -7,6 +7,7 @@ from qfluentwidgets import qconfig, setThemeColor
 
 from app.common.accent import EVERNIGHT_RED
 from app.common.mascot import Mascot, load_mascot, mascot_path
+from app.overview.greeting import SQUASH_WIDTH
 from app.pages.common import is_evernight
 from app.setup.rail import StepRail
 from assets.scripts.prepare_mascot import EVERNIGHT, POSES, prepare
@@ -46,6 +47,7 @@ def test_setup_rail_keeps_march7th_in_evernight(qtbot):
         for pose in Mascot:
             rail.setPose(pose)
             assert is_evernight() and rail.mascot.pose() is pose and not rail.mascot._evernight
+            assert rail.mascot.imageRect().width() * (1 + SQUASH_WIDTH) <= rail.width()
     finally:
         setThemeColor(color, save=False)
 

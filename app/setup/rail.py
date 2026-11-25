@@ -10,6 +10,7 @@ from app.pages import style
 from app.pages.common import is_evernight, secondary
 
 WIDTH = 252
+MASCOT_MAX_WIDTH = 220  # 压扁变宽时也不超出左栏
 RADIUS = 12
 ART_HEIGHT = 214
 
@@ -119,7 +120,7 @@ class StepRail(QWidget):
             self.rows.append(row)
             layout.addWidget(row)
         layout.addStretch(1)
-        self.mascot = MascotWidget(self)
+        self.mascot = MascotWidget(self, max_width=MASCOT_MAX_WIDTH)
         qconfig.themeChanged.connect(self.restyle)
         qconfig.themeColorChanged.connect(self.restyle)
 

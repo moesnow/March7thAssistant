@@ -45,6 +45,9 @@ def test_sample_renders(page, state, theme):
         assert page.greeting.titleLabel.fullText() == snapshot.greeting.title
         assert page.greeting.phaseBox.isVisible() == (state == "running")
         assert page.greeting.mascot.pose().value == snapshot.greeting.mascot
+        art = page.greeting.mascot.imageRect()  # 压到底和弹起时都不会被裁掉
+        assert art.width() * (1 + greeting.SQUASH_WIDTH) <= page.greeting.mascot.width()
+        assert art.height() * (1 + greeting.SQUASH_HEIGHT * greeting.STRETCH) < page.greeting.height() - 1
         image = page.view.grab()
         assert image.width() >= 900 and image.height() >= page.greeting.height() and not image.isNull()
     finally:
@@ -166,6 +169,30 @@ def test_reduced_motion_suppresses_mascot_bounce(page, monkeypatch, qtbot):
         monkeypatch.setattr(greeting, "animations_enabled", lambda: enabled)
         qtbot.mouseClick(mascot, Qt.MouseButton.LeftButton)
         assert (mascot.animation.state() == mascot.animation.State.Running) == enabled
+
+
+def test_mascot_squash_follows_android(page, monkeypatch, qtbot):
+    monkeypatch.setattr(greeting, "animations_enabled", lambda: True)
+    page.render(sample_snapshot("ready"))
+    mascot = page.greeting.mascot
+    animation = mascot.animation
+    qtbot.mousePress(mascot, Qt.MouseButton.LeftButton)
+    assert animation.state() == animation.State.Stopped  # 松手才算点击
+    qtbot.mouseRelease(mascot, Qt.MouseButton.LeftButton)
+    animation.pause()
+    for elapsed, scale in ((0, (1, 1)), (70, (1.14, 0.78)), (194, (0.9479, 1.0819)), (319, (1.0194, 0.9695))):
+        animation.setCurrentTime(elapsed)
+        assert mascot._scale() == pytest.approx(scale, abs=0.001)
+    animation.setCurrentTime(194)
+    stretched = mascot._squash
+    mascot.bounce()  # 连点：从当前的形变继续
+    animation.pause()
+    animation.setCurrentTime(0)
+    assert mascot._squash == stretched
+    animation.setCurrentTime(70)
+    assert mascot._scale() == pytest.approx((1.14, 0.78))
+    animation.setCurrentTime(greeting.BOUNCE_MS)
+    assert mascot._scale() == (1, 1)
 
 
 @pytest.mark.parametrize("accepted", [True, False])

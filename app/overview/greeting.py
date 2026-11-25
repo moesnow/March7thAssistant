@@ -1,7 +1,7 @@
 """总览顶部的问候区：状态胶囊、标题、说明、运行阶段、操作按钮，右侧是 Q 版小人和星轨背景。"""
 import math
 
-from PySide6.QtCore import QAbstractAnimation, QEasingCurve, QEvent, QPoint, QPointF, QRectF, QSize, Qt, \
+from PySide6.QtCore import QAbstractAnimation, QEasingCurve, QEvent, QPoint, QPointF, QRect, QRectF, QSize, Qt, \
     QVariantAnimation, Signal
 from PySide6.QtGui import QColor, QImage, QLinearGradient, QPainter, QPainterPath, QPainterPathStroker, QPen, \
     QPixmap
@@ -18,30 +18,51 @@ from .star_track import COLORS, paint_background, paint_star_track, rgba
 from .style import GREETING_TONES, accent, animations_enabled, primary_button_qss, tinted_button_qss, with_alpha
 from .widgets import PHASES, ElidedTitleLabel, LinkButton, PhaseProgress, Pill
 
-MASCOT_HEIGHT = 176
+MASCOT_HEIGHT = 172
 MASCOT_MAX_WIDTH = 236
+# 点小人的形变和安卓端首页一致：70 毫秒压到底，再由弹簧弹回。
+SQUASH_WIDTH, SQUASH_HEIGHT = 0.14, 0.22
+PRESS_MS, BOUNCE_MS = 70, 660
+PRESS_CURVE = QEasingCurve(QEasingCurve.Type.BezierSpline)
+PRESS_CURVE.addCubicBezierSegment(QPointF(0.4, 0.0), QPointF(0.2, 1.0), QPointF(1.0, 1.0))
+SPRING_DAMPING, SPRING_STIFFNESS = 0.30, 700.0
+SPRING_DECAY = SPRING_DAMPING * math.sqrt(SPRING_STIFFNESS)
+SPRING_SPEED = math.sqrt(SPRING_STIFFNESS) * math.sqrt(1 - SPRING_DAMPING ** 2)
+STRETCH = math.exp(-math.pi * SPRING_DECAY / SPRING_SPEED)  # 第一次弹起的幅度，相对压到底
 LINK_ACTIONS = {"view_run", "view_result", "view_reason"}
 SECONDARY_ACTIONS = {"choose_task", "toggle_pause"}
 ICONS = {"start_full": FIF.PLAY, "continue": FIF.PLAY, "retry_step": FIF.SYNC, "start_task": FIF.SYNC,
          "configure": FIF.SETTING}
 
 
-class MascotWidget(QWidget):
-    """Q 版小人。点一下会压扁再回弹。"""
+def squash_amount(elapsed, start=0.0):
+    """点击后 elapsed 毫秒时的形变：1 是压到底，0 是原样，负数是弹起时拉长。start 是点击那一刻的形变。"""
+    if elapsed < PRESS_MS:
+        return start + (1.0 - start) * PRESS_CURVE.valueForProgress(elapsed / PRESS_MS)
+    if elapsed >= BOUNCE_MS:
+        return 0.0
+    t = (elapsed - PRESS_MS) / 1000
+    swing = math.cos(SPRING_SPEED * t) + SPRING_DECAY / SPRING_SPEED * math.sin(SPRING_SPEED * t)
+    return math.exp(-SPRING_DECAY * t) * swing
 
-    def __init__(self, parent=None):
+
+class MascotWidget(QWidget):
+    """Q 版小人。点一下会压扁再弹回，连点时从当前的形变继续。"""
+
+    def __init__(self, parent=None, *, max_width=MASCOT_MAX_WIDTH):
         super().__init__(parent)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self._max_width = max_width
         self._pose = Mascot.FULL
         self._override = None
         self._evernight = False
         self._ratio = 0.0
         self._pixmap = QPixmap()
-        self._progress = 1.0
+        self._squash = self._squash_start = 0.0
         self.animation = QVariantAnimation(self)
         self.animation.setStartValue(0.0)
-        self.animation.setEndValue(1.0)
-        self.animation.setDuration(640)
+        self.animation.setEndValue(float(BOUNCE_MS))
+        self.animation.setDuration(BOUNCE_MS)
         self.animation.valueChanged.connect(self._advance)
 
     def setPose(self, pose, *, evernight=False):
@@ -62,14 +83,17 @@ class MascotWidget(QWidget):
         ratio = self.devicePixelRatioF() or 1.0
         self._ratio = ratio
         pixmap = load_mascot(pose, MASCOT_HEIGHT, ratio, evernight=self._evernight)
-        if not pixmap.isNull() and pixmap.width() / ratio > MASCOT_MAX_WIDTH:
-            height = int(MASCOT_HEIGHT * MASCOT_MAX_WIDTH / (pixmap.width() / ratio))
+        if not pixmap.isNull() and pixmap.width() / ratio > self._max_width:
+            height = int(MASCOT_HEIGHT * self._max_width / (pixmap.width() / ratio))
             pixmap = load_mascot(pose, height, ratio, evernight=self._evernight)
         self._pixmap = pixmap
-        size = self.imageSize()
-        # 回弹时会稍微变宽、变高，四周留出余量。
-        self.setFixedSize(size.width() + 16, MASCOT_HEIGHT + 14)
+        # 压扁时变宽，弹起时变高，两侧和上方留出余量。
+        self.setFixedSize(self.imageSize().width() + 2 * self._sideRoom(),
+                          math.ceil(MASCOT_HEIGHT * (1 + SQUASH_HEIGHT * STRETCH)) + 2)
         self.update()
+
+    def _sideRoom(self):
+        return math.ceil(self.imageSize().width() * SQUASH_WIDTH / 2) + 2
 
     def imageSize(self):
         if self._pixmap.isNull():
@@ -77,36 +101,34 @@ class MascotWidget(QWidget):
         ratio = self._pixmap.devicePixelRatio() or 1.0
         return QSize(round(self._pixmap.width() / ratio), round(self._pixmap.height() / ratio))
 
+    def imageRect(self):
+        """没有形变时插画在控件里的位置。"""
+        size = self.imageSize()
+        return QRect(QPoint(self._sideRoom(), self.height() - 2 - size.height()), size)
+
     def bounce(self):
         if not animations_enabled():
             return
+        self._squash_start = self._squash
         self.animation.stop()
         self.animation.start()
 
-    def _advance(self, value):
-        self._progress = float(value)
+    def _advance(self, elapsed):
+        self._squash = squash_amount(elapsed, self._squash_start)
         self.update()
 
     def _scale(self):
-        if self.animation.state() != QAbstractAnimation.State.Running:
-            return 1.0, 1.0
-        t = self._progress
-        if t < 0.12:
-            wave = math.sin(t / 0.12 * math.pi / 2)
-        else:
-            u = t - 0.12
-            wave = math.exp(-5.0 * u) * math.cos(u * math.pi * 3.6)
-        return 1 + 0.08 * wave, 1 - 0.10 * wave
+        return 1 + SQUASH_WIDTH * self._squash, 1 - SQUASH_HEIGHT * self._squash
 
     def showEvent(self, event):
         super().showEvent(event)
         if abs((self.devicePixelRatioF() or 1.0) - self._ratio) > 0.01:
             self._reload()
 
-    def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton and self.rect().contains(event.position().toPoint()):
             self.bounce()
-        super().mousePressEvent(event)
+        super().mouseReleaseEvent(event)
 
     def paintEvent(self, event):
         if self._pixmap.isNull():
@@ -384,7 +406,7 @@ class GreetingCard(QWidget):
     def _hintRight(self):
         """提示文字的右端贴着小人左侧，像是她在说话；没有小人时居中。"""
         if not self.mascot.isHidden():
-            return self.mascot.x() + 4
+            return self.mascot.x() + self.mascot.imageRect().x() - 4
         return None
 
     def _mascotCenter(self):
@@ -394,8 +416,9 @@ class GreetingCard(QWidget):
 
     def _relayout(self):
         if not self.mascot.isHidden():
-            self.mascot.move(self.width() - self.mascot.width() - 24, self.height() - self.mascot.height() - 4)
-            right = self.mascot.width() + 40
+            image = self.mascot.imageRect()
+            self.mascot.move(self.width() - 32 - image.width() - image.x(), self.height() - self.mascot.height())
+            right = image.width() + 56
         else:
             right = 28
         if self.vBox.contentsMargins().right() != right:
