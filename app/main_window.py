@@ -694,6 +694,9 @@ class MainWindow(FluentWindow):
 
     def initSystemTray(self):
         """初始化系统托盘"""
+        from .tools.macos_tray import patch_macos_tray
+
+        patch_macos_tray()
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setIcon(self.windowIcon())
         self.tray_icon.setToolTip('March7th Assistant')
