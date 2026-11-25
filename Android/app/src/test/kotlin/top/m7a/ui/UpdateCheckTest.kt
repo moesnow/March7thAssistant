@@ -6,8 +6,22 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import top.m7a.BuildConfig
 
 class UpdateCheckTest {
+    @Test(timeout = 5000)
+    fun packagedVersionCanInitializeTheStartupUpdater() = runBlocking {
+        val checker = UpdateCheckController(
+            scope = this,
+            initialChannel = UpdateChannel.STABLE,
+            installedVersion = BuildConfig.VERSION_NAME,
+            findRelease = { null },
+            saveChannel = {},
+        )
+        checker.check(automatic = true)
+        assertEquals(UpdateState.NoAndroidRelease, checker.snapshot.first { it.state != UpdateState.Checking }.state)
+    }
+
     @Test
     fun stableOnlyOffersPublishedAndroidStableReleases() {
         val entries = listOf(

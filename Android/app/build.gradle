@@ -48,7 +48,7 @@ android {
         minSdk = providers.gradleProperty('m7a.minApi').get().toInteger()
         targetSdk = 37
         versionCode = versionCodeValue
-        versionName = new File(repo, 'assets/config/version.txt').getText('UTF-8').trim() + (focusExperiment ? '-focus1438' : '')
+        versionName = new File(repo, 'assets/config/version.txt').getText('UTF-8').trim() + (focusExperiment ? '+focus1438' : '')
         buildConfigField 'String', 'SHIZUKU_SDK_VERSION', "\"${shizukuVersion}\""
         buildConfigField 'boolean', 'ANDROID12_FOCUS_EXPERIMENT', focusExperiment.toString()
         ndk {

@@ -145,7 +145,7 @@ jobs:
           java -jar "$ANDROID_BUILD_TOOLS/lib/apksigner.jar" verify --verbose "$apk"
           badging=$("$ANDROID_BUILD_TOOLS/aapt" dump badging "$apk")
           package=${badging%%$'\n'*}
-          [[ "$package" == "package: name='top.m7a.focus1438' "* && "$package" == *"-focus1438'"* ]]
+          [[ "$package" == "package: name='top.m7a.focus1438' "* && "$package" == *"+focus1438'"* ]]
           cp "$apk" "$RUNNER_TEMP/March7thAssistant-focus1438.apk"
           echo 'Issue #1438：API 31 真机停帧焦点实验，独立包名，debug 签名，可直接安装。' >> "$GITHUB_STEP_SUMMARY"
 
