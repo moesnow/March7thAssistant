@@ -1,6 +1,7 @@
 """总览页的卡片：四张状态卡、完整运行清单、上次运行、快捷启动、建议检查。"""
 from datetime import timedelta
 import math
+import sys
 
 from PySide6.QtCore import QElapsedTimer, QPointF, QRectF, QTimer, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter
@@ -501,6 +502,9 @@ class ShortcutsCard(OverviewCard):
         else:
             button = PushButton(icon, shortcut.name, self)
             button.clicked.connect(lambda _=False, key=shortcut.id: self.shortcutTriggered.emit(key))
+        if sys.platform == "darwin":
+            # macOS 原生按钮的布局会扣除透明边距，但 Fluent 样式绘制覆盖整个控件。
+            button.setAttribute(Qt.WidgetAttribute.WA_LayoutUsesWidgetRect)
         button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         button.setMinimumWidth(0)
         return button

@@ -111,6 +111,17 @@ def test_default_shortcuts_launch_the_selected_task(page):
     ]
 
 
+def test_shortcut_rows_keep_their_spacing_on_first_show(page, qtbot):
+    page.render(sample_snapshot("ready"))
+    card = page.shortcutsCard
+    qtbot.waitUntil(lambda: card._columns == 2 and card._buttons[0].isVisible())
+    QApplication.processEvents()
+
+    for column in range(2):
+        upper, lower = card._buttons[column], card._buttons[column + 2]
+        assert lower.y() - upper.geometry().bottom() - 1 >= card.grid.verticalSpacing()
+
+
 def test_empty_shortcuts_card_tells_why(page):
     snapshot = sample_snapshot("ready")
     card = page.shortcutsCard
