@@ -11,11 +11,12 @@ from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QWidget
 from qfluentwidgets import Theme, isDarkTheme, qconfig, setTheme, themeColor
 
 from app.common.evernight import EVEY_ANIMATION, EvernightEasterEgg
-from app.common.mascot import Mascot
+from app.common.mascot import Mascot, load_mascot
 from app.common.theme_assets import application_icon_path
 from app.common.accent import EVERNIGHT_RED, MARCH7TH_PINK
 from app.common.window_icon import set_application_icon
 from app.components.evey_animation import EveyAnimation
+from app.overview.style import animations_enabled
 from module.config import cfg
 from tests.test_app.test_language_switch import window, switch_language
 
@@ -64,8 +65,12 @@ def test_greeting_background_crossfades_at_midpoint_below_text_and_buttons(windo
     greeting = window.homeInterface.greeting
     fade = greeting.crossfade
     before = greeting.grab().toImage()
+    mascot = greeting.mascot
+    march7th = mascot._pixmap.cacheKey()
     intro.timeline.setCurrentTime(intro.DURATION_MS // 2)
     fade.animation.pause()
+    assert mascot._pixmap.cacheKey() not in (0, march7th)
+    assert (mascot.animation.state() == mascot.animation.State.Running) == animations_enabled()
     assert fade.isVisible() and fade.testAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
     assert greeting._mode() == "evernight"
     layers = greeting.children()
@@ -162,6 +167,10 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
     assert window.windowTitle() == 'Evernight Assistant'
     assert window.titleBar.titleLabel.text() == f'Evernight Assistant {cfg.version}'
     assert mascot.pose() == original_pose and mascot._evernight
+    empty_mascots = ((accounts.empty.mascot, 200), (window.logInterface.historyPage.mascot, 180))
+    for label, height in empty_mascots:
+        evernight = load_mascot(Mascot.OK, height, label.devicePixelRatioF(), evernight=True)
+        assert label.pixmap().cacheKey() == evernight.cacheKey()
     assert window.windowIcon().pixmap(32, 32).toImage() != original_icon
     assert window.windowIcon().pixmap(32, 32).toImage() == QIcon(
         application_icon_path(True)).pixmap(32, 32).toImage()
@@ -194,6 +203,8 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
     assert page.greeting._mode() == 'light'
     assert window.windowTitle() == 'March7th Assistant'
     assert mascot.pose() == original_pose and not mascot._evernight
+    for label, height in empty_mascots:
+        assert label.pixmap().cacheKey() == load_mascot(Mascot.OK, height, label.devicePixelRatioF()).cacheKey()
     assert window.windowIcon().pixmap(32, 32).toImage() == original_icon
     assert window.titleBar.iconLabel.pixmap().toImage() == QIcon(
         application_icon_path(False)).pixmap(window.titleBar.iconLabel.size()).toImage()
@@ -708,12 +719,14 @@ def test_logo_hint_rises_fades_and_restarts(qtbot):
 
 
 @pytest.mark.parametrize('active', [False, True])
-def test_application_icons_keep_white_tiles(qtbot, active):
-    image = QIcon(application_icon_path(active)).pixmap(256, 256).toImage()
+def test_application_icons_share_the_same_tile(qtbot, active):
+    icon = QIcon(application_icon_path(active))
+    assert icon.availableSizes() == QIcon(application_icon_path()).availableSizes()
+    image = icon.pixmap(256, 256).toImage()
     assert not image.isNull()
-    assert image.pixelColor(128, 16).alpha() >= 245
+    assert all(image.pixelColor(x, y).alpha() >= 245 for x, y in ((128, 8), (8, 128), (247, 128), (128, 247)))
     assert image.pixelColor(0, 0).alpha() == 0
-    assert image.pixelColor(128, 16).lightness() > 225
+    assert (image.pixelColor(128, 16).lightness() > 225) is not active
 
 
 

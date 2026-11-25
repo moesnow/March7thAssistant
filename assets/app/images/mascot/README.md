@@ -8,7 +8,7 @@
 | chibi_typing.webp | 敲电脑 | 问候区运行中 |
 | chibi_wave.webp | 挥手 | 问候区今日全部完成，关闭程序确认 |
 | chibi_lost.webp | 拿地图发懵 | 问候区运行失败，界面切换失败提示 |
-| chibi_ok.webp | 探头比OK | 问候区还没配好，首次配置向导欢迎页，运行记录为空 |
+| chibi_ok.webp | 探头比OK | 问候区还没配好，首次配置向导欢迎页，账号页和运行记录为空 |
 | chibi_camera.webp | 举相机 | 工具箱游戏截图空状态 |
 | chibi_gift.webp | 抱礼盒 | 发现新版本对话框 |
 | chibi_serious.webp | 认真 | 帮助页「没找到答案？」，免 UAC、解锁帧率、自动登录风险确认 |
@@ -23,11 +23,15 @@
 
 用 alpha > 8 的内容范围向外留 6 个原图像素，以 LANCZOS 将长边缩至 512 px，保存带透明通道的 WebP（quality 88，method 6）。建议逻辑高度为问候区 170～200 px、空状态 220～250 px、对话框 96～120 px、帮助小卡约 100 px。
 
-在仓库根目录用安装了 Pillow 的 Python 执行以下命令。原图名为表中「姿势」加 `.png`。
+在仓库根目录用安装了 Pillow 的 Python 执行以下命令。原图名为表中「姿势」加 `.png`，长夜月的原图前面再加 `长夜月_`。
 
 ```powershell
 python assets/scripts/prepare_mascot.py --source "D:\素材\Q版"
 python assets/scripts/prepare_mascot.py --source "D:\素材\长夜月" --evernight
 ```
 
-长夜月原图单独放在一个目录，可逐张提供全身站立、敲电脑、挥手、拿地图发懵、探头比OK。脚本将同名 WebP 放入 `evernight/`。这五个问候姿势缺图时自动显示三月七，补入后即可使用。其他页面照常用三月七。
+## 长夜月
+
+`evernight/` 里是长夜主题用的 Q 版长夜月，由项目作者提供，文件名和规格与三月七相同，共 5 个姿势：全身站立、敲电脑、挥手、拿地图发懵、探头比OK，用于问候区、账号页和运行记录的空页面。其他位置没有对应的图，自动显示三月七；首次配置向导只有部分姿势有图，全程用三月七。
+
+长夜月的原图单独放在一个目录，可以只放要更新的几张。

@@ -365,6 +365,7 @@ class GreetingCard(QWidget):
             previous = self._surfaceImage()
             self._evernight = active
             self.crossfade.play(previous, self._clipPath())
+            self.mascot.bounce()
         else:
             self.crossfade.finish()
             self._evernight = active

@@ -132,6 +132,7 @@ class StepRail(QWidget):
         self.textLabel.setText(text)
 
     def setPose(self, pose, *, bounce=False):
+        """长夜月缺几个姿势，向导全程用三月七。"""
         if self.mascot.pose() is not pose:
             self.mascot.setPose(pose)
             if bounce:
