@@ -1,12 +1,14 @@
 """Integration through the desktop pages, with external operations replaced at their boundaries."""
+from math import ceil
 from pathlib import Path
 import sys
 from unittest.mock import Mock
 
 import pytest
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QFontMetricsF
 from PySide6.QtWidgets import QApplication
-from qfluentwidgets import PushButton, qconfig
+from qfluentwidgets import PushButton, getFont, qconfig
 
 from app.common.design_tokens import EVERNIGHT_RED
 from module import localization
@@ -286,7 +288,11 @@ def test_sidebar_search_text_is_never_cut(window):
     assert box.text() == "搜索功能、设置、帮助"
     if sys.platform == "win32":
         assert box.shownText() == box.text()
-    box.setFixedWidth(box.width() - 40)
+    metrics = QFontMetricsF(getFont(13))
+    controls_width = box.width() - box._rects()[2].width()
+    box.setFixedWidth(ceil(controls_width + metrics.horizontalAdvance(box.text())))
+    assert box.shownText() == box.text()
+    box.setFixedWidth(ceil(controls_width + metrics.horizontalAdvance("搜索")))
     assert box.shownText() == "搜索"
 
 

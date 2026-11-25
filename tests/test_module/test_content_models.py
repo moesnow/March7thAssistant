@@ -177,11 +177,12 @@ def test_power_order_uses_the_rest_of_an_account_plan():
 
 def test_search_ranking_secrets_and_every_link():
     cfg = SampleConfig()
+    cfg.set_values({"control_backend": "local", "github_token": "SENTINEL"})
     index = SearchIndex(cfg)
-    cfg.set_value("github_token", "SENTINEL")
     assert index.query("ＳＭＴＰ")[0].link.endswith("notify_smtp_enable") or index.query("ＳＭＴＰ")[0].name.startswith("SMTP")
     assert index.query("清体力")[0].link == "task:power"
-    assert any(row.link == "setting:local_control_mode" for row in index.query("不占鼠标", limit=100))
+    local_mode_results = index.query("不占鼠标", limit=100)
+    assert any(row.link == "setting:local_control_mode" for row in local_mode_results) == (sys.platform == "win32")
     assert any(row.link == "task:power" for row in index.query("刷本"))
     assert all(row.kind == "setting" and row.location.startswith("设置") for row in index.query("后台", settings_only=True))
     assert index.query("GitHub Token")[0].value == "已设置"

@@ -42,7 +42,7 @@ class ShortcutEditDialog(MessageBoxBase):
 
         self.tree = TreeWidget(self.widget)
         self.tree.setHeaderHidden(True)
-        self.tree.setMinimumHeight(min(340, max(150, parent.height() - 300)))
+        self.tree.setMinimumHeight(min(360, max(150, parent.height() - 300)))
         self.tree.currentItemChanged.connect(self._show_selection)
         self.addButton = self._add_menu(tr("添加"), self._add_shortcut)
         self.upButton = self._tool(FIF.UP, tr("上移"), lambda: self._move(-1))

@@ -136,8 +136,13 @@ def test_history_filters_retry_account_and_caches_unchanged_records(host, monkey
     h.refresh()
     assert len(list(h.records())) == 300
     assert not h._active_timer.isActive() and "登录过期" in h.entry(root).reason
-    assert h.retry_text(h.entry(child)) == "重试这一项" and h.retry(h.entry(child))
-    host._onStartTask.assert_called_once_with({"program": "self", "args": "routine", "retry_step": "power", "account": B})
+    entry = h.entry(child)
+    if sys.platform == "win32":
+        assert h.retry_text(entry) == "重试这一项" and h.retry(entry)
+        host._onStartTask.assert_called_once_with({"program": "self", "args": "routine", "retry_step": "power", "account": B})
+    else:
+        assert not h.retry_text(entry) and not h.retry(entry)
+        host._onStartTask.assert_not_called()
     spy = Mock(wraps=runs.load_run)
     monkeypatch.setattr(runs, "load_run", spy)
     h.refresh()

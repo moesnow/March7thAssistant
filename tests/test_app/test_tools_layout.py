@@ -170,6 +170,7 @@ def test_windows_tools_stay_disabled_after_hosting_on_other_platforms(qtbot, mon
     tools.tool.start.assert_not_called()
 
 
+@pytest.mark.skipif(tools.sys.platform != "win32", reason="触屏模式工具只在 Windows 上启用")
 def test_touch_mode_confirms_all_three_steps_before_starting(toolbox, monkeypatch, tmp_path):
     from app.common.mascot import Mascot
     from tests.test_app.mascot_assertions import assert_pose
