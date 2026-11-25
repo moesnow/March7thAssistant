@@ -16,6 +16,7 @@ from app.content.account_model import AccountModel
 from .accounts.editing import EditingAccount
 from .pages.common import NoticeStrip, SectionView, is_evernight, secondary, shared
 from .pages.decorations import CardDecorations
+from .pages.power_order import PowerOrderView
 from .pages.tasks import ChecksCard, TaskHeader, TaskListPanel
 
 
@@ -46,11 +47,14 @@ class TaskPage(ScrollArea):
         self.vBoxLayout.addWidget(self.estimate)
         self.host = PageHost(window, self.view)
         self.views = {}
-        self.checks = None
+        self.checks = self.order = None
         for section in build_page(task.id, self.host):
             if section.id == "header" and not section.cards:
                 continue
-            view = SectionView(section, self.view)
+            if (task.id, section.id) == ("power", "instances"):
+                view = self.order = PowerOrderView(section, model.config, self.view)
+            else:
+                view = SectionView(section, self.view)
             if section.checks:
                 self.checks = ChecksCard(model, view)
                 view.addExtra(self.checks)
@@ -83,6 +87,8 @@ class TaskPage(ScrollArea):
                 self.estimate.setRatio(estimate.ratio)
             if self.checks is not None:
                 self.checks.refresh()
+            if self.order is not None:
+                self.order.refreshOrder()
         except Exception as exc:
             log.warning(f"刷新任务页失败：{task_id} {type(exc).__name__}: {exc}")
 

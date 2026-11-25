@@ -13,6 +13,11 @@ from tasks.power.policy import (
 from utils.pause import RunStopRequested
 
 
+@pytest.fixture(autouse=True)
+def recorded_power(monkeypatch):
+    monkeypatch.setattr(power, "save_reading", Mock())
+
+
 @pytest.mark.parametrize(
     "old_frames, target_page, missed_drags, expected_drags",
     [
@@ -639,6 +644,7 @@ def test_defeat_retries_stop_without_recording_completion(monkeypatch, instance_
     assert battle.start_instance.call_count == battle.exit_defeat.call_count == 3
     balance.assert_called_once_with(use_supplement=True)
     assert stock.call_count == (1 if instance_type == ORNAMENT else 0)
+    power.save_reading.assert_not_called()
 
 
 def test_pc_power_plan_reuses_budget_for_defeat_retry_same_batch_and_smaller_batch(monkeypatch):
@@ -672,6 +678,7 @@ def test_pc_power_plan_reuses_budget_for_defeat_retry_same_batch_and_smaller_bat
     assert instance.Instance.complete_run.call_count == 2
     balance.assert_called_once_with(use_supplement=True)
     forbidden_read.assert_not_called()
+    power.save_reading.assert_called_once_with(cfg, "overview_power", 5)
 
 
 @pytest.mark.parametrize("quota", [1, 0], ids=["rewarded-echo", "practice"])
@@ -691,6 +698,7 @@ def test_pc_echo_finishes_without_reading_the_result_meter(monkeypatch, quota):
     assert map_balance.call_count == (1 if quota else 0)
     battle.complete_run.assert_called_once_with(ECHO)
     config.save_timestamp.assert_called_once_with("echo_of_war_timestamp")
+    assert power.save_reading.call_args_list == ([call(config, "overview_power", 60)] if quota else [])
 
 
 def test_pc_immersifier_only_uses_stock_without_reading_power(monkeypatch):
@@ -713,6 +721,7 @@ def test_pc_immersifier_only_uses_stock_without_reading_power(monkeypatch):
     instance.Instance.start_instance_again.assert_not_called()
     power.Power.get.assert_not_called()
     stock.assert_called_once_with()
+    power.save_reading.assert_not_called()
 
 
 def test_pc_ornament_mixed_repeat_and_defeat_reuse_the_initial_budget(monkeypatch):
@@ -750,6 +759,7 @@ def test_pc_ornament_mixed_repeat_and_defeat_reuse_the_initial_budget(monkeypatc
     ]
     stock.assert_called_once_with()
     balance.assert_called_once_with(use_supplement=True)
+    power.save_reading.assert_called_once_with(config, "overview_power", 14)
 
 
 @pytest.mark.parametrize("entry", ["divergent", "universe"])

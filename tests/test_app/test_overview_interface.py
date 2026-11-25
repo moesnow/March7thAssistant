@@ -124,6 +124,30 @@ def test_fold_and_breakpoint(page, qtbot):
             qtbot.waitUntil(lambda: page.sideWidget.geometry().bottom() < card.geometry().top())
 
 
+def test_power_card_counts_up_between_readings(page):
+    snapshot = sample_snapshot("ready")  # 17 分钟前为 186
+    card = page.powerCard
+    card._elapsed = Mock(elapsed=Mock(return_value=0))
+    page.render(snapshot)
+    assert (card.valueLabel.text(), card.unitLabel.text(), card.badge.text()) == ("188", "/ 300", "+1 · 1:00")
+    assert card.meter._fraction == 188 / 300 and "186" in card.noteLabel.fullText()
+    for elapsed, value, countdown in ((59_000, "188", "0:01"), (60_000, "189", "6:00"), (421_000, "190", "5:59")):
+        card._elapsed.elapsed.return_value = elapsed
+        card._refresh()
+        assert (card.valueLabel.text(), card.badge.text()) == (value, f"+1 · {countdown}")
+        assert card._timer.isActive()
+    card.hide()
+    assert not card._timer.isActive()
+    card.show()
+    assert card._timer.isActive()
+    page.render(replace(snapshot, power=replace(snapshot.power, value=300)))
+    assert (card.valueLabel.text(), card.badge.text()) == ("300", tr("已回满")) and not card._timer.isActive()
+    page.render(replace(snapshot, power=replace(snapshot.power, value=None)))
+    assert card.valueLabel.text() == "—" and card.badge.isHidden() and not card._timer.isActive()
+    page.render(replace(snapshot, power=None, unavailable=("power",)))
+    assert card.valueLabel.text() == "—" and card.noteLabel.fullText() == tr("暂时读不到开拓力")
+
+
 def test_context_menu_changes_background_and_mascot(page, monkeypatch, tmp_path):
     chosen = str(tmp_path / "custom.webp")
     write = Mock()

@@ -60,7 +60,8 @@ def test_every_registered_widget_and_every_built_card(pages):
     assert len(hosts["reward"].sections[1].checks) == 8
     assert not hosts["reward"].sections[1].cards
     assert not card_for("power_enable", hosts["power"])
-    assert hosts["power"].powerPlanCard in hosts["power"].sections[-1].cards
+    instances = next(s for s in hosts["power"].sections if s.id == "instances")
+    assert hosts["power"].powerPlanCard in instances.cards
     host = hosts["universe"]
     host.universeEnableCard.setExpand(True)
     state = host.capture_card_state()

@@ -8757,14 +8757,6 @@ msgstr "暂时读不到开拓力"
 msgid "运行一次清体力后显示"
 msgstr "运行一次清体力后显示"
 
-#: app/overview_interface.py:157
-msgid "{time} 读取"
-msgstr "{time} 读取"
-
-#: app/overview_interface.py:160
-msgid "现在应该已经回满"
-msgstr "现在应该已经回满"
-
 #: app/overview_interface.py:182
 msgid "今天还没有完成"
 msgstr "今天还没有完成"
@@ -9096,14 +9088,6 @@ msgstr "执行时间"
 #: module/search/setting_text.py:3
 msgid "投资环境和投资策略的选择优先级"
 msgstr "投资环境和投资策略的选择优先级"
-
-#: module/task_catalog.py
-msgid "按上次读取的 {power} 开拓力，{name}可挑战 {count} 次（每次 {waves} 轮）"
-msgstr "按上次读取的 {power} 开拓力，{name}可挑战 {count} 次（每次 {waves} 轮）"
-
-#: module/task_catalog.py:46
-msgid "按体力计划或所选副本消耗开拓力。"
-msgstr "按体力计划或所选副本消耗开拓力。"
 
 #: module/task_catalog.py:50
 msgid "按地图路线清理大世界敌人。"
@@ -10233,10 +10217,6 @@ msgstr "类型"
 #: app/content/gacha_model.py
 msgid "第几抽（保底内）"
 msgstr "第几抽（保底内）"
-
-#: app/content/gacha_dialogs.py:90
-msgid "SRGF 格式 (*.srgf.json)"
-msgstr "SRGF 格式 (*.srgf.json)"
 
 #: module/gacha/store.py:44
 msgid "{date} 更新"
@@ -12485,3 +12465,131 @@ msgstr "发现新版本"
 #: app/card/messagebox_custom.py:274
 msgid "更新日志 |･ω･)"
 msgstr "更新日志 |･ω･)"
+
+#: app/content/gacha_dialogs.py:94
+msgid "SRGF 格式 (*.json)"
+msgstr "SRGF 格式 (*.json)"
+
+#: app/overview/cards.py:141
+msgid "按上次记录的数值和每 6 分钟恢复 1 点估算，可能和游戏里差几点"
+msgstr "按上次记录的数值和每 6 分钟恢复 1 点估算，可能和游戏里差几点"
+
+#: app/overview/cards.py:149
+msgid "{time} 时为 {value}"
+msgstr "{time} 时为 {value}"
+
+#: app/overview/cards.py:154
+msgid "已回满"
+msgstr "已回满"
+
+#: app/pages/nav_search.py:15
+msgid "搜索"
+msgstr "搜索"
+
+#: app/pages/notify.py:50
+msgid "删除渠道"
+msgstr "删除渠道"
+
+#: app/pages/notify.py:293
+msgid "删除渠道「{name}」？"
+msgstr "删除渠道「{name}」？"
+
+#: app/pages/notify.py:291
+msgid "填写的内容会一起清除，以后要用得重新填写。"
+msgstr "填写的内容会一起清除，以后要用得重新填写。"
+
+#: app/pages/notify.py:291
+msgid "以后要用可以重新添加。"
+msgstr "以后要用可以重新添加。"
+
+#: app/pages/notify.py:292
+msgid "只是暂时不用的话，关掉开关就行。"
+msgstr "只是暂时不用的话，关掉开关就行。"
+
+#: app/pages/notify.py:304
+msgid "无法删除这个渠道"
+msgstr "无法删除这个渠道"
+
+#: app/pages/notify.py:306
+msgid "已删除"
+msgstr "已删除"
+
+#: app/pages/power_order.py:87
+msgid "按从上到下的顺序用开拓力：前一步用不上或刷完了，才轮到下一步"
+msgstr "按从上到下的顺序用开拓力：前一步用不上或刷完了，才轮到下一步"
+
+#: module/task_catalog.py:114
+msgid "计划刷完就停，不会刷"
+msgstr "计划刷完就停，不会刷"
+
+#: module/task_catalog.py:114
+msgid "计划刷完再刷"
+msgstr "计划刷完再刷"
+
+#: module/task_catalog.py:116
+msgid "先刷 {count} 项"
+msgstr "先刷 {count} 项"
+
+#: module/task_catalog.py:118
+msgid "计划已刷完，跳过"
+msgstr "计划已刷完，跳过"
+
+#: module/task_catalog.py:118
+msgid "暂无计划，跳过"
+msgstr "暂无计划，跳过"
+
+#: module/task_catalog.py:120
+msgid "未启用，跳过"
+msgstr "未启用，跳过"
+
+#: module/task_catalog.py:122
+msgid "先刷这里"
+msgstr "先刷这里"
+
+#: module/task_catalog.py:126
+msgid "没选副本，不会刷"
+msgstr "没选副本，不会刷"
+
+#: module/task_catalog.py:128
+msgid "培养目标用不上时才刷"
+msgstr "培养目标用不上时才刷"
+
+#: module/task_catalog.py:130
+msgid "直接刷这里"
+msgstr "直接刷这里"
+
+#: module/task_catalog.py:132
+msgid "先刷体力计划"
+msgstr "先刷体力计划"
+
+#: module/task_catalog.py:132
+msgid "按列表里的副本和次数"
+msgstr "按列表里的副本和次数"
+
+#: module/task_catalog.py:133
+msgid "再刷培养目标"
+msgstr "再刷培养目标"
+
+#: module/task_catalog.py:133
+msgid "按游戏里的培养目标自动选副本"
+msgstr "按游戏里的培养目标自动选副本"
+
+#: module/task_catalog.py:134
+msgid "最后刷默认副本"
+msgstr "最后刷默认副本"
+
+#: module/task_catalog.py:159
+msgid "现在约有 {power} 开拓力，{name}可挑战 {count} 轮"
+msgstr "现在约有 {power} 开拓力，{name}可挑战 {count} 轮"
+
+#: module/task_catalog.py:161
+msgid "现在约有 {power} 开拓力，{name}可挑战 {count} 次（每次 {waves} 轮）"
+msgstr "现在约有 {power} 开拓力，{name}可挑战 {count} 次（每次 {waves} 轮）"
+
+#: module/task_catalog.py:47
+msgid "按体力计划、培养目标、默认副本的顺序消耗开拓力。"
+msgstr "按体力计划、培养目标、默认副本的顺序消耗开拓力。"
+
+#: module/search/setting_text.py:3
+msgid "按列表里的副本和次数刷，排在培养目标和默认副本前面"
+msgstr "按列表里的副本和次数刷，排在培养目标和默认副本前面"

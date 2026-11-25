@@ -12,7 +12,7 @@ from module.task_catalog import step_page
 from module.overview import cards, history, readings
 from module.overview.samples import sample_snapshot, _Config
 from module.overview.snapshot import build_snapshot, make_greeting, time_greeting
-from module.overview.types import LiveRun
+from module.overview.types import LiveRun, PowerReading
 from module.settings_registry import Scope, find_setting
 from utils import runs
 
@@ -77,6 +77,27 @@ def test_readings_are_observed_values_and_survive_save_failure(monkeypatch):
     monkeypatch.setattr(power, "screen", Mock())
     monkeypatch.setattr(power, "read_number", Mock(return_value=92))
     assert power.Power.get() == 92
+
+
+@pytest.mark.parametrize("value,minutes,expected,left", [
+    (186, 0, 186, 360), (186, 5.5, 186, 30), (186, 6, 187, 360), (186, 17, 188, 60), (186, -10, 186, 360),
+    (299, 5, 299, 60), (299, 6, 300, None), (0, 3 * 24 * 60, 300, None), (300, 1, 300, None), (302, 60, 302, None),
+])
+def test_power_recovers_every_six_minutes_up_to_the_cap(value, minutes, expected, left):
+    read_at = datetime(2026, 11, 23, 8)
+    reading = PowerReading(value, read_at, read_at + timedelta(seconds=readings.seconds_until_full(value)))
+    now = read_at + timedelta(minutes=minutes)
+    assert (readings.power_now(reading, now), readings.next_power_in(reading, now)) == (expected, left)
+
+
+def test_power_summary_follows_the_order_of_use():
+    cfg = _Config(**YAML(typ="safe").load(Path("assets/config/config.example.yaml")))
+    cfg.instance_type, cfg.instance_names = "侵蚀隧洞", {"侵蚀隧洞": "睿治之径"}
+    assert cards.summary("power", cfg) == "睿治之径"
+    cfg.build_target_enable = True
+    assert (cards.summary("power", cfg), cards.summary("power", cfg, touch=True)) == ("培养目标", "睿治之径")
+    cfg.power_plan = [["侵蚀隧洞", "睿治之径", 1]]
+    assert cards.summary("power", cfg) == "体力计划 · 1 项"
 
 
 def test_corrupt_missing_and_old_history(tmp_path, monkeypatch):

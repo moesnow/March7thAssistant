@@ -2,7 +2,7 @@
 
 DESCRIPTIONS = {
     'setup_wizard': '重新设置游戏位置、每天要做的任务、运行时间和通知',
-    'power_plan': '按体力计划或所选副本消耗开拓力。',
+    'power_plan': '按列表里的副本和次数刷，排在培养目标和默认副本前面',
     'instance_names': '说明：清体力是根据选择的副本类型来判断，副本名称也会用于双倍活动',
     'instance_names_challenge_count': '副本最大连续挑战次数（通常不建议修改保持默认即可）',
     'borrow_friends': '检查支援角色需求',

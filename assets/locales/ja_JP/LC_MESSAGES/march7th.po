@@ -8839,14 +8839,6 @@ msgstr "現在、開拓力を読み込めません"
 msgid "运行一次清体力后显示"
 msgstr "開拓力消化を一度実行すると表示されます"
 
-#: app/overview_interface.py:157
-msgid "{time} 读取"
-msgstr "{time} に取得"
-
-#: app/overview_interface.py:160
-msgid "现在应该已经回满"
-msgstr "現在は全回復している見込みです"
-
 #: app/overview_interface.py:182
 msgid "今天还没有完成"
 msgstr "今日はまだ未完了です"
@@ -9178,14 +9170,6 @@ msgstr "実行時期"
 #: module/search/setting_text.py:3
 msgid "投资环境和投资策略的选择优先级"
 msgstr "投資環境と投資戦略の選択優先度"
-
-#: module/task_catalog.py
-msgid "按上次读取的 {power} 开拓力，{name}可挑战 {count} 次（每次 {waves} 轮）"
-msgstr "前回の開拓力 {power} なら、{name} に {count} 回挑戦できます（1回 {waves} ウェーブ）"
-
-#: module/task_catalog.py:46
-msgid "按体力计划或所选副本消耗开拓力。"
-msgstr "プランまたは選択したステージに従って開拓力を消費します。"
 
 #: module/task_catalog.py:50
 msgid "按地图路线清理大世界敌人。"
@@ -10317,10 +10301,6 @@ msgstr "種類"
 #: app/content/gacha_model.py
 msgid "第几抽（保底内）"
 msgstr "天井内の連数"
-
-#: app/content/gacha_dialogs.py:90
-msgid "SRGF 格式 (*.srgf.json)"
-msgstr "SRGF 形式 (*.srgf.json)"
 
 #: module/gacha/store.py:44
 msgid "{date} 更新"
@@ -12572,3 +12552,131 @@ msgstr "新しいバージョンがあります"
 #: app/card/messagebox_custom.py:274
 msgid "更新日志 |･ω･)"
 msgstr "更新履歴 |･ω･)"
+
+#: app/content/gacha_dialogs.py:94
+msgid "SRGF 格式 (*.json)"
+msgstr "SRGF 形式 (*.json)"
+
+#: app/overview/cards.py:141
+msgid "按上次记录的数值和每 6 分钟恢复 1 点估算，可能和游戏里差几点"
+msgstr "前回記録した値から 6 分ごとに 1 回復するものとして計算した目安です。ゲーム内と数ポイント異なる場合があります"
+
+#: app/overview/cards.py:149
+msgid "{time} 时为 {value}"
+msgstr "{time} 時点で {value}"
+
+#: app/overview/cards.py:154
+msgid "已回满"
+msgstr "全回復"
+
+#: app/pages/nav_search.py:15
+msgid "搜索"
+msgstr "検索"
+
+#: app/pages/notify.py:50
+msgid "删除渠道"
+msgstr "チャンネルを削除"
+
+#: app/pages/notify.py:293
+msgid "删除渠道「{name}」？"
+msgstr "「{name}」を削除しますか？"
+
+#: app/pages/notify.py:291
+msgid "填写的内容会一起清除，以后要用得重新填写。"
+msgstr "入力した内容も消去されます。再び使うときは入力し直してください。"
+
+#: app/pages/notify.py:291
+msgid "以后要用可以重新添加。"
+msgstr "必要になったら再び追加できます。"
+
+#: app/pages/notify.py:292
+msgid "只是暂时不用的话，关掉开关就行。"
+msgstr "一時的に使わないだけなら、スイッチをオフにしてください。"
+
+#: app/pages/notify.py:304
+msgid "无法删除这个渠道"
+msgstr "このチャンネルを削除できません"
+
+#: app/pages/notify.py:306
+msgid "已删除"
+msgstr "削除しました"
+
+#: app/pages/power_order.py:87
+msgid "按从上到下的顺序用开拓力：前一步用不上或刷完了，才轮到下一步"
+msgstr "開拓力は上から順に使います。前の手順が終わるか使われないときに、次へ進みます"
+
+#: module/task_catalog.py:114
+msgid "计划刷完就停，不会刷"
+msgstr "プラン完了で終了"
+
+#: module/task_catalog.py:114
+msgid "计划刷完再刷"
+msgstr "プラン完了後"
+
+#: module/task_catalog.py:116
+msgid "先刷 {count} 项"
+msgstr "先に {count} 件"
+
+#: module/task_catalog.py:118
+msgid "计划已刷完，跳过"
+msgstr "プラン完了、スキップ"
+
+#: module/task_catalog.py:118
+msgid "暂无计划，跳过"
+msgstr "プランなし、スキップ"
+
+#: module/task_catalog.py:120
+msgid "未启用，跳过"
+msgstr "無効、スキップ"
+
+#: module/task_catalog.py:122
+msgid "先刷这里"
+msgstr "ここから開始"
+
+#: module/task_catalog.py:126
+msgid "没选副本，不会刷"
+msgstr "ダンジョン未選択"
+
+#: module/task_catalog.py:128
+msgid "培养目标用不上时才刷"
+msgstr "育成目標が使えないときのみ"
+
+#: module/task_catalog.py:130
+msgid "直接刷这里"
+msgstr "すぐにここを周回"
+
+#: module/task_catalog.py:132
+msgid "先刷体力计划"
+msgstr "まず開拓力プラン"
+
+#: module/task_catalog.py:132
+msgid "按列表里的副本和次数"
+msgstr "リストのダンジョンと回数"
+
+#: module/task_catalog.py:133
+msgid "再刷培养目标"
+msgstr "次に育成目標"
+
+#: module/task_catalog.py:133
+msgid "按游戏里的培养目标自动选副本"
+msgstr "ゲーム内の育成目標から自動選択"
+
+#: module/task_catalog.py:134
+msgid "最后刷默认副本"
+msgstr "最後に既定のダンジョン"
+
+#: module/task_catalog.py:159
+msgid "现在约有 {power} 开拓力，{name}可挑战 {count} 轮"
+msgstr "現在の開拓力は約 {power}。{name} に {count} ウェーブ挑戦できます"
+
+#: module/task_catalog.py:161
+msgid "现在约有 {power} 开拓力，{name}可挑战 {count} 次（每次 {waves} 轮）"
+msgstr "現在の開拓力は約 {power}。{name} に {count} 回挑戦できます（1回 {waves} ウェーブ）"
+
+#: module/task_catalog.py:47
+msgid "按体力计划、培养目标、默认副本的顺序消耗开拓力。"
+msgstr "開拓力プラン、育成目標、既定のダンジョンの順に開拓力を消費します。"
+
+#: module/search/setting_text.py:3
+msgid "按列表里的副本和次数刷，排在培养目标和默认副本前面"
+msgstr "リストのダンジョンと回数で周回します。育成目標と既定のダンジョンより優先されます"

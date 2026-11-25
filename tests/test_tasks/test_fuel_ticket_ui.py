@@ -18,6 +18,11 @@ DISPLAY = "欢愉之蕾"
 BATCH = FuelTicketBatch(CRIMSON_CALYX, RED_NAME, 1, 10, 1)
 
 
+@pytest.fixture(autouse=True)
+def recorded_power(monkeypatch):
+    monkeypatch.setattr(power, "save_reading", Mock())
+
+
 def words(*rows):
     return [Word(*row) for row in rows]
 
@@ -116,6 +121,7 @@ def test_quick_result_commits_before_closing_and_leftover_falls_back(monkeypatch
     battle.select_waves.assert_called_once_with(GOLDEN_CALYX,2)
     battle.start_instance.assert_called_once()
     quick.close_receipt.assert_called_once()
+    power.save_reading.assert_called_once_with(config,"overview_power",0)
 
 
 def test_unknown_commit_aborts_without_repeating_or_entering_normal_battle(monkeypatch):
@@ -138,6 +144,7 @@ def test_verified_commit_is_preserved_when_receipt_close_fails(monkeypatch):
         power.Power.execute_power_plan()
     config.set_value.assert_called_once_with("power_plan",[[GOLDEN_CALYX,"回忆之蕾",2]])
     battle.prepare_instance.assert_not_called()
+    power.save_reading.assert_called_once_with(config,"overview_power",20)
 
 
 def test_disabled_option_uses_native_power_flow(monkeypatch):

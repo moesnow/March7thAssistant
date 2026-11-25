@@ -138,7 +138,7 @@ def test_export_then_clear_through_page(page, tmp_path, monkeypatch):
     page.store.write(uid, data())
     page.reload()
     original = page.store.path(uid).read_bytes()
-    destination = tmp_path / "records.srgf.json"
+    destination = tmp_path / "records.json"
     monkeypatch.setattr(dialogs.QFileDialog, "getSaveFileName", lambda *args: (str(destination), ""))
     opened = Mock(return_value=True)
     monkeypatch.setattr(dialogs.QDesktopServices, "openUrl", opened)

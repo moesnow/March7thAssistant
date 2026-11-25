@@ -1,11 +1,12 @@
 """Task-page metadata and calculations. All labels stored here are source msgids."""
 from dataclasses import dataclass
+from datetime import datetime
 
 from module.content_pages import PAGE_BY_ID
 from module.localization import get_raw_instance_names, tr
 from module.overview import plan
 from module.overview.legacy_cards import DEFAULT_CARDS
-from module.overview.readings import POWER_CAP, power_reading
+from module.overview.readings import POWER_CAP, power_now, power_reading
 from module.settings_registry import SETTINGS, Scope, find_setting
 
 
@@ -43,7 +44,7 @@ def _menu(name):
 
 
 TASKS = (
-    Task("power", "按体力计划或所选副本消耗开拓力。", ("power_enable",), "power", ("power",), touch=True),
+    Task("power", "按体力计划、培养目标、默认副本的顺序消耗开拓力。", ("power_enable",), "power", ("power",), touch=True),
     Task("daily", "完成当天的每日实训。", ("daily_enable",), "daily", ("daily",), touch=True),
     Task("activity", "检查签到、双倍掉落和活动热点。", ("activity_enable",), "activity", ("activity",)),
     Task("reward", "检查并领取已选的日常奖励。", ("reward_enable",), "reward", ("reward", "redemption"), touch=True),
@@ -93,29 +94,74 @@ def status(task, rows, config, *, supported=True):
 
 
 @dataclass(frozen=True)
+class OrderState:
+    id: str
+    title: str
+    kind: str  # first：先刷；then：前面刷完或用不上时；skip：不会用到；warning：没有可刷的副本
+    text: str
+    detail: str
+
+
+def power_order(config):
+    """清体力依次考虑的三个来源，以及按现在的设置会不会用到。顺序和 Power.run 一致。"""
+    from module.content_visibility import Visibility
+    from tasks.power.policy import remaining_plan
+    plan, remaining = config.power_plan, remaining_plan(config)
+    stop = bool(remaining) and not config.power_plan_continue
+    target = bool(config.build_target_enable) and not Visibility.read(config).touch
+    name = (config.instance_names or {}).get(config.instance_type)
+    chosen = bool(name) and name != "无"
+    after = ("skip", tr("计划刷完就停，不会刷")) if stop else ("then", tr("计划刷完再刷"))
+    if remaining:
+        first = ("first", tr("先刷 {count} 项").format(count=len(remaining)))
+    else:
+        first = ("skip", tr("计划已刷完，跳过") if plan else tr("暂无计划，跳过"))
+    if not target:
+        second = ("skip", tr("未启用，跳过"))
+    else:
+        second = after if remaining else ("first", tr("先刷这里"))
+    if stop:
+        third = after
+    elif not chosen:
+        third = ("skip" if remaining or target else "warning", tr("没选副本，不会刷"))
+    elif target:
+        third = ("then", tr("培养目标用不上时才刷"))
+    else:
+        third = after if remaining else ("first", tr("直接刷这里"))
+    place = f"{tr(config.instance_type)} · {tr(name)}" if chosen else tr(config.instance_type)
+    return (OrderState("plan", tr("先刷体力计划"), *first, tr("按列表里的副本和次数")),
+            OrderState("target", tr("再刷培养目标"), *second, tr("按游戏里的培养目标自动选副本")),
+            OrderState("default", tr("最后刷默认副本"), *third, place))
+
+
+@dataclass(frozen=True)
 class Estimate:
     text: str
     ratio: float
 
 
-def estimate(task_id, config):
+def estimate(task_id, config, now=None):
     if task_id != "power" or config.power_plan or config.build_target_enable:
         return None
     from module.instance_limits import INSTANCE_LIMITS
     try:
-        reading = power_reading(config).value
+        reading = power_reading(config)
         category = config.instance_type
         name = config.instance_names.get(category)
         cost, maximum = INSTANCE_LIMITS[category]
         waves = config.instance_names_challenge_count.get(category, maximum)
-        if (reading is None or not name or name == "无" or name not in get_raw_instance_names().get(category, {})
+        if (reading.value is None or not name or name == "无" or name not in get_raw_instance_names().get(category, {})
                 or type(waves) is not int or not 1 <= waves <= maximum):
             return None
-        count, remainder = divmod(reading // cost, waves)
-        text = tr("按上次读取的 {power} 开拓力，{name}可挑战 {count} 次（每次 {waves} 轮）").format(
-            power=reading, name=tr(name), count=count, waves=waves)
-        if remainder:
-            text += tr("，另可挑战 {count} 轮").format(count=remainder)
-        return Estimate(text, min(reading / POWER_CAP, 1.0))
+        power = power_now(reading, now or datetime.now())
+        count, remainder = divmod(power // cost, waves)
+        if not count:
+            text = tr("现在约有 {power} 开拓力，{name}可挑战 {count} 轮").format(power=power, name=tr(name), count=remainder)
+        else:
+            text = tr("现在约有 {power} 开拓力，{name}可挑战 {count} 次（每次 {waves} 轮）").format(
+                power=power, name=tr(name), count=count, waves=waves)
+            if remainder:
+                text += tr("，另可挑战 {count} 轮").format(count=remainder)
+        return Estimate(text, min(power / POWER_CAP, 1.0))
     except (AttributeError, KeyError, TypeError, ValueError, OverflowError, OSError):
         return None

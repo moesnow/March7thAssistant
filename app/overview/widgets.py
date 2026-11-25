@@ -1,6 +1,6 @@
 """总览页的小控件：胶囊、文字链接、进度条、图标底块、可省略的文字和运行阶段条。"""
 from PySide6.QtCore import QPointF, QRect, QRectF, QSize, Qt
-from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter
+from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter, QPen
 from PySide6.QtWidgets import QLabel, QPushButton, QSizePolicy, QWidget
 from qfluentwidgets import BodyLabel, TitleLabel, getFont, isDarkTheme, setFont
 
@@ -53,6 +53,61 @@ class Pill(QWidget):
             painter.setBrush(foreground)
             painter.drawEllipse(QPointF(x + 3, rect.center().y()), 3.2, 3.2)
             x += 12
+        painter.setPen(foreground)
+        painter.setFont(self._font)
+        painter.drawText(QRectF(x, 0, rect.width() - x, rect.height()),
+                         Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft, self._text)
+
+
+class RecoveryBadge(QWidget):
+    """开拓力恢复：圆环随时间填满，旁边是下一点的倒计时；回满后换成状态文字。"""
+
+    RING = 12
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._text = ""
+        self._fraction = None
+        self._evernight = False
+        self._font = getFont(12)
+        self.setFixedHeight(22)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+
+    def setCountdown(self, seconds, fraction, *, evernight=False):
+        self._show(f"+1 · {seconds // 60}:{seconds % 60:02d}", max(0.0, min(1.0, fraction)), evernight)
+
+    def setFull(self, text, *, evernight=False):
+        self._show(text, None, evernight)
+
+    def _show(self, text, fraction, evernight):
+        self._text, self._fraction, self._evernight = text, fraction, evernight
+        self.setFixedWidth(self.sizeHint().width())
+        self.update()
+
+    def text(self):
+        return self._text
+
+    def sizeHint(self):
+        width = QFontMetrics(self._font).horizontalAdvance(self._text) + 20
+        return QSize(width if self._fraction is None else width + self.RING + 4, self.height())
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        background, foreground = tone("success" if self._fraction is None else "accent", self._evernight)
+        rect = QRectF(self.rect())
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(background)
+        painter.drawRoundedRect(rect, rect.height() / 2, rect.height() / 2)
+        x = 10.0
+        if self._fraction is not None:
+            ring = QRectF(9, rect.center().y() - self.RING / 2, self.RING, self.RING).adjusted(1, 1, -1, -1)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.setPen(QPen(with_alpha(foreground, 0.28), 2))
+            painter.drawEllipse(ring)
+            painter.setPen(QPen(foreground, 2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
+            painter.drawArc(ring, 90 * 16, -round(self._fraction * 360 * 16))
+            x += self.RING + 4
         painter.setPen(foreground)
         painter.setFont(self._font)
         painter.drawText(QRectF(x, 0, rect.width() - x, rect.height()),

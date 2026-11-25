@@ -112,6 +112,23 @@ def test_figures_pity_distribution_and_recent_rows(make_page, qtbot):
     assert five.list.shown() == 1 and five.footLabel.fullText() == "共 1 个五星 · 表格中可按星级、名称筛选"
 
 
+def test_pool_chips_shrink_to_stay_on_one_line(make_page, qapp):
+    bar = make_page().poolBar
+    chips = list(bar.chips.values())
+    gaps = bar.flow.horizontalSpacing() * (len(chips) - 1)
+    normal, narrow = (sum(chip.widthFor(compact) for chip in chips) + gaps for compact in (False, True))
+    assert narrow < normal and bar.chips["2"].accessibleName() == "新手跃迁 50 · 已结束"
+    bar.setParent(None)
+    bar.show()
+    for width, compact, rows in ((normal + 1, False, 1), (normal, True, 1), (narrow + 1, True, 1), (narrow, False, 2)):
+        bar.resize(width, 80)
+        for _ in range(3):
+            qapp.processEvents()
+        assert {chip._compact for chip in chips} == {compact} and len({chip.y() for chip in chips}) == rows, width
+        assert bar.heightForWidth(width) == rows * 32 + (rows - 1) * 8
+    bar.deleteLater()
+
+
 def test_departure_warp_finished_and_early_five(make_page):
     page = make_page()
     page.poolBar.chips["2"].click()

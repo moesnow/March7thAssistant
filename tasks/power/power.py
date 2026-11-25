@@ -101,6 +101,17 @@ class Power:
 
     @staticmethod
     def _run_instance(instance_type, name, planned, *, support=None, immersifier_only=False):
+        """逐批挑战。结束时记下剩余的开拓力，总览从这个数估算恢复。"""
+        balance = []
+        try:
+            yield from Power._run_batches(instance_type, name, planned, balance, support=support,
+                                          immersifier_only=immersifier_only)
+        finally:
+            if balance:
+                save_reading(cfg, "overview_power", balance[-1])
+
+    @staticmethod
+    def _run_batches(instance_type, name, planned, balance, *, support=None, immersifier_only=False):
         if (instance_type not in INSTANCE_LIMITS
                 or not name or name not in get_raw_instance_names().get(instance_type, {}) or name == "无"):
             raise PowerError(f"未配置有效的副本：{instance_type} · {name}")
@@ -154,6 +165,7 @@ class Power:
                     break
                 completed += done
                 available -= done * cost_per_wave
+                balance.append(available)
                 if remaining is not None:
                     remaining -= done
                 log.info(f"助燃券已确认结算 {done} 次")
@@ -283,6 +295,8 @@ class Power:
             was_support_pending = support.pending
             support.won(borrowed)
             available -= cost
+            if cost:
+                balance.append(available)
             immersifiers -= used_immersifiers
             completed += waves
             yield waves

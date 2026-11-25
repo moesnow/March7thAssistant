@@ -1,7 +1,9 @@
 """总览页的卡片：四张状态卡、完整运行清单、上次运行、快捷启动、建议检查。"""
+from datetime import timedelta
+import math
 import os
 
-from PySide6.QtCore import QPointF, QRectF, Qt, Signal
+from PySide6.QtCore import QElapsedTimer, QPointF, QRectF, QTimer, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QIcon, QPainter
 from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QSizePolicy, QVBoxLayout, QWidget
 from qfluentwidgets import Action, CaptionLabel, DropDownPushButton, FluentIcon as FIF, IconWidget, InfoBarIcon, \
@@ -9,10 +11,11 @@ from qfluentwidgets import Action, CaptionLabel, DropDownPushButton, FluentIcon 
 
 from module.localization import tr
 from module.overview.labels import result_label, trigger_label
+from module.overview.readings import POWER_CAP, SECONDS_PER_POWER, next_power_in, power_now
 
-from .style import CHECK_TONES, PLAN_TONES, RESULT_TONES, accent, format_duration, format_when, resolve_icon, tone, \
-    with_alpha
-from .widgets import ElidedLabel, IconTile, LinkButton, MeterBar, Pill
+from .style import CHECK_TONES, PLAN_TONES, RESULT_TONES, accent, brand, format_duration, format_when, resolve_icon, \
+    tone, with_alpha
+from .widgets import ElidedLabel, IconTile, LinkButton, MeterBar, Pill, RecoveryBadge
 
 SECONDARY = (QColor(96, 96, 96), QColor(206, 206, 206))
 CHEVRON = FIF.CHEVRON_RIGHT_MED.colored(QColor(138, 138, 138), QColor(160, 160, 160))
@@ -60,16 +63,16 @@ class StatCard(OverviewCard):
         header.addWidget(self.iconWidget)
         header.addWidget(self.titleLabel)
         header.addStretch(1)
-        value = QHBoxLayout()
-        value.setSpacing(6)
+        self.valueRow = QHBoxLayout()
+        self.valueRow.setSpacing(6)
         self.valueLabel = StrongBodyLabel(self)
         setFont(self.valueLabel, 26, QFont.Weight.DemiBold)
         self.unitLabel = secondary(CaptionLabel(self))
         setFont(self.unitLabel, 13)
         self.unitLabel.setContentsMargins(0, 0, 0, 5)
-        value.addWidget(self.valueLabel, 0, Qt.AlignmentFlag.AlignBottom)
-        value.addWidget(self.unitLabel, 0, Qt.AlignmentFlag.AlignBottom)
-        value.addStretch(1)
+        self.valueRow.addWidget(self.valueLabel, 0, Qt.AlignmentFlag.AlignBottom)
+        self.valueRow.addWidget(self.unitLabel, 0, Qt.AlignmentFlag.AlignBottom)
+        self.valueRow.addStretch(1)
         self.meter = MeterBar(self)
         note = QHBoxLayout()
         note.setSpacing(4)
@@ -82,7 +85,7 @@ class StatCard(OverviewCard):
         note.addStretch(1)
         self.vBox.addLayout(header)
         self.vBox.addSpacing(4)
-        self.vBox.addLayout(value)
+        self.vBox.addLayout(self.valueRow)
         self.vBox.addSpacing(8)
         self.vBox.addWidget(self.meter)
         self.vBox.addSpacing(10)
@@ -102,6 +105,65 @@ class StatCard(OverviewCard):
         self.noteLink.setText(link_text)
         self.noteLink.setEvernight(evernight)
         self.noteLink.setVisible(bool(link_text and target))
+
+
+class PowerCard(StatCard):
+    """开拓力：从上次读数起按时间估算，右边是恢复下一点的倒计时。"""
+
+    def __init__(self, icon, parent=None):
+        super().__init__(icon, parent)
+        self._reading = None
+        self._now = None
+        self._evernight = False
+        self._elapsed = QElapsedTimer()
+        self._timer = QTimer(self, singleShot=True)
+        self._timer.setTimerType(Qt.TimerType.PreciseTimer)
+        self._timer.timeout.connect(self._refresh)
+        self.badge = RecoveryBadge(self)
+        self.badge.hide()
+        self.valueRow.addWidget(self.badge, 0, Qt.AlignmentFlag.AlignVCenter)
+
+    def setReading(self, reading, now, *, unavailable=False, evernight=False):
+        known = not unavailable and reading is not None and reading.value is not None
+        self._reading = reading if known else None
+        self._now, self._evernight = now, evernight
+        self._elapsed.start()
+        self.setToolTip(tr("按上次记录的数值和每 6 分钟恢复 1 点估算，可能和游戏里差几点") if known else "")
+        self._refresh()
+        if not known:
+            self.setValue("—", f"/ {getattr(reading, 'maximum', POWER_CAP)}")
+            self.meter.setFraction(0, brand(evernight))
+            self.setNote(tr("暂时读不到开拓力") if unavailable else tr("运行一次清体力后显示"))
+
+    def _refresh(self):
+        reading = self._reading
+        self._timer.stop()
+        self.badge.setVisible(reading is not None)
+        if reading is None:
+            return
+        now = self._now + timedelta(milliseconds=self._elapsed.elapsed())
+        value = power_now(reading, now)
+        left = next_power_in(reading, now)
+        self.setValue(str(value), f"/ {reading.maximum}")
+        self.meter.setFraction(value / max(1, reading.maximum), brand(self._evernight))
+        note = tr("{time} 时为 {value}").format(time=format_when(reading.read_at, now), value=reading.value)
+        if reading.value < reading.maximum:
+            note = tr("约{time} 回满").format(time=format_when(reading.full_at, now)) + " · " + note
+        self.setNote(note)
+        if left is None:
+            self.badge.setFull(tr("已回满"), evernight=self._evernight)
+            return
+        self.badge.setCountdown(math.ceil(left), 1 - left / SECONDS_PER_POWER, evernight=self._evernight)
+        if self.isVisible():
+            self._timer.start(int(left * 1000) % 1000 + 10)  # 正好在跳秒之后
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._refresh()
+
+    def hideEvent(self, event):
+        super().hideEvent(event)
+        self._timer.stop()
 
 
 class PlanRow(QWidget):

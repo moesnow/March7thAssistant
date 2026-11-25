@@ -134,15 +134,18 @@ def test_dialog_empty_first_import_invalid_and_export_cancel(ui, tmp_path, monke
     assert dialogs.import_dialog(window, store=store).uids == ("111",)
 
 
-@pytest.mark.parametrize("format,uid", [("srgf", "111"), ("uigf", None), ("excel", "111")])
-def test_export_opens_folder(ui, tmp_path, monkeypatch, format, uid):
+@pytest.mark.parametrize("format,uid,name", [("srgf", "111", "SRGF_111.json"), ("uigf", None, "UIGF_all.json"),
+                                             ("excel", "111", "抽卡记录_111.xlsx")])
+def test_export_opens_folder(ui, tmp_path, monkeypatch, format, uid, name):
     window, store = ui
     store.write("111", data(uid="111"))
     dest = tmp_path / ("out.xlsx" if format == "excel" else "out.json")
-    monkeypatch.setattr(dialogs.QFileDialog, "getSaveFileName", lambda *a: (str(dest), ""))
+    chosen = Mock(return_value=(str(dest), ""))
+    monkeypatch.setattr(dialogs.QFileDialog, "getSaveFileName", chosen)
     opened = Mock(return_value=True)
     monkeypatch.setattr(dialogs.QDesktopServices, "openUrl", opened)
     outcome = dialogs.export_dialog(window, format, uid, store=store)
+    assert chosen.call_args.args[2] == name and chosen.call_args.args[3].endswith(f"(*{dest.suffix})")
     assert outcome.status == "success" and outcome.path == dest and dest.is_file()
     assert opened.call_args.args[0].toLocalFile().replace("\\", "/") == dest.parent.as_posix()
 

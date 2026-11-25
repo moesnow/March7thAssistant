@@ -12,7 +12,7 @@ from module.overview.labels import post_action_label
 
 from .common.design_tokens import CARD_SPACING, PAGE_MARGIN
 from .common.icon import UiIcon
-from .overview.cards import ChecksCard, LastRunCard, PlanCard, ShortcutsCard, StatCard
+from .overview.cards import ChecksCard, LastRunCard, PlanCard, PowerCard, ShortcutsCard, StatCard
 from .overview.greeting import GreetingCard
 from .overview.style import bar_success, brand, format_when, palette
 
@@ -36,7 +36,7 @@ class OverviewInterface(ScrollArea):
         self.setStyleSheet("#homeInterface, #view { background: transparent; border: none; }")
 
         self.greeting = GreetingCard(self.view)
-        self.powerCard = StatCard(UiIcon.BATTERY_CHARGE, self.view)
+        self.powerCard = PowerCard(UiIcon.BATTERY_CHARGE, self.view)
         self.dailyCard = StatCard(UiIcon.CLIPBOARD_TASK, self.view)
         self.weeklyCard = StatCard(FIF.CALENDAR, self.view)
         self.scheduleCard = StatCard(FIF.DATE_TIME, self.view)
@@ -133,7 +133,7 @@ class OverviewInterface(ScrollArea):
         now = snapshot.now
         self.greeting.render(snapshot.greeting, show_mascot=snapshot.show_mascot, background=snapshot.background,
                              evernight=evernight)
-        self._renderPower(snapshot.power, now, "power" in unavailable)
+        self.powerCard.setReading(snapshot.power, now, unavailable="power" in unavailable, evernight=evernight)
         self._renderDaily(snapshot.daily, now, "daily" in unavailable)
         self._renderWeekly(snapshot.weekly, "weekly" in unavailable)
         self._renderSchedule(snapshot.schedule, now, "schedule" in unavailable)
@@ -143,24 +143,6 @@ class OverviewInterface(ScrollArea):
                                         evernight=evernight, editable=self._canEditShortcuts())
         self.checksCard.setChecks(snapshot.checks, unavailable="checks" in unavailable, evernight=evernight)
         self.checksCard.setVisible(bool(snapshot.checks) or "checks" in unavailable)
-
-    def _renderPower(self, reading, now, unavailable):
-        card = self.powerCard
-        if unavailable or reading is None or reading.value is None:
-            maximum = getattr(reading, "maximum", 300)
-            card.setValue("—", f"/ {maximum}")
-            card.meter.setFraction(0, brand(self._evernight))
-            card.setNote(tr("暂时读不到开拓力") if unavailable else tr("运行一次清体力后显示"))
-            return
-        card.setValue(str(reading.value), f"/ {reading.maximum}")
-        card.meter.setFraction(reading.value / max(1, reading.maximum), brand(self._evernight))
-        parts = [tr("{time} 读取").format(time=format_when(reading.read_at, now))]
-        if reading.full_at is not None:
-            if reading.full_at <= now:
-                parts.append(tr("现在应该已经回满"))
-            else:
-                parts.append(tr("约{time} 回满").format(time=format_when(reading.full_at, now)))
-        card.setNote(" · ".join(parts))
 
     def _renderDaily(self, daily, now, unavailable):
         card = self.dailyCard

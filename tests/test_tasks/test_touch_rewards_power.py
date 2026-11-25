@@ -14,6 +14,11 @@ from tasks.power.policy import plan_paid_batch
 from utils.pause import RunStopRequested
 
 
+@pytest.fixture(autouse=True)
+def recorded_power(monkeypatch):
+    monkeypatch.setattr(power, "save_reading", Mock())
+
+
 @pytest.mark.parametrize(("text", "expected"), [
     ("0/300", 0),
     (" ９８ ／ 300 ", 98),
@@ -358,6 +363,7 @@ def test_touch_ornament_repeats_mixed_payment_and_keeps_unfunded_plan(monkeypatc
     assert [args.args[0] for args in select.call_args_list] == [6, 2]
     click.assert_called_once_with("再来一次", power.REPEAT)
     balance.assert_called_once_with(ornament.INDEX_POWER)
+    power.save_reading.assert_called_once_with(config, "overview_power", 14)
     stock.assert_called_once_with(ornament.auto, ornament.INDEX_IMMERSIFIERS)
     assert exit_result.call_count == 2
     assert fill.call_args_list == (
@@ -589,6 +595,7 @@ def test_repeat_stops_at_plan_count_or_calculated_budget(monkeypatch, planned, a
     settlements = Mock()
     assert list(power._run_instance(power.GOLDEN_CALYX, "回忆之蕾", planned, on_settlement=settlements)) == [1, 1]
     assert settlements.call_args_list == [call(1, None)] * 2
+    power.save_reading.assert_called_once_with(power.cfg, "overview_power", available - 20)
     balance.assert_called_once_with()
     assert start.call_args_list == [
         call(power.GOLDEN_CALYX, "回忆之蕾", 1, borrow_for_daily=False, practice=False,
@@ -623,6 +630,7 @@ def test_echo_without_weekly_rewards_only_fights_for_an_explicit_plan(monkeypatc
     assert list(power._run_instance(power.ECHO, "毁灭的开端", planned)) == ([1] if planned else [])
     balance.assert_not_called()
     supplement.assert_not_called()
+    power.save_reading.assert_not_called()
     if planned:
         start.assert_called_once_with(power.ECHO, "毁灭的开端", 1, borrow_for_daily=False, practice=True,
                                       world_team=False, team_failure=None)

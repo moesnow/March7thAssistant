@@ -76,7 +76,8 @@ SETTINGS = (
     # 体力
     _plan('', '启用清体力', 'power', 'header', ('power_enable', 'overview_power'),
         state_keys=('overview_power',), role='header'),
-    _plan('powerPlanCard', '体力计划', 'power', 'battle', ('power_plan', 'power_plan_keep', 'power_plan_continue')),
+    _plan('powerPlanCard', '体力计划', 'power', 'instances', ('power_plan', 'power_plan_keep', 'power_plan_continue'),
+        doc='doc:Tutorial#副本类型--副本名称'),
     _plan('instanceTypeCard', '副本类型', 'power', 'instances', ('instance_type',), doc='doc:Tutorial#副本类型--副本名称'),
     _plan('instanceTeamEnableCard', '自动切换队伍', 'power', 'battle',
         ('instance_team_enable', 'instance_team_number', 'instance_teams')),

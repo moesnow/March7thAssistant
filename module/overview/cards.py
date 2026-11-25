@@ -32,7 +32,7 @@ OPTIONS = {
 }
 
 
-def summary(key, cfg):
+def summary(key, cfg, touch=False):
     if key in OPTIONS:
         selected = [tr(label) for switch, label in OPTIONS[key].items() if cfg.get_value(switch, False)]
         if selected:
@@ -42,6 +42,8 @@ def summary(key, cfg):
     if key == "power":
         if cfg.power_plan:
             return tr("体力计划 · {count} 项").format(count=len(cfg.power_plan))
+        if cfg.build_target_enable and not touch:
+            return tr("培养目标")
         name = cfg.instance_names.get(cfg.instance_type, "")
         return tr(name) if name else tr(cfg.instance_type)
     if key in ("echo", "relic_cleanup"):
@@ -67,7 +69,7 @@ def preview(config, now, *, touch=False, backend="local", current_step=None):
             state = plan.detail_state(key, config, now=now, backend=backend, headless=lambda: config.browser_headless_enable)
         if key == current_step:
             state = "running"
-        detail = summary(key, config)
+        detail = summary(key, config, touch)
         if get_current_language() in ("zh_CN", "zh_TW") and len(detail) > 16:
             detail = detail[:15] + "…"
         rows.append(PlanItem(key, tr(plan.STEP_NAMES[key]), step.icon, detail, state,

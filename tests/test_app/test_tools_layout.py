@@ -79,8 +79,8 @@ def test_translated_cards_fit_with_expanded_navigation(toolbox, qapp):
         for lang in LOCALES:
             localization.load_language(lang)
             page.retranslateUi()
-            for width in (1280, 1440, 1600, 1920):
-                page.resize(width - 232, 608)
+            for width in (1280, 1320, 1440, 1600, 1920):
+                page.resize(width - 240, 608)
                 for _ in range(3):
                     qapp.processEvents()
                 assert page.horizontalScrollBar().maximum() == 0
@@ -101,7 +101,7 @@ def test_translated_cards_fit_with_expanded_navigation(toolbox, qapp):
 
 def test_clicking_a_card_outside_its_buttons_does_nothing(toolbox, qtbot):
     page, _ = toolbox
-    page.resize(1048, 608)
+    page.resize(1080, 608)
     page.show()
     for _, cards, _ in page.grid.groups:
         for card in cards:

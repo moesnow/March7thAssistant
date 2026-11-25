@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 import sys
 from unittest.mock import Mock
@@ -13,7 +13,7 @@ from module.overview.cards import preview
 from module.search import SearchIndex, current_value
 from module.search.documents import heading_pairs
 from module.settings_registry import SETTINGS, Scope, find_setting
-from module.task_catalog import BY_ID, estimate, status
+from module.task_catalog import BY_ID, estimate, power_order, status
 
 
 def test_notification_forms_match_template_and_registry():
@@ -62,6 +62,17 @@ def test_channel_lifecycle_and_secret_values(tmp_path):
         assert "winotify" in {r.channel.id for r in channels.added(cfg, {})}
         channels.remove(cfg, "winotify")
         assert "winotify" not in {r.channel.id for r in channels.added(cfg, {})}
+
+
+@pytest.mark.parametrize("channel", CHANNELS, ids=lambda channel: channel.id)
+def test_every_channel_can_be_removed(channel):
+    cfg = SampleConfig()
+    original = channels.form(cfg, channel.id)
+    cfg.set_values({**{f.key: "x" for f in channel.fields if f.kind not in ("switch", "choice", "number")},
+                    channel.enable_key: True, channels.ADDED: [channel.id]})
+    assert not channels.remove(cfg, channel.id)
+    assert channel.id not in {row.channel.id for row in channels.added(cfg, {})}
+    assert channels.form(cfg, channel.id) == original and not cfg.get_value(channel.enable_key)
 
 
 def test_unsaved_channel_test_and_recording(tmp_path, monkeypatch):
@@ -121,8 +132,47 @@ def test_samples_and_plan_agree(scenario):
     else:
         assert "3 次" in sample.estimates["power"].text and sample.estimates["power"].ratio == 186 / 300
         assert {r.last.success for r in sample.channels} == {True, False}
+        later = estimate("power", cfg, now + timedelta(hours=1))
+        assert "196" in later.text and later.ratio == 196 / 300
+        cfg.set_value("overview_power", {"value": 50, "timestamp": now.timestamp()})
+        assert "5 轮" in estimate("power", cfg, now).text and "0 次" not in estimate("power", cfg, now).text
     cfg.set_value("overview_power", {"value": "invalid", "timestamp": None})
     assert estimate("power", cfg) is None
+
+
+PLAN = [["凝滞虚影", "空海之形", 2]]
+
+
+@pytest.mark.parametrize("values,expected", [
+    ({}, ("skip", "skip", "first")),
+    ({"build_target_enable": True}, ("skip", "first", "then")),
+    ({"power_plan": PLAN}, ("first", "skip", "then")),
+    ({"power_plan": PLAN, "build_target_enable": True}, ("first", "then", "then")),
+    ({"power_plan": PLAN, "build_target_enable": True, "power_plan_continue": False}, ("first", "skip", "skip")),
+    ({"instance_names": {"侵蚀隧洞": "无"}}, ("skip", "skip", "warning")),
+    ({"instance_names": {"侵蚀隧洞": "无"}, "power_plan": PLAN}, ("first", "skip", "skip")),
+    ({"build_target_enable": True, "control_backend": "adb", "ui_profile": "touch_720"}, ("skip", "skip", "first")),
+])
+def test_power_order_says_what_the_next_run_will_use(values, expected):
+    cfg = SampleConfig()
+    cfg.set_values({"control_backend": "local", "ui_profile": "pc_1080", "instance_type": "侵蚀隧洞", "power_plan": [],
+                    "instance_names": {"侵蚀隧洞": "睿治之径"}, "power_plan_continue": True,
+                    "build_target_enable": False, **values})
+    states = power_order(cfg)
+    assert [state.id for state in states] == ["plan", "target", "default"]
+    assert tuple(state.kind for state in states) == expected
+    assert states[2].detail == ("侵蚀隧洞" if "instance_names" in values else "侵蚀隧洞 · 睿治之径")
+
+
+def test_power_order_uses_the_rest_of_an_account_plan():
+    class Progress(SampleConfig):
+        def remaining_power_plan(self):
+            return []
+
+    cfg = Progress()
+    cfg.set_values({"power_plan": PLAN, "power_plan_continue": False})
+    plan, _, default = power_order(cfg)
+    assert (plan.kind, plan.text, default.kind) == ("skip", "计划已刷完，跳过", "first")
 
 
 def test_search_ranking_secrets_and_every_link():

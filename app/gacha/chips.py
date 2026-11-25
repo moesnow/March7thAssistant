@@ -15,13 +15,14 @@ class Chip(QAbstractButton):
     """圆角胶囊。主文字后面可以跟一段小字，例如数量或「已结束」。"""
 
     HEIGHT = 32
-    PADDING = 14
+    PADDING, COMPACT_PADDING = 14, 10
     GAP = 6
 
     def __init__(self, text="", parent=None, *, soft=False):
         super().__init__(parent)
         self._soft = soft
-        self._extra = ""
+        self._extras = ("", "")
+        self._compact = False
         self._muted = False
         self._hover = False
         self._font = style.font(14)
@@ -32,22 +33,33 @@ class Chip(QAbstractButton):
         self.setFocusPolicy(Qt.FocusPolicy.TabFocus)
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
-    def setLabel(self, text, extra=""):
+    def setLabel(self, text, extra="", short=None):
+        """short 是收窄时换用的小字，不填就和 extra 一样。"""
         self.setText(text)
-        self._extra = extra or ""
-        self.setAccessibleName(f"{text} {self._extra}".strip())
+        self._extras = (extra or "", (extra if short is None else short) or "")
+        self.setAccessibleName(f"{text} {self._extras[0]}".strip())
         self.updateGeometry()
         self.update()
+
+    def setCompact(self, compact):
+        if self._compact != compact:
+            self._compact = compact
+            self.updateGeometry()
+            self.update()
+
+    def widthFor(self, compact):
+        padding = self.COMPACT_PADDING if compact else self.PADDING
+        width = QFontMetricsF(self._font).horizontalAdvance(self.text()) + padding * 2
+        if extra := self._extras[compact]:
+            width += self.GAP + QFontMetricsF(self._small).horizontalAdvance(extra)
+        return int(width) + 2
 
     def setMuted(self, muted):
         self._muted = bool(muted)
         self.update()
 
     def sizeHint(self):
-        width = QFontMetricsF(self._font).horizontalAdvance(self.text()) + self.PADDING * 2
-        if self._extra:
-            width += self.GAP + QFontMetricsF(self._small).horizontalAdvance(self._extra)
-        return QSize(int(width) + 2, self.HEIGHT)
+        return QSize(self.widthFor(self._compact), self.HEIGHT)
 
     def minimumSizeHint(self):
         return self.sizeHint()
@@ -98,11 +110,12 @@ class Chip(QAbstractButton):
         baseline = (self.height() + main.ascent() - main.descent()) / 2
         painter.setFont(self._font)
         painter.setPen(foreground)
-        painter.drawText(QPointF(self.PADDING, baseline), self.text())
-        if self._extra:
+        left = self.COMPACT_PADDING if self._compact else self.PADDING
+        painter.drawText(QPointF(left, baseline), self.text())
+        if small := self._extras[self._compact]:
             painter.setFont(self._small)
             painter.setPen(extra)
-            painter.drawText(QPointF(self.PADDING + main.horizontalAdvance(self.text()) + self.GAP, baseline), self._extra)
+            painter.drawText(QPointF(left + main.horizontalAdvance(self.text()) + self.GAP, baseline), small)
 
 
 class PoolBar(QWidget):
@@ -129,15 +142,27 @@ class PoolBar(QWidget):
         for key, chip in self.chips.items():
             stats = pools.get(key)
             total = stats.total if stats is not None else 0
-            extra = style.number(total)
+            count = style.number(total)
             ended = stats is not None and stats.ended
-            if ended:
-                extra = tr("{count} · 已结束").format(count=extra)
-            chip.setLabel(POOLS[key].label, extra)
+            chip.setLabel(POOLS[key].label, tr("{count} · 已结束").format(count=count) if ended else count, count)
             chip.setMuted(total == 0 or ended)
             chip.setChecked(key == selected)
+        self._fit()
+
+    def _fit(self):
+        """一行放不下时收窄胶囊、省去「已结束」。收窄也放不下就照常换行。"""
+        chips = self.chips.values()
+        gaps = self.flow.horizontalSpacing() * (len(chips) - 1)
+        normal, narrow = (sum(chip.widthFor(compact) for chip in chips) + gaps for compact in (False, True))
+        for chip in chips:
+            chip.setCompact(narrow < self.width() <= normal)
         self.flow.invalidate()
         self.updateGeometry()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if event.oldSize().width() != event.size().width():
+            self._fit()
 
     def hasHeightForWidth(self):
         return True

@@ -91,7 +91,7 @@ def export_dialog(parent, format, uid=None, *, store=None):
         if format == "excel":
             title, name, pattern = tr("导出为 Excel 文件"), f"{tr('抽卡记录')}_{uid}.xlsx", tr("Excel 文件 (*.xlsx)")
         elif format == "srgf":
-            title, name, pattern = tr("导出抽卡记录"), f"SRGF_{uid}.srgf.json", tr("SRGF 格式 (*.srgf.json)")
+            title, name, pattern = tr("导出抽卡记录"), f"SRGF_{uid}.json", tr("SRGF 格式 (*.json)")
         else:
             title = tr("导出抽卡记录")
             name, pattern = f"UIGF_{uid or 'all'}.json", tr("UIGF 格式 (*.json)")

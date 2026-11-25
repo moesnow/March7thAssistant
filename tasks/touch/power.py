@@ -560,6 +560,17 @@ def _wait_battle(*, repeated=False, instance_screen="calyx", verify_team=False):
 
 
 def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_settlement=None):
+    """逐批挑战。结束时记下剩余的开拓力，总览从这个数估算恢复。"""
+    balance = []
+    try:
+        yield from _run_batches(instance_type, name, planned, balance, borrow_for_daily=borrow_for_daily,
+                                on_settlement=on_settlement)
+    finally:
+        if balance:
+            save_reading(cfg, "overview_power", balance[-1])
+
+
+def _run_batches(instance_type, name, planned, balance, *, borrow_for_daily=False, on_settlement=None):
     instance_screen, cost, _ = INSTANCES[instance_type]
     limit = batch_limit(cfg, instance_type)
     demand = borrow_for_daily if isinstance(borrow_for_daily, SupportDemand) else SupportDemand(borrow_for_daily)
@@ -567,7 +578,7 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
     if instance_type == ORNAMENT:
         from tasks.touch import ornament
 
-        yield from ornament.run_instance(name, planned, limit, demand, on_settlement)
+        yield from ornament.run_instance(name, planned, limit, demand, on_settlement, balance)
         return
 
     _select_category(instance_type)
@@ -686,6 +697,7 @@ def _run_instance(instance_type, name, planned, *, borrow_for_daily=False, on_se
             remaining -= waves
         if not practice:
             power -= waves * cost
+            balance.append(power)
         if on_settlement is not None:
             on_settlement(waves, None)
         if is_echo and not practice:

@@ -9179,14 +9179,6 @@ msgstr "Trailblaze Power is temporarily unavailable"
 msgid "运行一次清体力后显示"
 msgstr "Run Spend Power once to see your balance"
 
-#: app/overview_interface.py:157
-msgid "{time} 读取"
-msgstr "Read at {time}"
-
-#: app/overview_interface.py:160
-msgid "现在应该已经回满"
-msgstr "Estimated to be full now"
-
 #: app/overview_interface.py:182
 msgid "今天还没有完成"
 msgstr "Not completed today"
@@ -9526,17 +9518,6 @@ msgstr "Run time"
 #: module/search/setting_text.py:3
 msgid "投资环境和投资策略的选择优先级"
 msgstr "Priority for investment environments and strategies"
-
-#: module/task_catalog.py
-msgid "按上次读取的 {power} 开拓力，{name}可挑战 {count} 次（每次 {waves} 轮）"
-msgstr ""
-"With the last reading of {power} Trailblaze Power, you can run {name} "
-"{count} times ({waves} waves each)"
-
-#: module/task_catalog.py:46
-msgid "按体力计划或所选副本消耗开拓力。"
-msgstr ""
-"Spend Trailblaze Power according to your plan or the selected instance."
 
 #: module/task_catalog.py:50
 msgid "按地图路线清理大世界敌人。"
@@ -10713,10 +10694,6 @@ msgstr "Type"
 #: app/content/gacha_model.py
 msgid "第几抽（保底内）"
 msgstr "Pull within pity"
-
-#: app/content/gacha_dialogs.py:90
-msgid "SRGF 格式 (*.srgf.json)"
-msgstr "SRGF files (*.srgf.json)"
 
 #: module/gacha/store.py:44
 msgid "{date} 更新"
@@ -13010,3 +12987,144 @@ msgstr "Update available"
 #: app/card/messagebox_custom.py:274
 msgid "更新日志 |･ω･)"
 msgstr "Changelog |･ω･)"
+
+#: app/content/gacha_dialogs.py:94
+msgid "SRGF 格式 (*.json)"
+msgstr "SRGF files (*.json)"
+
+#: app/overview/cards.py:141
+msgid "按上次记录的数值和每 6 分钟恢复 1 点估算，可能和游戏里差几点"
+msgstr ""
+"Estimated from the last recorded value at 1 point every 6 minutes. It may "
+"differ from the game by a few points"
+
+#: app/overview/cards.py:149
+msgid "{time} 时为 {value}"
+msgstr "{value} at {time}"
+
+#: app/overview/cards.py:154
+msgid "已回满"
+msgstr "Full"
+
+#: app/pages/nav_search.py:15
+msgid "搜索"
+msgstr "Search"
+
+#: app/pages/notify.py:50
+msgid "删除渠道"
+msgstr "Remove channel"
+
+#: app/pages/notify.py:293
+msgid "删除渠道「{name}」？"
+msgstr "Remove {name}?"
+
+#: app/pages/notify.py:291
+msgid "填写的内容会一起清除，以后要用得重新填写。"
+msgstr ""
+"Its saved details will be cleared. You will need to enter them again to use "
+"it later."
+
+#: app/pages/notify.py:291
+msgid "以后要用可以重新添加。"
+msgstr "You can add it again later."
+
+#: app/pages/notify.py:292
+msgid "只是暂时不用的话，关掉开关就行。"
+msgstr "To pause it for now, just turn off its switch."
+
+#: app/pages/notify.py:304
+msgid "无法删除这个渠道"
+msgstr "Could not remove this channel"
+
+#: app/pages/notify.py:306
+msgid "已删除"
+msgstr "Removed"
+
+#: app/pages/power_order.py:87
+msgid "按从上到下的顺序用开拓力：前一步用不上或刷完了，才轮到下一步"
+msgstr ""
+"Trailblaze Power is spent from top to bottom. A step starts only when the "
+"one above is finished or not used"
+
+#: module/task_catalog.py:114
+msgid "计划刷完就停，不会刷"
+msgstr "Stops after the plan"
+
+#: module/task_catalog.py:114
+msgid "计划刷完再刷"
+msgstr "After the plan"
+
+#: module/task_catalog.py:116
+msgid "先刷 {count} 项"
+msgstr "First: {count} items"
+
+#: module/task_catalog.py:118
+msgid "计划已刷完，跳过"
+msgstr "Plan finished, skipped"
+
+#: module/task_catalog.py:118
+msgid "暂无计划，跳过"
+msgstr "No plan, skipped"
+
+#: module/task_catalog.py:120
+msgid "未启用，跳过"
+msgstr "Off, skipped"
+
+#: module/task_catalog.py:122
+msgid "先刷这里"
+msgstr "Starts here"
+
+#: module/task_catalog.py:126
+msgid "没选副本，不会刷"
+msgstr "No dungeon selected"
+
+#: module/task_catalog.py:128
+msgid "培养目标用不上时才刷"
+msgstr "If the cultivation target doesn't apply"
+
+#: module/task_catalog.py:130
+msgid "直接刷这里"
+msgstr "Runs right away"
+
+#: module/task_catalog.py:132
+msgid "先刷体力计划"
+msgstr "First: power plan"
+
+#: module/task_catalog.py:132
+msgid "按列表里的副本和次数"
+msgstr "Dungeons and counts from your list"
+
+#: module/task_catalog.py:133
+msgid "再刷培养目标"
+msgstr "Then: cultivation target"
+
+#: module/task_catalog.py:133
+msgid "按游戏里的培养目标自动选副本"
+msgstr "Picks dungeons from the in-game target"
+
+#: module/task_catalog.py:134
+msgid "最后刷默认副本"
+msgstr "Last: default dungeon"
+
+#: module/task_catalog.py:159
+msgid "现在约有 {power} 开拓力，{name}可挑战 {count} 轮"
+msgstr ""
+"About {power} Trailblaze Power now: enough for {count} waves of {name}"
+
+#: module/task_catalog.py:161
+msgid "现在约有 {power} 开拓力，{name}可挑战 {count} 次（每次 {waves} 轮）"
+msgstr ""
+"About {power} Trailblaze Power now: enough for {count} runs of {name} "
+"({waves} waves each)"
+
+#: module/task_catalog.py:47
+msgid "按体力计划、培养目标、默认副本的顺序消耗开拓力。"
+msgstr ""
+"Spends Trailblaze Power on the power plan, then the cultivation target, then"
+" the default dungeon."
+
+#: module/search/setting_text.py:3
+msgid "按列表里的副本和次数刷，排在培养目标和默认副本前面"
+msgstr ""
+"Farms the dungeons in your list, before the cultivation target and the "
+"default dungeon"

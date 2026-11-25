@@ -6,9 +6,11 @@ from PySide6.QtCore import QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QSizePolicy, QVBoxLayout, QWidget
 from qfluentwidgets import (BodyLabel, CaptionLabel, ComboBox, FluentIcon, IconWidget, InfoBar, LineEdit,
-                            MessageBoxBase, PasswordLineEdit, PlainTextEdit, PushButton, ScrollArea,
-                            SimpleCardWidget, StrongBodyLabel, SubtitleLabel, getFont, isDarkTheme, qconfig)
+                            MessageBox, MessageBoxBase, PasswordLineEdit, PlainTextEdit, PushButton, ScrollArea,
+                            SimpleCardWidget, StrongBodyLabel, SubtitleLabel, ToolButton, getFont, isDarkTheme, qconfig)
 
+from app.common.mascot import Mascot
+from app.components.mascot_dialog import add_mascot
 from app.overview.style import accent, format_when, text_color, tone
 from app.overview.widgets import IconTile, LinkButton
 from module.channel_catalog import CHANNEL_BY_ID
@@ -29,6 +31,7 @@ def _delivery_time(at):
 class ChannelRow(QWidget):
     testRequested = Signal(str)
     editRequested = Signal(str)
+    removeRequested = Signal(str)
     enableRequested = Signal(str, bool)
 
     def __init__(self, row, parent=None):
@@ -43,6 +46,8 @@ class ChannelRow(QWidget):
         self.statusLabel.setWordWrap(True)
         self.testButton = PushButton(FluentIcon.SEND, tr("测试"), self)
         self.editButton = PushButton(FluentIcon.EDIT, tr("编辑"), self)
+        self.removeButton = ToolButton(FluentIcon.DELETE, self)
+        self.removeButton.setToolTip(tr("删除渠道"))
         self.switch = bare_switch(self)
         status = QHBoxLayout()
         status.setSpacing(4)
@@ -59,10 +64,12 @@ class ChannelRow(QWidget):
         layout.addLayout(column, 1)
         layout.addWidget(self.testButton)
         layout.addWidget(self.editButton)
+        layout.addWidget(self.removeButton)
         layout.addSpacing(6)
         layout.addWidget(self.switch)
         self.testButton.clicked.connect(lambda: self.testRequested.emit(self.channelId))
         self.editButton.clicked.connect(lambda: self.editRequested.emit(self.channelId))
+        self.removeButton.clicked.connect(lambda: self.removeRequested.emit(self.channelId))
         self.switch.checkedChanged.connect(lambda on: self.enableRequested.emit(self.channelId, on))
         self.setRow(row)
 
@@ -211,6 +218,7 @@ class ChannelPanel(QWidget):
             widget = ChannelRow(row, self.listCard)
             widget.testRequested.connect(self._test)
             widget.editRequested.connect(self._edit)
+            widget.removeRequested.connect(self._remove)
             widget.enableRequested.connect(self._enable)
             widget.setTesting(row.channel.id in self._pendingTests)
             self.rows[row.channel.id] = widget
@@ -276,6 +284,26 @@ class ChannelPanel(QWidget):
         dialog = ChannelDialog(self.model, channel_id, self.window_)
         dialog.exec()
         dialog.deleteLater()
+
+    def _remove(self, channel_id):
+        channel = CHANNEL_BY_ID[channel_id]
+        name = tr(channel.name)
+        text = tr("填写的内容会一起清除，以后要用得重新填写。") if channel.fields else tr("以后要用可以重新添加。")
+        text += "\n" + tr("只是暂时不用的话，关掉开关就行。")
+        box = MessageBox(tr("删除渠道「{name}」？").format(name=name), text, self.window_)
+        box.yesButton.setText(tr("删除渠道"))
+        box.cancelButton.setText(tr("取消"))
+        add_mascot(box, Mascot.BOX)
+        box.cancelButton.setFocus()
+        confirmed = box.exec()
+        box.deleteLater()
+        if not confirmed:
+            return
+        errors = self.model.remove(channel_id)
+        if errors:
+            InfoBar.error(tr("无法删除这个渠道"), "\n".join(errors.values()), duration=5000, parent=self.window_)
+        else:
+            InfoBar.success(tr("已删除"), name, duration=2500, parent=self.window_)
 
     def _enable(self, channel_id, enabled):
         errors = self.model.set_enabled(channel_id, enabled)

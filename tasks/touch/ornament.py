@@ -85,7 +85,7 @@ def _select_team(name, team=None):
     raise power.PowerError(f"饰品提取未找到{label}")
 
 
-def run_instance(name, planned, batch_limit, borrow_for_daily, on_settlement):
+def run_instance(name, planned, batch_limit, borrow_for_daily, on_settlement, balance=None):
     instance_screen, cost_per_wave, _ = power.INSTANCES[power.ORNAMENT]
     demand = (borrow_for_daily if isinstance(borrow_for_daily, power.SupportDemand)
               else power.SupportDemand(borrow_for_daily))
@@ -157,6 +157,8 @@ def run_instance(name, planned, batch_limit, borrow_for_daily, on_settlement):
 
         demand.won(borrowed)
         available -= cost
+        if cost and balance is not None:
+            balance.append(available)
         immersifiers -= used_immersifiers
         yield waves
         log.info(f"饰品提取已结算 {waves} 次")

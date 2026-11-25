@@ -8534,14 +8534,6 @@ msgstr ""
 msgid "运行一次清体力后显示"
 msgstr ""
 
-#: app/overview_interface.py:157
-msgid "{time} 读取"
-msgstr ""
-
-#: app/overview_interface.py:160
-msgid "现在应该已经回满"
-msgstr ""
-
 #: app/overview_interface.py:182
 msgid "今天还没有完成"
 msgstr ""
@@ -8876,14 +8868,6 @@ msgstr ""
 
 #: module/search/setting_text.py:3
 msgid "投资环境和投资策略的选择优先级"
-msgstr ""
-
-#: module/task_catalog.py
-msgid "按上次读取的 {power} 开拓力，{name}可挑战 {count} 次（每次 {waves} 轮）"
-msgstr ""
-
-#: module/task_catalog.py:46
-msgid "按体力计划或所选副本消耗开拓力。"
 msgstr ""
 
 #: module/task_catalog.py:50
@@ -10016,10 +10000,6 @@ msgstr ""
 
 #: app/content/gacha_model.py
 msgid "第几抽（保底内）"
-msgstr ""
-
-#: app/content/gacha_dialogs.py:90
-msgid "SRGF 格式 (*.srgf.json)"
 msgstr ""
 
 #: module/gacha/store.py:44
@@ -12268,4 +12248,132 @@ msgstr ""
 
 #: app/card/messagebox_custom.py:274
 msgid "更新日志 |･ω･)"
+msgstr ""
+
+#: app/content/gacha_dialogs.py:94
+msgid "SRGF 格式 (*.json)"
+msgstr ""
+
+#: app/overview/cards.py:141
+msgid "按上次记录的数值和每 6 分钟恢复 1 点估算，可能和游戏里差几点"
+msgstr ""
+
+#: app/overview/cards.py:149
+msgid "{time} 时为 {value}"
+msgstr ""
+
+#: app/overview/cards.py:154
+msgid "已回满"
+msgstr ""
+
+#: app/pages/nav_search.py:15
+msgid "搜索"
+msgstr ""
+
+#: app/pages/notify.py:50
+msgid "删除渠道"
+msgstr ""
+
+#: app/pages/notify.py:293
+msgid "删除渠道「{name}」？"
+msgstr ""
+
+#: app/pages/notify.py:291
+msgid "填写的内容会一起清除，以后要用得重新填写。"
+msgstr ""
+
+#: app/pages/notify.py:291
+msgid "以后要用可以重新添加。"
+msgstr ""
+
+#: app/pages/notify.py:292
+msgid "只是暂时不用的话，关掉开关就行。"
+msgstr ""
+
+#: app/pages/notify.py:304
+msgid "无法删除这个渠道"
+msgstr ""
+
+#: app/pages/notify.py:306
+msgid "已删除"
+msgstr ""
+
+#: app/pages/power_order.py:87
+msgid "按从上到下的顺序用开拓力：前一步用不上或刷完了，才轮到下一步"
+msgstr ""
+
+#: module/task_catalog.py:114
+msgid "计划刷完就停，不会刷"
+msgstr ""
+
+#: module/task_catalog.py:114
+msgid "计划刷完再刷"
+msgstr ""
+
+#: module/task_catalog.py:116
+msgid "先刷 {count} 项"
+msgstr ""
+
+#: module/task_catalog.py:118
+msgid "计划已刷完，跳过"
+msgstr ""
+
+#: module/task_catalog.py:118
+msgid "暂无计划，跳过"
+msgstr ""
+
+#: module/task_catalog.py:120
+msgid "未启用，跳过"
+msgstr ""
+
+#: module/task_catalog.py:122
+msgid "先刷这里"
+msgstr ""
+
+#: module/task_catalog.py:126
+msgid "没选副本，不会刷"
+msgstr ""
+
+#: module/task_catalog.py:128
+msgid "培养目标用不上时才刷"
+msgstr ""
+
+#: module/task_catalog.py:130
+msgid "直接刷这里"
+msgstr ""
+
+#: module/task_catalog.py:132
+msgid "先刷体力计划"
+msgstr ""
+
+#: module/task_catalog.py:132
+msgid "按列表里的副本和次数"
+msgstr ""
+
+#: module/task_catalog.py:133
+msgid "再刷培养目标"
+msgstr ""
+
+#: module/task_catalog.py:133
+msgid "按游戏里的培养目标自动选副本"
+msgstr ""
+
+#: module/task_catalog.py:134
+msgid "最后刷默认副本"
+msgstr ""
+
+#: module/task_catalog.py:159
+msgid "现在约有 {power} 开拓力，{name}可挑战 {count} 轮"
+msgstr ""
+
+#: module/task_catalog.py:161
+msgid "现在约有 {power} 开拓力，{name}可挑战 {count} 次（每次 {waves} 轮）"
+msgstr ""
+
+#: module/task_catalog.py:47
+msgid "按体力计划、培养目标、默认副本的顺序消耗开拓力。"
+msgstr ""
+
+#: module/search/setting_text.py:3
+msgid "按列表里的副本和次数刷，排在培养目标和默认副本前面"
 msgstr ""

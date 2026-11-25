@@ -201,7 +201,7 @@ class EasterEggClickFilter(QObject):
 
 
 # 所有设置卡和任务卡都能完整显示的最小窗口尺寸，也是新安装的默认尺寸（见 config.example.yaml）。
-MIN_WINDOW_WIDTH = 1280
+MIN_WINDOW_WIDTH = 1320
 MIN_WINDOW_HEIGHT = 640
 
 
@@ -628,7 +628,7 @@ class MainWindow(FluentWindow):
         navigation.setReturnButtonVisible(False)
         # 侧栏常驻展开：只看图标很难分辨页面。标题栏占满窗口宽度，侧栏从标题栏下方开始。
         navigation.setMenuButtonVisible(False)
-        navigation.setExpandWidth(232)
+        navigation.setExpandWidth(240)
         navigation.panel.vBoxLayout.insertSpacing(0, 42)
         from .accounts.nav_card import AccountNavCard
         self.accountNavCard = AccountNavCard(self)

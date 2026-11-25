@@ -74,6 +74,6 @@ def sample_state(scenario="desktop"):
     rows = preview(config, now, touch=touch, backend=config.control_backend)
     states = {t.id: status(t, rows, config, supported=not touch or t.touch) for t in TASKS}
     index = SearchIndex(config)
-    return Sample(config, states, {t.id: estimate(t.id, config) for t in TASKS},
+    return Sample(config, states, {t.id: estimate(t.id, config, now) for t in TASKS},
                   {"currencywars": tr("请更新货币战争策略")}, added(config, history), tuple(index.query("快捷键" if touch else "后台")),
                   tuple(index.query("zznohits9081")), index.suggestions())

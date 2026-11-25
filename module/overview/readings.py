@@ -24,6 +24,19 @@ def save_reading(config, key, value):
         logging.getLogger("March7thAssistant").warning("无法保存总览读数 %s，本次任务继续", key, exc_info=True)
 
 
+def power_now(reading, now):
+    """按每 6 分钟恢复 1 点估算现在的开拓力，最多恢复到上限。"""
+    gained = int(max(0, (now - reading.read_at).total_seconds()) // SECONDS_PER_POWER)
+    return max(reading.value, min(reading.value + gained, reading.maximum))
+
+
+def next_power_in(reading, now):
+    """恢复下一点还要多少秒。已经回满时返回 None。"""
+    if power_now(reading, now) >= reading.maximum:
+        return None
+    return SECONDS_PER_POWER - max(0, (now - reading.read_at).total_seconds()) % SECONDS_PER_POWER
+
+
 def power_reading(config):
     reading = config.get_value("overview_power")
     if not reading:

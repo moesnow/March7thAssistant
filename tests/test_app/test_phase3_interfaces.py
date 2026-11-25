@@ -230,6 +230,73 @@ def test_channel_dialog_validation_test_send_save_and_qq_binding(editable, qtbot
 
 
 
+def test_channel_can_be_removed_from_the_list(editable, qtbot, monkeypatch):
+    from app.content import notify_model
+    from app.pages import notify
+    w = editable
+    monkeypatch.setattr(notify_model, "init_notifiers", Mock())
+    panel = w.settingInterface.pages["notify"].channels
+    assert not w.notifyModel.save("telegram", {"notify_telegram_token": "test-token", "notify_telegram_userid": "12345"})
+    qtbot.waitUntil(lambda: "telegram" in panel.rows)
+    asked = []
+    answers = iter([False, True])
+    monkeypatch.setattr(notify.MessageBox, "exec", lambda box: asked.append(box.contentLabel.text()) or next(answers))
+    qtbot.mouseClick(panel.rows["telegram"].removeButton, Qt.MouseButton.LeftButton)
+    assert "telegram" in panel.rows and cfg.notify_telegram_token == "test-token"
+    qtbot.mouseClick(panel.rows["telegram"].removeButton, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: "telegram" not in panel.rows)
+    assert not cfg.notify_telegram_token and not cfg.notify_telegram_enable
+    assert not panel.tiles["telegram"]._added and len(asked) == 2 and "填写的内容会一起清除" in asked[0]
+    monkeypatch.setattr(w.notifyModel, "remove", lambda _: {"": "配置写入已暂停"})
+    failed = Mock()
+    monkeypatch.setattr(notify.InfoBar, "error", failed)
+    answers = iter([True])
+    panel._remove("winotify" if sys.platform == "win32" else "telegram")
+    assert failed.call_args.args[1] == "配置写入已暂停"
+
+
+def test_power_order_follows_the_settings(editable, qtbot):
+    page = editable.taskInterface.pages["power"]
+    host, steps = page.host, page.order.steps
+    assert [step.cards for step in steps.values()] == [
+        [host.powerPlanCard], [host.buildTargetEnableCard], [host.instanceTypeCard, host.instanceNameCard]]
+    base = {"control_backend": "local", "ui_profile": "pc_1080", "power_plan": [], "build_target_enable": False,
+            "instance_type": "侵蚀隧洞", "instance_names": {**cfg.instance_names, "侵蚀隧洞": "睿治之径"}}
+
+    def shows(*texts):
+        qtbot.waitUntil(lambda: tuple(step.pill.text() for step in steps.values()) == texts)
+
+    cfg.set_values(base)
+    shows("暂无计划，跳过", "未启用，跳过", "直接刷这里")
+    assert [step._number for step in steps.values()] == [1, 2, 3]
+    cfg.set_values({"power_plan": [["凝滞虚影", "空海之形", 2]], "build_target_enable": True})
+    shows("先刷 1 项", "计划刷完再刷", "培养目标用不上时才刷")
+    cfg.set_value("power_plan_continue", False)
+    shows("先刷 1 项", "计划刷完就停，不会刷", "计划刷完就停，不会刷")
+    cfg.set_values({**base, "control_backend": "adb", "ui_profile": "touch_720"})
+    qtbot.waitUntil(steps["target"].isHidden)
+    assert (steps["plan"]._number, steps["default"]._number, steps["default"]._last) == (1, 2, True)
+    editable.stackedWidget.setAnimationEnabled(False)
+    assert editable.navigate("task:power#power_plan")
+    assert editable.taskInterface.currentTask() == "power"
+
+
+def test_sidebar_search_text_is_never_cut(window):
+    box = window.searchBox
+    assert box.text() == "搜索功能、设置、帮助"
+    if sys.platform == "win32":
+        assert box.shownText() == box.text()
+    box.setFixedWidth(box.width() - 40)
+    assert box.shownText() == "搜索"
+
+
+def test_default_window_size_is_the_minimum():
+    from ruamel.yaml import YAML
+    from app.main_window import MIN_WINDOW_HEIGHT, MIN_WINDOW_WIDTH
+    example = YAML(typ="safe").load(Path(cfg.example_path))
+    assert (example["window_width"], example["window_height"]) == (MIN_WINDOW_WIDTH, MIN_WINDOW_HEIGHT)
+
+
 @pytest.mark.parametrize("component", ["task", "accounts"])
 def test_language_rollback_on_new_page_failure(editable, qtbot, monkeypatch, component):
     from app import task_interface
