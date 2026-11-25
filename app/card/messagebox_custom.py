@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, QUrl, QSize, Signal, Slot
+from PySide6.QtCore import QEvent, Qt, QUrl, QSize, Signal, Slot
 from PySide6.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QCompleter, QSizePolicy, QWidget
 from PySide6.QtGui import QPixmap, QDesktopServices, QFont
 from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit,
@@ -194,7 +194,57 @@ class MessageBoxSupport(MessageBoxImage):
 
         self.yesButton.setText(tr('下次一定'))
         self.cancelButton.setHidden(True)
+        self._supportPixmap = QPixmap(self.imageLabel.pixmap())
+        self.imageLabel.setScaledContents(False)
+        # 先排好完整的文字和小人，图片只使用剩余高度，避免触发文字滚动。
+        self.vBoxLayout.removeWidget(self.imageLabel)
         add_mascot(self, Mascot.LATER)
+        self._supportHeader = self.vBoxLayout.itemAt(0).layout()
+        self.vBoxLayout.insertWidget(1, self.imageLabel, 0, Qt.AlignmentFlag.AlignCenter)
+        self.vBoxLayout.setSizeConstraint(QVBoxLayout.SizeConstraint.SetNoConstraint)
+        self._hBoxLayout.setContentsMargins(24, 24, 24, 24)
+        self._fitSupportImage()
+        if parent is not None:
+            parent.installEventFilter(self)
+
+    def _fitSupportImage(self):
+        margins = self._hBoxLayout.contentsMargins()
+        frame = self.widget.contentsMargins()
+        source_size = self._supportPixmap.deviceIndependentSize().toSize()
+        width = min(self.width() - margins.left() - margins.right(),
+                    max(self.buttonGroup.minimumWidth(), self._supportHeader.sizeHint().width(),
+                        source_size.width()) + frame.left() + frame.right())
+        inner_width = max(1, width - frame.left() - frame.right())
+        header_height = self._supportHeader.heightForWidth(inner_width)
+        if header_height < 0:
+            header_height = self._supportHeader.sizeHint().height()
+        chrome = header_height + self.buttonGroup.height() + frame.top() + frame.bottom()
+        image_height = max(1, min(source_size.height(),
+                                  self.height() - margins.top() - margins.bottom() - chrome))
+        image_size = source_size.scaled(QSize(inner_width, image_height), Qt.AspectRatioMode.KeepAspectRatio)
+        ratio = self.devicePixelRatioF()
+        pixmap = self._supportPixmap.scaled(image_size * ratio, Qt.AspectRatioMode.KeepAspectRatio,
+                                           Qt.TransformationMode.SmoothTransformation)
+        pixmap.setDevicePixelRatio(ratio)
+        self.imageLabel.setPixmap(pixmap)
+        self.imageLabel.setFixedSize(image_size)
+        self.widget.setFixedSize(width, chrome + image_size.height())
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if hasattr(self, '_supportHeader'):
+            self._fitSupportImage()
+
+    def showEvent(self, event):
+        if self.parentWidget() is not None:
+            self.resize(self.parentWidget().size())
+        self._fitSupportImage()
+        super().showEvent(event)
+
+    def eventFilter(self, obj, event):
+        if obj is self.parentWidget() and event.type() == QEvent.Type.Resize:
+            self.resize(event.size())
+        return super().eventFilter(obj, event)
 
 
 class MessageBoxAnnouncement(MessageBoxImage):
