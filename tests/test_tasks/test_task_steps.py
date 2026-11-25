@@ -2,6 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from module.accounts.runtime import AccountError
 from module.game.adb_transport import AdbError
 from tasks.base import task_steps
 from utils.pause import RunStopRequested
@@ -41,7 +42,8 @@ def test_failure_in_final_step_does_not_navigate_before_returning(journal):
     assert task_steps.run_steps([("委托", lambda: None)]) is True
 
 
-@pytest.mark.parametrize("error", [AdbError("disconnected", "设备已断开"), RunStopRequested()])
+@pytest.mark.parametrize("error", [AccountError("account_mismatch", "当前登录账号与任务账号不符"),
+                                 AdbError("disconnected", "设备已断开"), RunStopRequested()])
 def test_fatal_errors_and_stop_requests_end_without_a_result(journal, error):
     def fatal():
         raise error

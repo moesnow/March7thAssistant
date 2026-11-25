@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 
-from module.accounts.runtime import AccountError
+from module.accounts.errors import AccountError
 
 from module.automation.background_input import GameWindowLost, InputInterrupted
 from module.config.platform import ProfileAssetNotFoundError, TouchProfileInputError

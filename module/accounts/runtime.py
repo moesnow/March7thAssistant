@@ -6,6 +6,7 @@ import time
 from module.connection_values import configured_backend
 from utils.registry.gameaccount import gamereg_uid, server_for_path
 from utils.tasks import HOST_TASKS
+from .errors import AccountError
 from .layers import supported
 from .store import AccountStore, masked_uid
 
@@ -54,12 +55,6 @@ ROTATABLE = frozenset(
         "screen_test",
     )
 )
-
-
-class AccountError(RuntimeError):
-    def __init__(self, reason, message, code=1):
-        self.reason, self.exit_code = reason, code
-        super().__init__(message)
 
 
 def require_supported(config, index):
