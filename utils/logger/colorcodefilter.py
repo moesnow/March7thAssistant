@@ -17,13 +17,8 @@ class ColorCodeFilter(logging.Formatter):
         :param record: 日志记录
         :return: 清理颜色代码后的日志字符串
         """
-        # 移除日志消息中的颜色代码
-        log_message = self._remove_color_codes(record.getMessage())
-        record.msg = log_message
-        # 移除日志级别名称中的颜色代码
-        record.levelname = self._remove_color_codes(record.levelname)
-        # 调用父类的format方法进行最终的格式化
-        return super().format(record)
+        # 参数只由 logging 替换一次；清理最终输出，不改动后续处理器共用的消息和级别。
+        return self._remove_color_codes(super().format(record))
 
     def _remove_color_codes(self, message):
         """

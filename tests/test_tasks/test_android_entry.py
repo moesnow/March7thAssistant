@@ -756,6 +756,30 @@ def test_android_entry_exports_debug_and_traceback_and_restores_log_levels(entry
     assert [handler.level for handler in log.logger.handlers] == handler_levels
 
 
+def test_config_write_warning_reaches_the_app_and_allows_the_task_to_continue(entry, device, monkeypatch):
+    from module.overview.readings import save_reading
+
+    continued = Mock()
+
+    def task(*, on_summary):
+        config = SimpleNamespace(set_value=Mock(side_effect=OSError("配置暂时不可写")))
+        save_reading(config, "overview_power", 120)
+        continued()
+        return True
+
+    monkeypatch.setattr(rewards, "run_daily_training", task)
+    bridge = Bridge()
+
+    assert start(entry, "DAILY", bridge) == "success"
+    continued.assert_called_once_with()
+    assert bridge.steps == [("每日实训", "started", None), ("每日实训", "succeeded", None)]
+    warnings = [call[2] for call in bridge.calls if call[:2] == ("log", "WARNING")]
+    assert len(warnings) == 1
+    assert "无法保存总览读数 overview_power，本次任务继续" in warnings[0]
+    assert "OSError: 配置暂时不可写" in warnings[0]
+    assert not any(call[:2] == ("log", "ERROR") for call in bridge.calls)
+
+
 def test_settings_that_do_not_match_report_no_progress(entry, device):
     bridge = Bridge()
     assert entry.run(str(ROOT), "token", 29, "10", "Redmi", False, "DAILY", "{}", False, True, "zh_CN", bridge) == "runtime_error"

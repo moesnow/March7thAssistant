@@ -1,5 +1,6 @@
 import logging
 import sys
+from copy import copy
 
 from .colorcodefilter import ColorCodeFilter
 
@@ -66,6 +67,8 @@ class ColoredFormatter(logging.Formatter):
         :param record: 日志记录
         :return: 带颜色的日志字符串
         """
+        # 同一条记录还会交给文件日志、GUI 和 Android 回调，颜色只用于当前输出。
+        record = copy(record)
         # 获取日志级别，用于确定使用哪种颜色
         log_level = record.levelname
         # 根据日志级别获取相应的颜色代码，如果找不到则使用重置颜色
