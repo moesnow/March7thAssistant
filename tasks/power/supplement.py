@@ -21,14 +21,14 @@ CANCEL = _crop((335, 465, 269, 143))
 CONFIRM = _crop((675, 465, 266, 143))
 AMOUNT_TITLE = _crop((448, 123, 336, 132))
 
-# 最大值按钮、最大值读数、已选数量读数、每份补充的开拓力。
-PC_QUANTITIES = {
-    "后备开拓力": ((941, 460), (840, 445, 37, 30), (562, 396, 130, 34), 1),
-    "燃料": ((965, 422), (864, 407, 28, 30), (783, 392, 38, 26), 60),
+# 数量弹窗的最大值按钮。
+PC_MAX_BUTTONS = {
+    "后备开拓力": (941, 460),
+    "燃料": (965, 422),
 }
-TOUCH_QUANTITIES = {
-    "后备开拓力": ((1016, 486), (880, 471, 42, 30), (550, 409, 130, 34), 1),
-    "燃料": ((1046, 438), (926, 422, 24, 31), (824, 399, 48, 36), 60),
+TOUCH_MAX_BUTTONS = {
+    "后备开拓力": (1016, 486),
+    "燃料": (1046, 438),
 }
 
 
@@ -68,7 +68,7 @@ def _prepare_exchange(auto, screen, config, locate_entry, return_screen, desktop
     else:
         raise PowerError("未找到开拓力补充弹窗")
 
-    quantities = PC_QUANTITIES if desktop else TOUCH_QUANTITIES
+    max_buttons = PC_MAX_BUTTONS if desktop else TOUCH_MAX_BUTTONS
     stock_y, stock_height = (362, 29) if desktop else (364, 26)
     for enabled, source, label, x in (
         (config.use_reserved_trailblaze_power, "后备开拓力", "取出等量后备开拓力", 550 if desktop else 528),
@@ -96,21 +96,15 @@ def _prepare_exchange(auto, screen, config, locate_entry, return_screen, desktop
         _click(auto, method_button)
         if not _find_text(auto, source, AMOUNT_TITLE, retries=8, include=True):
             raise PowerError("未确认补充数量弹窗")
-        max_point, max_crop, selected_crop, multiplier = quantities[source]
-        max_quantity = read_number(auto, _crop(max_crop), _number, "未确认弹窗允许的最大补充量")
-        if not 1 <= max_quantity <= stock:
-            raise PowerError(f"游戏显示的最大补充量无效：{max_quantity}")
-        _tap(auto, *max_point)
-        read_number(auto, _crop(selected_crop), lambda text: max_quantity if _number(text) == max_quantity else None,
-                    "补充数量未达到弹窗最大值")
+        _tap(auto, *max_buttons[source])
         confirm = _find_text(auto, "确认", CONFIRM, retries=6)
         if not confirm:
             raise PowerError("无法确认补充数量")
-        return confirm, max_quantity * multiplier
+        return confirm
     return None
 
 
-def _return_from_dialog(auto, screen, return_screen, *, exchange_sent, record_receipt):
+def _return_from_dialog(auto, screen, return_screen, *, exchange_sent):
     remaining_inputs = 4
     waiting_for_return = exchange_sent
     # 转场只占用等待时间，关闭弹窗有独立的输入次数。
@@ -121,7 +115,6 @@ def _return_from_dialog(auto, screen, return_screen, *, exchange_sent, record_re
             return
         if remaining_inputs:
             if exchange_sent and _find_text(auto, "获得物品", ITEM_POPUP):
-                record_receipt()
                 remaining_inputs -= 1
                 _tap(auto, 640, 569)
             elif cancel := _find_text(auto, "取消", CANCEL):
@@ -136,13 +129,9 @@ def _return_from_dialog(auto, screen, return_screen, *, exchange_sent, record_re
 
 
 def supplement(auto, screen, config, balance, locate_entry, read_balance, *, return_screen, desktop=False):
-    expected = None
+    exchange_sent = False
     after = balance
     failure = None
-
-    def record_receipt():
-        nonlocal after
-        after = balance + expected
 
     try:
         if not (config.use_reserved_trailblaze_power or config.use_fuel):
@@ -150,36 +139,31 @@ def supplement(auto, screen, config, balance, locate_entry, read_balance, *, ret
         with screenshot_retry_timeout(5):
             with limit_input_deadline(time.monotonic() + 18):
                 try:
-                    prepared = _prepare_exchange(auto, screen, config, locate_entry, return_screen, desktop)
-                    if prepared:
-                        confirm, increment = prepared
+                    confirm = _prepare_exchange(auto, screen, config, locate_entry, return_screen, desktop)
+                    if confirm:
                         _check_input()
                         # 最终确认会消耗库存，派发后只核对结果。
                         def record_dispatch(_):
-                            nonlocal expected
-                            expected = increment
+                            nonlocal exchange_sent
+                            exchange_sent = True
 
                         if getattr(auto.input_handler, "reports_dispatch", False) is True:
                             with observe_input_dispatch(record_dispatch):
                                 auto.click_element_with_pos(confirm)
                         else:
-                            expected = increment
+                            exchange_sent = True
                             auto.click_element_with_pos(confirm)
-                        if expected is None:
+                        if not exchange_sent:
                             raise PowerError("未能发送补充开拓力确认")
-                        if _find_text(auto, "获得物品", ITEM_POPUP, retries=5):
-                            record_receipt()
+                        # 为正常转场保留等待；获得页漏识别仍按实际余额收尾。
+                        _find_text(auto, "获得物品", ITEM_POPUP, retries=8)
                 except Exception as error:
                     failure = error
 
             with limit_input_deadline(time.monotonic() + 10):
-                _return_from_dialog(auto, screen, return_screen, exchange_sent=expected is not None,
-                                    record_receipt=record_receipt)
-                if expected is not None and after == balance:
-                    current = read_balance()
-                    if not balance + expected <= current <= balance + expected + 1:
-                        raise PowerError(f"补充开拓力后余额未确认（原有 {balance}，预期增加 {expected}，实际 {current}）")
-                    after = current
+                _return_from_dialog(auto, screen, return_screen, exchange_sent=exchange_sent)
+                if exchange_sent:
+                    after = read_balance()
     except Exception as error:
         # 后续副本照常导航，screen.change_to 会处理可退出的未知界面。
         failure = failure or error

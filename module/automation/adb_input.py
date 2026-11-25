@@ -9,6 +9,8 @@ from module.localization import tr
 
 
 class AdbInput(InputBase):
+    reports_dispatch = True
+
     def __init__(self, controller):
         self._controller = controller
 

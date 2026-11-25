@@ -233,7 +233,7 @@ def test_reward_receipt_can_see_the_full_title(monkeypatch):
     (False, False, 0, 0, "map"), (True, False, 0, 0, "map"), (False, True, 0, 0, "guide3"),
     (True, True, 0, 2.5, "guide3"), (False, True, 0, 2.5, "map"), (False, False, 2.5, 0, "map"),
 ])
-def test_power_supplement_closes_visible_reward_and_reuses_confirmed_amount(
+def test_power_supplement_closes_visible_reward_and_reads_the_actual_balance_once(
     monkeypatch, dropped_dismissal, late_receipt, receipt_delay, return_delay, return_screen,
 ):
     original = SimpleNamespace(use_reserved_trailblaze_power=True, use_fuel=False)
@@ -300,17 +300,19 @@ def test_power_supplement_closes_visible_reward_and_reuses_confirmed_amount(
     auto.find_element.side_effect = find
     auto.click_element_with_pos.side_effect = click
     screen = Mock(check_screen=Mock(side_effect=lambda target: target == page))
-    monkeypatch.setattr(supplement, "read_number", Mock(side_effect=[20, 20, 20]))
+    stock = Mock(side_effect=[20])
+    monkeypatch.setattr(supplement, "read_number", stock)
     monkeypatch.setattr(supplement, "time", SimpleNamespace(monotonic=lambda: now, sleep=sleep))
 
-    read_balance = Mock(side_effect=PowerError("补充后不应再次读取余额"))
+    read_balance = Mock(return_value=317)
     assert supplement.supplement(auto, screen, original, 300, Mock(return_value="入口"),
-                                 read_balance, return_screen=return_screen, desktop=return_screen == "map") == 320
+                                 read_balance, return_screen=return_screen, desktop=return_screen == "map") == 317
     assert dismissals == (2 if dropped_dismissal else 1)
     assert page == return_screen
     assert auto.click_element_with_pos.call_args_list.count(call("确认")) == 2
     auto.press_key.assert_not_called()
-    read_balance.assert_not_called()
+    read_balance.assert_called_once_with()
+    stock.assert_called_once()
 
 
 @pytest.mark.parametrize("remaining_checks,attempts", [([False], 1), ([True, False], 2), ([True, True, True], 3)])

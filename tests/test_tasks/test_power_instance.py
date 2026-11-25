@@ -588,7 +588,8 @@ def test_pc_supplement_rechecks_budget_and_stop_after_button_lookup(monkeypatch,
     monkeypatch.setattr(power, "cfg", cfg)
     monkeypatch.setattr(power, "Instance", battle)
     monkeypatch.setattr(power, "read_number", meter)
-    monkeypatch.setattr(supplement, "read_number", Mock(side_effect=[30, 20, 20]))
+    stock = Mock(side_effect=[30])
+    monkeypatch.setattr(supplement, "read_number", stock)
     monkeypatch.setattr(supplement, "time", SimpleNamespace(monotonic=lambda: now, sleep=Mock()))
     monkeypatch.setattr(supplement.pause_ctl, "checkpoint", checkpoint)
 
@@ -600,6 +601,7 @@ def test_pc_supplement_rechecks_budget_and_stop_after_button_lookup(monkeypatch,
         assert power.Power.process(GOLDEN_CALYX, "回忆之蕾", planned_attempts=3) == 3
         battle.complete_run.assert_called_once_with(GOLDEN_CALYX)
     meter.assert_called_once()
+    stock.assert_called_once()
     assert actions == ["入口", supplement._crop((550, 327, 0, 0)), "确认",
                        supplement._crop((941, 460, 0, 0))] + ([] if fault == "user-stop" else ["取消", "取消"])
 

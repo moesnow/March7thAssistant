@@ -982,17 +982,19 @@ def test_sms_pending_thread_accepts_sticker_reply(monkeypatch):
     auto.click_element_with_pos.assert_called_once_with(sticker, offset=(55, 62))
 
 
-@pytest.mark.parametrize("amounts, increase", [([630, 300, 300], 300), ([0, 7, 5, 5], 300)])
-def test_supplement_uses_maximum_even_above_300_and_checks_zero_reserve(monkeypatch, amounts, increase):
+@pytest.mark.parametrize("stocks,after", [([630], 620), ([630], 380), ([0, 7], 440)])
+def test_supplement_uses_maximum_and_accepts_the_actual_balance(monkeypatch, stocks, after):
     cfg = SimpleNamespace(use_reserved_trailblaze_power=True, use_fuel=True)
     auto = Mock()
     auto.find_element.side_effect = lambda label, *_args, **_kwargs: label if label != "获得物品" else None
-    read = Mock(side_effect=amounts)
+    read = Mock(side_effect=stocks)
     monkeypatch.setattr(supplement, "read_number", read)
     navigate = Mock(check_screen=Mock(return_value=True))
+    read_balance = Mock(return_value=after)
     assert supplement.supplement(auto, navigate, cfg, 320, Mock(return_value="入口"),
-                                 Mock(return_value=320 + increase), return_screen="guide3") == 620
-    assert read.call_count == len(amounts)
+                                 read_balance, return_screen="guide3") == after
+    assert read.call_count == len(stocks)
+    read_balance.assert_called_once_with()
     assert auto.click_element_with_pos.call_args_list.count(call("确认")) == 2
     navigate.check_screen.assert_called_once_with("guide3")
 
@@ -1004,12 +1006,14 @@ def test_supplement_reuses_previous_budget_without_resending_unconfirmed_exchang
     auto.find_element.side_effect = lambda label, *_args, **_kwargs: label if label != "获得物品" else None
     screen = Mock(check_screen=Mock(return_value=True))
     read_balance = Mock(side_effect=[after])
-    monkeypatch.setattr(supplement, "read_number", Mock(side_effect=[30, 20, 20]))
+    stock = Mock(side_effect=[30])
+    monkeypatch.setattr(supplement, "read_number", stock)
 
     assert supplement.supplement(auto, screen, cfg, 80, Mock(return_value="入口"), read_balance,
                                  return_screen="guide3") == 80
     assert auto.click_element_with_pos.call_args_list.count(call("确认")) == 2
     read_balance.assert_called_once_with()
+    stock.assert_called_once()
     screen.check_screen.assert_called_once_with("guide3")
 
 

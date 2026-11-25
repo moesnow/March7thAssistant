@@ -16,6 +16,7 @@ from unittest.mock import Mock
 from PIL import Image, ImageDraw
 import pytest
 
+from module.automation.input_base import observe_input_dispatch
 from module.game import adb as backend
 from module.game import adb_ready
 from module.game import adb_transport as transport
@@ -491,6 +492,29 @@ def test_disconnect_aborts_without_replaying_input_and_next_run_reconnects(adb, 
     controller.start_game_process()
     assert controller.capture_frame()
     assert sum(request["cmd"] == "tap" for request in s1.requests) == 1
+
+
+@pytest.mark.parametrize("state", ["blocked", "delivered", "reply-lost"])
+def test_input_observer_distinguishes_rejected_and_dispatched_taps(adb, s1, state):
+    controller, _ = adb
+    controller.start_game_process()
+    inputs = controller.get_input_handler()
+    assert inputs.reports_dispatch is True
+    if state == "blocked":
+        s1.event("task_display_changed", to=0)
+        s1.event("sdk_window_shown", display_id=0)
+        controller.get_runtime_status()
+    elif state == "reply-lost":
+        s1.drop_command = "tap"
+    dispatched = []
+    with observe_input_dispatch(dispatched.append):
+        if state == "reply-lost":
+            with pytest.raises(transport.AdbError):
+                inputs.mouse_click(38, 59)
+        else:
+            assert inputs.mouse_click(38, 59) is (state == "delivered")
+    assert len(dispatched) == int(state != "blocked")
+    assert sum(request["cmd"] == "tap" for request in s1.requests) == int(state != "blocked")
 
 
 def test_watchdog_blocks_input_until_recovered_and_stops_on_manual_login(adb, s1):
