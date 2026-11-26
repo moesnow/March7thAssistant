@@ -570,8 +570,8 @@ def check_docs(docs_dir: Path | None = None) -> list[str]:
 # zh_TW 文档生成（繁体由简体基准机械转换，不需要人工翻译）
 # ---------------------------------------------------------------------------
 
-# 同步桌面帮助和另有繁体版本的安卓教程。
-ZH_TW_DOC_BASES = (*DOC_BASES, "Android")
+# 同步桌面帮助和另有繁体版本的安卓教程（含 Shizuku 激活教程）。
+ZH_TW_DOC_BASES = (*DOC_BASES, "Android", "Shizuku")
 
 # 生成器把转换声明放在标题后的第一个引用块，阅读器按声明文字识别。
 ZH_TW_DOC_NOTE = "> 本文件由簡體中文版經 OpenCC 簡繁轉換產生，用語以台灣習慣為準；內容如有差異，請以簡體中文版為準。"

@@ -10459,6 +10459,10 @@ msgstr "Docker Deployment"
 msgid "Termux 安卓部署"
 msgstr "Android Deployment with Termux"
 
+#: module/docs/catalog.py:31
+msgid "Shizuku 激活教程"
+msgstr "Shizuku Activation Guide"
+
 #: app/help_interface.py:41
 msgid "搜索帮助文档"
 msgstr "Search help"

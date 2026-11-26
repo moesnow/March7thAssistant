@@ -28,6 +28,7 @@ RELATED = (
     Manual("DesktopTwin", "桌面分身", "FIF.CONNECT"),
     Manual("Docker", "Docker 部署", "FIF.COMMAND_PROMPT"),
     Manual("Termux", "Termux 安卓部署", "FIF.COMMAND_PROMPT"),
+    Manual("Shizuku", "Shizuku 激活教程", "FIF.PHONE"),
 )
 DOCUMENTS = {manual.id: manual for manual in (*SIDEBAR, *RELATED)}
 

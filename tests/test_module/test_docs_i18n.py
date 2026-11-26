@@ -28,7 +28,7 @@ class TestDocBasesSingleSource:
         # 后缀登记校验 / 译文完整性校验 / zh_TW 生成 / 测试清单必须同源
         from tools.i18n import ZH_TW_DOC_BASES
         assert set(DOC_BASES) == {"Tutorial", "Workflow", "FAQ", "Background", "TasksTable", "Changelog"}
-        assert tuple(ZH_TW_DOC_BASES) == (*DOC_BASES, "Android")
+        assert tuple(ZH_TW_DOC_BASES) == (*DOC_BASES, "Android", "Shizuku")
         assert tuple(LOCALIZED_DOC_BASES) == tuple(DOC_BASES)
 
     def test_suffix_check_covers_workflow(self, tmp_path):
