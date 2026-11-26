@@ -68,6 +68,8 @@ class FakeS1(socketserver.ThreadingTCPServer):
         self.drop_command = None
         self.ignore_boundary = False
         self.hello_versions = []
+        self.interactive = True
+        self.launch_interactive = []
 
     def event(self, name, **details):
         self.events.append(dict(event=name, event_seq=len(self.events) + 1, **details))
@@ -89,13 +91,14 @@ class FakeS1(socketserver.ThreadingTCPServer):
             self.display_id = header["display_id"]
             return {}, b""
         if cmd == "launch":
+            self.launch_interactive.append(self.interactive)
             target = self.display_id if self.launch_display_id is None else self.launch_display_id
             self.event("task_display_changed", to=target)
             return {}, b""
         if cmd == "events":
             return dict(events=self.events[header["after"]:], event_seq=len(self.events)), b""
         if cmd == "status":
-            return dict(watchdog=dict(pid=12, task={
+            return dict(power=dict(interactive=self.interactive, keyguard_locked=False), watchdog=dict(pid=12, task={
                 "display_id": self.display_id, "visible": self.task_visible, "top_activity": self.top_activity,
             })), b""
         if cmd in ("tap", "swipe", "touch", "clipboard"):
@@ -156,6 +159,8 @@ class FakeAdb(transport.Adb):
         self.start_busy = False
         self.busy_launches_remaining = 0
         self.launch_attempts = 0
+        self.wake_inputs = []
+        self.wake_effective = True
 
     def devices(self):
         return self.devices_found
@@ -179,6 +184,11 @@ class FakeAdb(transport.Adb):
         raise AssertionError(args)
 
     def shell(self, command, **kwargs):
+        if command == "input keyevent KEYCODE_WAKEUP":
+            self.wake_inputs.append(command)
+            if self.wake_effective:
+                self.service.interactive = True
+            return ""
         if command.startswith("echo "):
             return "\n".join((f"ro.build.version.sdk={self.sdk}", f"ro.build.version.release={self.sdk - 19}",
                               f"ro.product.cpu.abilist={self.abis}", "ro.kernel.qemu=", "ro.boot.qemu="))
@@ -391,12 +401,98 @@ def test_connect_negotiates_keep_awake_before_launch(adb, s1, monkeypatch, scena
     assert controller.start_game_process()
     assert controller.start_game_process()
     requests = [r["cmd"] for r in s1.requests]
-    assert requests[:2] == ["hello", "create_display" if scenario == "old_jar" else "keep_awake"]
+    assert requests[:2] == ["hello", "status" if scenario == "old_jar" else "keep_awake"]
     assert requests.count("keep_awake") == (0 if scenario == "old_jar" else 1)
     if scenario != "old_jar":
         assert s1.requests[1]["on"] is True
         assert requests.index("keep_awake") < requests.index("create_display") < requests.index("launch")
     assert log.warning.call_count == (0 if scenario == "supported" else 1)
+
+
+@pytest.mark.parametrize("asleep", [False, True])
+def test_desktop_adb_wakes_sleeping_device_before_display_and_launch(adb, s1, asleep):
+    controller, fake = adb
+    s1.interactive = not asleep
+    assert controller.start_game_process()
+    assert s1.launch_interactive == [True]
+    assert len(fake.wake_inputs) == int(asleep)
+    requests = [r["cmd"] for r in s1.requests]
+    assert requests.index("status") < requests.index("create_display") < requests.index("launch")
+
+
+def test_desktop_adb_waits_for_late_wake_receipt_without_repeating_wake(adb, s1, monkeypatch):
+    controller, fake = adb
+    s1.interactive = False
+    reply = s1.reply
+    late = 2
+
+    def delayed(request):
+        nonlocal late
+        header, data = reply(request)
+        if request["cmd"] == "status" and fake.wake_inputs and late:
+            late -= 1
+            header["power"]["interactive"] = False
+        return header, data
+
+    monkeypatch.setattr(s1, "reply", delayed)
+    assert controller.start_game_process()
+    assert late == 0 and len(fake.wake_inputs) == 1
+    assert s1.launch_interactive == [True]
+
+
+def test_desktop_adb_reports_persistent_sleep_without_launching_game(adb, s1, monkeypatch):
+    controller, fake = adb
+    s1.interactive = False
+    fake.wake_effective = False
+    monkeypatch.setattr(transport, "_WAKE_TIMEOUT_SECONDS", 0.05, raising=False)
+    with pytest.raises(transport.AdbError, match="未能唤醒") as error:
+        controller.start_game_process()
+    assert error.value.code == "wake_timeout"
+    assert len(fake.wake_inputs) == 1
+    assert not s1.launch_interactive and not fake.forwarding
+
+
+@pytest.mark.parametrize("after_status", [False, True])
+def test_desktop_adb_stop_before_wake_does_not_send_input_or_launch(adb, s1, monkeypatch, after_status):
+    controller, fake = adb
+    s1.interactive = False
+    monkeypatch.setattr(pause_ctl, "check_stop", Mock(side_effect=[None, RunStopRequested] if after_status else RunStopRequested))
+    with pytest.raises(RunStopRequested):
+        controller.start_game_process()
+    assert not fake.wake_inputs and not s1.launch_interactive
+    assert not fake.forwarding
+
+
+def test_desktop_adb_wake_budget_expiring_during_status_lookup_sends_no_input(monkeypatch):
+    service = transport.AdbService(Mock())
+    now = 100.0
+
+    def status(*args, **kwargs):
+        nonlocal now
+        now += 6
+        return {"power": {"interactive": False}}, b""
+
+    service.request = Mock(side_effect=status)
+    monkeypatch.setattr(transport, "time", SimpleNamespace(monotonic=lambda: now))
+    with pytest.raises(transport.AdbError) as error:
+        service._wake_device()
+    assert error.value.code == "wake_timeout"
+    service.adb.shell.assert_not_called()
+
+
+def test_desktop_adb_unknown_power_state_requests_wake_once_and_uses_game_confirmation(adb, s1, monkeypatch):
+    controller, fake = adb
+    reply = s1.reply
+
+    def unavailable(request):
+        header, data = reply(request)
+        if request["cmd"] == "status":
+            header["power"] = {"error": "not available"}
+        return header, data
+
+    monkeypatch.setattr(s1, "reply", unavailable)
+    assert controller.start_game_process()
+    assert len(fake.wake_inputs) == 1
 
 
 def test_crop_and_strict_sequence_after_input(adb, s1):

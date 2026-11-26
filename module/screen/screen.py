@@ -218,7 +218,8 @@ class Screen(metaclass=SingletonMeta):
                         if future.result() is not None:
                             break
                 finally:
-                    executor.shutdown(wait=False, cancel_futures=True)
+                    # 后续导航会替换 auto.screenshot；等待已开始的识别结束，避免它们读到下一步的局部截图。
+                    executor.shutdown(wait=True, cancel_futures=True)
             else:
                 for name, screen in screen_map.items():
                     find_screen(name, screen)
@@ -240,7 +241,10 @@ class Screen(metaclass=SingletonMeta):
                 self.logger.debug("未识别出任何界面，请确保游戏画面干净")
                 break
 
-        self.logger.error("当前界面：未知")
+        if get_control_backend(cfg) == "adb":
+            self.logger.debug("当前界面：未知")
+        else:
+            self.logger.error("当前界面：未知")
         return False
 
     def find_shortest_path(self, start, end):

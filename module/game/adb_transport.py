@@ -30,6 +30,7 @@ _REMOTE_DIR = "/data/local/tmp"
 _IDLE_SECONDS = 8
 _SHUTDOWN_TIMEOUT_SECONDS = 9
 _START_TIMEOUT_SECONDS = 10
+_WAKE_TIMEOUT_SECONDS = 5
 _BUSY_TIMEOUT_SECONDS = _IDLE_SECONDS + _SHUTDOWN_TIMEOUT_SECONDS
 _BUSY_RETRY_SECONDS = 0.4
 _NETWORK_SERIAL = re.compile(r"(?:\[[^\]]+\]|[^:\s]+):\d{1,5}")
@@ -442,6 +443,10 @@ class AdbService:
         self.port = int(port)
         self.client = ServiceClient(self.port, self.token)
         check_service_hello(self.client.hello)
+        self._keep_awake()
+        self._wake_device()
+
+    def _keep_awake(self):
         if "keep_awake" not in self.client.hello.get("features", ()):
             log.warning("ADB 设备端 JAR 不支持运行保活，请更新或重新构建 JAR")
             return
@@ -453,6 +458,42 @@ class AdbService:
             log.warning(f"未能请求 Android 保持唤醒：{error}")
         else:
             log.info("已请求 Android 在 ADB 会话期间保持唤醒")
+
+    def _wake_device(self):
+        """桌面 ADB 在启动游戏前唤醒已休眠的系统；保活本身只能重置息屏计时。"""
+        from module.automation.input_base import begin_input_dispatch, input_deadline
+        from utils.pause import pause_ctl
+
+        deadline = time.monotonic() + _WAKE_TIMEOUT_SECONDS
+        if input_deadline.get() is not None:
+            deadline = min(deadline, input_deadline.get())
+        requested = False
+        while (remaining := deadline - time.monotonic()) > 0:
+            pause_ctl.check_stop()
+            status, _ = self.request("status", timeout=min(2, remaining))
+            pause_ctl.check_stop()
+            if time.monotonic() >= deadline:
+                break
+            power = status.get("power")
+            interactive = power.get("interactive") if isinstance(power, dict) else None
+            if interactive is True:
+                if requested:
+                    log.info("Android 设备已唤醒")
+                return
+            if not requested:
+                log.info("正在请求唤醒 Android 设备")
+                pause_ctl.check_stop()
+                remaining = deadline - time.monotonic()
+                if remaining <= 0 or not begin_input_dispatch(time.monotonic()):
+                    break
+                # WAKEUP 已亮屏时无副作用，不能用会再次息屏的 POWER 切换键。
+                self.adb.shell("input keyevent KEYCODE_WAKEUP", timeout=min(2, remaining))
+                requested = True
+            elif interactive is not False:
+                log.warning("无法读取 Android 唤醒状态，已发送唤醒指令，继续按游戏画面确认")
+                return
+            time.sleep(min(0.1, max(0, deadline - time.monotonic())))
+        raise AdbError("wake_timeout", tr("未能唤醒 Android 设备，请检查设备电源状态后重试"))
 
     def _launch_process(self, command: str, name: str) -> int:
         started = time.monotonic()
