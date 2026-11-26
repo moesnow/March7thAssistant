@@ -187,7 +187,7 @@ CHOICES = {
     'control_backend': {'local': '本地客户端', 'cloud': '云·星穹铁道', 'adb': '安卓设备'},
     'currencywars_investment_priority': {'strategy': '策略优先', 'catalog': '图鉴优先'},
     'currencywars_rank_difficulty': {'highest': '最高职级', 'current': '当前职级', 'lowest': '最低职级', 'promotion_cap': '晋升点封顶档'},
-    'currencywars_strategy': {'default': '默认', 's2_anaxa_high': '连击那刻夏', 's2_firefly_hanya': '寒鸦流萤（高难）', 's2_serval_hanya': '寒鸦希露瓦（高难）'},
+    'currencywars_strategy': {'default': '默认', 's2_anaxa_high': '连击那刻夏', 's2_anaxa_a820': '那刻夏（A820）', 's2_firefly_hanya': '寒鸦流萤（高难）', 's2_serval_hanya': '寒鸦希露瓦（高难）'},
     'currencywars_type': {'normal': '标准博弈', 'overclock': '超频博弈'},
     'currencywars_unfinished_match': {'restart': '结算后重新开局', 'resume': '继续进度'},
     'divergent_type': {'normal': '常规演算', 'cycle': '周期演算'},

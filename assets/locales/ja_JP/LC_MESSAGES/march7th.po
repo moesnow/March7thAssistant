@@ -12739,3 +12739,7 @@ msgstr "認証設定が反映されませんでした。組織のポリシーで
 #: app/tools/desktop_twin_policy.py:90
 msgid "恢复记录有误，请在 Windows 安全策略中检查账户验证设置。"
 msgstr "復元用の記録が正しくありません。Windows のセキュリティポリシーで認証設定を確認してください。"
+
+#: module/search/setting_text.py:190 tasks/weekly/currency_wars_strategy.py:152
+msgid "那刻夏（A820）"
+msgstr "アナイクス（A820）"
