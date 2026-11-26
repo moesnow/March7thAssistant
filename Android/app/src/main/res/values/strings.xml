@@ -49,8 +49,8 @@
     <string name="open_shizuku">打开 Shizuku</string>
     <string name="authorize">授权</string>
     <string name="check_root">检查 Root</string>
-    <string name="shizuku_manual">Shizuku 使用手册</string>
-    <string name="url_shizuku_manual">https://shizuku.rikka.app/zh-hans/guide/setup/</string>
+    <string name="shizuku_manual">Shizuku 激活教程</string>
+    <string name="url_shizuku_manual">https://m7a.top/docs/#/assets/docs/Shizuku</string>
 
     <!-- 任务阶段。通知栏也用这一组。 -->
     <string name="notification_channel">任务进度</string>
@@ -495,7 +495,7 @@
     <string name="settings_version">版本 %1$s</string>
     <string name="settings_project">项目主页</string>
     <string name="settings_project_summary">github.com/moesnow/March7thAssistant</string>
-    <string name="settings_manual_summary">安装、配对和启动的官方说明</string>
+    <string name="settings_manual_summary">按手机品牌讲解配对、启动和排错</string>
     <string name="settings_telemetry">匿名使用数据收集</string>
     <string name="settings_telemetry_details">查看说明</string>
     <string name="settings_telemetry_description">使用随机安装标识统计活跃度，上报 App 版本、Android 版本和 API 级别、厂商、机型及 CPU 架构。任务统计包含任务类型、权限方式、息屏设置、结果及耗时，故障仅记录固定的阶段、错误码和步骤。\n\n关闭后停止收集和发送，并清除待发送的数据。日志和截图由你主动反馈。</string>
