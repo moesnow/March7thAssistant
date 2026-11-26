@@ -327,7 +327,7 @@
     <string name="guide_grant_pending">服务运行后再授权</string>
     <string name="guide_grant_done">已授权</string>
     <string name="guide_grant_detail">点下面的按钮，在弹出的窗口里选「始终允许」。</string>
-    <string name="guide_grant_hint">没有弹窗？打开 Shizuku 的「已授权应用」，手动打开三月七小助手的开关。</string>
+    <string name="guide_grant_hint">没有弹窗？在 Shizuku 首页点「已授权 X 个应用」，手动打开三月七小助手的开关。</string>
     <string name="guide_root_check_title">检查并授予 Root 权限</string>
     <string name="guide_root_unchecked">点「检查 Root」确认设备是否已授权。</string>
     <string name="guide_root_denied">在 Root 管理应用（如 Magisk）里允许小助手使用 Root，再检查一次。</string>
