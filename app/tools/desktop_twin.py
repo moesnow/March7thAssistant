@@ -23,8 +23,10 @@ from app.common.style_sheet import StyleSheet
 from app.components.notice_bar import NoticeBar
 from app.components.pill_label import PillLabel, pill_colors
 from app.tools.process_audio import ProcessAudioMuter
+from app.tools.desktop_twin_policy import TwinAuthPolicy
 from app.tools.rdp_control import DESKTOP_SIZE, RdpControl
 from module.localization import tr
+from module.logger import log
 from utils.admin import is_user_admin
 from utils.desktop_twin import (
     ScheduledLauncher, check_child_available, check_parent_session, claim_child_session, connection_reserved,
@@ -47,6 +49,8 @@ _STATUS_COLORS = {
     "error": ("#c42b1c", "#ff99a4"),
 }
 _ALTERNATIVE = 2  # 确认窗口第三个按钮的返回值
+# 常见的 NLA / 账户认证失败；网络不通、超时和其他错误不触发系统策略修复。
+_AUTHENTICATION_ERRORS = {519, 2055, 6151}
 # 处于这些状态时窗口尺寸由系统决定，换页后等还原再调整
 _STATE_KEEPS_SIZE = Qt.WindowState.WindowMinimized | Qt.WindowState.WindowMaximized | Qt.WindowState.WindowFullScreen
 # 按钮栏的内边距 (左, 上, 右, 下)：False 为底栏，True 为右侧竖排的侧栏
@@ -283,6 +287,8 @@ class DesktopTwinDialog(QDialog):
         self._logoff_lease = None
         self._error = ""
         self._error_doc_section = None
+        self._auth_policy = TwinAuthPolicy()
+        self._force_guest_available = False
         # 分身的声音由本进程里的 RDP 控件播放，窗口看不见时静音
         self._audio = ProcessAudioMuter(marker=os.path.abspath(os.path.join(paths.cache_dir(), "desktop_twin_muted")))
         self._audio_check_at = 0.0
@@ -404,11 +410,18 @@ class DesktopTwinDialog(QDialog):
         self._error_docs_button = HyperlinkButton(self._errorBar)
         self._error_docs_button.setIcon(FIF.HELP)
         self._errorBar.addWidget(self._error_docs_button)
+        self._fix_auth_button = PushButton(self._errorBar)
+        self._fix_auth_button.setAutoDefault(False)
+        self._fix_auth_button.clicked.connect(self._fix_auth_policy)
+        self._errorBar.addWidget(self._fix_auth_button)
         self._errorBar.closed.connect(self._dismiss_error)
         errorLayout = QVBoxLayout(self._errorHolder)
         errorLayout.setContentsMargins(0, 12, 0, 0)
         errorLayout.addWidget(self._errorBar)
         self._errorHolder.hide()
+        self._restore_policy_button = HyperlinkButton(intro)
+        self._restore_policy_button.setAutoDefault(False)
+        self._restore_policy_button.clicked.connect(self._restore_auth_policy)
 
         titleRow = QHBoxLayout()
         titleRow.setSpacing(10)
@@ -431,6 +444,7 @@ class DesktopTwinDialog(QDialog):
         layout.addSpacing(20)
         layout.addWidget(self._pointsCard)
         layout.addWidget(self._errorHolder)
+        layout.addWidget(self._restore_policy_button, 0, Qt.AlignmentFlag.AlignLeft)
         layout.addStretch(1)
         return intro
 
@@ -754,6 +768,15 @@ class DesktopTwinDialog(QDialog):
         self._docs_button.setToolTip(tr("在浏览器中打开桌面分身的使用文档"))
         self._error_docs_button.setText(tr("查看排查方法"))
         self._error_docs_button.setUrl(self._docs_button.getUrl())
+        self._error_docs_button.setVisible(not self._force_guest_available)
+        self._fix_auth_button.setText(tr("调整并重试"))
+        self._fix_auth_button.setVisible(self._force_guest_available)
+        self._restore_policy_button.setText(tr("恢复原验证设置"))
+        self._restore_policy_button.setVisible(self._auth_policy.restore_available)
+        self._restore_policy_button.setEnabled(
+            self._lease is None and self._session is None and not self._connect_until
+            and not self._quit_until and not self._logoff_until
+        )
 
         closing = self._quit_until is not None or self._logoff_until is not None
         opening = self._launcher is not None or self._launch_until is not None
@@ -815,7 +838,11 @@ class DesktopTwinDialog(QDialog):
         show_error = bool(self._error) and not screen_visible
         error_changed = show_error != (not self._errorHolder.isHidden())
         if show_error:
-            self._errorBar.setContent(self._error)
+            content = self._error
+            if self._force_guest_available:
+                content += "\n" + tr("Windows 当前使用“仅来宾”验证，可能导致分身登录失败。"
+                                      "调整为“经典”后将按实际账户验证，也会影响本机共享资源的访问方式。")
+            self._errorBar.setContent(content)
             self._errorBar.show()
         self._errorHolder.setVisible(show_error)
         if error_changed or show_error:
@@ -827,13 +854,60 @@ class DesktopTwinDialog(QDialog):
 
     def _dismiss_error(self):
         self._error = ""
+        self._force_guest_available = False
         self.retranslateUi()
 
-    def _report(self, error, *, rdp_code=None):
+    def _report(self, error, *, rdp_code=None, authentication_cancelled=False):
         self._error = str(error)
         self._error_doc_section = "rdp-516" if rdp_code == 516 else "常见问题"
+        self._force_guest_available = False
+        if rdp_code in _AUTHENTICATION_ERRORS or authentication_cancelled:
+            try:
+                self._force_guest_available = self._auth_policy.guest_only()
+            except Exception as exc:
+                # 策略读取失败只影响辅助修复，保留原来的连接错误和手动重试入口。
+                log.warning(f"桌面分身：无法检查 ForceGuest 策略：{exc}")
         self._log.appendLog(f"桌面分身：{error}\n")
         self.retranslateUi()
+
+    def _fix_auth_policy(self):
+        if (not self._force_guest_available or self._connect_until or self._connected
+                or self._quit_until or self._logoff_until):
+            return
+        # 提示条已经说明系统范围的影响；点击“调整并重试”即为本次修改的确认。
+        self._force_guest_available = False
+        self.retranslateUi()
+        try:
+            changed = self._auth_policy.use_classic()
+        except PermissionError:
+            self._report(tr("无法调整账户验证设置，请以管理员身份运行小助手；若电脑受组织管理，请联系管理员。"))
+            return
+        except Exception as exc:
+            self._report(tr("无法调整账户验证设置：{error}").format(error=exc))
+            return
+        if changed:
+            log.info("桌面分身：经用户确认，将 ForceGuest 从 1 调整为 0，已保存恢复记录")
+        self._toggle_connection()
+
+    def _restore_auth_policy(self):
+        if self._lease is not None or self._session is not None or self._connect_until or self._quit_until or self._logoff_until:
+            return
+        if self._ask(
+            tr("恢复原验证设置？"),
+            tr("将恢复为“仅来宾”验证方式，桌面分身可能再次无法连接。"),
+            tr("恢复"),
+        ) != "accept":
+            return
+        try:
+            self._auth_policy.restore()
+        except PermissionError:
+            self._report(tr("请以管理员身份运行小助手"))
+            return
+        except Exception as exc:
+            self._report(tr("无法恢复账户验证设置：{error}").format(error=exc))
+            return
+        log.info("桌面分身：经用户确认，恢复 ForceGuest 原设置")
+        self._dismiss_error()
 
     def _ask(self, title, content, accept_text, alternative_text=None):
         """独立的确认窗口：遮罩式 MessageBox 会被 RDP 原生画面挡住。
@@ -884,6 +958,7 @@ class DesktopTwinDialog(QDialog):
         if self._quit_until or self._logoff_until:
             return
         self._error = ""
+        self._force_guest_available = False
         if self._connect_until:
             if self._rdp.logged_on and self._rdp.error is None:
                 self._poll_connection(time.monotonic())
@@ -934,6 +1009,7 @@ class DesktopTwinDialog(QDialog):
     def _cancel_connection(self):
         self._connect_until = None
         self._connected = False
+        self._force_guest_available = False
         try:
             self._rdp.dispose()
         except Exception as error:
@@ -989,8 +1065,11 @@ class DesktopTwinDialog(QDialog):
             error = tr("连接分身超时")
         else:
             return
+        # Windows 可能在控件内部反复提示凭据错误，直到用户取消才回报 RDP 1。
+        # 只在尚未完成登录时检查此分支；工具栏取消连接仍走原来的取消路径。
+        authentication_cancelled = rdp_code == 1 and not self._rdp.logged_on
         self._cancel_connection()
-        self._report(error, rdp_code=rdp_code)
+        self._report(error, rdp_code=rdp_code, authentication_cancelled=authentication_cancelled)
 
     def _contact_assistant(self, payload=None):
         if owned_session_info(self._session) is None:

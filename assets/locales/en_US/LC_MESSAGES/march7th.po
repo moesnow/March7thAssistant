@@ -13136,3 +13136,65 @@ msgstr "Duplicate schedule"
 #: app/content/tasks/assets.py:67
 msgid "缺乏维护，已禁用"
 msgstr "Disabled due to lack of maintenance"
+
+#: app/tools/desktop_twin.py:772
+msgid "调整并重试"
+msgstr "Adjust and retry"
+
+#: app/tools/desktop_twin.py:774
+msgid "恢复原验证设置"
+msgstr "Restore sign-in settings"
+
+#: app/tools/desktop_twin.py:843
+msgid "Windows 当前使用“仅来宾”验证，可能导致分身登录失败。调整为“经典”后将按实际账户验证，也会影响本机共享资源的访问方式。"
+msgstr ""
+"Windows uses Guest-only authentication, which may prevent the twin from "
+"signing in. Switching to Classic authenticates users as themselves and also "
+"affects access to this PC's shared resources."
+
+#: app/tools/desktop_twin.py:883
+msgid "无法调整账户验证设置，请以管理员身份运行小助手；若电脑受组织管理，请联系管理员。"
+msgstr ""
+"Unable to change sign-in settings. Run the assistant as administrator. If "
+"this PC is managed by your organization, contact your administrator."
+
+#: app/tools/desktop_twin.py:886
+msgid "无法调整账户验证设置：{error}"
+msgstr "Unable to change sign-in settings: {error}"
+
+#: app/tools/desktop_twin.py:896
+msgid "恢复原验证设置？"
+msgstr "Restore previous sign-in settings?"
+
+#: app/tools/desktop_twin.py:897
+msgid "将恢复为“仅来宾”验证方式，桌面分身可能再次无法连接。"
+msgstr ""
+"This restores Guest-only authentication. The desktop twin may be unable to "
+"connect again."
+
+#: app/tools/desktop_twin.py:907
+msgid "无法恢复账户验证设置：{error}"
+msgstr "Unable to restore sign-in settings: {error}"
+
+#: app/tools/desktop_twin_policy.py:32
+msgid "账户验证设置正在其他窗口中调整，请稍后重试。"
+msgstr ""
+"Sign-in settings are being changed in another window. Please try again "
+"later."
+
+#: app/tools/desktop_twin_policy.py:67
+msgid "账户验证设置已在其他位置更改，请在 Windows 安全策略中核对。"
+msgstr ""
+"Sign-in settings have changed elsewhere. Check the Windows security policy."
+
+#: app/tools/desktop_twin_policy.py:78
+msgid "账户验证设置未生效，可能受组织策略管理，请联系管理员。"
+msgstr ""
+"The sign-in setting did not take effect. It may be managed by your "
+"organization. Contact your administrator."
+
+#: app/tools/desktop_twin_policy.py:90
+msgid "恢复记录有误，请在 Windows 安全策略中检查账户验证设置。"
+msgstr ""
+"The restore record is invalid. Check the sign-in settings in Windows "
+"security policy."

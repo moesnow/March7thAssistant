@@ -12696,3 +12696,53 @@ msgstr "일정 복제"
 #: app/content/tasks/assets.py:67
 msgid "缺乏维护，已禁用"
 msgstr "유지보수 중단으로 비활성화됨"
+
+#: app/tools/desktop_twin.py:772
+msgid "调整并重试"
+msgstr "변경 후 다시 시도"
+
+#: app/tools/desktop_twin.py:774
+msgid "恢复原验证设置"
+msgstr "이전 인증 설정 복원"
+
+#: app/tools/desktop_twin.py:843
+msgid "Windows 当前使用“仅来宾”验证，可能导致分身登录失败。调整为“经典”后将按实际账户验证，也会影响本机共享资源的访问方式。"
+msgstr ""
+"Windows의 ‘게스트 전용’ 인증으로 인해 분신에 로그인하지 못할 수 있습니다. ‘클래식’으로 변경하면 각 계정으로 인증하며, 이 "
+"PC의 공유 리소스에 접근하는 방식도 변경됩니다."
+
+#: app/tools/desktop_twin.py:883
+msgid "无法调整账户验证设置，请以管理员身份运行小助手；若电脑受组织管理，请联系管理员。"
+msgstr "인증 설정을 변경할 수 없습니다. 도우미를 관리자 권한으로 실행하세요. 조직에서 관리하는 PC라면 관리자에게 문의하세요."
+
+#: app/tools/desktop_twin.py:886
+msgid "无法调整账户验证设置：{error}"
+msgstr "인증 설정을 변경할 수 없습니다: {error}"
+
+#: app/tools/desktop_twin.py:896
+msgid "恢复原验证设置？"
+msgstr "이전 인증 설정으로 복원할까요?"
+
+#: app/tools/desktop_twin.py:897
+msgid "将恢复为“仅来宾”验证方式，桌面分身可能再次无法连接。"
+msgstr "‘게스트 전용’ 인증 방식으로 복원합니다. 데스크톱 분신에 다시 연결하지 못할 수 있습니다."
+
+#: app/tools/desktop_twin.py:907
+msgid "无法恢复账户验证设置：{error}"
+msgstr "인증 설정을 복원할 수 없습니다: {error}"
+
+#: app/tools/desktop_twin_policy.py:32
+msgid "账户验证设置正在其他窗口中调整，请稍后重试。"
+msgstr "다른 창에서 인증 설정을 변경하고 있습니다. 잠시 후 다시 시도하세요."
+
+#: app/tools/desktop_twin_policy.py:67
+msgid "账户验证设置已在其他位置更改，请在 Windows 安全策略中核对。"
+msgstr "다른 곳에서 인증 설정이 변경되었습니다. Windows 보안 정책을 확인하세요."
+
+#: app/tools/desktop_twin_policy.py:78
+msgid "账户验证设置未生效，可能受组织策略管理，请联系管理员。"
+msgstr "인증 설정이 적용되지 않았습니다. 조직의 정책으로 관리되고 있을 수 있으므로 관리자에게 문의하세요."
+
+#: app/tools/desktop_twin_policy.py:90
+msgid "恢复记录有误，请在 Windows 安全策略中检查账户验证设置。"
+msgstr "복원 기록이 올바르지 않습니다. Windows 보안 정책에서 인증 설정을 확인하세요."

@@ -12601,3 +12601,51 @@ msgstr "复制定时计划"
 #: app/content/tasks/assets.py:67
 msgid "缺乏维护，已禁用"
 msgstr "缺乏维护，已禁用"
+
+#: app/tools/desktop_twin.py:772
+msgid "调整并重试"
+msgstr "调整并重试"
+
+#: app/tools/desktop_twin.py:774
+msgid "恢复原验证设置"
+msgstr "恢复原验证设置"
+
+#: app/tools/desktop_twin.py:843
+msgid "Windows 当前使用“仅来宾”验证，可能导致分身登录失败。调整为“经典”后将按实际账户验证，也会影响本机共享资源的访问方式。"
+msgstr "Windows 当前使用“仅来宾”验证，可能导致分身登录失败。调整为“经典”后将按实际账户验证，也会影响本机共享资源的访问方式。"
+
+#: app/tools/desktop_twin.py:883
+msgid "无法调整账户验证设置，请以管理员身份运行小助手；若电脑受组织管理，请联系管理员。"
+msgstr "无法调整账户验证设置，请以管理员身份运行小助手；若电脑受组织管理，请联系管理员。"
+
+#: app/tools/desktop_twin.py:886
+msgid "无法调整账户验证设置：{error}"
+msgstr "无法调整账户验证设置：{error}"
+
+#: app/tools/desktop_twin.py:896
+msgid "恢复原验证设置？"
+msgstr "恢复原验证设置？"
+
+#: app/tools/desktop_twin.py:897
+msgid "将恢复为“仅来宾”验证方式，桌面分身可能再次无法连接。"
+msgstr "将恢复为“仅来宾”验证方式，桌面分身可能再次无法连接。"
+
+#: app/tools/desktop_twin.py:907
+msgid "无法恢复账户验证设置：{error}"
+msgstr "无法恢复账户验证设置：{error}"
+
+#: app/tools/desktop_twin_policy.py:32
+msgid "账户验证设置正在其他窗口中调整，请稍后重试。"
+msgstr "账户验证设置正在其他窗口中调整，请稍后重试。"
+
+#: app/tools/desktop_twin_policy.py:67
+msgid "账户验证设置已在其他位置更改，请在 Windows 安全策略中核对。"
+msgstr "账户验证设置已在其他位置更改，请在 Windows 安全策略中核对。"
+
+#: app/tools/desktop_twin_policy.py:78
+msgid "账户验证设置未生效，可能受组织策略管理，请联系管理员。"
+msgstr "账户验证设置未生效，可能受组织策略管理，请联系管理员。"
+
+#: app/tools/desktop_twin_policy.py:90
+msgid "恢复记录有误，请在 Windows 安全策略中检查账户验证设置。"
+msgstr "恢复记录有误，请在 Windows 安全策略中检查账户验证设置。"
