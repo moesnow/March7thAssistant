@@ -9,6 +9,7 @@ from contextlib import nullcontext
 from module.accounts.runtime import AccountError, load_acc_and_pwd, mark_expired, prepare_launch, verify_ready
 from module.accounts.switching import renew as renew_login
 from utils.registry.gameaccount import gamereg_uid
+from .login_switch import game_login_switch
 from .starrailcontroller import GameResolutionMismatch, StarRailController
 from .adb_check import wait_for_game as wait_for_adb_game
 
@@ -243,6 +244,8 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None, pres
     login_attempts = 0
     credentials_started = False
     login_error = None
+    # 按账号运行、在游戏登录框里切换时才有；重试启动时沿用，记得已经登出过、点过进入游戏。
+    login_switch = game_login_switch(cfg) if backend == "local" else None
 
     def remaining_startup_time():
         return max(0, deadline - time.monotonic())
@@ -305,22 +308,30 @@ def start_game(headless=None, *, optimize_graphics=True, screen_ready=None, pres
             raise GameClientOutdatedError(tr("检测到游戏客户端版本过低，请前往启动器下载最新客户端"))
 
     def check_and_click_enter():
+        # 在游戏登录框里切换账号时，切完之前只处理通用弹窗，不点进入、不点「登录其他账号」。
+        switch_state = login_switch.step() if login_switch is not None else "done"
+        if switch_state == "acted":
+            return False
         # 点击进入
-        if auto.click_element("./assets/images/screen/click_enter.png", "image", 0.9):
+        if switch_state == "done" and auto.click_element("./assets/images/screen/click_enter.png", "image", 0.9):
             return True
         check_local_client_version()
-        if credentials_started or try_local_login():
+        if switch_state == "done" and (credentials_started or try_local_login()):
             return False
         # 游戏热更新，需要确认重启
         auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, take_screenshot=False)
         # 网络异常等问题，需要重新启动
         auto.click_element("./assets/images/zh_CN/base/restart.png", "image", 0.9, take_screenshot=False)
-        # 适配国际服，需要点击“开始游戏”
-        auto.click_element("./assets/images/screen/start_game.png", "image", 0.9, take_screenshot=False)
-        # 出现多账号登录页时，需要点击“登录其他账号”
-        auto.click_element("./assets/images/screen/login_switch_account.png", "image", 0.9, take_screenshot=False)
+        if switch_state == "done":
+            # 适配国际服，以及国服重新登录后，需要点击“开始游戏”
+            auto.click_element("./assets/images/screen/start_game.png", "image", 0.9, take_screenshot=False)
+        if login_switch is None:
+            # 出现多账号登录页时，需要点击“登录其他账号”
+            auto.click_element("./assets/images/screen/login_switch_account.png", "image", 0.9, take_screenshot=False)
         # 适配用户协议和隐私政策更新提示，需要点击“同意”
         auto.click_element("./assets/images/screen/agree_update.png", "image", 0.9, take_screenshot=False)
+        if login_switch is not None:
+            return False
         # 适配B服，需要点击“登录”，强制使用前台截图方式（#901）
         if auto.find_element(("bilibili游戏隐私政策提示", "登录记录"), "text", use_background_screenshot=False):
             if auto.matched_text == "bilibili游戏隐私政策提示":

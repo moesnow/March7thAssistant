@@ -1,6 +1,7 @@
 """本地账号数据、快照、配置和身份隔离。只使用 tmp_path 和假的客户端。"""
 
 from concurrent.futures import ThreadPoolExecutor
+import os
 from pathlib import Path
 import sys
 from types import SimpleNamespace
@@ -8,9 +9,9 @@ from unittest.mock import Mock
 
 import pytest
 
-from module.accounts import layers, runtime, snapshots, switching
+from module.accounts import layers, runtime, snapshots, status, switching
 from module.accounts.differences import differences
-from module.accounts.store import AccountStore, masked_uid, xor_encrypt_to_base64
+from module.accounts.store import AccountStore, masked_uid, switch_method, xor_encrypt_to_base64
 from module.settings_registry import Scope
 from utils import paths
 from utils.registry import gameaccount
@@ -761,3 +762,110 @@ def test_snapshot_is_kept_when_it_should_not_be_renewed(config, store, client, m
         assert not store.path(A, "login.reg").exists()
     else:
         assert store.path(A, "login.reg").read_bytes() == snapshot(A)
+
+
+HINT = "155******08"
+
+
+def test_switch_method_defaults_and_login_hints(tmp_path, config, store):
+    fresh = AccountStore(tmp_path / "fresh", role="ui")
+    assert fresh.index()["switch_methods"] == {"cn": "game"}  # 新安装默认在游戏登录框里切换
+    # 测试版里已经保存过快照的账号继续用快照，并写进账号列表。
+    assert store.index()["switch_methods"] == {"cn": "snapshot"}
+    assert "switch_methods" in store.index_path.read_text(encoding="utf-8")
+    assert switch_method(store.index(), "global") == "snapshot"
+    store.update(A, login_hint="15512345608")
+    assert store.account(A)["login_hint"] == HINT
+    with pytest.raises(ValueError):
+        store.update(A, login_hint="昵称")
+    store.add("100000123", server="cn", login_hint=HINT, name="")
+    row = store.account("100000123")
+    assert row["login_hint"] == HINT and row["name"] == masked_uid("100000123")
+    assert not store.path("100000123", "login.reg").exists()
+    store.set_switch_method("game")
+    rows = {row["uid"]: row for row in status.list_accounts(config, store, logged_uid=A, records=[])}
+    assert rows[B]["status"] == "no_hint" and rows[B]["switch_method"] == "game"
+    assert rows[A]["status"] != "no_hint"
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="需要 Windows 本地账号开关生效")
+def test_in_game_switch_never_touches_the_registry(config, store, client, monkeypatch):
+    store.set_switch_method("game")
+    store.update(A, login_hint="15512345608")
+    store.path(A, "login.reg").unlink()  # 在游戏登录框里切换不需要快照
+    runtime.prepare(config, A, "main", Mock(), store=worker(store))
+    runtime.prepare_launch(config)
+    layer = config._account_layer
+    assert client["calls"] == ["close"] and client["uid"] == B
+    assert layer.switch_method == "game" and layer.login_switch == "logout" and layer.previous_uid == B
+    # 进入游戏前注册表还是上一个账号；登录页属于目标账号，记过期、取密码都不因此拒绝。
+    monkeypatch.setattr("module.config.cfg", config)
+    monkeypatch.setattr(runtime, "AccountStore", lambda: store)
+    assert runtime.load_acc_and_pwd(int(B)) == (None, None)
+    runtime.mark_expired(config)
+    assert store.read(A, "state.yaml")["login_status"] == "expired"
+    waited = []
+
+    def enter_world(seconds):
+        waited.append(seconds)
+        client["uid"] = A  # 进入游戏后注册表才变成目标账号
+
+    monkeypatch.setattr(runtime.time, "sleep", enter_world)
+    runtime.verify_ready(config)
+    assert waited and layer.login_switch == "done"
+    assert store.read(A, "state.yaml")["login_status"] == "ready"
+    assert not switching.renew(config)  # 不导出快照
+    config.save_timestamp("last_run_timestamp")
+    assert store.read(A, "state.yaml")["last_run_timestamp"] and not store.read(B, "state.yaml")
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="需要 Windows 本地账号开关生效")
+def test_in_game_switch_refuses_a_third_account(config, store, client, monkeypatch):
+    store.set_switch_method("game")
+    store.update(A, login_hint=HINT)
+    runtime.prepare(config, A, "main", Mock(), store=worker(store))
+    runtime.prepare_launch(config)
+    client["uid"] = "100000123"
+    monkeypatch.setattr(runtime.time, "sleep", Mock(side_effect=AssertionError("不应等待")))
+    with pytest.raises(runtime.AccountError) as error:
+        runtime.verify_ready(config)
+    assert error.value.reason == "account_mismatch"
+
+
+@pytest.mark.parametrize("case", ["no_hint", "touch"])
+@pytest.mark.skipif(sys.platform != "win32", reason="需要 Windows 本地账号开关生效")
+def test_in_game_switch_checks_before_closing_the_game(config, store, client, monkeypatch, case):
+    store.set_switch_method("game")
+    if case == "touch":
+        store.update(A, login_hint=HINT)
+        monkeypatch.setattr("module.config.platform.get_ui_profile", lambda *_: SimpleNamespace(name="touch_720"))
+    with pytest.raises(runtime.AccountError) as error:
+        runtime.prepare(config, A, "main", Mock(), store=worker(store))
+    assert error.value.reason == ("account_no_login_record" if case == "no_hint" else "account_unsupported")
+    assert client["calls"] == []
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="需要 Windows 本地账号开关生效")
+def test_signed_in_target_keeps_the_game_and_only_guards_the_login_box(config, store, client):
+    store.set_switch_method("game")
+    client["uid"] = A
+    runtime.prepare(config, A, "main", Mock(), store=worker(store))
+    runtime.prepare_launch(config)
+    assert client["calls"] == [] and config._account_layer.login_switch == "keep"
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="需要 Windows 本地账号开关生效")
+def test_old_snapshots_need_resaving_after_switching_back(config, store, client):
+    store.set_switch_method("game")
+    store.set_switch_method("snapshot")
+    since = store.index()["snapshot_since"]
+    with pytest.raises(runtime.AccountError) as error:
+        runtime.prepare(config, A, "main", Mock(), store=worker(store))
+    assert error.value.reason == "stale_snapshot" and client["calls"] == []
+    rows = {row["uid"]: row for row in status.list_accounts(config, store, logged_uid=B, records=[])}
+    assert rows[A]["status"] == "stale" and rows[A]["stale_snapshot"]
+    # 重新保存过的快照照常写回。
+    os.utime(store.path(A, "login.reg"), (since + 1, since + 1))
+    runtime.prepare(config, A, "main", Mock(), store=worker(store))
+    runtime.prepare_launch(config)
+    assert client["uid"] == A

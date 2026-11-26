@@ -26,6 +26,11 @@ REASONS = {
     "game_running": "游戏仍在运行",
     "graphics_pending": "临时画质尚未恢复",
     "registry_failed": "登录信息写入失败",
+    "stale_snapshot": "登录快照需要重新保存",
+    "account_no_login_record": "没有填写登录记录",
+    "account_record_missing": "登录记录里找不到账号",
+    "account_record_ambiguous": "登录记录无法区分",
+    "account_verification": "需要安全验证",
 }
 
 

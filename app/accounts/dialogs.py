@@ -6,6 +6,7 @@ from qfluentwidgets import (BodyLabel, CaptionLabel, LineEdit, MessageBoxBase, P
 
 from app.common.mascot import Mascot, load_mascot
 from app.pages.common import NoticeStrip, is_evernight, secondary, style_primary
+from module.accounts.login_records import mask_hint
 from module.localization import tr
 from .account_list import server_text
 from .avatar import Avatar
@@ -61,12 +62,50 @@ class AccountDialog(MessageBoxBase):
         return notice
 
 
-class AddAccountDialog(AccountDialog):
-    """从游戏当前的登录添加账号。detect() 返回当前登录，没有登录返回 None。"""
+class HintField(QWidget):
+    """登录框里显示的账号：输入框和说明，输入不对时说明换成原因。"""
 
-    def __init__(self, detect, parent):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.edit = LineEdit(self)
+        self.edit.setPlaceholderText(tr("例如 138******66"))
+        self.edit.setMaxLength(64)
+        self.noteLabel = secondary(CaptionLabel(self))
+        self.noteLabel.setWordWrap(True)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+        layout.addWidget(self.edit)
+        layout.addWidget(self.noteLabel)
+        self.edit.textChanged.connect(self.validate)
+        self.validate()
+
+    def validate(self):
+        """返回能否保存。空着不算错，但不能保存。"""
+        note = tr("游戏登录框里这个账号显示的样子，换号时用它找保留的登录记录。也可以填完整手机号或邮箱，只保存遮挡后的样子。")
+        try:
+            masked = mask_hint(self.edit.text())
+            valid = bool(masked)
+            if valid and "*" not in self.edit.text().replace("＊", "*"):
+                note = tr("会保存为「{hint}」，换号时用它在游戏登录框里找保留的登录记录。").format(hint=masked)
+        except ValueError as error:
+            valid, note = False, tr(str(error))
+        self.noteLabel.setText(note)
+        return valid
+
+    def text(self):
+        return self.edit.text().strip()
+
+
+class AddAccountDialog(AccountDialog):
+    """从游戏当前的登录添加账号。detect() 返回当前登录，没有登录返回 None。
+    method_for(server) 返回这个服务器的切换方式；在游戏登录框里切换时要填写登录框里显示的账号。"""
+
+    def __init__(self, detect, parent, method_for=None):
         super().__init__(tr("添加账号"), tr("添加"), parent)
         self._detect = detect
+        self._method_for = method_for
+        self._game = False
         self.login = None
         self.box = QWidget(self.widget)
         self.avatar = Avatar(40, self.box)
@@ -90,15 +129,27 @@ class AddAccountDialog(AccountDialog):
         self.nameEdit.setPlaceholderText(tr("例如：小号"))
         self.nameEdit.setMaxLength(30)
         self.addField(tr("备注名"), self.nameEdit)
+        self.hintLabel = StrongBodyLabel(tr("登录框里显示的账号"), self.widget)
+        self.hintField = HintField(self.widget)
+        self.hintField.edit.textChanged.connect(self._check)
+        self.form.addWidget(self.hintLabel)
+        self.form.addWidget(self.hintField)
         self.addNotice(tr("请先完全进入游戏（看到角色）再添加。否则读到的是上一个账号的 UID，保存的登录和账号会对不上。"))
         self.refresh()
+
+    def _check(self):
+        found = self.login is not None
+        self.yesButton.setEnabled(found and (not self._game or self.hintField.validate()))
 
     def refresh(self):
         self.login = self._detect()
         found = self.login is not None
+        self._game = bool(found and self._method_for and self._method_for(self.login.server) == "game")
+        self.hintLabel.setVisible(self._game)
+        self.hintField.setVisible(self._game)
         self.avatar.setVisible(found)
-        self.yesButton.setEnabled(found)
         self.nameEdit.setEnabled(found)
+        self._check()
         if not found:
             self.uidLabel.setText(tr("没有检测到登录"))
             self.stateLabel.setText(tr("请先启动游戏并登录要添加的账号，进入游戏后点「重新检测」。"))
@@ -106,13 +157,58 @@ class AddAccountDialog(AccountDialog):
         self.avatar.setAccount(self.login.color, self.login.name or self.login.masked)
         server = server_text(self.login.server)
         self.uidLabel.setText(" · ".join(filter(None, (f"UID {self.login.masked}", server))))
-        self.stateLabel.setText(tr("已经保存过，会更新它的登录快照") if self.login.saved else tr("游戏当前登录的账号"))
+        if self._game:
+            saved = tr("已经添加过，会更新它的资料")
+        else:
+            saved = tr("已经保存过，会更新它的登录快照")
+        self.stateLabel.setText(saved if self.login.saved else tr("游戏当前登录的账号"))
         self.yesButton.setText(tr("更新") if self.login.saved else tr("添加"))
         if self.login.saved and not self.nameEdit.text():
             self.nameEdit.setText(self.login.name)
+        if self._game and self.login.hint and not self.hintField.text():
+            self.hintField.edit.setText(self.login.hint)
 
     def name(self):
         return self.nameEdit.text().strip()
+
+    def hint(self):
+        """在游戏登录框里切换时返回填写的账号，否则返回 None。"""
+        return self.hintField.text() if self._game else None
+
+
+class HintDialog(AccountDialog):
+    def __init__(self, name, hint, parent):
+        super().__init__(tr("登录记录中的账号"), tr("保存"), parent, width=440)
+        self.setText(tr("「{name}」在游戏登录框里显示的账号。换号时在保留的登录记录里找这一条，只比较星号两边露出来的部分。")
+                     .format(name=name))
+        self.hintField = HintField(self.widget)
+        self.hintField.edit.setText(hint)
+        self.hintField.edit.textChanged.connect(lambda: self.yesButton.setEnabled(self.hintField.validate()))
+        self.form.addWidget(self.hintField)
+        self.yesButton.setEnabled(self.hintField.validate())
+        self.hintField.edit.setFocus()
+
+    def hint(self):
+        return self.hintField.text()
+
+
+class MethodDialog(AccountDialog):
+    """切换国服账号的切换方式前，说明要做的准备。"""
+
+    def __init__(self, method, parent):
+        if method == "game":
+            super().__init__(tr("改为在游戏登录框里切换？"), tr("改用游戏登录记录"), parent, pose=Mascot.SERIOUS, width=520)
+            lines = (tr("· 换号时关闭游戏，启动后在标题页登出，再在登录框里选目标账号保留的登录记录，不再写回注册表。"),
+                     tr("· 请先在游戏里把每个国服账号登录一次，退出时选「退出并保留登录记录」。"),
+                     tr("· 在每个账号的「登录记录中的账号」填写登录框里显示的账号，例如 138******66。"),
+                     tr("· 已保存的登录快照会留着，但不再使用；国际服账号仍用登录快照。"))
+        else:
+            super().__init__(tr("改用登录快照？"), tr("改用登录快照"), parent, pose=Mascot.SERIOUS, width=520)
+            lines = (tr("· 换号时关闭游戏，写回账号页保存的注册表快照。"),
+                     tr("· 之前保存的国服快照可能已经过期，写回会冲掉游戏保留的登录记录，所以每个国服账号要重新保存后才会切换。"),
+                     tr("· 多个国服账号轮流时，快照可能在几天后让登录过期。"))
+        self.setText("\n".join(lines))
+        self.textLabel.setMinimumWidth(320)
 
 
 class RenameDialog(AccountDialog):
@@ -153,12 +249,14 @@ class CredentialsDialog(AccountDialog):
 
 
 class EnableDialog(AccountDialog):
-    def __init__(self, name, parent):
+    def __init__(self, name, parent, method="snapshot"):
         super().__init__(tr("打开多账号轮流？"), tr("启用"), parent, pose=Mascot.SERIOUS, width=500)
+        switching = (tr("· 轮流运行时按顺序切换：关闭游戏，启动后在登录框里选登录记录，进入游戏后核对 UID。")
+                     if method == "game" else tr("· 轮流运行时按顺序切换：关闭游戏、写回登录、重新启动并核对 UID。"))
         self.setText("\n".join((
             tr("· 「{name}」沿用现在的完成状态，其他账号从空的状态开始。").format(name=name),
             tr("· 现在的任务设置成为共享方案，每个账号可以改用独立方案。"),
-            tr("· 轮流运行时按顺序切换：关闭游戏、写回登录、重新启动并核对 UID。"))))
+            switching)))
         self.textLabel.setMinimumWidth(320)
 
 
@@ -170,7 +268,8 @@ class DeleteDialog(AccountDialog):
 
 
 class ClearLoginDialog(AccountDialog):
-    def __init__(self, parent):
+    def __init__(self, parent, method="snapshot"):
         super().__init__(tr("清除游戏登录信息？"), tr("清除"), parent, pose=Mascot.BOX)
-        self.setText(tr("这会清除该游戏的登录信息和画质、分辨率等设置。确定继续吗？"))
+        self.setText(tr("这会清除该游戏的登录信息、保留的登录记录和画质、分辨率等设置，之后要在游戏里重新登录每个账号。确定继续吗？")
+                     if method == "game" else tr("这会清除该游戏的登录信息和画质、分辨率等设置。确定继续吗？"))
         self.cancelButton.setFocus()

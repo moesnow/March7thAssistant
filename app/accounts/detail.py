@@ -163,6 +163,8 @@ class HeaderCard(SimpleCardWidget):
             self.switchButton.setText(tr("当前登录") if info.logged_in else tr("切换登录"))
             self.switchButton.setEnabled(not info.logged_in and info.login != "missing")
             self.switchButton.setToolTip(tr("把这个账号的登录信息写回游戏，需要先退出游戏"))
+        # 在游戏登录框里切换的账号不写注册表，没开多账号时也就没有「切换登录」。
+        self.switchButton.setVisible(active or info.switch_method != "game")
         self.runButton.setVisible(active)
         self.runButton.setText(tr("只运行此账号"))
         self.runButton.setEnabled(not busy)
@@ -181,6 +183,7 @@ class HeaderCard(SimpleCardWidget):
 
 class LoginGroup(Group):
     saveClicked = Signal()
+    hintClicked = Signal()
     credentialsClicked = Signal()
     clearCredentialsClicked = Signal()
     autoLoginToggled = Signal(bool)
@@ -193,7 +196,8 @@ class LoginGroup(Group):
         self.snapshotRow = self.addRow(Row(self.card))
         self.saveButton = self.snapshotRow.addTrailing(PushButton(self))
         self.saveButton.setIcon(FluentIcon.SYNC)
-        self.saveButton.clicked.connect(self.saveClicked)
+        self.saveButton.clicked.connect(self._primary)
+        self._game = False
         self.credentialsRow = self.addRow(Row(self.card))
         self.credentialsPill = self.credentialsRow.addTrailing(Pill(self))
         self.credentialsButton = self.credentialsRow.addTrailing(LinkButton("", self, size=13))
@@ -210,6 +214,9 @@ class LoginGroup(Group):
         self.hourCombo.setMinimumWidth(150)
         self.hourCombo.currentIndexChanged.connect(self._hourChanged)
         self._saved = False
+
+    def _primary(self):
+        (self.hintClicked if self._game else self.saveClicked).emit()
 
     def _openCredentials(self):
         if not self._saved:
@@ -228,17 +235,32 @@ class LoginGroup(Group):
         now = now or datetime.now()
         evernight = is_evernight()
         self.titleLabel.setText(tr("登录"))
-        if info.login == "missing":
-            text = tr("还没有保存登录。在游戏里登录这个账号，完全进入游戏后点「保存」。")
-        elif info.login == "expired":
-            text = tr("登录已过期。在游戏里重新登录这个账号，完全进入游戏后点「重新保存」。")
+        self._game = info.switch_method == "game"
+        if self._game:
+            if info.login == "missing":
+                text = tr("还没有填写。填游戏登录框里显示的账号，例如 138******66。")
+            elif info.login == "expired":
+                text = tr("这条登录记录已失效。在游戏里重新登录这个账号，退出时选「退出并保留登录记录」。")
+            else:
+                text = tr("换号时在游戏登录框里选「{hint}」这条登录记录").format(hint=info.login_hint)
+            self.snapshotRow.setTexts(tr("登录记录中的账号"), text)
+            self.saveButton.setIcon(FluentIcon.EDIT)
+            self.saveButton.setText(tr("填写") if info.login == "missing" else tr("修改"))
         else:
-            saved = format_when(info.saved_at, now) if info.saved_at else tr("时间未知")
-            text = tr("切换账号时写回游戏的登录信息 · 上次保存于{time}").format(time=saved)
-            if active:
-                text += tr("，运行结束后自动更新")
-        self.snapshotRow.setTexts(tr("游戏登录快照"), text)
-        self.saveButton.setText(tr("保存") if info.login == "missing" else tr("重新保存"))
+            if info.login == "missing":
+                text = tr("还没有保存登录。在游戏里登录这个账号，完全进入游戏后点「保存」。")
+            elif info.login == "expired":
+                text = tr("登录已过期。在游戏里重新登录这个账号，完全进入游戏后点「重新保存」。")
+            elif info.login == "stale":
+                text = tr("这是改用游戏登录记录之前保存的，可能已经过期。在游戏里登录这个账号，完全进入游戏后点「重新保存」。")
+            else:
+                saved = format_when(info.saved_at, now) if info.saved_at else tr("时间未知")
+                text = tr("切换账号时写回游戏的登录信息 · 上次保存于{time}").format(time=saved)
+                if active:
+                    text += tr("，运行结束后自动更新")
+            self.snapshotRow.setTexts(tr("游戏登录快照"), text)
+            self.saveButton.setIcon(FluentIcon.SYNC)
+            self.saveButton.setText(tr("保存") if info.login == "missing" else tr("重新保存"))
         self._saved = info.credentials == "saved"
         self.credentialsRow.setTexts(tr("登录过期时自动填写账号密码"),
                                      tr("使用 Windows 加密保存在本机，仅当前 Windows 用户可以解密"))

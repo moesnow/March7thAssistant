@@ -10,7 +10,7 @@ from utils.registry.gameaccount import server_for_path
 from .reasons import reason_text
 from .runtime import current_login
 from .layers import own_game_path, supported
-from .store import AccountStore, masked_uid
+from .store import AccountStore, masked_uid, switch_method
 
 LABELS = {
     "running": "正在运行",
@@ -20,6 +20,8 @@ LABELS = {
     "failed": "今日失败",
     "expired": "登录过期",
     "missing": "没有登录快照",
+    "no_hint": "未填写登录记录",
+    "stale": "需重新保存快照",
     "path": "需要设置游戏路径",
     "excluded": "不参与轮流",
     "idle": "今日未运行",
@@ -84,9 +86,11 @@ def list_accounts(config, store=None, *, now=None, logged_uid=None, records=None
         for row in index["accounts"]
     }
     active, days = _history(index, hours, records)
+    since = index.get("snapshot_since")
     rows = []
     for row in index["accounts"]:
         uid = row["uid"]
+        method = switch_method(index, row["server"])
         state = store.read(uid, "state.yaml")
         own_path = own_game_path(row, state)
         snap = store.path(uid, "login.reg")
@@ -99,6 +103,8 @@ def list_accounts(config, store=None, *, now=None, logged_uid=None, records=None
                 saved = snap.stat().st_mtime
             except OSError:
                 saved = None
+        # 切回登录快照之前保存的快照，要重新保存才会写回。
+        stale = bool(row["server"] == "cn" and has_snapshot and isinstance(since, (int, float)) and (saved or 0) < since)
         today = game_day(now, hours[uid])
         week = []
         for distance in range(6, -1, -1):
@@ -119,8 +125,12 @@ def list_accounts(config, store=None, *, now=None, logged_uid=None, records=None
         if not status:
             if login == "expired":
                 status = "expired"
-            elif not has_snapshot:
+            elif method == "game" and not row["login_hint"]:
+                status = "no_hint"
+            elif method == "snapshot" and not has_snapshot:
                 status = "missing"
+            elif method == "snapshot" and stale:
+                status = "stale"
             elif (
                 not Path(own_path or global_path or "").is_file()
                 or server_for_path(own_path or global_path) != row["server"]
@@ -143,6 +153,8 @@ def list_accounts(config, store=None, *, now=None, logged_uid=None, records=None
                 "login_status": login,
                 "snapshot_saved_at": saved,
                 "has_snapshot": has_snapshot,
+                "stale_snapshot": stale,
+                "switch_method": method,
                 "password_status": store.password_status(uid),
                 "status": status,
                 "status_text": label,

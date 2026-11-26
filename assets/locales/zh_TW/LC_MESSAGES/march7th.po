@@ -12650,3 +12650,219 @@ msgstr "賬戶驗證設定未生效，可能受組織策略管理，請聯絡管
 #: app/tools/desktop_twin_policy.py:90
 msgid "恢复记录有误，请在 Windows 安全策略中检查账户验证设置。"
 msgstr "恢復記錄有誤，請在 Windows 安全策略中檢查賬戶驗證設定。"
+
+#: app/accounts/detail.py:241
+msgid "还没有填写。填游戏登录框里显示的账号，例如 138******66。"
+msgstr "尚未填寫。請輸入遊戲登入視窗顯示的帳號，例如 138******66。"
+
+#: app/accounts/detail.py:243
+msgid "这条登录记录已失效。在游戏里重新登录这个账号，退出时选「退出并保留登录记录」。"
+msgstr "這筆登入記錄已失效。請在遊戲裡重新登入這個帳號，登出時選「退出並保留登入記錄」。"
+
+#: app/accounts/detail.py:245
+msgid "换号时在游戏登录框里选「{hint}」这条登录记录"
+msgstr "切換帳號時會在遊戲登入視窗選取「{hint}」這筆登入記錄"
+
+#: app/accounts/detail.py:246
+msgid "登录记录中的账号"
+msgstr "登入記錄中的帳號"
+
+#: app/accounts/detail.py:248
+msgid "填写"
+msgstr "填寫"
+
+#: app/accounts/detail.py:255
+msgid "这是改用游戏登录记录之前保存的，可能已经过期。在游戏里登录这个账号，完全进入游戏后点「重新保存」。"
+msgstr "這份快照是在改用遊戲登入記錄前儲存的，可能已過期。請在遊戲裡登入這個帳號，看到角色後點「重新儲存」。"
+
+#: app/accounts/dialogs.py:71
+msgid "例如 138******66"
+msgstr "例如 138******66"
+
+#: app/accounts/dialogs.py:85
+msgid "游戏登录框里这个账号显示的样子，换号时用它找保留的登录记录。也可以填完整手机号或邮箱，只保存遮挡后的样子。"
+msgstr "請照遊戲登入視窗顯示的樣子填寫帳號，切換時會用它尋找保留的登入記錄。也可以輸入完整的手機號碼或電子郵件地址，只會儲存遮蔽後的內容。"
+
+#: app/accounts/dialogs.py:90
+msgid "会保存为「{hint}」，换号时用它在游戏登录框里找保留的登录记录。"
+msgstr "會以「{hint}」儲存，切換帳號時會用它在遊戲登入視窗尋找保留的登入記錄。"
+
+#: app/accounts/dialogs.py:132
+msgid "登录框里显示的账号"
+msgstr "登入框裡顯示的帳號"
+
+#: app/accounts/dialogs.py:161
+msgid "已经添加过，会更新它的资料"
+msgstr "這個帳號已新增過，將會更新它的資料"
+
+#: app/accounts/dialogs.py:182
+msgid "「{name}」在游戏登录框里显示的账号。换号时在保留的登录记录里找这一条，只比较星号两边露出来的部分。"
+msgstr "請填寫「{name}」在遊戲登入視窗顯示的帳號。切換時會在保留的登入記錄裡尋找這一筆，只比對星號兩側看得到的部分。"
+
+#: app/accounts/dialogs.py:200
+msgid "改为在游戏登录框里切换？"
+msgstr "改在遊戲登入視窗切換帳號？"
+
+#: app/accounts/dialogs.py:200
+msgid "改用游戏登录记录"
+msgstr "改用遊戲登入記錄"
+
+#: app/accounts/dialogs.py:201
+msgid "· 换号时关闭游戏，启动后在标题页登出，再在登录框里选目标账号保留的登录记录，不再写回注册表。"
+msgstr "· 切換帳號時會關閉並重新啟動遊戲，在標題頁登出，再到登入視窗選取目標帳號保留的登入記錄，不再寫回登錄檔。"
+
+#: app/accounts/dialogs.py:202
+msgid "· 请先在游戏里把每个国服账号登录一次，退出时选「退出并保留登录记录」。"
+msgstr "· 請先在遊戲裡逐一登入每個國服帳號，登出時選「退出並保留登入記錄」。"
+
+#: app/accounts/dialogs.py:203
+msgid "· 在每个账号的「登录记录中的账号」填写登录框里显示的账号，例如 138******66。"
+msgstr "· 在每個帳號的「登入記錄中的帳號」填入登入視窗顯示的帳號，例如 138******66。"
+
+#: app/accounts/dialogs.py:204
+msgid "· 已保存的登录快照会留着，但不再使用；国际服账号仍用登录快照。"
+msgstr "· 已儲存的登入快照會保留。國服帳號不再使用快照，國際服帳號仍會使用。"
+
+#: app/accounts/dialogs.py:206
+msgid "改用登录快照？"
+msgstr "改用登入快照？"
+
+#: app/accounts/dialogs.py:206
+msgid "改用登录快照"
+msgstr "改用登入快照"
+
+#: app/accounts/dialogs.py:207
+msgid "· 换号时关闭游戏，写回账号页保存的注册表快照。"
+msgstr "· 切換帳號時會關閉遊戲，將帳號頁儲存的快照寫回登錄檔。"
+
+#: app/accounts/dialogs.py:208
+msgid "· 之前保存的国服快照可能已经过期，写回会冲掉游戏保留的登录记录，所以每个国服账号要重新保存后才会切换。"
+msgstr "· 先前儲存的國服快照可能已過期，寫回時會覆蓋遊戲保留的登入記錄。每個國服帳號都要重新儲存快照才能切換。"
+
+#: app/accounts/dialogs.py:209
+msgid "· 多个国服账号轮流时，快照可能在几天后让登录过期。"
+msgstr "· 多個國服帳號使用快照輪流執行時，登入狀態可能在幾天後過期。"
+
+#: app/accounts/dialogs.py:254
+msgid "· 轮流运行时按顺序切换：关闭游戏，启动后在登录框里选登录记录，进入游戏后核对 UID。"
+msgstr "· 輪流執行時會依序切換帳號。先關閉並重新啟動遊戲，在登入視窗選取登入記錄，進入遊戲後核對 UID。"
+
+#: app/accounts/dialogs.py:273
+msgid "这会清除该游戏的登录信息、保留的登录记录和画质、分辨率等设置，之后要在游戏里重新登录每个账号。确定继续吗？"
+msgstr "這會清除該遊戲的登入資訊、保留的登入記錄，以及畫質、解析度等設定。之後需要在遊戲裡重新登入每個帳號。確定要繼續嗎？"
+
+#: app/accounts/empty.py:80
+msgid "记下要轮流的账号，换号时在游戏登录框里选保留的登录记录；添加两个以上就可以按顺序轮流运行。只支持本地客户端。"
+msgstr "請新增要輪流執行的帳號，切換時會在遊戲登入視窗選取保留的登入記錄。新增兩個以上的帳號後即可依序執行。僅支援本機客戶端。"
+
+#: app/accounts/empty.py:88
+msgid "回到这里点「添加账号」，填写登录框里显示的账号"
+msgstr "回到這裡點「新增帳號」，填寫登入視窗顯示的帳號"
+
+#: app/accounts/empty.py:89
+msgid "在游戏里登出，选「退出并保留登录记录」，登录下一个账号再添加一次；全部添加好后打开多账号轮流"
+msgstr "在遊戲裡登出時選「退出並保留登入記錄」，再登入並新增下一個帳號。全部新增後開啟多帳號輪流。"
+
+#: app/accounts/panel.py:75
+msgid "国服账号切换方式"
+msgstr "國服帳號切換方式"
+
+#: app/accounts/panel.py:88
+msgid "游戏登录记录"
+msgstr "遊戲登入記錄"
+
+#: app/accounts/panel.py:89
+msgid "登录快照"
+msgstr "登入快照"
+
+#: app/accounts/panel.py:94
+msgid "换号时在游戏标题页登出，再在登录框里选保留的登录记录，不写注册表。国际服账号仍用登录快照。"
+msgstr "切換帳號時會在遊戲標題頁登出，再到登入視窗選取保留的登入記錄，不會寫入登錄檔。國際服帳號仍使用登入快照。"
+
+#: app/accounts/panel.py:96
+msgid "换号时关闭游戏，写回账号页保存的注册表快照。多个国服账号轮流时，快照可能让登录过期。"
+msgstr "切換帳號時會關閉遊戲，將帳號頁儲存的快照寫回登錄檔。多個國服帳號使用快照輪流執行時，登入狀態可能會過期。"
+
+#: app/accounts/panel.py:113
+msgid "这里记下本地客户端的账号，换号时在游戏登录框里选保留的登录记录。打开上面的开关后，可以按顺序轮流运行。"
+msgstr "這裡會列出本機客戶端的帳號，切換時會在遊戲登入視窗選取保留的登入記錄。開啟上方的開關後，即可依序輪流執行。"
+
+#: app/accounts_interface.py:151 module/accounts/status.py:23
+msgid "未填写登录记录"
+msgstr "未填寫登入記錄"
+
+#: app/accounts_interface.py:153 module/accounts/status.py:24
+msgid "需重新保存快照"
+msgstr "需重新儲存快照"
+
+#: app/accounts_interface.py:253
+msgid "已改为在游戏登录框里切换"
+msgstr "已改為在遊戲登入視窗切換"
+
+#: app/accounts_interface.py:253
+msgid "已改为写回登录快照"
+msgstr "已改為寫回登入快照"
+
+#: app/accounts_interface.py:260
+msgid "账号已添加"
+msgstr "已新增帳號"
+
+#: app/content/account_model.py:366
+msgid "任务正在运行，结束后才能更改切换方式"
+msgstr "任務正在執行，請等任務結束後再變更切換方式"
+
+#: app/content/account_model.py:460
+msgid "已切换查看的账号，按账号运行时会在游戏登录框里切换"
+msgstr "已切換檢視的帳號。執行該帳號的任務時，會在遊戲登入視窗切換。"
+
+#: app/content/account_model.py:461
+msgid "这个账号在游戏登录框里切换，请在游戏里登出后选择它"
+msgstr "這個帳號要在遊戲登入視窗切換。請在遊戲裡登出，再選擇這個帳號。"
+
+#: module/accounts/reasons.py:30
+msgid "没有填写登录记录"
+msgstr "尚未填寫登入記錄中的帳號"
+
+#: module/accounts/reasons.py:29
+msgid "登录快照需要重新保存"
+msgstr "登入快照需要重新儲存"
+
+#: module/accounts/reasons.py:32
+msgid "登录记录无法区分"
+msgstr "無法區分符合的登入記錄"
+
+#: module/accounts/reasons.py:31
+msgid "登录记录里找不到账号"
+msgstr "在登入記錄裡找不到帳號"
+
+#: module/accounts/reasons.py:33
+msgid "需要安全验证"
+msgstr "需要安全驗證"
+
+#: module/accounts/login_records.py:51
+msgid "账号太长，请照游戏登录框里显示的样子填写"
+msgstr "帳號太長，請照遊戲登入視窗顯示的樣子填寫"
+
+#: module/accounts/login_records.py:55
+msgid "请照游戏登录框里显示的样子填写，星号前后都要有字，合起来至少 3 个，例如 138******66"
+msgstr "請照遊戲登入視窗顯示的樣子填寫。星號前後各要有至少 1 個字元，兩側合計至少 3 個，例如 138******66。"
+
+#: module/accounts/login_records.py:65
+msgid "请照游戏登录框里显示的样子填写，例如 138******66"
+msgstr "請照遊戲登入視窗顯示的樣子填寫，例如 138******66"
+
+#: app/content/account_model.py:418
+msgid "未找到已登录的游戏账号"
+msgstr "找不到已登入的遊戲帳號"
+
+#: app/content/account_model.py:420
+msgid "当前登录的 UID 与所选账号不符"
+msgstr "目前登入的 UID 與所選帳號不符"
+
+#: module/accounts/store.py:361
+msgid "未知的账号设置"
+msgstr "未知的帳號設定"
+
+#: module/accounts/store.py:385
+msgid "未知的切换方式"
+msgstr "未知的切換方式"

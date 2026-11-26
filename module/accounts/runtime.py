@@ -8,7 +8,7 @@ from utils.registry.gameaccount import gamereg_uid, server_for_path
 from utils.tasks import HOST_TASKS
 from .errors import AccountError
 from .layers import supported
-from .store import AccountStore, masked_uid
+from .store import AccountStore, masked_uid, switch_method
 
 IGNORED = HOST_TASKS | {
     "adb_check",
@@ -21,6 +21,8 @@ IGNORED = HOST_TASKS | {
     "fight_gui",
 }
 TAKEOVER = {"currencywarstemp", "divergenttemp", "workflow"}
+# 在游戏登录框里换号后，注册表里的 UID 要等进入游戏才变成新账号。
+IN_GAME_VERIFY_SECONDS = 60.0
 _worker = None
 
 
@@ -194,6 +196,7 @@ def prepare(config, selector, task, session, *, store=None):
     if server_for_path(config.game_path) != row["server"]:
         raise AccountError("account_server_mismatch", "请为这个账号设置同一服务器的游戏路径")
     layer = config._account_layer
+    layer.switch_method = switch_method(index, row["server"])
     layer.select_client_at_launch = bool(selector) and task not in TAKEOVER
     actual = gamereg_uid(config.game_path)
     if layer.select_client_at_launch:
@@ -201,7 +204,7 @@ def prepare(config, selector, task, session, *, store=None):
             # 现在只确认能切过去，真正切换在启动游戏前，见 prepare_launch。
             from . import switching
 
-            switching.check(config, row, store, actual)
+            switching.check(config, row, store, actual, method=layer.switch_method)
         return
     if actual is None:
         if task not in TAKEOVER and row["auto_login"] and store.password_status(row["uid"]) == "saved":
@@ -220,12 +223,21 @@ def prepare_launch(config):
         return
     layer = config._account_layer
     actual = gamereg_uid(config.game_path)
-    if layer.select_client_at_launch and str(actual) != layer.uid:
+    if layer.select_client_at_launch and layer.switch_method == "game":
+        # 在游戏登录框里切换：进入游戏前注册表一直是上一个账号，进游戏后由 verify_ready 核对。
+        layer.previous_uid = None if actual is None else str(actual)
+        if str(actual) != layer.uid:
+            from . import switching
+
+            switching.prepare_in_game(config)
+        else:
+            layer.login_switch = "keep"
+    elif layer.select_client_at_launch and str(actual) != layer.uid:
         from . import switching
 
         switching.switch(config)
         actual = gamereg_uid(config.game_path)
-    if actual is not None and str(actual) != layer.uid:
+    if actual is not None and str(actual) != layer.uid and layer.login_switch != "logout":
         raise AccountError("account_mismatch", "启动前的登录账号已变化，已停止本账号任务")
     check_client(config.game_path, require_running=False, switch=layer.select_client_at_launch)
 
@@ -235,6 +247,9 @@ def verify_ready(config, *, timeout=4.0):
     if not isinstance(uid, str):
         return
     layer = config._account_layer
+    switched = layer.login_switch == "logout"
+    if switched:
+        timeout = max(timeout, IN_GAME_VERIFY_SECONDS)
 
     def verify():
         check_client(config.game_path, require_running=True)
@@ -246,12 +261,15 @@ def verify_ready(config, *, timeout=4.0):
         current = gamereg_uid(config.game_path)
         if str(current) == uid:
             break
-        if current is not None or time.monotonic() >= end:
+        pending = current is None or switched and str(current) == layer.previous_uid
+        if not pending or time.monotonic() >= end:
             raise AccountError("account_mismatch", "进入游戏后未能核对指定账号，已停止本账号任务")
         time.sleep(0.2)
     verify()
     layer.verify_identity = verify
     layer.login_prompt_seen = False
+    if layer.login_switch is not None:
+        layer.login_switch = "done"
     if layer.state.get("login_status") != "ready":
         layer.state = layer.store.modify(uid, "state.yaml", lambda data: data.update(login_status="ready"))
 
@@ -261,7 +279,8 @@ def mark_expired(config):
     if isinstance(uid, str):
         layer = config._account_layer
         actual = gamereg_uid(config.game_path)
-        if actual is not None and str(actual) != uid:
+        # 在游戏登录框里换号时，注册表还是上一个账号，登录页属于正在切换的目标账号。
+        if actual is not None and str(actual) != uid and layer.login_switch != "logout":
             raise AccountError("account_mismatch", "登录页所属账号发生变化，已停止本账号任务")
         layer.login_prompt_seen = True
         layer.verify_identity = None
@@ -272,7 +291,8 @@ def load_acc_and_pwd(account_id):
     from module.config import cfg
 
     bound = getattr(cfg, "bound_account", None)
-    if bound and account_id is not None and str(account_id) != bound:
+    switching_in_game = getattr(getattr(cfg, "_account_layer", None), "login_switch", None) == "logout"
+    if bound and account_id is not None and str(account_id) != bound and not switching_in_game:
         raise AccountError("account_mismatch", "登录页所属账号与所选账号不符")
     uid = bound or account_id
     if uid is None:

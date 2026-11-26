@@ -9,7 +9,7 @@ from module.localization import tr
 from module.logger import log
 from .accounts.detail import AccountDetail
 from .accounts.dialogs import (AddAccountDialog, ClearLoginDialog, CredentialsDialog, DeleteDialog, EnableDialog,
-                               RenameDialog)
+                               HintDialog, MethodDialog, RenameDialog)
 from .accounts.empty import EmptyAccounts
 from .accounts.panel import AccountPanel
 from .pages.common import NoticeStrip, is_evernight, refresh_on_restore, secondary, shared, style_primary
@@ -50,6 +50,7 @@ class AccountsInterface(QWidget):
         self.panel = AccountPanel(self)
         self.panel.setFixedWidth(PANEL_WIDTH)
         self.panel.toggled.connect(self.setEnabledState)
+        self.panel.methodChanged.connect(self.changeMethod)
         self.panel.list.setStatusSource(self._rowStatus)
         self.panel.list.accountSelected.connect(self.showAccount)
         self.panel.list.orderChanged.connect(lambda order: self._run(tr("调整顺序"), self.model.reorder, order))
@@ -98,6 +99,7 @@ class AccountsInterface(QWidget):
         header.folderClicked.connect(lambda: self.model.open_folder(self._selected))
         header.deleteClicked.connect(self.deleteAccount)
         login.saveClicked.connect(self.saveLogin)
+        login.hintClicked.connect(self.editHint)
         login.credentialsClicked.connect(self.editCredentials)
         login.clearCredentialsClicked.connect(
             lambda: self._run(tr("账号密码"), self.model.clear_credentials, self._selected))
@@ -145,7 +147,11 @@ class AccountsInterface(QWidget):
             return info.status.kind, info.status.text
         if info.logged_in:
             return "login", tr("当前登录")
-        return ("no_login", tr("没有登录快照")) if info.login == "missing" else ("idle", "")
+        if info.login == "missing":
+            return "no_login", tr("未填写登录记录") if info.switch_method == "game" else tr("没有登录快照")
+        if info.login == "stale":
+            return "no_login", tr("需重新保存快照")
+        return "idle", ""
 
     def refresh(self):
         infos = self.model.accounts()
@@ -155,8 +161,11 @@ class AccountsInterface(QWidget):
         self.notice.setText("\n".join(problems))
         self.notice.setAction(tr("打开账号文件夹"))
         self.notice.setVisible(bool(problems))
+        method = self.model.switch_method()
+        self.panel.setMethod(method, enabled=not self.model.readonly() and not self.model.busy())
         self.panel.setState(enabled=self.model.enabled(), reason=reason)
-        self.empty.textLabel.setText(reason or self.empty.introduction())
+        self.empty.setMethod(method)
+        self.empty.textLabel.setText(reason or self.empty.introduction(method))
         for step in self.empty.steps:
             step.setVisible(not reason)
         readonly = self.model.readonly()
@@ -229,28 +238,39 @@ class AccountsInterface(QWidget):
             self.refresh()
             InfoBar.warning(tr("还没有保存账号"), tr("先添加至少一个账号，再打开多账号轮流"), duration=4000, parent=self.window_)
             return
-        if on and not EnableDialog(self.model.inherit_name(), self.window_).exec():
+        if on and not EnableDialog(self.model.inherit_name(), self.window_, self.model.switch_method()).exec():
             self.refresh()
             return
         self._run(tr("多账号轮流运行"), self.model.set_enabled, on)
 
-    def addAccount(self):
-        dialog = AddAccountDialog(lambda: self.model.login(), self.window_)
-        if dialog.exec() and dialog.login is not None and \
-                self._run(tr("添加账号"), self.model.add_current, dialog.name(), "", dialog.login.uid, success=tr("登录已保存")):
+    def changeMethod(self, method):
+        if method == self.model.switch_method():
+            return
+        if not MethodDialog(method, self.window_).exec():
+            self.refresh()
+            return
+        self._run(tr("国服账号切换方式"), self.model.set_switch_method, method,
+                  success=tr("已改为在游戏登录框里切换") if method == "game" else tr("已改为写回登录快照"))
+
+    def _add(self, dialog, path):
+        if not dialog.exec() or dialog.login is None:
+            return
+        hint = dialog.hint()
+        if self._run(tr("添加账号"), self.model.add_current, dialog.name(), path, dialog.login.uid, hint,
+                     success=tr("账号已添加") if hint is not None else tr("登录已保存")):
             self.showAccount(dialog.login.uid)
+
+    def addAccount(self):
+        self._add(AddAccountDialog(lambda: self.model.login(), self.window_, self.model.method_for), "")
 
     def addFromClient(self):
         path, _ = QFileDialog.getOpenFileName(self.window_, tr("选择游戏客户端"), "", "StarRail.exe (StarRail.exe)")
         if not path:
             return
-        dialog = AddAccountDialog(lambda: self.model.login(path), self.window_)
-        if dialog.exec() and dialog.login is not None and \
-                self._run(tr("添加账号"), self.model.add_current, dialog.name(), path, dialog.login.uid, success=tr("登录已保存")):
-            self.showAccount(dialog.login.uid)
+        self._add(AddAccountDialog(lambda: self.model.login(path), self.window_, self.model.method_for), path)
 
     def clearGameLogin(self):
-        if ClearLoginDialog(self.window_).exec():
+        if ClearLoginDialog(self.window_, self.model.switch_method()).exec():
             self._run(tr("清除游戏登录信息"), self.model.clear_game_login, success=tr("游戏登录信息和设置已清除"))
 
     def rename(self):
@@ -278,6 +298,14 @@ class AccountsInterface(QWidget):
         info = self.info()
         if info is not None:
             self._run(tr("游戏登录快照"), self.model.save_login, info.uid, success=tr("登录已保存"))
+
+    def editHint(self):
+        info = self.info()
+        if info is None:
+            return
+        dialog = HintDialog(info.name, info.login_hint, self.window_)
+        if dialog.exec():
+            self._run(tr("登录记录中的账号"), self.model.set_login_hint, info.uid, dialog.hint(), success=tr("已保存"))
 
     def editCredentials(self):
         info = self.info()

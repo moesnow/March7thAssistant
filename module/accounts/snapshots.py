@@ -153,6 +153,10 @@ def _load(store, uid, game_path):
     except FileNotFoundError:
         raise SnapshotError("missing_snapshot", "账号没有登录快照") from None
     server = snapshot_server(data, uid)
+    since = store._read_index()[0].get("snapshot_since")
+    if server == "cn" and isinstance(since, (int, float)) and store.path(uid, "login.reg").stat().st_mtime < since:
+        # 国服用过游戏内切换后，旧快照里的登录记录可能已经过期，写回会冲掉游戏保留的登录记录。
+        raise SnapshotError("stale_snapshot", "切回登录快照之前保存的快照需要重新保存")
     resolved = registry.get_reg_path(game_path)
     expected = registry.reg_path_cn if server == "cn" else registry.reg_path_oversea
     if not resolved or resolved.casefold() != expected.casefold():

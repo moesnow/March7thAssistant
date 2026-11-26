@@ -12746,3 +12746,246 @@ msgstr "인증 설정이 적용되지 않았습니다. 조직의 정책으로 �
 #: app/tools/desktop_twin_policy.py:90
 msgid "恢复记录有误，请在 Windows 安全策略中检查账户验证设置。"
 msgstr "복원 기록이 올바르지 않습니다. Windows 보안 정책에서 인증 설정을 확인하세요."
+
+#: app/accounts/detail.py:241
+msgid "还没有填写。填游戏登录框里显示的账号，例如 138******66。"
+msgstr "아직 입력하지 않았습니다. 게임 로그인 창에 표시된 계정을 입력하세요. 예: 138******66"
+
+#: app/accounts/detail.py:243
+msgid "这条登录记录已失效。在游戏里重新登录这个账号，退出时选「退出并保留登录记录」。"
+msgstr ""
+"이 로그인 기록이 만료되었습니다. 게임에서 이 계정으로 다시 로그인한 뒤 로그아웃할 때 ‘로그아웃하고 로그인 기록 유지’를 선택하세요."
+
+#: app/accounts/detail.py:245
+msgid "换号时在游戏登录框里选「{hint}」这条登录记录"
+msgstr "계정을 전환할 때 게임 로그인 창에서 ‘{hint}’ 로그인 기록을 선택합니다."
+
+#: app/accounts/detail.py:246
+msgid "登录记录中的账号"
+msgstr "로그인 기록에 표시된 계정"
+
+#: app/accounts/detail.py:248
+msgid "填写"
+msgstr "입력"
+
+#: app/accounts/detail.py:255
+msgid "这是改用游戏登录记录之前保存的，可能已经过期。在游戏里登录这个账号，完全进入游戏后点「重新保存」。"
+msgstr ""
+"게임 로그인 기록으로 전환하기 전에 저장한 스냅샷이라 만료되었을 수 있습니다. 게임에서 이 계정으로 로그인하고 캐릭터가 보이면 ‘다시 "
+"저장’을 누르세요."
+
+#: app/accounts/dialogs.py:71
+msgid "例如 138******66"
+msgstr "예: 138******66"
+
+#: app/accounts/dialogs.py:85
+msgid "游戏登录框里这个账号显示的样子，换号时用它找保留的登录记录。也可以填完整手机号或邮箱，只保存遮挡后的样子。"
+msgstr ""
+"게임 로그인 창에 표시된 대로 계정을 입력하세요. 계정을 전환할 때 이 정보로 저장된 로그인 기록을 찾습니다. 휴대폰 번호나 이메일 "
+"주소를 전부 입력해도 일부를 가린 형태로만 저장합니다."
+
+#: app/accounts/dialogs.py:90
+msgid "会保存为「{hint}」，换号时用它在游戏登录框里找保留的登录记录。"
+msgstr "‘{hint}’로 저장합니다. 계정을 전환할 때 게임 로그인 창에서 이 표시와 일치하는 로그인 기록을 찾습니다."
+
+#: app/accounts/dialogs.py:132
+msgid "登录框里显示的账号"
+msgstr "로그인 창에 표시된 계정"
+
+#: app/accounts/dialogs.py:161
+msgid "已经添加过，会更新它的资料"
+msgstr "이미 추가한 계정입니다. 계정 정보를 갱신합니다."
+
+#: app/accounts/dialogs.py:182
+msgid "「{name}」在游戏登录框里显示的账号。换号时在保留的登录记录里找这一条，只比较星号两边露出来的部分。"
+msgstr ""
+"게임 로그인 창에 표시되는 ‘{name}’의 계정을 입력하세요. 저장된 로그인 기록에서 찾을 때는 별표 앞뒤에 보이는 부분만 비교합니다."
+
+#: app/accounts/dialogs.py:200
+msgid "改为在游戏登录框里切换？"
+msgstr "게임 로그인 창에서 계정을 전환할까요?"
+
+#: app/accounts/dialogs.py:200
+msgid "改用游戏登录记录"
+msgstr "게임 로그인 기록 사용"
+
+#: app/accounts/dialogs.py:201
+msgid "· 换号时关闭游戏，启动后在标题页登出，再在登录框里选目标账号保留的登录记录，不再写回注册表。"
+msgstr ""
+"· 계정을 전환할 때 게임을 종료했다가 다시 실행하고 타이틀 화면에서 로그아웃한 뒤 로그인 창에서 대상 계정의 저장된 로그인 기록을 "
+"선택합니다. 레지스트리에 다시 쓰지 않습니다."
+
+#: app/accounts/dialogs.py:202
+msgid "· 请先在游戏里把每个国服账号登录一次，退出时选「退出并保留登录记录」。"
+msgstr "· 먼저 게임에서 중국 서버 계정마다 한 번씩 로그인하고, 로그아웃할 때 ‘로그아웃하고 로그인 기록 유지’를 선택하세요."
+
+#: app/accounts/dialogs.py:203
+msgid "· 在每个账号的「登录记录中的账号」填写登录框里显示的账号，例如 138******66。"
+msgstr "· 각 계정의 ‘로그인 기록에 표시된 계정’에 로그인 창에 표시된 대로 입력하세요. 예: 138******66"
+
+#: app/accounts/dialogs.py:204
+msgid "· 已保存的登录快照会留着，但不再使用；国际服账号仍用登录快照。"
+msgstr ""
+"· 기존 로그인 스냅샷은 보관합니다. 중국 서버 계정은 스냅샷을 더 이상 사용하지 않으며 글로벌 서버 계정은 계속 사용합니다."
+
+#: app/accounts/dialogs.py:206
+msgid "改用登录快照？"
+msgstr "로그인 스냅샷으로 전환할까요?"
+
+#: app/accounts/dialogs.py:206
+msgid "改用登录快照"
+msgstr "로그인 스냅샷 사용"
+
+#: app/accounts/dialogs.py:207
+msgid "· 换号时关闭游戏，写回账号页保存的注册表快照。"
+msgstr "· 계정을 전환할 때 게임을 종료하고 계정 페이지에서 저장한 스냅샷을 레지스트리에 복원합니다."
+
+#: app/accounts/dialogs.py:208
+msgid "· 之前保存的国服快照可能已经过期，写回会冲掉游戏保留的登录记录，所以每个国服账号要重新保存后才会切换。"
+msgstr ""
+"· 이전에 저장한 중국 서버 스냅샷은 만료되었을 수 있으며, 복원하면 게임에 남아 있는 로그인 기록을 덮어씁니다. 각 중국 서버 계정의 "
+"스냅샷을 다시 저장해야 해당 계정으로 전환할 수 있습니다."
+
+#: app/accounts/dialogs.py:209
+msgid "· 多个国服账号轮流时，快照可能在几天后让登录过期。"
+msgstr "· 스냅샷으로 중국 서버 계정 여러 개를 순차 실행하면 며칠 뒤 로그인이 만료될 수 있습니다."
+
+#: app/accounts/dialogs.py:254
+msgid "· 轮流运行时按顺序切换：关闭游戏，启动后在登录框里选登录记录，进入游戏后核对 UID。"
+msgstr ""
+"· 순차 실행은 계정을 차례로 전환합니다. 게임을 종료했다가 다시 실행하고 로그인 창에서 기록을 선택한 뒤 게임에 들어가 UID를 "
+"확인합니다."
+
+#: app/accounts/dialogs.py:273
+msgid "这会清除该游戏的登录信息、保留的登录记录和画质、分辨率等设置，之后要在游戏里重新登录每个账号。确定继续吗？"
+msgstr ""
+"이 게임의 로그인 정보와 저장된 로그인 기록, 그래픽 품질과 해상도 등의 설정이 지워집니다. 이후 게임에서 각 계정으로 다시 로그인해야 "
+"합니다. 계속하시겠습니까?"
+
+#: app/accounts/empty.py:80
+msgid "记下要轮流的账号，换号时在游戏登录框里选保留的登录记录；添加两个以上就可以按顺序轮流运行。只支持本地客户端。"
+msgstr ""
+"순차 실행할 계정을 추가하세요. 계정을 전환할 때 게임 로그인 창에서 저장된 로그인 기록을 선택합니다. 두 개 이상 추가하면 차례로 "
+"실행할 수 있습니다. 로컬 클라이언트에서만 지원합니다."
+
+#: app/accounts/empty.py:88
+msgid "回到这里点「添加账号」，填写登录框里显示的账号"
+msgstr "여기로 돌아와 ‘계정 추가’를 누르고 로그인 창에 표시된 계정을 입력하세요."
+
+#: app/accounts/empty.py:89
+msgid "在游戏里登出，选「退出并保留登录记录」，登录下一个账号再添加一次；全部添加好后打开多账号轮流"
+msgstr ""
+"게임에서 ‘로그아웃하고 로그인 기록 유지’를 선택한 뒤 다음 계정으로 로그인해 같은 방법으로 추가하세요. 모두 추가하면 계정 순차 실행을"
+" 켜세요."
+
+#: app/accounts/panel.py:75
+msgid "国服账号切换方式"
+msgstr "중국 서버 계정 전환 방식"
+
+#: app/accounts/panel.py:88
+msgid "游戏登录记录"
+msgstr "게임 로그인 기록"
+
+#: app/accounts/panel.py:89
+msgid "登录快照"
+msgstr "로그인 스냅샷"
+
+#: app/accounts/panel.py:94
+msgid "换号时在游戏标题页登出，再在登录框里选保留的登录记录，不写注册表。国际服账号仍用登录快照。"
+msgstr ""
+"계정을 전환할 때 게임 타이틀 화면에서 로그아웃한 뒤 로그인 창에서 저장된 로그인 기록을 선택합니다. 레지스트리에는 쓰지 않습니다. "
+"글로벌 서버 계정은 계속 로그인 스냅샷을 사용합니다."
+
+#: app/accounts/panel.py:96
+msgid "换号时关闭游戏，写回账号页保存的注册表快照。多个国服账号轮流时，快照可能让登录过期。"
+msgstr ""
+"계정을 전환할 때 게임을 종료하고 계정 페이지에서 저장한 스냅샷을 레지스트리에 복원합니다. 중국 서버 계정 여러 개를 이 방식으로 순차 "
+"실행하면 로그인이 만료될 수 있습니다."
+
+#: app/accounts/panel.py:113
+msgid "这里记下本地客户端的账号，换号时在游戏登录框里选保留的登录记录。打开上面的开关后，可以按顺序轮流运行。"
+msgstr ""
+"여기에는 로컬 클라이언트의 계정이 표시됩니다. 계정을 전환할 때 게임 로그인 창에서 저장된 로그인 기록을 선택합니다. 위의 스위치를 켜면"
+" 목록 순서대로 실행합니다."
+
+#: app/accounts_interface.py:151 module/accounts/status.py:23
+msgid "未填写登录记录"
+msgstr "로그인 기록 미입력"
+
+#: app/accounts_interface.py:153 module/accounts/status.py:24
+msgid "需重新保存快照"
+msgstr "스냅샷 다시 저장 필요"
+
+#: app/accounts_interface.py:253
+msgid "已改为在游戏登录框里切换"
+msgstr "게임 로그인 창에서 계정을 전환하도록 변경했습니다"
+
+#: app/accounts_interface.py:253
+msgid "已改为写回登录快照"
+msgstr "로그인 스냅샷을 복원하도록 변경했습니다"
+
+#: app/accounts_interface.py:260
+msgid "账号已添加"
+msgstr "계정을 추가했습니다"
+
+#: app/content/account_model.py:366
+msgid "任务正在运行，结束后才能更改切换方式"
+msgstr "작업이 실행 중입니다. 작업이 끝난 뒤에 전환 방식을 변경하세요."
+
+#: app/content/account_model.py:460
+msgid "已切换查看的账号，按账号运行时会在游戏登录框里切换"
+msgstr "이제 이 계정의 정보가 표시됩니다. 이 계정의 작업을 실행할 때 게임 로그인 창에서 전환합니다."
+
+#: app/content/account_model.py:461
+msgid "这个账号在游戏登录框里切换，请在游戏里登出后选择它"
+msgstr "이 계정은 게임 로그인 창에서 전환합니다. 게임에서 로그아웃한 뒤 이 계정을 선택하세요."
+
+#: module/accounts/reasons.py:30
+msgid "没有填写登录记录"
+msgstr "로그인 기록에 표시된 계정을 입력하지 않았습니다"
+
+#: module/accounts/reasons.py:29
+msgid "登录快照需要重新保存"
+msgstr "로그인 스냅샷을 다시 저장해야 합니다"
+
+#: module/accounts/reasons.py:32
+msgid "登录记录无法区分"
+msgstr "일치하는 로그인 기록이 여러 개입니다"
+
+#: module/accounts/reasons.py:31
+msgid "登录记录里找不到账号"
+msgstr "로그인 기록에서 계정을 찾을 수 없습니다"
+
+#: module/accounts/reasons.py:33
+msgid "需要安全验证"
+msgstr "보안 인증이 필요합니다"
+
+#: module/accounts/login_records.py:51
+msgid "账号太长，请照游戏登录框里显示的样子填写"
+msgstr "입력한 계정이 너무 깁니다. 게임 로그인 창에 표시된 대로 입력하세요."
+
+#: module/accounts/login_records.py:55
+msgid "请照游戏登录框里显示的样子填写，星号前后都要有字，合起来至少 3 个，例如 138******66"
+msgstr ""
+"게임 로그인 창에 표시된 대로 입력하세요. 별표 앞뒤에 각각 한 글자 이상 있어야 하며, 보이는 글자는 모두 합해 3자 이상이어야 "
+"합니다. 예: 138******66"
+
+#: module/accounts/login_records.py:65
+msgid "请照游戏登录框里显示的样子填写，例如 138******66"
+msgstr "게임 로그인 창에 표시된 대로 입력하세요. 예: 138******66"
+
+#: app/content/account_model.py:418
+msgid "未找到已登录的游戏账号"
+msgstr "로그인된 게임 계정을 찾을 수 없습니다"
+
+#: app/content/account_model.py:420
+msgid "当前登录的 UID 与所选账号不符"
+msgstr "현재 로그인한 UID가 선택한 계정과 일치하지 않습니다"
+
+#: module/accounts/store.py:361
+msgid "未知的账号设置"
+msgstr "알 수 없는 계정 설정입니다"
+
+#: module/accounts/store.py:385
+msgid "未知的切换方式"
+msgstr "알 수 없는 계정 전환 방식입니다"

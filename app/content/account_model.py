@@ -12,7 +12,7 @@ from module.accounts import layers, snapshots, status
 from module.accounts.differences import differences
 from module.accounts.reasons import reason_text
 from module.accounts.runtime import running_clients
-from module.accounts.store import AccountStore, masked_uid
+from module.accounts.store import AccountStore, masked_uid, switch_method
 from module.config import cfg
 from module.connection_values import configured_backend
 from module.localization import tr
@@ -56,6 +56,8 @@ class AccountInfo:
     status: Status
     week: tuple = ()
     color: int = 0
+    switch_method: str = "snapshot"
+    login_hint: str = ""
 
 
 @dataclass(frozen=True)
@@ -77,10 +79,22 @@ class Login:
     name: str
     saved: bool
     color: int
+    hint: str = ""
+
+
+def _login_state(row):
+    """登录这一栏的状态：missing 还没保存快照或没填登录记录，stale 快照要重新保存。"""
+    expired = row["login_status"] == "expired"
+    if row.get("switch_method") == "game":
+        return "missing" if not row.get("login_hint") else "expired" if expired else "ok"
+    if not row["has_snapshot"]:
+        return "missing"
+    return "expired" if expired else "stale" if row.get("stale_snapshot") else "ok"
 
 
 def _info(row):
-    kinds = {"success": "done", "missing": "no_login", "path": "need_path", "excluded": "off"}
+    kinds = {"success": "done", "missing": "no_login", "no_hint": "no_login", "stale": "no_login", "path": "need_path",
+             "excluded": "off"}
     try:
         saved = datetime.fromtimestamp(row["snapshot_saved_at"]) if row["snapshot_saved_at"] else None
     except (TypeError, ValueError, OverflowError, OSError):
@@ -89,10 +103,9 @@ def _info(row):
     return AccountInfo(row["uid"], row["masked_uid"], row["name"], row["server"], row["rotate"], row["plan"],
                        row["game_path"], row["refresh_hour"], row["auto_login"],
                        {"saved": "saved", "resave": "unreadable"}.get(row["password_status"], "none"),
-                       "missing" if not row["has_snapshot"] else "expired" if row["login_status"] == "expired" else "ok",
-                       saved, row["is_logged_in"],
+                       _login_state(row), saved, row["is_logged_in"],
                        Status(kinds.get(row["status"], row["status"]), row["status_text"], row.get("reason") or ""),
-                       week, row["color"])
+                       week, row["color"], row.get("switch_method", "snapshot"), row.get("login_hint", ""))
 
 
 class AccountModel(QObject):
@@ -259,7 +272,14 @@ class AccountModel(QObject):
         row = next((r for r in rows if r["uid"] == uid), {})
         colors = [r["color"] for r in rows]
         return Login(uid, masked_uid(uid), gameaccount.server_for_path(path) or "cn", row.get("name", ""),
-                     bool(row), row.get("color", min(range(6), key=colors.count)))
+                     bool(row), row.get("color", min(range(6), key=colors.count)), row.get("login_hint", ""))
+
+    def switch_method(self):
+        """国服账号的切换方式：game 在游戏登录框里选登录记录，snapshot 写回登录快照。"""
+        return switch_method(self._index, "cn")
+
+    def method_for(self, server):
+        return switch_method(self._index, server)
 
     def card(self):
         from app.accounts.account_list import server_text
@@ -341,6 +361,14 @@ class AccountModel(QObject):
     def reorder(self, order):
         return self._change(lambda: self.store.reorder(order))
 
+    def set_switch_method(self, method):
+        if self.busy():
+            return Outcome(False, tr("任务正在运行，结束后才能更改切换方式"))
+        return self._change(lambda: self.store.set_switch_method(method))
+
+    def set_login_hint(self, uid, hint):
+        return self._change(lambda: self.store.update(uid, login_hint=hint))
+
     def set_rotate(self, uid, on):
         return self._change(lambda: self.store.update(uid, rotate=bool(on)))
 
@@ -379,7 +407,24 @@ class AccountModel(QObject):
             return Outcome(False, tr("此账号正在运行或等待轮流，暂时无法删除"))
         return self._change(lambda: self.store.delete(uid))
 
-    def add_current(self, name, path="", expected_uid=None):
+    def add_current(self, name, path="", expected_uid=None, hint=None):
+        """hint 不是 None 时按在游戏登录框里切换的方式添加：只记下账号和登录记录，不保存快照。"""
+        if hint is not None:
+            target = path or self.config.shared_value("game_path", "")
+
+            def add():
+                value = gameaccount.gamereg_uid(target)
+                if value is None:
+                    raise ValueError("未找到已登录的游戏账号")
+                if expected_uid is not None and str(value) != str(expected_uid):
+                    raise ValueError("当前登录的 UID 与所选账号不符")
+                fields = {"server": gameaccount.server_for_path(target) or "cn", "login_hint": hint, "name": name}
+                if path:
+                    fields["game_path"] = path
+                self.store.add(str(value), **fields)
+                return Outcome(True, tr("账号已添加"))
+            return self._background(add)
+
         def save():
             uid = snapshots.save_current(self.store, path or None, expected_uid=expected_uid)
             if name:
@@ -409,6 +454,11 @@ class AccountModel(QObject):
             result = self.set_current(uid)
             if not result.ok:
                 return result
+        info = next((a for a in self._infos if a.uid == uid), None)
+        if info is not None and info.switch_method == "game":
+            # 不写注册表：按账号运行时在游戏登录框里切换。
+            return (Outcome(True, tr("已切换查看的账号，按账号运行时会在游戏登录框里切换")) if active else
+                    Outcome(False, tr("这个账号在游戏登录框里切换，请在游戏里登出后选择它")))
         try:
             in_use = self.busy() or bool(running_clients())
         except (OSError, RuntimeError) as error:

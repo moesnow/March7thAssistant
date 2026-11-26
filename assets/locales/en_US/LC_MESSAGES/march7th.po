@@ -13198,3 +13198,283 @@ msgid "恢复记录有误，请在 Windows 安全策略中检查账户验证设�
 msgstr ""
 "The restore record is invalid. Check the sign-in settings in Windows "
 "security policy."
+
+#: app/accounts/detail.py:241
+msgid "还没有填写。填游戏登录框里显示的账号，例如 138******66。"
+msgstr ""
+"No account entered yet. Enter it as shown on the game’s sign-in screen, e.g."
+" 138******66."
+
+#: app/accounts/detail.py:243
+msgid "这条登录记录已失效。在游戏里重新登录这个账号，退出时选「退出并保留登录记录」。"
+msgstr ""
+"This saved login has expired. Sign in to this account in the game again, "
+"then choose “Sign out and keep saved logins”."
+
+#: app/accounts/detail.py:245
+msgid "换号时在游戏登录框里选「{hint}」这条登录记录"
+msgstr "Selects the saved login “{hint}” when switching accounts in the game."
+
+#: app/accounts/detail.py:246
+msgid "登录记录中的账号"
+msgstr "Account in saved logins"
+
+#: app/accounts/detail.py:248
+msgid "填写"
+msgstr "Enter"
+
+#: app/accounts/detail.py:255
+msgid "这是改用游戏登录记录之前保存的，可能已经过期。在游戏里登录这个账号，完全进入游戏后点「重新保存」。"
+msgstr ""
+"This snapshot was saved before you switched to saved game logins and may "
+"have expired. Sign in to this account and select Save again once your "
+"character appears."
+
+#: app/accounts/dialogs.py:71
+msgid "例如 138******66"
+msgstr "e.g. 138******66"
+
+#: app/accounts/dialogs.py:85
+msgid "游戏登录框里这个账号显示的样子，换号时用它找保留的登录记录。也可以填完整手机号或邮箱，只保存遮挡后的样子。"
+msgstr ""
+"Enter the account as shown on the game’s sign-in screen so the assistant can"
+" find its saved login. You can also enter a full phone number or email "
+"address. Only the masked version is saved."
+
+#: app/accounts/dialogs.py:90
+msgid "会保存为「{hint}」，换号时用它在游戏登录框里找保留的登录记录。"
+msgstr ""
+"The assistant will save “{hint}” and use it to find this account on the "
+"game’s sign-in screen."
+
+#: app/accounts/dialogs.py:132
+msgid "登录框里显示的账号"
+msgstr "Account shown at sign-in"
+
+#: app/accounts/dialogs.py:161
+msgid "已经添加过，会更新它的资料"
+msgstr "This account has already been added. Its details will be updated."
+
+#: app/accounts/dialogs.py:182
+msgid "「{name}」在游戏登录框里显示的账号。换号时在保留的登录记录里找这一条，只比较星号两边露出来的部分。"
+msgstr ""
+"Enter the account shown for “{name}” on the game’s sign-in screen. When "
+"looking through saved logins, the assistant matches only the visible parts "
+"on either side of the asterisks."
+
+#: app/accounts/dialogs.py:200
+msgid "改为在游戏登录框里切换？"
+msgstr "Switch accounts on the game’s sign-in screen?"
+
+#: app/accounts/dialogs.py:200
+msgid "改用游戏登录记录"
+msgstr "Use saved game logins"
+
+#: app/accounts/dialogs.py:201
+msgid "· 换号时关闭游戏，启动后在标题页登出，再在登录框里选目标账号保留的登录记录，不再写回注册表。"
+msgstr ""
+"· When switching accounts, the assistant closes and restarts the game, signs"
+" out on the title screen, then selects the target account’s saved login in "
+"the sign-in dialog. It no longer writes to the registry."
+
+#: app/accounts/dialogs.py:202
+msgid "· 请先在游戏里把每个国服账号登录一次，退出时选「退出并保留登录记录」。"
+msgstr ""
+"· Sign in to each China server account in the game once. When signing out, "
+"choose “Sign out and keep saved logins”."
+
+#: app/accounts/dialogs.py:203
+msgid "· 在每个账号的「登录记录中的账号」填写登录框里显示的账号，例如 138******66。"
+msgstr ""
+"· For each account, fill in “Account in saved logins” as it appears on the "
+"sign-in screen, e.g. 138******66."
+
+#: app/accounts/dialogs.py:204
+msgid "· 已保存的登录快照会留着，但不再使用；国际服账号仍用登录快照。"
+msgstr ""
+"· Existing login snapshots are kept. Only Global accounts will continue to "
+"use them."
+
+#: app/accounts/dialogs.py:206
+msgid "改用登录快照？"
+msgstr "Switch to login snapshots?"
+
+#: app/accounts/dialogs.py:206
+msgid "改用登录快照"
+msgstr "Use login snapshots"
+
+#: app/accounts/dialogs.py:207
+msgid "· 换号时关闭游戏，写回账号页保存的注册表快照。"
+msgstr ""
+"· When switching accounts, the assistant closes the game and restores the "
+"snapshot saved on the Accounts page to the registry."
+
+#: app/accounts/dialogs.py:208
+msgid "· 之前保存的国服快照可能已经过期，写回会冲掉游戏保留的登录记录，所以每个国服账号要重新保存后才会切换。"
+msgstr ""
+"· Older snapshots for China server accounts may have expired. Restoring one "
+"overwrites the game’s saved logins. Save a fresh snapshot for each China "
+"server account before switching to it."
+
+#: app/accounts/dialogs.py:209
+msgid "· 多个国服账号轮流时，快照可能在几天后让登录过期。"
+msgstr ""
+"· When rotating multiple China server accounts with snapshots, their logins "
+"may expire after a few days."
+
+#: app/accounts/dialogs.py:254
+msgid "· 轮流运行时按顺序切换：关闭游戏，启动后在登录框里选登录记录，进入游戏后核对 UID。"
+msgstr ""
+"· For each account in order, the assistant closes and restarts the game, "
+"selects its saved login and checks the UID after entering the game."
+
+#: app/accounts/dialogs.py:273
+msgid "这会清除该游戏的登录信息、保留的登录记录和画质、分辨率等设置，之后要在游戏里重新登录每个账号。确定继续吗？"
+msgstr ""
+"This will clear the game’s login information, saved logins and settings such"
+" as graphics quality and resolution. You’ll need to sign in to each account "
+"again. Continue?"
+
+#: app/accounts/empty.py:80
+msgid "记下要轮流的账号，换号时在游戏登录框里选保留的登录记录；添加两个以上就可以按顺序轮流运行。只支持本地客户端。"
+msgstr ""
+"Add the accounts you want to run. The assistant selects their saved logins "
+"in the game. Add at least two accounts to run them in order. Local game "
+"clients only."
+
+#: app/accounts/empty.py:88
+msgid "回到这里点「添加账号」，填写登录框里显示的账号"
+msgstr ""
+"Return here, select Add account and enter the account shown on the sign-in "
+"screen."
+
+#: app/accounts/empty.py:89
+msgid "在游戏里登出，选「退出并保留登录记录」，登录下一个账号再添加一次；全部添加好后打开多账号轮流"
+msgstr ""
+"In the game, choose “Sign out and keep saved logins”, then sign in to the "
+"next account and add it here. Enable account rotation once you’ve added them"
+" all."
+
+#: app/accounts/panel.py:75
+msgid "国服账号切换方式"
+msgstr "China server account switching"
+
+#: app/accounts/panel.py:88
+msgid "游戏登录记录"
+msgstr "Saved game logins"
+
+#: app/accounts/panel.py:89
+msgid "登录快照"
+msgstr "Login snapshot"
+
+#: app/accounts/panel.py:94
+msgid "换号时在游戏标题页登出，再在登录框里选保留的登录记录，不写注册表。国际服账号仍用登录快照。"
+msgstr ""
+"To switch accounts, the assistant signs out on the game’s title screen and "
+"selects a saved login in the sign-in dialog without writing to the registry."
+" Global accounts still use login snapshots."
+
+#: app/accounts/panel.py:96
+msgid "换号时关闭游戏，写回账号页保存的注册表快照。多个国服账号轮流时，快照可能让登录过期。"
+msgstr ""
+"When switching accounts, the assistant closes the game and restores the "
+"snapshot saved on the Accounts page to the registry. Logins may expire when "
+"multiple China server accounts rotate this way."
+
+#: app/accounts/panel.py:113
+msgid "这里记下本地客户端的账号，换号时在游戏登录框里选保留的登录记录。打开上面的开关后，可以按顺序轮流运行。"
+msgstr ""
+"The local client’s accounts are listed here. The assistant selects their "
+"saved logins in the game when switching. Turn on rotation above to run them "
+"in order."
+
+#: app/accounts_interface.py:151 module/accounts/status.py:23
+msgid "未填写登录记录"
+msgstr "No saved login"
+
+#: app/accounts_interface.py:153 module/accounts/status.py:24
+msgid "需重新保存快照"
+msgstr "Resave snapshot"
+
+#: app/accounts_interface.py:253
+msgid "已改为在游戏登录框里切换"
+msgstr "Accounts will now switch on the game’s sign-in screen"
+
+#: app/accounts_interface.py:253
+msgid "已改为写回登录快照"
+msgstr "Accounts will now switch by restoring login snapshots"
+
+#: app/accounts_interface.py:260
+msgid "账号已添加"
+msgstr "Account added"
+
+#: app/content/account_model.py:366
+msgid "任务正在运行，结束后才能更改切换方式"
+msgstr ""
+"A task is running. Wait for it to finish before changing how accounts "
+"switch."
+
+#: app/content/account_model.py:460
+msgid "已切换查看的账号，按账号运行时会在游戏登录框里切换"
+msgstr ""
+"You’re now viewing this account. The assistant will switch to it on the "
+"game’s sign-in screen when you run its tasks."
+
+#: app/content/account_model.py:461
+msgid "这个账号在游戏登录框里切换，请在游戏里登出后选择它"
+msgstr ""
+"To switch to this account, sign out in the game and select it on the sign-in"
+" screen."
+
+#: module/accounts/reasons.py:30
+msgid "没有填写登录记录"
+msgstr "No saved login specified for this account"
+
+#: module/accounts/reasons.py:29
+msgid "登录快照需要重新保存"
+msgstr "Login snapshot must be saved again"
+
+#: module/accounts/reasons.py:32
+msgid "登录记录无法区分"
+msgstr "Multiple saved logins match"
+
+#: module/accounts/reasons.py:31
+msgid "登录记录里找不到账号"
+msgstr "Account not found in saved logins"
+
+#: module/accounts/reasons.py:33
+msgid "需要安全验证"
+msgstr "Security verification required"
+
+#: module/accounts/login_records.py:51
+msgid "账号太长，请照游戏登录框里显示的样子填写"
+msgstr ""
+"The account is too long. Enter it as shown on the game’s sign-in screen."
+
+#: module/accounts/login_records.py:55
+msgid "请照游戏登录框里显示的样子填写，星号前后都要有字，合起来至少 3 个，例如 138******66"
+msgstr ""
+"Enter the account as shown on the game’s sign-in screen. At least 3 "
+"characters must be visible in total, with at least one on each side of the "
+"asterisks (e.g. 138******66)."
+
+#: module/accounts/login_records.py:65
+msgid "请照游戏登录框里显示的样子填写，例如 138******66"
+msgstr ""
+"Enter the account as shown on the game’s sign-in screen, e.g. 138******66."
+
+#: app/content/account_model.py:418
+msgid "未找到已登录的游戏账号"
+msgstr "No signed-in game account found"
+
+#: app/content/account_model.py:420
+msgid "当前登录的 UID 与所选账号不符"
+msgstr "The signed-in UID does not match the selected account"
+
+#: module/accounts/store.py:361
+msgid "未知的账号设置"
+msgstr "Unknown account setting"
+
+#: module/accounts/store.py:385
+msgid "未知的切换方式"
+msgstr "Unknown account switching method"

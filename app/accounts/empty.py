@@ -75,17 +75,29 @@ class EmptyAccounts(QWidget):
         self.restyle()
 
     @staticmethod
-    def introduction():
+    def introduction(method="snapshot"):
+        if method == "game":
+            return tr("记下要轮流的账号，换号时在游戏登录框里选保留的登录记录；添加两个以上就可以按顺序轮流运行。只支持本地客户端。")
         return tr("把登录保存下来，换号时不用重新登录；保存两个以上就可以按顺序轮流运行。只支持本地客户端。")
+
+    def setMethod(self, method):
+        """按国服账号的切换方式说明添加步骤。"""
+        self._method = method
+        if method == "game":
+            texts = (tr("启动游戏，登录要添加的账号，完全进入游戏（看到角色）"),
+                     tr("回到这里点「添加账号」，填写登录框里显示的账号"),
+                     tr("在游戏里登出，选「退出并保留登录记录」，登录下一个账号再添加一次；全部添加好后打开多账号轮流"))
+        else:
+            texts = (tr("启动游戏，登录要添加的账号，完全进入游戏（看到角色）"),
+                     tr("回到这里点「添加账号」，保存它的登录"),
+                     tr("在游戏里换一个账号，再添加一次；全部添加好后打开多账号轮流"))
+        for step, text in zip(self.steps, texts):
+            step.textLabel.setText(text)
 
     def retranslateUi(self):
         self.titleLabel.setText(tr("还没有保存账号"))
-        self.textLabel.setText(self.introduction())
-        texts = (tr("启动游戏，登录要添加的账号，完全进入游戏（看到角色）"),
-                 tr("回到这里点「添加账号」，保存它的登录"),
-                 tr("在游戏里换一个账号，再添加一次；全部添加好后打开多账号轮流"))
-        for step, text in zip(self.steps, texts):
-            step.textLabel.setText(text)
+        self.textLabel.setText(self.introduction(getattr(self, "_method", "snapshot")))
+        self.setMethod(getattr(self, "_method", "snapshot"))
         self.addButton.setText(tr("添加账号"))
 
     def restyle(self, *_):

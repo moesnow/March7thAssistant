@@ -6,6 +6,7 @@ import json
 import locale
 import os
 import re
+import time
 from pathlib import Path
 
 from module.localization import tr
@@ -30,6 +31,8 @@ ISSUES = {
     "damaged": "{name} 损坏，已按空数据读取",
     "busy": "{name} 暂时无法留存损坏副本，请稍后重试",
 }
+# 国服账号的切换方式：game 在游戏登录框里选保留的登录记录，snapshot 写回保存的注册表快照。国际服只有 snapshot。
+SWITCH_METHODS = ("game", "snapshot")
 _LEGACY_KEY = b"TI4ftRSDaP63kBxxoLoZ5KpVmRBz00JikzLNweryzZ4wecWJxJO9tbxlH9YDvjAr"
 
 
@@ -38,6 +41,14 @@ def uid_string(value):
     if not _UID.fullmatch(uid):
         raise ValueError("账号 UID 格式无效")
     return uid
+
+
+def switch_method(index, server):
+    """这个服务器的账号怎么切换。国际服只支持登录快照，国服按账号页的设置。"""
+    if server != "cn":
+        return "snapshot"
+    value = (index.get("switch_methods") or {}).get("cn")
+    return value if value in SWITCH_METHODS else "snapshot"
 
 
 def masked_uid(value):
@@ -68,6 +79,7 @@ def _account(uid, **values):
             "game_path": "",
             "refresh_hour": None,
             "auto_login": False,
+            "login_hint": "",
         },
         **values,
     )
@@ -101,6 +113,7 @@ def _valid_fields(item):
         and item.get("server", "cn") in ("cn", "global")
         and type(item.get("rotate", True)) is bool
         and type(item.get("auto_login", False)) is bool
+        and isinstance(item.get("login_hint", ""), str)
         and (hour is None or type(hour) is int and 0 <= hour <= 23)
     )
 
@@ -225,6 +238,12 @@ class AccountStore:
                 row["color"] = color
                 used[color] += 1
         data["accounts"] = list(rows.values())
+        methods = data.get("switch_methods")
+        methods = dict(methods) if isinstance(methods, dict) else {}
+        if methods.get("cn") not in SWITCH_METHODS:
+            # 测试版里已经保存过账号的继续用登录快照，新安装默认在游戏登录框里切换。
+            methods["cn"] = "snapshot" if rows else "game"
+        data["switch_methods"] = methods
         if data.get("current") not in rows:
             data["current"] = next(iter(rows), None)
         if not rows:
@@ -312,10 +331,14 @@ class AccountStore:
 
     def update(self, uid, **fields):
         uid = uid_string(uid)
-        if fields.keys() - {"name", "rotate", "plan", "game_path", "refresh_hour", "auto_login", "server"}:
+        if fields.keys() - {"name", "rotate", "plan", "game_path", "refresh_hour", "auto_login", "server", "login_hint"}:
             raise ValueError("未知的账号设置")
         if "name" in fields and not fields["name"].strip():
             raise ValueError("账户名不能为空")
+        if "login_hint" in fields:
+            from .login_records import mask_hint
+
+            fields = {**fields, "login_hint": mask_hint(fields["login_hint"])}
 
         def change(data):
             row = next((a for a in data["accounts"] if a["uid"] == uid), None)
@@ -330,6 +353,47 @@ class AccountStore:
             row.update(fields)
 
         self.edit_index(change)
+
+    def add(self, uid, **fields):
+        """不保存快照，直接加入账号列表，用于在游戏登录框里切换的账号。已有的账号只更新给出的字段。"""
+        uid = uid_string(uid)
+        if fields.keys() - {"name", "server", "game_path", "login_hint"}:
+            raise ValueError("未知的账号设置")
+        if "login_hint" in fields:
+            from .login_records import mask_hint
+
+            fields["login_hint"] = mask_hint(fields["login_hint"])
+        if not (fields.get("name") or "").strip():
+            fields.pop("name", None)
+        if self.account(uid) is not None:
+            # 已有的账号走 update：改游戏路径时一并清掉之前检测到的路径。
+            self.update(uid, **fields)
+            return
+
+        def change(data):
+            if any(a["uid"] == uid for a in data["accounts"]):
+                raise ValueError("账号列表已变化，请刷新后再添加")
+            used = [a.get("color") for a in data["accounts"]]
+            counts = [used.count(i) for i in range(6)]
+            data["accounts"].append(_account(uid, color=counts.index(min(counts)), **fields))
+            if data.get("current") is None:
+                data["current"] = uid
+
+        self.edit_index(change)
+
+    def set_switch_method(self, method):
+        """设置国服账号的切换方式。切回登录快照时记下时间，之前保存的快照要重新保存才能用。"""
+        if method not in SWITCH_METHODS:
+            raise ValueError("未知的切换方式")
+
+        def change(data):
+            if data["switch_methods"].get("cn") == method:
+                return
+            if method == "snapshot":
+                data["snapshot_since"] = time.time()
+            data["switch_methods"]["cn"] = method
+
+        return self.edit_index(change)
 
     def reorder(self, uids):
         order = list(map(uid_string, uids))
