@@ -8,6 +8,7 @@ from module.config import cfg
 from module.localization import tr
 from module.search.setting_text import choice_texts
 from tasks.weekly.currency_wars_strategy import (
+    A820_ANAXA,
     DEFAULT_STRATEGY as CURRENCY_WARS_DEFAULT,
     HIGH_ANAXA,
     STRATEGY_NAMES,
@@ -38,7 +39,7 @@ def build(host):
         texts=choice_texts("currencywars_rank_difficulty"),
         parent=host.card_parent,
     )
-    visible_strategies = (CURRENCY_WARS_DEFAULT, HIGH_ANAXA)
+    visible_strategies = (CURRENCY_WARS_DEFAULT, HIGH_ANAXA, A820_ANAXA)
     host.currencywarsStrategySelectCard = ExpandableComboBoxSettingCard(
         "currencywars_strategy",
         UiIcon.LIST,

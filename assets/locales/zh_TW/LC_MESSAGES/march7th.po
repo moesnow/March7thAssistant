@@ -12650,3 +12650,7 @@ msgstr "賬戶驗證設定未生效，可能受組織策略管理，請聯絡管
 #: app/tools/desktop_twin_policy.py:90
 msgid "恢复记录有误，请在 Windows 安全策略中检查账户验证设置。"
 msgstr "恢復記錄有誤，請在 Windows 安全策略中檢查賬戶驗證設定。"
+
+#: module/search/setting_text.py:190 tasks/weekly/currency_wars_strategy.py:152
+msgid "那刻夏（A820）"
+msgstr "那刻夏（A820）"

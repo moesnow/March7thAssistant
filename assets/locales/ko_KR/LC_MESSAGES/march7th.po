@@ -12746,3 +12746,7 @@ msgstr "인증 설정이 적용되지 않았습니다. 조직의 정책으로 �
 #: app/tools/desktop_twin_policy.py:90
 msgid "恢复记录有误，请在 Windows 安全策略中检查账户验证设置。"
 msgstr "복원 기록이 올바르지 않습니다. Windows 보안 정책에서 인증 설정을 확인하세요."
+
+#: module/search/setting_text.py:190 tasks/weekly/currency_wars_strategy.py:152
+msgid "那刻夏（A820）"
+msgstr "아낙사 (A820)"

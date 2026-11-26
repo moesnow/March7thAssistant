@@ -7,7 +7,7 @@ import pytest
 from PySide6.QtCore import Qt
 
 from tasks.weekly.currency_wars_strategy import (
-    DEFAULT_STRATEGY, HIGH_ANAXA, HIGH_FIREFLY, HIGH_SERVAL, PROMOTION_CAP_DIFFICULTY,
+    A820_ANAXA, DEFAULT_STRATEGY, HIGH_ANAXA, HIGH_FIREFLY, HIGH_SERVAL, PROMOTION_CAP_DIFFICULTY,
 )
 
 
@@ -78,7 +78,7 @@ def test_currency_wars_settings_lists_default_and_anaxa_strategies(open_currency
 
     assert page.notice.isHidden()
     combo = widget.currencywarsStrategySelectCard.comboBox
-    assert [combo.itemData(index) for index in range(combo.count())] == [DEFAULT_STRATEGY, HIGH_ANAXA]
+    assert [combo.itemData(index) for index in range(combo.count())] == [DEFAULT_STRATEGY, HIGH_ANAXA, A820_ANAXA]
     assert combo.currentData() == displayed
     config._load_config()
     assert config.get_value("currencywars_strategy") == (configured or DEFAULT_STRATEGY)

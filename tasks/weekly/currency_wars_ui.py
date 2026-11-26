@@ -12,8 +12,11 @@ from PIL import Image
 
 from module.logger import log
 from tasks.weekly import weekly_reward as reward_ui
-from tasks.weekly.currency_wars_equipment import Equipment, ITEMS, RECIPES
-from tasks.weekly.currency_wars_strategy import Offer, Point, Slot
+from tasks.weekly.currency_wars_equipment import (
+    BLUE_DIAMOND, DREAM_EMBLEM, EXTRA_EQUIPMENT, PRIVILEGED_PROPELLER, RED_DIAMOND, ROASTED_SWEET_POTATO,
+    A820_RECIPES, Equipment, ITEMS, RECIPES,
+)
+from tasks.weekly.currency_wars_strategy import A820_COSTS, A820_ENDGAME, A820_ENVIRONMENT_SCORES, A820_GUIDE_COMBO, Offer, Point, Slot
 
 Area = tuple[int, int, int, int]
 WHOLE = (0, 0, 1920, 1080)
@@ -101,6 +104,8 @@ ITEM_CARD_NAMES = (450, 279, 1590, 354)
 ITEM_CARD_DETAILS = (450, 354, 1590, 410)
 SUPPLY_CONFIRM = (1495, 949, 1890, 1021)
 ENCOUNTER_CONFIRM = (895, 866, 1280, 936)
+ENCOUNTER_CENTERS = (667, 1252)
+ENCOUNTER_REFRESH = (645, 865, 854, 935)
 INVESTMENT_CENTERS = (460, 960, 1460)
 INVESTMENT_REFRESH = ((389, 856), (888, 856), (1388, 856))
 PAIRED_INVESTMENT_CENTERS = (514, 1005, 1409)
@@ -122,6 +127,7 @@ SVAROG_LAST_CARD = (1444, 285)  # 三列和四列布局的末卡都覆盖此处�
 SVAROG_CONFIRM_POINT = (1492, 585)
 GARDEN_TITLE = (920, 49, 1175, 111)
 GARDEN_SUBTITLE = (908, 113, 1190, 153)
+PREP_EXPAND = (460, 38, 670, 126)
 BOARD_EFFECT_CONFIRM = (1310, 566, 1667, 633)
 GARDEN_COLUMNS = ((444, 832), (852, 1240), (1260, 1649))
 HACK_COLUMNS = ((563, 1017), (1070, 1534))
@@ -189,6 +195,7 @@ CONTINUE_MATCH = ("继续进度", "继续对局", "继续博弈")
 END_MATCH = ("结束并结算", "放弃并结算")
 WEAPON_BOXES = ("武装箱", "简易武装箱", "完整武装箱", "进阶武装箱", "特权武装箱")
 EQUIPMENT_REWARD = "选择装备"
+FORTUNE_REWARD = "好运令牌"
 AHA_EQUIPMENT_REWARD = "为阿哈选择1件简易装备"
 ITEM_CHOICES = (*WEAPON_BOXES, *(f"阿哈·{box}" for box in WEAPON_BOXES),
                 "星徽秘典", "阿哈", EQUIPMENT_REWARD, AHA_EQUIPMENT_REWARD)
@@ -217,6 +224,10 @@ class Label:
     confidence: float = 1.0
 
 
+def _employee_name(text: str) -> str:
+    return "千冶·刃" if text == "干冶·刃" else text
+
+
 class Page(Enum):
     UNKNOWN = "未知页面"
     CONFLICT = "识别冲突"
@@ -238,6 +249,7 @@ class Page(Enum):
     DETAIL = "角色详情"
     PARTNER_DETAIL = "奇遇伙伴详情"
     EQUIPMENT = "装备推荐"
+    INVENTORY_CRAFT = "背包装备合成确认"
     CHOICE = "节点选择"
     TREASURY = "珠珠鱼宝库"
     DANCE = "梦境交织共舞"
@@ -246,6 +258,7 @@ class Page(Enum):
     DRAGON_CLEANSE = "苍龙濯世"
     DRAGON_BOND = "双龙吟"
     GARDEN = "奇兽花园"
+    PREP_COLLAPSED = "待选择弹层已收起"
     HACK = "骇入效果"
     HALO = "主角光环"
     HALO_DETAIL = "主角光环角色详情"
@@ -267,7 +280,39 @@ def template(path: str) -> np.ndarray:
     return np.asarray(Image.open(Path("assets/images") / path).convert("RGB"))
 
 
-def equipment_name(mark: np.ndarray) -> str | None:
+@lru_cache(maxsize=1)
+def _equipment_icon_patterns():
+    icons = ((RED_DIAMOND, "s2_red_diamond.png"), (RED_DIAMOND, "s2_live_red_diamond.png"),
+             (DREAM_EMBLEM, "s2_dream_emblem.png"),
+             ("永动机", "s2_perpetual_motion.png"), ("冷笑话引擎", "s2_joke_engine.png"),
+             ("反螺旋舞步", "s2_spiral_step.png"), ("蓄能帆", "s2_charge_sail.png"),
+             ("痛觉阻断芯片", "s2_pain_block_chip.png"),
+             ("信心注入器", "s2_live_confidence_injector.png"),
+             ("追逐星辰", "s2_star_chaser.png"), (PRIVILEGED_PROPELLER, "s2_privileged_propeller.png"),
+             ("掩体生成枪", "s2_live_cover_generator.png"), ("战场进化手册", "s2_live_combat_manual.png"),
+             ("奇兽花园星徽", "s2_live_garden_emblem.png"), ("生命之环", "s2_live_life_ring.png"),
+             ("小小巨人星徽", "s2_live_giant_emblem.png"),
+             ("小小巨人星徽", "s2_live_giant_emblem_crafted.png"),
+             (ROASTED_SWEET_POTATO, "s2_live_roasted_sweet_potato.png"),
+             (BLUE_DIAMOND, "s2_live_blue_diamond.png"))
+    extra = template("screen/currency_wars/s2_extra_equipment.png")
+    arts = [(name, template(f"screen/currency_wars/{path}")) for name, path in icons]
+    arts += [(name, extra[:, index * 64:(index + 1) * 64]) for index, name in enumerate(EXTRA_EQUIPMENT)]
+    patterns = {}
+    for name, art in arts:
+        images = tuple(cv2.resize(art, (size, size), interpolation=cv2.INTER_AREA) for size in (32, 36, 40))
+        if name in ("反螺旋舞步", "蓄能帆", "生命之环"):
+            # 以内侧图案定位，给装备格内的少量偏移留出余量。
+            images += (images[-1][5:-5, 5:-5], images[-1][8:-8, 8:-8])
+        if name == DREAM_EMBLEM or name in ("冷笑话引擎", "动能激发剑", "很硬的甲", "痛觉阻断芯片", "永动机", "杀红眼"):
+            # 使用背包中放大后的内部图案，避开角标和裁切边缘。
+            inventory_art = cv2.resize(art, (56, 56), interpolation=cv2.INTER_AREA)
+            images += (inventory_art[10:-10, 10:-10], inventory_art[14:-14, 14:-14])
+        patterns[name] = (*patterns.get(name, ()), *images)
+    return tuple(patterns.items())
+
+
+def equipment_name(mark: np.ndarray, *, a820=False) -> str | None:
     if min(mark.shape[:2]) < 12 or mark.std(axis=(0, 1)).max() < 24:
         return None
     atlas = template("screen/currency_wars/s2_equipment.png")
@@ -279,10 +324,21 @@ def equipment_name(mark: np.ndarray) -> str | None:
                     for y in range(0, atlas.shape[0], 40))
         scores.append((score, name))
     scores.sort(reverse=True)
+    if a820:
+        # 背包与配方小图有留边，允许在固定图标格内少量缩放。
+        matches = sorted(((max(cv2.matchTemplate(sample, art, cv2.TM_CCOEFF_NORMED).max()
+                               for art in patterns), name)
+                          for name, patterns in _equipment_icon_patterns()), reverse=True)
+        score, name = matches[0]
+        if (score >= 0.75 and (scores[0][1] == name or score - scores[0][0] >= 0.12)
+                and score - matches[1][0] >= 0.08):
+            return name
     return scores[0][1] if scores[0][0] >= 0.48 and scores[0][0] - scores[1][0] >= 0.10 else None
 
 
 class Frame:
+    a820 = False
+
     def __init__(self, image: Image.Image, labels: tuple[Label, ...]):
         self.image = image
         self.labels = labels
@@ -379,6 +435,33 @@ class Frame:
             if 0 <= left <= right and right > 0:
                 return left, right
         return None
+
+    @cached_property
+    def encounter_levels(self) -> tuple[tuple[int, Label], ...]:
+        levels = []
+        digits = "一二三四五六七八九"
+        for x in ENCOUNTER_CENTERS:
+            title = self.value(r"遭遇其[一二三四五六七八九1-9]", (x - 155, 340, x + 155, 419))
+            if title:
+                number = title[-1]
+                levels.append((digits.index(number) + 1 if number in digits else int(number), Label(title, (x, 390))))
+                continue
+            patch = self.crop((x - 130, 457, x + 130, 514)).astype(np.int16)
+            red, green, blue = np.moveaxis(patch, -1, 0)
+            badges = ((blue >= 155) & (blue - red >= 24) & (blue - green >= 34)).sum(axis=0) >= 5
+            spans = np.flatnonzero(np.diff(np.r_[False, badges, False])).reshape(-1, 2)
+            if 1 <= len(spans) <= 4 and all(32 <= end - start <= 58 for start, end in spans):
+                number = len(spans)
+                levels.append((number, Label(f"遭遇其{digits[number - 1]}（难度标记）", (x, 390))))
+        return tuple(levels)
+
+    @cached_property
+    def encounter_refresh_count(self) -> int | None:
+        count = self.value(r"剩余次数[:：]?[0-9]", ENCOUNTER_REFRESH)
+        if count is None:
+            count = self.read_local((700, 875, 854, 927), recognition_only=True)
+        match = re.fullmatch(r"剩余次数[:：]?([0-9])", count or "")
+        return int(match[1]) if match else None
 
     def match(self, path: str, area: Area, threshold: float = 0.88) -> Point | None:
         source, target = self.crop(area), template(path)
@@ -523,6 +606,9 @@ class Frame:
 
     @cached_property
     def choice(self) -> str | None:
+        if (self.a820 and self.find(FORTUNE_REWARD, area=EQUIPMENT_REWARD_TITLE)
+                and self.has("请选择1个", "请选择一个", area=ITEM_SELECTION)):
+            return FORTUNE_REWARD
         label = self.find(EQUIPMENT_REWARD, area=EQUIPMENT_REWARD_TITLE) or self.find(*CHOICES, area=CHOICE_TITLE)
         if (label and (label.text in ("武装箱", "阿哈", EQUIPMENT_REWARD, AHA_EQUIPMENT_REWARD)
                        or label.text.startswith("阿哈·"))
@@ -539,8 +625,11 @@ class Frame:
 
     @cached_property
     def recruitment_cards(self) -> tuple[Label, ...]:
-        return tuple(label for label in self.texts((375, 369, 1680, 408))
-                     if re.fullmatch(EMPLOYEE_NAME, label.text))
+        cards = tuple(label for label in self.texts((375, 369, 1680, 408))
+                      if re.fullmatch(EMPLOYEE_NAME, label.text))
+        if self.a820:
+            return tuple(Label(_employee_name(label.text), label.point, label.confidence) for label in cards)
+        return cards
 
     @cached_property
     def combat_progress(self) -> bool:
@@ -702,6 +791,8 @@ class Frame:
                 and (self.has("选择奇美拉", area=GARDEN_SUBTITLE, contains=True)
                      or self.has("确认选择", area=BOARD_EFFECT_CONFIRM))):
             return Page.GARDEN
+        if self.a820 and self.collapsed_preparation is not None:
+            return Page.PREP_COLLAPSED
         if self.has("请选择一个骇入效果", area=EMPLOYEE_EVENT_SUBTITLE) or (
                 self.has("我来当", area=EMPLOYEE_EVENT_TITLE, contains=True)
                 and (self.has("请选择骇入效果", area=BOARD_EFFECT_PROMPT)
@@ -772,6 +863,8 @@ class Frame:
                 return Page.BENCH_FULL
             if self.shop_open:
                 return Page.SHOP
+            if self.a820 and self.inventory_craft_prompt:
+                return Page.INVENTORY_CRAFT
             if self.find("商店", area=BOARD_SHOP) and self.board_advance and self._board_rows_visible():
                 return Page.BOARD
         return Page.UNKNOWN
@@ -787,6 +880,14 @@ class Frame:
             if label.text in BOARD_ADVANCE or re.fullmatch(r"跳过\([1-9]\d*/[1-9]\d*\)", label.text)
         )
         return buttons[0] if len(buttons) == 1 else None
+
+    @cached_property
+    def collapsed_preparation(self) -> Label | None:
+        expand = self.find("展开", area=PREP_EXPAND)
+        if (expand and self.stage and self.has("战斗节点", "遭遇节点", area=BOARD_STAGE)
+                and self.board_advance and self.capacity):
+            return expand
+        return None
 
     def _board_rows_visible(self):
         front_area = (850, 304, 1100, 326)
@@ -836,10 +937,22 @@ class Frame:
                 if cost is None:
                     cost = self.number((x + 208, 286, x + 240, 327), 5, local=True)
             else:
-                continue
+                if not self.a820 or not names or self.shop_slot_empty(index):
+                    continue
+                # 名字和金币被合成噪声框时单独核对攻略要用的卡，费用必须与实际报价一致。
+                name = _employee_name(self.read_local((x + 12, 288, x + 170, 324)))
+                if name not in (A820_ENDGAME | A820_GUIDE_COMBO):
+                    continue
+                price = raw_price or self.read_local(price_area, recognition_only=True)
+                cost = A820_COSTS.get(name)
+                if cost is None or price != str(cost * (3 if stars == 2 else 1)):
+                    continue
+                cost = int(price)
             # 报价前的金币图标还会读成 1、h、Y 等字符粘在名字末尾，例如「昔涟h」「千冶·刃1」，名字对不上就会漏买。
             # 角色名没有以汉字加单个字母或数字结尾的（银狼LV.999 末尾的数字前面也是数字）。
             name = re.sub(r"(?<=[\u3400-\u9fff])[0-9A-Za-z]$", "", name)
+            if self.a820:
+                name = _employee_name(name)
             if cost is not None and 1 <= cost <= ceiling:
                 # 卡面右上角上下两枚方块，实心表示能上前台、后台，空心表示不能。只取方块内部，
                 # 避开空心方块的边框和下方的「试用」角标。
@@ -1131,7 +1244,7 @@ class Frame:
                 return None
         else:
             return None
-        return "千冶·刃" if name == "干冶·刃" else name
+        return _employee_name(name)
 
     def employee_output(self, *, allow_dual=False) -> bool:
         if allow_dual:
@@ -1295,12 +1408,114 @@ class Frame:
         return (self.match("screen/currency_wars/s2_wrench.png", area, 0.82)
                 or self.match("screen/currency_wars/s2_precision_wrench.png", area, 0.82))
 
+    def _toolbar_tool(self, asset: str) -> Point | None:
+        left, top = 1536, 106
+        toolbar = self.crop((left, top, 1896, 213))
+        art = template(f"screen/currency_wars/{asset}")
+        best = (0.85, None)
+        for width in (32, 36, 40, 44, 48):
+            height = round(width * art.shape[0] / art.shape[1])
+            mark = cv2.resize(art, (width, height), interpolation=cv2.INTER_AREA)
+            _, score, _, (x, y) = cv2.minMaxLoc(cv2.matchTemplate(toolbar, mark, cv2.TM_CCOEFF_NORMED))
+            if score > best[0]:
+                best = (score, (left + x + width // 2, top + y + height // 2))
+        return best[1]
+
+    @cached_property
+    def good_fortune_tokens(self) -> tuple[Point, ...]:
+        if self.page != Page.BOARD:
+            return ()
+        left, top = 1536, 106
+        toolbar = self.crop((left, top, 1896, 213))
+        art = template("screen/currency_wars/s2_live_good_fortune_token.png")
+        matches = cv2.matchTemplate(toolbar, art, cv2.TM_CCOEFF_NORMED)
+        points = []
+        while True:
+            _, score, _, (x, y) = cv2.minMaxLoc(matches)
+            if score < 0.88:
+                return tuple(sorted(points))
+            points.append((left + x + art.shape[1] // 2, top + y + art.shape[0] // 2))
+            matches[:, max(0, x - 27):x + 28] = 0
+
+    @cached_property
+    def _reforge_tool(self) -> Point | None:
+        return self._toolbar_tool("s2_furnace.png")
+
+    def reforge_tool(self) -> Point | None:
+        return self._reforge_tool if self.page == Page.BOARD else None
+
+    @cached_property
+    def reforge_charges(self) -> int | None:
+        return self._toolbar_charges(self.reforge_tool()) if self.page == Page.BOARD else None
+
+    @cached_property
+    def employee_projectors(self) -> tuple[tuple[str, int | None, Point, int | None], ...]:
+        if self.page != Page.BOARD:
+            return ()
+        matches = (("实习生投影仪", 1, self._toolbar_tool("s2_live_intern_projector.png")),
+                   ("员工投影仪", 3, self._toolbar_tool("s2_staff_projector.png")),
+                   ("完美投影仪", None, self._toolbar_tool("s2_perfect_projector.png")))
+        tools = []
+        for name, ceiling, position in matches:
+            if position is None or any(other is not None and other_name != name
+                                       and max(abs(a - b) for a, b in zip(position, other)) < 22
+                                       for other_name, _, other in matches):
+                continue
+            tools.append((name, ceiling, position, self._toolbar_charges(position)))
+        return tuple(tools)
+
+    def _toolbar_charges(self, tool: Point | None) -> int | None:
+        if tool is None:
+            return 0
+        x, y = tool
+        badge = (x + 11, y + 7, x + 46, y + 46)
+        number = self.value(r"[1-9]\d?", badge)
+        if number:
+            return int(number)
+        # 电脑端数量角标较小，常见次数也可通过亮字轮廓复核。
+        digits = template("screen/currency_wars/s2_furnace_charges.png")
+        sample = np.uint8(self.crop(badge).min(axis=2) > 175)
+        glyphs = np.uint8(digits.min(axis=2) > 175)
+        scales = ((13, 20, cv2.INTER_NEAREST), (15, 23, cv2.INTER_NEAREST),
+                  (17, 26, cv2.INTER_NEAREST), (17, 23, cv2.INTER_NEAREST_EXACT))
+        scores = []
+        for left in range(0, digits.shape[1], 15):
+            shapes = [cv2.resize(glyphs[top:top + 23, left:left + 15], (width, height), interpolation=method)
+                      for top in range(0, glyphs.shape[0], 23) for width, height, method in scales]
+            scores.append(max(cv2.matchTemplate(
+                sample, shape, cv2.TM_CCOEFF_NORMED
+            ).max() for shape in shapes))
+        ranked = sorted(((score, index) for index, score in enumerate(scores, 1)), reverse=True)
+        if ranked[0][0] >= 0.75 and ranked[0][0] - ranked[1][0] >= 0.12:
+            return ranked[0][1]
+        return None
+
     def inventory_equipment(self) -> tuple[tuple[Point, str | None], ...]:
-        result = []
-        for x, y in self.inventory_items():
-            mark = self.crop((x - 24, y - 24, x + 24, y + 24))
-            result.append(((x, y), equipment_name(mark)))
-        return tuple(result)
+        return self._inventory_equipment
+
+    @cached_property
+    def _inventory_equipment(self) -> tuple[tuple[Point, str | None], ...]:
+        right = self.inventory_items()
+        positions = list(right)
+        # 右列填满后按同一行高向左扩展。左列从上往下填满，空格之后的场景边缘不属于装备栏。
+        if self.a820 and len(right) == 6:
+            for _, y in right:
+                if not self._inventory_cell(1767, y):
+                    break
+                positions.append((1767, y))
+        return tuple((point, self._equipment_icon(*point)) for point in positions)
+
+    def _equipment_icon(self, x, y) -> str | None:
+        name = equipment_name(self.crop((x - 24, y - 24, x + 24, y + 24)), a820=self.a820)
+        if name is not None or not self.a820:
+            return name
+        # 先核对小幅横纵偏移，再处理转场中整列装备的垂直位移。
+        for offsets in (((-2, -2), (-2, 2), (2, -2), (2, 2)), ((0, -8), (0, -4), (0, 4), (0, 8))):
+            alternatives = {candidate for dx, dy in offsets if (
+                candidate := equipment_name(self.crop((x + dx - 24, y + dy - 24, x + dx + 24, y + dy + 24)), a820=True))}
+            if alternatives:
+                return next(iter(alternatives)) if len(alternatives) == 1 else None
+        return None
 
     def inventory_items(self) -> tuple[Point, ...]:
         # 装备格有贯穿其宽度的水平边缘。左列的场景纹理容易误判，右列覆盖所有行。
@@ -1323,6 +1538,45 @@ class Frame:
                 positions.append((x, y))
         return tuple(positions)
 
+    def _inventory_cell(self, x, y) -> bool:
+        edges = []
+        for top, bottom in ((y - 40, y - 28), (y + 29, y + 41)):
+            crop = self.crop((x - 29, top, x + 30, bottom)).mean(axis=2)
+            edges.append((np.abs(np.diff(crop, axis=0)) > 16).mean(axis=1).max())
+        return min(edges) >= 0.65
+
+    @cached_property
+    def inventory_craft_prompt(self) -> tuple[Point, Point, Equipment] | None:
+        # 拖放后的预览跟随装备格上下移动。定位同一行的红叉与绿勾，再读上方三件装备。
+        left, top = 1400, 268
+        colors = self.crop((left, top, 1902, 769)).astype(np.int16)
+        red, green, blue = colors.transpose(2, 0, 1)
+
+        def buttons(mask):
+            _, _, bounds, centroids = cv2.connectedComponentsWithStats(mask.astype(np.uint8), connectivity=8)
+            points = []
+            for (_, _, width, height, area), (cx, cy) in zip(bounds[1:], centroids[1:]):
+                if 14 <= width <= 39 and 11 <= height <= 36 and area >= 65:
+                    x, y = left + round(cx), top + round(cy)
+                    button = self.crop((x - 43, y - 15, x + 43, y + 15))
+                    if (button.min(axis=2) > 173).mean() >= 0.70:
+                        points.append((x, y))
+            return points
+
+        cancels = buttons((red > 145) & (red - green > 38) & (red - blue > 26))
+        if not cancels:
+            return None
+        confirms = buttons((green > 95) & (green - red > 20) & (green - blue > 15))
+        pairs = [(cancel, confirm) for cancel in cancels for confirm in confirms
+                 if 102 <= confirm[0] - cancel[0] <= 130 and abs(cancel[1] - confirm[1]) <= 8]
+        if len(pairs) != 1:
+            return None
+        cancel, confirm = pairs[0]
+        x, y = confirm[0] + 16, (cancel[1] + confirm[1]) // 2 - 77
+        parts = tuple(self._equipment_icon(x + dx, y) for dx in (-210, -105))
+        result = self._equipment_icon(x, y)
+        return cancel, confirm, Equipment(result, parts)
+
     def equipment_actions(self) -> tuple[Label, ...]:
         return self.matching(("穿戴", "合成"), (940, 490, 1440, 974))
 
@@ -1338,20 +1592,21 @@ class Frame:
         column = min((1010, 1147, 1284), key=lambda center: abs(x - 20 - center))
         row = 656 if y < 795 else 845
         icon = self.crop((column - 24, row - 24, column + 24, row + 24))
-        name = equipment_name(icon)
+        name = equipment_name(icon, a820=self.a820)
         ingredients = ()
         if button.text == "合成":
             ingredients = tuple(equipment_name(self.crop((column + 48, row + dy - 11,
-                                                           column + 70, row + dy + 11))) for dy in (-19, 18))
+                                                           column + 70, row + dy + 11)), a820=self.a820) for dy in (-19, 18))
             if name is None and all(ingredients):
-                name = RECIPES.get(frozenset(ingredients))
+                recipes = A820_RECIPES if self.a820 else RECIPES
+                name = recipes.get(frozenset(ingredients))
         return Equipment(name, ingredients, (column, row))
 
     def equipped_names(self) -> tuple[str | None, ...]:
         names = []
         for x, mark in zip((1646, 1731, 1819), self.equipped_slots()):
             if mark.std(axis=(0, 1)).max() >= 28:
-                names.append(equipment_name(self.crop((x - 24, 793, x + 24, 841))))
+                names.append(self._equipment_icon(x, 817))
         return tuple(names)
 
     def equipment_full(self) -> bool:
@@ -1432,7 +1687,9 @@ class Frame:
         texts = self.investment_card_texts(column)
         title = min(texts, key=lambda label: label.point[1], default=None)
         bottom = 420 if self.choice == "投资环境" else (597 if self.paired_investment else 560)
-        if title and title.point[1] < bottom and any(label.point[1] >= title.point[1] + 24 for label in texts):
+        if title and title.point[1] < bottom and (
+                self.a820 and self.choice == "投资环境" and title.text in A820_ENVIRONMENT_SCORES
+                or any(label.point[1] >= title.point[1] + 24 for label in texts)):
             return title
         return None
 
@@ -1717,6 +1974,8 @@ class Frame:
                          if re.fullmatch(EMPLOYEE_NAME, label.text)]
             if len(names) != 1 or len(equipment) > 1:
                 continue
+            if self.a820:
+                names[0] = _employee_name(names[0])
             role = self.crop((x + 94, 304, x + 117, 326))
             front = bool((role.min(axis=2) > 210).sum() >= 70)
             cards.append((Label(names[0], (x, 566)), next(iter(equipment), ""), front))
@@ -1728,6 +1987,28 @@ class Frame:
             return "职级提升"
         titles = self.matching((*MATCH_WINS, *MATCH_LOSSES, "对局评价"), RESULT_TITLE)
         return "|".join(sorted({label.text for label in titles})) or None
+
+    @cached_property
+    def match_grade(self) -> str | None:
+        # 评分有独立的「对局评价」样式，也有画在胜负与博弈模式之间的徽章。
+        grade_pattern = r"SSS|SS|S|A|B|C|D"
+        grades = set()
+        for label in self.texts(RESULT_TITLE):
+            if grade := re.fullmatch(rf"对局评价[:：]?({grade_pattern})", label.text):
+                grades.add(grade[1])
+            if label.text in ("对局评价", "对局评价:", "对局评价："):
+                x, y = label.point
+                nearby = max(410, x - 220), max(135, y - 95), min(1350, x + 305), min(460, y + 150)
+                grades.update(item.text for item in self.texts(nearby) if re.fullmatch(grade_pattern, item.text))
+        outcome = self.find(*MATCH_WIN_TITLES, *MATCH_LOSS_TITLES, "触发晋升赛", area=RESULT_TITLE)
+        mode = self.find(*MODE_NAMES.values(), area=(180, 395, 910, 790))
+        if outcome and mode:
+            x, y = outcome.point
+            mode_x, mode_y = mode.point
+            if abs(x - mode_x) <= 195 and y + 120 < mode_y:
+                badge = x - 120, y + 65, x + 120, min(y + 256, mode_y - 30)
+                grades.update(item.text for item in self.texts(badge) if re.fullmatch(grade_pattern, item.text))
+        return next(iter(grades)) if len(grades) == 1 else None
 
     def result_buttons(self, area):
         return tuple(label.text for label in self.texts(area)
@@ -1778,8 +2059,10 @@ class Frame:
         return bool(re.search(r"占用[2-9二两三四五六七八九](?:个)?(?:团队规模|人口|上阵位置)", text)
                     or self.halo_title(index) == "高傲巨人")
 
-    def halo_effect(self, *, max_difficulty=0, allow_support=False, allowed=(0, 1), preferred=()):
+    def halo_effect(self, *, max_difficulty=0, allow_support=False, allowed=(0, 1), preferred=(),
+                    effect_priority=None):
         ranked = []
+        plus = r"\s*[+＋]\s*" if self.a820 else r"\+"
         for index in allowed:
             area = HALO_EFFECTS[index]
             title = self.halo_title_label(index)
@@ -1789,7 +2072,7 @@ class Frame:
                 continue
             difficulty = 0
             if "敌人难度" in text:
-                increase = re.search(r"敌人难度\+([1-9]\d?)", text)
+                increase = re.search(rf"敌人难度{plus}([1-9]\d?)", text)
                 if not increase or int(increase[1]) > max_difficulty:
                     continue
                 difficulty = int(increase[1])
@@ -1798,11 +2081,17 @@ class Frame:
             resources = ("商店内概率刷出2星", "必定出现1个与该角色任一羁绊相同", "获得自身的一个复制")
             score = 2 * sum(bonus in text for bonus in bonuses) + sum(bonus in text for bonus in resources)
             score += bool(re.search(r"获得\d*金币", text))
+            if title.text in preferred and text:
+                score += 14 - preferred.index(title.text)
             if allow_support and not score:
                 healing = "获得" in text and "治疗强度" in text and "分摊" not in text
                 shielding = "获得" in text and "护盾强度" in text and "分摊" not in text
                 extending_battle = "倒计时延后" in text and "行动值" in text and "终结技" in text
                 score = int(healing or shielding or extending_battle)
+            if effect_priority is not None and text != title.text:
+                priority = effect_priority(title.text)
+                if priority is not None:
+                    score = priority
             # 策略首选的光环遇到就选，排在其它增益之前。
             if score or title.text in preferred:
                 ranked.append((score * 10 - difficulty + 1000 * (title.text in preferred), index, title))
@@ -1810,10 +2099,11 @@ class Frame:
 
     def halo_fallbacks(self) -> tuple[Label, ...]:
         cards = []
+        plus = r"\s*[+＋]\s*" if self.a820 else r"\+"
         for index, (lines, point) in enumerate(zip(self.halo_effect_texts(), HALO_OPTION_POINTS)):
             text = "".join(lines)
             disruptive = any(risk in text for risk in HALO_RISKS)
-            rank = re.search(r"敌人难度\+(\d+)", text)
+            rank = re.search(rf"敌人难度{plus}(\d+)", text)
             title = self.halo_title_label(index) or Label(f"第{index + 1}项", point)
             cards.append((disruptive, int(rank[1]) if rank else 0, index, title))
         return tuple(title for *_, title in sorted(cards))
