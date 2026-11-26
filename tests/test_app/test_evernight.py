@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
-from PySide6.QtCore import QPoint, Qt
+from PySide6.QtCore import QPoint, Qt, QTimer
 from PySide6.QtGui import QIcon, QPalette, QPixmap, QShortcut
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QWidget
 from qfluentwidgets import Theme, isDarkTheme, qconfig, setTheme, themeColor
@@ -655,7 +655,19 @@ def test_logo_hit_target_covers_padding_without_maximizing(window, qtbot):
     assert not window._evernight.unlocked  # Eight completed clicks, not ten.
 
 
-def test_logo_warning_expires_and_requires_two_fresh_groups(window, qtbot):
+@pytest.mark.parametrize('animation_delay_ms', [0, 100])
+def test_logo_warning_expires_and_requires_two_fresh_groups(
+        window, qtbot, monkeypatch, animation_delay_ms):
+    play_animation = window._play_evey_animation
+
+    def play_paused_animation():
+        play_animation()
+        if window._evey_animation is not None:
+            window._evey_animation.timeline.pause()
+
+    # 模拟事件延迟，并暂停动画，避免它在断言前自然结束。
+    monkeypatch.setattr(window, '_play_evey_animation', lambda: QTimer.singleShot(
+        animation_delay_ms, window, play_paused_animation))
     now = [0.0]
     window._evernight = EvernightEasterEgg(clock=lambda: now[0])
     setTheme(Theme.DARK)
@@ -675,7 +687,8 @@ def test_logo_warning_expires_and_requires_two_fresh_groups(window, qtbot):
     assert window._evey_animation is None
     click_logo(window, qtbot, 5)
     assert window._evernight.unlocked and hint.isHidden()
-    assert window._evey_animation is not None
+    qtbot.waitUntil(lambda: window._evey_animation is not None, timeout=5000)
+    assert window._evey_animation.isVisible()
 
 
 def test_logo_hint_rises_fades_and_restarts(qtbot):
