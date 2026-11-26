@@ -64,10 +64,11 @@ def build(host):
     host.lc3StarSuperimposeEnableCard = SwitchSettingCard1(
         UiIcon.STACK,
         tr("启用「3星光锥自动叠加」"),
-        tr("自动将3星光锥进行叠加以节省背包空间"),
+        tr("缺乏维护，已禁用"),
         "asset_lc3_star_superimpose_enable",
         parent=host.card_parent,
     )
+    host.lc3StarSuperimposeEnableCard.setEnabled(False)
     return host.finish("assets", (
         ("weeklyRelicCleanupEnableCard", ('smartRelicDiscardEnableCard',)),
     ))

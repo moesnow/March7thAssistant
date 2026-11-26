@@ -173,6 +173,9 @@ class Synthesis:
 
     @staticmethod
     def lc3star_superimpose():
+        log.info("3星光锥自动叠加缺乏维护，已禁用，跳过执行")
+        return
+
         try:
             log.hr("准备3星光锥自动叠加", 2)
             screen.change_to("bag_lc")

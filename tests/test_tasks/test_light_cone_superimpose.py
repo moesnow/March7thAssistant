@@ -6,6 +6,9 @@ import pytest
 from tasks.daily import synthesis
 
 
+pytestmark = pytest.mark.skip(reason="3星光锥自动叠加缺乏维护，已禁用")
+
+
 CONE = ((200, 300), (240, 340))
 AUTO_PLACE = ((1320, 930), (1420, 970))
 APPLY = ((1630, 930), (1730, 970))
