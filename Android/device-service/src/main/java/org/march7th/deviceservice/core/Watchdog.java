@@ -37,6 +37,8 @@ final class Watchdog {
         String inspector = TaskInspector.AUTO;
         /** 任务移回后、以及目标屏停止出帧时，是否自动把焦点切到目标屏。 */
         boolean autoFocus;
+        /** 新客户端在任务线程内共用焦点恢复，保留旧客户端的 auto_focus 协议。 */
+        boolean focusRecovery;
         /** 游戏进程退出后是否自动在目标屏重新启动。 */
         boolean relaunch;
         int maxRelaunches = 2;
@@ -67,6 +69,7 @@ final class Watchdog {
             config.stallMs = clamp(request.optInt("stall_ms", 10000), 0, 600000);
             config.inspector = request.optString("inspector", TaskInspector.AUTO);
             config.autoFocus = request.optBoolean("auto_focus", false);
+            config.focusRecovery = request.optBoolean("focus_recovery", false);
             config.relaunch = request.optBoolean("relaunch", false);
             config.maxRelaunches = clamp(request.optInt("max_relaunches", 2), 0, 10);
             if (config.relaunch) {
@@ -207,7 +210,8 @@ final class Watchdog {
     private int settled;
     private int moveAttempts;
     private boolean moveGaveUp;
-    private PendingFrame pendingFrame;
+    private volatile PendingFrame pendingFrame;
+    private volatile long focusMoveGeneration;
     private long mainOnTargetSince = -1;
     private boolean stalled;
     private boolean everRunning;
@@ -280,6 +284,34 @@ final class Watchdog {
         }
     }
 
+    /** 恢复使用新任务栈和电源状态，不能仅依赖上一轮看门狗快照。 */
+    String focusRecoveryProblem(int displayId, int taskId) throws Exception {
+        if (!running) return "stopped";
+        if (config.mainActivity == null) return "main_activity_unknown";
+        if (displayId <= 0 || displayId != targetDisplay() || displayId != host.currentDisplayId()) return "display_changed";
+        StackEntry current = findGame(platform.stacks());
+        if (current == null || current.displayId != displayId || current.taskIdOf(config.packageName) != taskId) return "task_changed";
+        if (!isMain(current)) return "sdk_window";
+        if (!current.visible) return "task_not_visible";
+        int currentPid;
+        synchronized (stateLock) { currentPid = pid; }
+        if (currentPid <= 0 || !config.packageName.equals(platform.processName(currentPid))) return "game_exited";
+        if (!platform.interactive() || platform.keyguardLocked()) return "device_unavailable";
+        return running ? null : "stopped";
+    }
+
+    boolean emulatorAutoFocus() { return config.autoFocus; }
+
+    long focusMoveGeneration() { return focusMoveGeneration; }
+
+    boolean needsMoveFocus(int displayId, int taskId) {
+        PendingFrame pending = pendingFrame;
+        if (pending == null || pending.task.displayId != displayId
+                || pending.task.taskIdOf(config.packageName) != taskId) return false;
+        FrameSequencer.Frame frame = host.latestFrame(displayId);
+        return frame == null || !(frame.timestampComparable ? frame.isAfter(pending.afterNs) : frame.seq > pending.afterSeq);
+    }
+
     JSONObject describe() throws JSONException {
         JSONObject json = new JSONObject();
         synchronized (stateLock) {
@@ -289,6 +321,7 @@ final class Watchdog {
             json.put("target_display_id", targetDisplay());
             json.put("inspector", platform.inspectorMode());
             json.put("auto_focus", config.autoFocus);
+            json.put("focus_recovery", config.focusRecovery);
             json.put("pid", pid);
             json.put("interactive", interactive);
             json.put("keyguard_locked", keyguardLocked);
@@ -540,6 +573,7 @@ final class Watchdog {
                 "task_id", moved.taskIdOf(config.packageName), "target_display_id", target));
         if (target == host.currentDisplayId()) {
             pendingFrame = new PendingFrame(moved, attempt, startedAt, deadline, arrivalSeq, arrivalNs);
+            focusMoveGeneration++;
             requestFocus(moved, target, "move_back");
             checkMoveFrame(moved, target, platform.interactive() && !platform.keyguardLocked());
         } else {
@@ -621,6 +655,11 @@ final class Watchdog {
         try {
             // 移动任务或发送事件期间可能锁屏，注入前重新读电源状态。
             if (!platform.interactive() || platform.keyguardLocked()) {
+                return;
+            }
+            if (config.focusRecovery) {
+                emit("focus_recovery_needed", fields("display_id", target, "task_id", current.taskIdOf(config.packageName),
+                        "reason", reason, "move_generation", focusMoveGeneration));
                 return;
             }
             boolean delivered = host.focusDisplay(target);

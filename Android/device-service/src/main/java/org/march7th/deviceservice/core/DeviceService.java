@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
 import java.util.regex.Pattern;
 
 /**
@@ -79,6 +80,7 @@ public final class DeviceService implements Watchdog.Host {
     private long eventSeq;
     private volatile VirtualScreen screen;
     private volatile Watchdog watchdog;
+    private final DisplayFocusRecovery focusRecovery = new DisplayFocusRecovery();
     private String lastLaunched; // displayLock
     private volatile boolean shutdownRequested;
     private volatile boolean closed;
@@ -185,6 +187,8 @@ public final class DeviceService implements Watchdog.Host {
                     return new Message(events(session, header));
                 case "startup_evidence":
                     return new Message(startupEvidence(Message.ok(header)));
+                case "recover_display_focus":
+                    return new Message(recoverDisplayFocus(session, header));
                 case "screen_power":
                     return new Message(screenPower(header));
                 case "keep_awake":
@@ -246,7 +250,8 @@ public final class DeviceService implements Watchdog.Host {
         out.put("encodings", new JSONArray(java.util.Arrays.asList(
                 FrameEncoder.RGBA, FrameEncoder.RGB, FrameEncoder.RGB_ZLIB, FrameEncoder.RGBA_ZLIB)));
         out.put("features", new JSONArray(java.util.Arrays.asList(
-                "screen_power", "mute", "stop_app", "events", "focus", "frame_after_ns", "keep_awake", "startup_snapshot")));
+                "screen_power", "mute", "stop_app", "events", "focus", "frame_after_ns", "keep_awake", "startup_snapshot",
+                "display_focus_recovery")));
         out.put("default_tap_ms", DEFAULT_TAP_MS);
         return out;
     }
@@ -900,8 +905,27 @@ public final class DeviceService implements Watchdog.Host {
             VirtualScreen current = screen;
             if (dog != null && current != null) {
                 try {
-                    out.put("startup", new JSONObject().put("watchdog", dog.describe())
-                            .put("display_id", current.displayId).put("frame", describeFrame(current))
+                    JSONObject dogState = dog.describe();
+                    JSONObject frame;
+                    synchronized (sequencer) {
+                        frame = describeFrame(current);
+                        if (request.optBoolean("frame_health") && current.latestFrame() != null) {
+                            frame.put("black", current.latestIsBlack());
+                        }
+                    }
+                    if (request.optBoolean("frame_health")) {
+                        JSONObject task = dogState.optJSONObject("task");
+                        long now = SystemClock.elapsedRealtime();
+                        boolean usable = task != null && task.optInt("display_id", -1) == current.displayId
+                                && dogState.optInt("target_display_id", -1) == current.displayId
+                                && task.optBoolean("visible") && dogState.optInt("pid", -1) > 0
+                                && dogState.optBoolean("interactive") && !dogState.optBoolean("keyguard_locked", true)
+                                && dogState.isNull("sdk_window") && now - dogState.optLong("task_checked_ms") <= 3000;
+                        focusRecovery.observe(now, frame.optLong("seq"), frame.optLong("age_ms", -1),
+                                frame.has("black") ? frame.optBoolean("black") : null, usable);
+                    }
+                    out.put("startup", new JSONObject().put("watchdog", dogState)
+                            .put("display_id", current.displayId).put("frame", frame)
                             .put("device_ms", SystemClock.elapsedRealtime()));
                 } catch (JSONException | RuntimeException e) {
                     Logger.w("cannot describe startup frames", e);
@@ -918,6 +942,97 @@ public final class DeviceService implements Watchdog.Host {
         out.put("device_ms", SystemClock.elapsedRealtime());
         out.put("display_now", current.diagnostics());
         return StartupDiagnostics.collect(out, dog.describe(), current.displayId);
+    }
+
+    private JSONObject recoverDisplayFocus(Session session, JSONObject request) throws CommandException, JSONException {
+        JSONObject out = Message.ok(request);
+        String phase = request.optString("phase");
+        if ("apply".equals(phase)) {
+            JSONObject report = focusRecovery.apply(session.id, request.getLong("attempt_id"));
+            emit("display_focus_recovery", report);
+            return out.put("recovery", report);
+        }
+        if (!"prepare".equals(phase)) throw new CommandException(Protocol.E_BAD_REQUEST, "phase must be prepare or apply");
+        int displayId = targetDisplay(request);
+        int taskId = JsonIntegers.id(request.opt("task_id"), "task_id", Integer.MAX_VALUE);
+        String reason = request.optString("reason");
+        if (!"frame_timeout".equals(reason) && !"virtual_display_black".equals(reason) && !"move_back".equals(reason)) {
+            throw new CommandException(Protocol.E_BAD_REQUEST, "invalid focus recovery reason");
+        }
+        Watchdog dog = watchdog;
+        VirtualScreen current = screen;
+        if (displayId <= 0 || dog == null || current == null || current.displayId != displayId
+                || (!dog.emulatorAutoFocus() && Build.VERSION.SDK_INT != 31 && Build.VERSION.SDK_INT != 32)
+                || ("move_back".equals(reason) && !dog.emulatorAutoFocus())) {
+            return out.put("recovery", new JSONObject().put("status", "unsupported").put("attempted", false));
+        }
+        int timeout = clamp(request.optInt("timeout_ms", 15000), 1, 15000);
+        long deadline = Math.min(request.getLong("deadline_ms"), SystemClock.elapsedRealtime() + timeout);
+        JSONObject report = focusRecovery.prepare(new DisplayFocusRecovery.Host() {
+            @Override
+            public long now() { return SystemClock.elapsedRealtime(); }
+
+            @Override
+            public String contextProblem() throws Exception {
+                if (closed || shutdownRequested) return "stopped";
+                if (screen != current || watchdog != dog) return "context_changed";
+                return dog.focusRecoveryProblem(displayId, taskId);
+            }
+
+            @Override
+            public long frameSequence() { return sequencer.latest(); }
+
+            @Override
+            public long moveGeneration() { return dog.focusMoveGeneration(); }
+
+            @Override
+            public boolean emulator() { return dog.emulatorAutoFocus(); }
+
+            @Override
+            public boolean pictureStillBad(String kind) {
+                synchronized (sequencer) {
+                    if (screen != current) return false;
+                    if ("move_back".equals(kind)) return dog.needsMoveFocus(displayId, taskId);
+                    FrameSequencer.Frame frame = current.latestFrame();
+                    if ("frame_timeout".equals(kind)) {
+                        if (frame == null) return true;
+                        return now() - frame.acquiredMs >= 10000;
+                    }
+                    return current.latestIsBlack();
+                }
+            }
+
+            @Override
+            public JSONObject evidence() throws JSONException {
+                JSONObject evidence = new JSONObject().put("display_now", current.diagnostics());
+                StartupDiagnostics.collect(evidence, dog.describe(), displayId, deadline);
+                evidence.put("frame", describeFrame(current));
+                evidence.put("device_ms", now());
+                return evidence;
+            }
+
+            @Override
+            public JSONObject inject(BooleanSupplier allowed) throws CommandException, JSONException {
+                JSONObject beforeDown = new JSONObject();
+                BooleanSupplier checked = () -> {
+                    if (!allowed.getAsBoolean()) return false;
+                    try {
+                        StartupDiagnostics.collectFocus(beforeDown, dog.describe().getString("package"), displayId, deadline);
+                        beforeDown.put("device_ms", now());
+                    } catch (JSONException error) {
+                        return false;
+                    }
+                    String focus = beforeDown.optString("target_window_focus");
+                    return ("none".equals(focus) || (emulator() && "game".equals(focus))) && allowed.getAsBoolean();
+                };
+                JSONObject injection = injector.focusResult(displayId, 1, 1, inputTargetUid(displayId), checked).describe();
+                return injection.put("before_down", beforeDown).put("display_id", displayId)
+                        .put("x", 1).put("y", 1).put("mode", "WAIT_FOR_RESULT");
+            }
+        }, reason, timeout, deadline, session.id);
+        report.put("display_id", displayId).put("task_id", taskId);
+        emit("display_focus_recovery", report);
+        return out.put("recovery", report);
     }
 
     @Override

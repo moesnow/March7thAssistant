@@ -15,6 +15,7 @@ from ruamel.yaml import YAML
 
 import module.game
 import module.game.adb_ready
+import module.game.adb_frame_health
 import module.game.adb_transport
 import module.localization
 import module.ocr
@@ -422,7 +423,7 @@ def test_virtual_display_startup_health(entry, device, monkeypatch, monthly_star
         now += seconds
 
     clock = SimpleNamespace(monotonic=lambda: now, sleep=sleep, time=lambda: now)
-    for owner in (adb, adb_ready, entry):
+    for owner in (adb, adb_ready, module.game.adb_frame_health, entry):
         monkeypatch.setattr(owner, "time", clock)
     monkeypatch.setattr(adb_ready, "wait_for_game", wait_for_game_frames)
     controller = AdbGameController(SimpleNamespace(ui_profile="touch_720", adb_tap_ms=None), logger=log)
@@ -531,6 +532,386 @@ def test_virtual_display_startup_health(entry, device, monkeypatch, monthly_star
         assert 180 <= now - started < 182
     if legacy:
         assert all(not call.kwargs.get("startup") for call in client.request.call_args_list)
+
+
+@pytest.mark.parametrize(("scenario", "outcome", "requests", "gestures"), [
+    ("normal", "success", 0, 0), ("short_black", "success", 0, 0),
+    ("short_stall", "success", 0, 0), ("sdk_loading", "success", 0, 0),
+    ("locked", "success", 0, 0), ("frame_read_error", "success", 0, 0),
+    ("snapshot_read_error", "success", 0, 0),
+    ("black_recovers", "success", 1, 1), ("stalled_recovers", "success", 1, 1),
+    ("api32_black_recovers", "success", 1, 1),
+    ("api32_stalled_recovers", "success", 1, 1),
+    ("no_first_recovers", "success", 1, 1), ("late_receipt", "success", 1, 1),
+    ("injection_denied", "inject_denied", 1, 1),
+    ("cancel_denied", "inject_denied", 1, 1),
+    ("persistent_black", "virtual_display_black", 1, 1), ("persistent_stall", "frame_timeout", 1, 1),
+    ("picture_resumed_during_evidence", "success", 1, 0),
+    ("recovery_unavailable", "virtual_display_black", 1, 0),
+    ("focus_game", "virtual_display_black", 1, 0), ("focus_other", "virtual_display_black", 1, 0),
+    ("focus_unknown", "virtual_display_black", 1, 0),
+    ("stop_before_request", "stopped", 0, 0), ("stop_during_recovery", "stopped", 1, 0),
+    ("deadline_before_recovery", "game_start_timeout", 0, 0),
+    ("deadline_during_recovery", "game_start_timeout", 1, 0),
+    ("old_service", "virtual_display_black", 0, 0),
+    ("api30", "virtual_display_black", 0, 0), ("api33", "virtual_display_black", 0, 0),
+    ("api34", "virtual_display_black", 0, 0),
+    ("emulator31", "success", 1, 1),
+    ("emulator32", "success", 1, 1),
+    ("emulator_cached_loading", "success", 1, 1),
+    ("process_unknown", "game_start_timeout", 0, 0),
+    ("valid_dark_loading", "game_start_timeout", 0, 0), ("stale_watchdog", "game_start_timeout", 0, 0),
+])
+def test_app_automatically_recovers_startup_frames_once(
+    entry, device, monkeypatch, monthly_startup_frames, record_property, scenario, outcome, requests, gestures,
+):
+    from module.game import adb, adb_ready, adb_frame_health
+
+    started = now = 200.0
+    recovered_at = None
+    last_seq = 0
+    last_image_at = None
+
+    def sleep(seconds):
+        nonlocal now
+        now += seconds
+        assert now - started < 200, "模拟启动必须在本轮时限内结束"
+
+    clock = SimpleNamespace(monotonic=lambda: now, sleep=sleep, time=lambda: now)
+    for owner in (adb, adb_ready, adb_frame_health, entry):
+        monkeypatch.setattr(owner, "time", clock)
+    monkeypatch.setattr(adb_ready, "wait_for_game", wait_for_game_frames)
+    controller = AdbGameController(SimpleNamespace(ui_profile="touch_720", adb_tap_ms=None), logger=log)
+    monkeypatch.setattr(module.game, "get_game_controller", lambda backend: controller)
+    task = Mock(return_value=True)
+    monkeypatch.setattr(rewards, "run_daily_training", task)
+    if scenario == "deadline_before_recovery":
+        device["start_game_timeout"] = 14 / 60
+    elif scenario == "deadline_during_recovery":
+        device["start_game_timeout"] = 55 / 60
+    bridge = Bridge()
+    client = module.game.adb_transport.ServiceClient.return_value
+    client.hello = {"features": ["keep_awake", "startup_snapshot"]
+                    + ([] if scenario == "old_service" else ["display_focus_recovery"])}
+    client.closed = False
+    client.close.side_effect = lambda: setattr(client, "closed", True)
+    commands, actions, events, recovery_params = [], [], [], []
+    black = bytes(1280 * 720 * 3)
+    static = bytearray(black)
+    static[3:6] = b'\xff\xff\xff'
+    main = monthly_startup_frames["main"]
+    watch_task = dict(task_id=355, stack_id=355, display_id=65, visible=True,
+                      top_activity="com.miHoYo.hkrpg/com.mihoyo.combosdk.ComboSDKActivity")
+
+    def emit(name, **fields):
+        events.append(dict(event=name, event_seq=len(events) + 1, **fields))
+
+    def respond(command, **params):
+        nonlocal last_seq, last_image_at, recovered_at
+        elapsed = now - started
+        commands.append(command)
+        if command == "create_display":
+            return {"display_id": 65}, None
+        if command == "launch":
+            emit("task_display_changed", to=65)
+        sdk = scenario == "sdk_loading" and 5 <= elapsed < 25
+        locked = scenario == "locked" and 5 <= elapsed < 30
+        if command == "events":
+            result = {"events": events[params["after"]:], "event_seq": len(events)}
+            if params.get("startup"):
+                if scenario == "snapshot_read_error" and elapsed < 28:
+                    raise module.game.adb_transport.AdbError("internal", "暂时无法读取启动快照")
+                if scenario == "stop_before_request" and elapsed >= 45:
+                    bridge.cancelled = True
+                result["startup"] = {
+                    "device_ms": round(now * 1000), "display_id": 65,
+                    "watchdog": {"task": watch_task, "pid": -1 if scenario == "process_unknown" else 123,
+                                 "auto_focus": scenario in {"emulator31", "emulator32", "emulator_cached_loading"},
+                                 "target_display_id": 65,
+                                 "task_checked_ms": round((started if scenario == "stale_watchdog" else now) * 1000),
+                                 "interactive": not locked, "keyguard_locked": locked,
+                                 "sdk_window": "sdk/Login" if sdk else None},
+                    "frame": {"seq": last_seq, "capturing": True,
+                              "age_ms": -1 if last_image_at is None else round((now - last_image_at) * 1000)},
+                }
+            return result, None
+        if command == "recover_display_focus":
+            if params["phase"] == "apply":
+                actions.extend(["DOWN@65", "CANCEL@65"])
+                recovered_at = now
+                injection = {"down_accepted": None if scenario == "late_receipt" else True, "cancel_accepted": True}
+                if scenario == "injection_denied":
+                    injection.update(down_accepted=None, down_error="inject_denied: permission denied")
+                if scenario == "cancel_denied":
+                    injection.update(cancel_accepted=None, cancel_error="inject_denied: permission denied")
+                return {"recovery": {"status": "requested", "attempted": True, "injection": injection}}, None
+            assert params["phase"] == "prepare"
+            recovery_params.append(params)
+            assert params["display_id"] == 65 and params["task_id"] == 355
+            assert params["reason"] in {"frame_timeout", "virtual_display_black"}
+            assert 0 < params["timeout_ms"] <= 15000
+            assert params["deadline_ms"] <= round(now * 1000) + params["timeout_ms"]
+            if scenario == "recovery_unavailable":
+                raise module.game.adb_transport.AdbError("unsupported", "恢复接口不可用")
+            if scenario.startswith("focus_"):
+                return {"recovery": {"status": scenario, "attempted": False}}, None
+            if scenario == "stop_during_recovery":
+                bridge.cancelled = True
+                return {"recovery": {"status": "prepared", "attempted": False, "attempt_id": 1}}, None
+            if scenario == "deadline_during_recovery":
+                sleep(params["timeout_ms"] / 1000 + 1.1)
+                return {"recovery": {"status": "deadline", "attempted": False}}, None
+            if scenario == "picture_resumed_during_evidence":
+                recovered_at = now
+                return {"recovery": {"status": "picture_resumed", "attempted": False}}, None
+            return {"recovery": {"status": "prepared", "attempted": False, "attempt_id": 1}}, None
+        if command == "frame":
+            sleep(.65)
+            frozen = scenario in {"stalled_recovers", "api32_stalled_recovers", "no_first_recovers", "persistent_stall", "valid_dark_loading", "emulator_cached_loading"}
+            if scenario == "short_stall":
+                frozen = 4 <= elapsed < 10
+            if sdk or locked:
+                frozen = True
+            if recovered_at is not None and scenario != "persistent_stall":
+                frozen = False
+            if not frozen or last_image_at is None:
+                last_seq += 1
+                last_image_at = now
+            if scenario == "no_first_recovers" and recovered_at is None:
+                last_seq, last_image_at = 0, None
+                raise module.game.adb_transport.AdbError("timeout", "暂时无首帧")
+            if frozen and last_seq < params.get("min_seq", 0):
+                raise module.game.adb_transport.AdbError("timeout", "输入后暂时没有新帧")
+            if scenario == "frame_read_error" and 10 <= elapsed < 23:
+                raise module.game.adb_transport.AdbError("timeout", "截图暂时不可用")
+            ready_at = {"normal": 3, "short_black": 22, "short_stall": 20, "sdk_loading": 30,
+                        "locked": 33, "frame_read_error": 30, "snapshot_read_error": 30}.get(scenario, 999)
+            if recovered_at is not None and scenario not in {"persistent_black", "persistent_stall"}:
+                ready_at = recovered_at - started + (9 if scenario == "late_receipt" else 3)
+            pixels = main if elapsed >= ready_at else static if scenario in {"valid_dark_loading", "emulator_cached_loading"} else black
+            return {"seq": last_seq, "display_id": 65, "crop": params["crop"], "encoding": "rgb"}, pixels
+        return {"original_mode": "allowed"}, None
+
+    client.request.side_effect = respond
+    sdk = {"api30": 30, "api33": 33, "api34": 34, "api32_black_recovers": 32,
+           "api32_stalled_recovers": 32, "emulator32": 32}.get(scenario, 31)
+    result = entry.run(str(ROOT), "token", sdk, str(sdk), "startup-test", scenario in {"emulator31", "emulator32", "emulator_cached_loading"}, "DAILY",
+                       payload(), False, False, "zh_CN", bridge)
+    record_property("scenario_result", json.dumps(dict(scenario=scenario, outcome=result, actions=actions,
+                                                       recovery_requests=len(recovery_params), elapsed=round(now - started, 2))))
+    assert result == outcome
+    assert len(recovery_params) == requests
+    assert actions == ["DOWN@65", "CANCEL@65"] * gestures
+    assert task.call_count == int(outcome == "success")
+    assert commands.count("launch") == 1 and commands.count("shutdown") == 1
+    assert not {"tap", "touch", "focus", "swipe"}.intersection(commands)
+    if requests:
+        expected_reason = "frame_timeout" if scenario in {"stalled_recovers", "api32_stalled_recovers", "no_first_recovers", "persistent_stall", "emulator_cached_loading"} else "virtual_display_black"
+        assert recovery_params[0]["reason"] == expected_reason
+    if outcome == "game_start_timeout":
+        assert 14 <= now - started < 182
+
+
+@pytest.mark.parametrize(("scenario", "outcome", "gestures"), [
+    ("healthy", "success", 0), ("crop_is_black", "success", 0),
+    ("runtime_black", "success", 1), ("runtime_stall", "success", 1),
+    ("idle_then_stall", "success", 1), ("late_apply_receipt", "success", 1),
+    ("runtime_cached_game", "success", 1), ("two_black_episodes", "success", 2),
+    ("two_stall_episodes", "success", 2), ("startup_and_runtime", "success", 2),
+    ("permanent_black", "virtual_display_black", 1), ("permanent_stall", "frame_timeout", 1),
+    ("isolated_black_buffers", "frame_timeout", 3),
+    ("brief_healthy_flash", "virtual_display_black", 1),
+    ("locked", "success", 0), ("sdk", "success", 0), ("snapshot_error", "success", 0),
+    ("lock_before_input_then_resume", "success", 1),
+    ("other_window", "virtual_display_black", 0), ("unknown_focus", "virtual_display_black", 0),
+    ("stop_during_prepare", "stopped", 0),
+    ("deadline_before", "operation_timeout", 0), ("deadline_during", "operation_timeout", 0),
+    ("emulator_move_back", "success", 1), ("emulator_runtime_black", "success", 1),
+    ("emulator34_runtime_black", "success", 1),
+    ("api34_physical", "virtual_display_black", 0),
+])
+def test_shared_focus_recovery_through_startup_and_runtime_capture(
+    entry, device, monkeypatch, monthly_startup_frames, record_property, scenario, outcome, gestures,
+):
+    from module.automation.input_base import limit_input_deadline
+    from module.game import adb, adb_ready, adb_frame_health
+
+    started = now = 200.0
+    runtime_at = None
+    seq = 0
+    image_at = None
+    temporary_lock_until = 0
+    events, commands, actions, prepares, applied = [], [], [], [], []
+    watch_task = dict(task_id=355, stack_id=355, display_id=65, visible=True,
+                      top_activity="com.miHoYo.hkrpg/com.mihoyo.combosdk.ComboSDKActivity")
+    black = bytes(1280 * 720 * 3)
+    main = monthly_startup_frames["main"]
+    bridge = Bridge()
+    client = module.game.adb_transport.ServiceClient.return_value
+    client.hello = {"features": ["keep_awake", "startup_snapshot", "display_focus_recovery"]}
+    client.closed = False
+    client.close.side_effect = lambda: setattr(client, "closed", True)
+    controller = AdbGameController(SimpleNamespace(ui_profile="touch_720", adb_tap_ms=None), logger=log)
+    monkeypatch.setattr(module.game, "get_game_controller", lambda backend: controller)
+    monkeypatch.setattr(adb_ready, "wait_for_game", wait_for_game_frames)
+
+    def sleep(seconds):
+        nonlocal now
+        now += seconds
+        assert now - started < 300, "故障注入必须在固定轮次内结束"
+
+    clock = SimpleNamespace(monotonic=lambda: now, sleep=sleep, time=lambda: now)
+    for owner in (adb, adb_ready, adb_frame_health, entry):
+        monkeypatch.setattr(owner, "time", clock)
+
+    def emit(name, **fields):
+        events.append(dict(event=name, event_seq=len(events) + 1, **fields))
+
+    def picture():
+        if runtime_at is None:
+            return scenario == "startup_and_runtime" and not applied
+        elapsed = now - runtime_at
+        if scenario in {"healthy", "crop_is_black", "snapshot_error", "emulator_move_back"}:
+            return False
+        if elapsed < 6 or (scenario in {"locked", "sdk"} and elapsed >= 64):
+            return False
+        runtime_applies = [when for stage, when in applied if stage == "runtime"]
+        if not runtime_applies:
+            return True
+        if scenario in {"permanent_black", "permanent_stall", "isolated_black_buffers"}:
+            return True
+        if scenario == "brief_healthy_flash":
+            return not 4 <= now - runtime_applies[0] < 5
+        if scenario in {"two_black_episodes", "two_stall_episodes"} and len(runtime_applies) == 1:
+            return now - runtime_applies[0] >= 20
+        return now - runtime_applies[-1] < 2
+
+    def respond(command, **params):
+        nonlocal seq, image_at, temporary_lock_until
+        commands.append((command, params))
+        bad = picture()
+        elapsed = 0 if runtime_at is None else now - runtime_at
+        if command == "create_display":
+            return {"display_id": 65}, None
+        if command == "launch":
+            emit("task_display_changed", to=65)
+        if command == "events":
+            if scenario == "emulator_move_back" and runtime_at is not None and elapsed >= 6 and len(events) == 1:
+                emit("move_back_started", to=65)
+                emit("task_display_changed", to=65)
+                emit("focus_recovery_needed", reason="move_back", display_id=65, task_id=355, move_generation=1)
+            out = {"events": events[params["after"]:], "event_seq": len(events)}
+            if params.get("startup"):
+                if scenario == "snapshot_error" and elapsed < 14:
+                    raise adb.AdbError("internal", "状态查询暂时不可用")
+                locked = (scenario == "locked" and 6 <= elapsed < 64) or now < temporary_lock_until
+                sdk = scenario == "sdk" and 6 <= elapsed < 64
+                full_black = bad and scenario != "runtime_cached_game"
+                out["startup"] = {
+                    "device_ms": round(now * 1000), "display_id": 65,
+                    "watchdog": {"task": watch_task, "pid": 123, "target_display_id": 65,
+                                 "task_checked_ms": round(now * 1000), "interactive": not locked,
+                                 "keyguard_locked": locked, "sdk_window": "sdk/Login" if sdk else None,
+                                 "frames_stalled": scenario == "idle_then_stall" and bad and elapsed >= 16},
+                    "frame": {"seq": seq, "age_ms": -1 if image_at is None else round((now - image_at) * 1000),
+                              "capturing": True, "black": full_black},
+                }
+            return out, None
+        if command == "recover_display_focus":
+            if params["phase"] == "prepare":
+                prepares.append((runtime_at is not None, params.copy(), now))
+                if scenario == "lock_before_input_then_resume" and len(prepares) == 1:
+                    temporary_lock_until = now + 8
+                    return {"recovery": {"status": "device_unavailable", "attempted": False}}, None
+                if scenario == "stop_during_prepare":
+                    bridge.cancelled = True
+                if scenario == "deadline_during":
+                    sleep(params["timeout_ms"] / 1000 + 1)
+                if scenario in {"other_window", "unknown_focus"}:
+                    return {"recovery": {"status": "focus_other" if scenario == "other_window" else "focus_unknown"}}, None
+                return {"recovery": {"status": "prepared", "attempt_id": len(prepares)}}, None
+            assert params["attempt_id"] == len(prepares)
+            applied.append(("startup" if runtime_at is None else "runtime", now))
+            actions.extend(["DOWN@65", "CANCEL@65"])
+            if scenario == "emulator_move_back":
+                seq += 1
+                image_at = now
+                emit("move_back_succeeded", first_frame_seq=seq)
+            if scenario == "late_apply_receipt":
+                sleep(3)
+                raise adb.AdbError("timeout", "恢复回执迟到，操作可能已经生效")
+            return {"recovery": {"status": "requested", "attempted": True,
+                                 "injection": {"down_accepted": True, "cancel_accepted": True}}}, None
+        if command == "frame":
+            sleep(.5)
+            frozen = bad and scenario in {"runtime_stall", "runtime_cached_game", "two_stall_episodes", "permanent_stall", "startup_and_runtime", "idle_then_stall", "isolated_black_buffers"}
+            if scenario == "isolated_black_buffers" and applied and image_at < applied[-1][1] <= now - 1:
+                frozen = False
+            if not frozen or image_at is None:
+                seq += 1
+                image_at = now
+            if scenario == "emulator_move_back" and applied and not any(event["event"] == "move_back_succeeded" for event in events):
+                emit("move_back_succeeded", first_frame_seq=seq)
+            if frozen and seq < params.get("min_seq", 0):
+                raise adb.AdbError("timeout", "恢复输入后暂时还没有新帧")
+            source = black if bad and scenario != "runtime_cached_game" else main
+            x, y, width, height = params["crop"]
+            if (x, y, width, height) != (0, 0, 1280, 720):
+                # 无论局部裁剪是全黑还是没有拿到完整图，健康检测必须依据原帧。
+                source = bytes(width * height * 3)
+            return {"seq": seq, "display_id": 65, "crop": params["crop"], "encoding": "rgb"}, source
+        return {"original_mode": "allowed"}, None
+
+    def task(**kwargs):
+        nonlocal runtime_at
+        runtime_at = now
+        assert controller._startup is None  # 真正通过入口结束启动检查后才注入运行期故障。
+        finish = runtime_at + (21 if scenario == "deadline_before" else 26 if scenario == "deadline_during" else 220)
+        template = adb_ready._load_template("main")
+        with limit_input_deadline(finish):
+            if scenario == "idle_then_stall":
+                sleep(20)
+            for _ in range(280):
+                frame = controller.capture_frame(crop=(0, 0, .1, .1))
+                if now >= finish:
+                    raise adb.AdbError("operation_timeout", "操作超过本轮等待时限")
+                runtime_applies = [when for stage, when in applied if stage == "runtime"]
+                done = len(runtime_applies) >= (2 if scenario.startswith("two_") else 1)
+                if scenario in {"healthy", "crop_is_black", "snapshot_error"}:
+                    done = now - runtime_at >= 30
+                elif scenario in {"locked", "sdk"}:
+                    done = now - runtime_at >= 70
+                elif scenario == "brief_healthy_flash":
+                    done = False
+                if done and not picture():
+                    fresh = controller.capture_frame(fresh=True)
+                    if fresh and adb_ready._match(fresh[0], "main", template):
+                        return True
+                sleep(.5)
+        raise AssertionError("设备恢复模拟未在固定轮次内结束")
+
+    monkeypatch.setattr(rewards, "run_daily_training", task)
+    client.request.side_effect = respond
+    emulator = scenario in {"emulator_move_back", "emulator_runtime_black", "emulator34_runtime_black"}
+    sdk = 34 if scenario in {"api34_physical", "emulator34_runtime_black"} else 32 if emulator else 31
+    result = entry.run(str(ROOT), "token", sdk, str(sdk), "runtime-test", emulator, "DAILY",
+                       payload(), False, False, "zh_CN", bridge)
+    record_property("scenario_result", json.dumps(dict(scenario="unified_" + scenario, outcome=result,
+        actions=actions, prepares=len(prepares), elapsed=round(now - started, 2),
+        recovery=[dict(reason=params["reason"], elapsed=round(at - started, 2)) for _, params, at in prepares])))
+    assert result == outcome
+    assert actions == ["DOWN@65", "CANCEL@65"] * gestures
+    assert all(when_runtime for when_runtime, _, _ in prepares) or scenario == "startup_and_runtime"
+    assert sum(command == "shutdown" for command, _ in commands) == 1
+    dog = next(params for command, params in commands if command == "watchdog")
+    assert dog["focus_recovery"] and dog["auto_focus"] == emulator
+    if scenario == "emulator_move_back":
+        assert prepares[0][1]["reason"] == "move_back"
+        assert prepares[0][2] - runtime_at < 8
+    if scenario == "lock_before_input_then_resume":
+        assert len(prepares) == 2
+    if scenario in {"healthy", "crop_is_black"}:
+        assert sum(command == "events" and params.get("frame_health", False) for command, params in commands) <= 12
 
 
 @pytest.mark.parametrize(("scenario", "outcome", "expected"), [

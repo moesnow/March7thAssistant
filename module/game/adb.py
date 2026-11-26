@@ -15,7 +15,7 @@ from module.game.adb_transport import (
 )
 from module.game.base import FrameCapture, GameControllerBase
 from module.localization import tr
-from utils.pause import pause_ctl
+from utils.pause import RunStopRequested, pause_ctl
 
 
 _GAME_ACTIVITY = "com.mihoyo.combosdk.ComboSDKActivity"
@@ -72,6 +72,8 @@ class AdbGameController(GameControllerBase):
     def _reset_display(self):
         self._on_event = None
         self._startup = None
+        self._frame_health = None
+        self._pending_move_focus = None
         self._display_id = None
         self._emulator_physical_display_id = None
         self._game_display_id = None
@@ -155,6 +157,11 @@ class AdbGameController(GameControllerBase):
     def _record_event(self, event):
         name = event["event"]
         self._events.append(event)
+        if name == "focus_recovery_needed":
+            if event.get("reason") == "move_back":
+                self._pending_move_focus = event
+            if self._frame_health is not None:
+                self._frame_health.next_sample = 0
         if self._on_event is None:
             self.log_info(f"ADB 看门狗 {name}：{event}")
         else:
@@ -187,10 +194,15 @@ class AdbGameController(GameControllerBase):
             self._startup.saw_task = True
             self._startup.missing_since_ms = None
 
-    def _poll_events(self, *, force=False, startup=False):
+    def _poll_events(self, *, force=False, startup=False, frame_health=False, timeout=None):
         if not self._watching or (not force and time.monotonic() - self._last_event_poll < 0.35):
             return
-        response, _ = self._call("events", after=self._event_seq, **({"startup": True} if startup else {}))
+        params = {"startup": True} if startup else {}
+        if frame_health:
+            params["frame_health"] = True
+        if timeout is not None:
+            params["timeout"] = timeout
+        response, _ = self._call("events", after=self._event_seq, **params)
         self._last_event_poll = time.monotonic()
         for event in response["events"]:
             self._record_event(event)
@@ -199,28 +211,108 @@ class AdbGameController(GameControllerBase):
             raise self._failure
         return response
 
-    def startup_frame_snapshot(self):
-        """只在虚拟屏启动检查取样，旧服务沿用原来的事件与超时处理。"""
+    def frame_health_snapshot(self, deadline):
+        """启动和运行共用取样；新服务直接复核完整原帧，避免裁剪区域误报。"""
         with self._lock:
             if not self._display_id or "startup_snapshot" not in self._service.client.hello.get("features", ()):
                 return None
             try:
-                response = self._poll_events(force=True, startup=True)
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    return None
+                response = self._poll_events(force=True, startup=True,
+                    frame_health="display_focus_recovery" in self._service.client.hello.get("features", ()),
+                    timeout=min(4, remaining))
             except AdbError as error:
                 if self._failure is not None:
                     raise
-                self.log_debug(f"ADB 启动状态取样不可用：{error}")
+                self.log_debug(f"ADB 虚拟屏状态取样不可用：{error}")
                 return None
-            if not response or not self._display_available():
+            if not response or self._sdk_window:
                 return None
             snapshot = response.get("startup")
             if not isinstance(snapshot, dict) or snapshot.get("display_id") != self._display_id:
                 return None
+            snapshot["received_at"] = time.monotonic()
             # 两次取样之间也可能曾短暂锁屏、移走任务或弹出 SDK。
             snapshot["last_transition"] = next((event["event_seq"] for event in reversed(self._events)
                 if event["event"] in {"device_state", "task_display_changed", "sdk_window_shown", "sdk_window_gone",
                                       "game_exited", "game_started", "move_back_started"}), 0)
             return snapshot
+
+    def pending_move_focus(self, snapshot):
+        event = self._pending_move_focus
+        if event is None:
+            return False
+        self._pending_move_focus = None
+        task = snapshot.get("watchdog", {}).get("task") or {}
+        return event.get("display_id") == self._display_id and event.get("task_id") == task.get("task_id")
+
+    def recover_display_focus(self, snapshot, reason, deadline):
+        """模拟器和 Android 12 真机共用一次恢复操作；每次故障的次数由健康监测管理。"""
+        with self._lock:
+            environment = self._environment
+            if (environment is None or (environment.sdk not in (31, 32) and not environment.virtual_auto_focus)
+                    or not self._display_id
+                    or "display_focus_recovery" not in self._service.client.hello.get("features", ())):
+                return False
+            remaining = deadline - time.monotonic()
+            if remaining < 4:
+                return False
+            task = snapshot.get("watchdog", {}).get("task") or {}
+            if snapshot.get("display_id") != self._display_id or type(task.get("task_id")) is not int:
+                return False
+            pause_ctl.check_stop()
+            operation_deadline = min(deadline, time.monotonic() + 15)
+            # 用同一快照中的设备时钟锚定截止时间，服务排队和两次请求不能重新获得一份预算。
+            device_deadline = snapshot["device_ms"] + int(
+                (operation_deadline - snapshot["received_at"] - .5) * 1000)
+            apply_sent = False
+            try:
+                result, _ = self._call("recover_display_focus", phase="prepare",
+                                       timeout=operation_deadline - time.monotonic(),
+                                       timeout_ms=int((operation_deadline - time.monotonic()) * 1000),
+                                       deadline_ms=device_deadline, display_id=self._display_id,
+                                       task_id=task["task_id"], reason=reason)
+                report = result["recovery"]
+                if report.get("status") == "prepared":
+                    pause_ctl.check_stop()
+                    remaining = operation_deadline - time.monotonic()
+                    if remaining <= 0:
+                        return False
+                    # APK 的桥接在每次 request 前也检查用户停止；取证期间取消时不再进入注入阶段。
+                    previous_min = self._min_seq
+                    self._min_seq = max(self._min_seq, snapshot["frame"]["seq"] + 1, self._frame_seq + 1)
+                    apply_sent = True
+                    result, _ = self._call("recover_display_focus", phase="apply", timeout=remaining,
+                                           attempt_id=report["attempt_id"])
+                    report = result["recovery"]
+                    if not report.get("attempted"):
+                        self._min_seq = previous_min
+                self.log_debug(f"ADB 虚拟屏焦点恢复结果：{report}")
+                injection = report.get("injection") or {}
+                if any((injection.get(key) or "").startswith("inject_denied:") for key in ("down_error", "cancel_error")):
+                    raise AdbError("inject_denied", tr("Android 拒绝触摸注入，请检查 USB 调试（安全设置）是否开启"))
+                if report.get("attempted"):
+                    # 本次截图在恢复输入之前取得，交回任务前必须跨过新的帧边界。
+                    self._min_seq = max(self._min_seq, snapshot["frame"]["seq"] + 1, self._frame_seq + 1)
+                    self.log_warning("后台虚拟屏画面持续异常，已尝试一次焦点恢复，继续等待游戏画面")
+                    return "requested"
+                # 取证或等待输入锁期间恢复出帧、切换页面或锁屏，不能用过期的黑帧立即判失败。
+                if report.get("status") in {"picture_resumed", "context_changed", "task_changed", "sdk_window",
+                                             "device_unavailable", "focus_changed", "active_gesture"}:
+                    return "deferred"
+                return None
+            except RunStopRequested:
+                raise
+            except AdbError as error:
+                if self._failure is not None or error.code == "inject_denied":
+                    raise
+                self.log_debug(f"ADB 虚拟屏焦点恢复不可用：{error}")
+            except Exception as error:
+                self.log_debug(f"ADB 虚拟屏焦点恢复不可用：{error}")
+            # apply 可能已经执行，只是回执迟到。保持新帧边界并观察，不重发输入。
+            return "uncertain" if apply_sent else None
 
     def log_startup_evidence(self, deadline):
         """已判定故障后再读系统窗口和 SurfaceFlinger；取证失败仍返回原故障。"""
@@ -306,7 +398,9 @@ class AdbGameController(GameControllerBase):
 
             # MuMu 的独立应用窗口可能把显式指定到 display 0 的启动重定向到外接屏。
             self._call("watchdog", package=GAME_PACKAGE, main_activity=_GAME_ACTIVITY, display_id=display_id,
-                       auto_focus=display_id != 0 and self._environment.virtual_auto_focus, subscribe=False)
+                       auto_focus=display_id != 0 and self._environment.virtual_auto_focus,
+                       focus_recovery="display_focus_recovery" in self._service.client.hello.get("features", ()),
+                       subscribe=False)
             self._call("launch", timeout=17, timeout_ms=15000, display_id=display_id,
                        component=_GAME_COMPONENT)
             self._watching = True
@@ -474,7 +568,7 @@ class AdbGameController(GameControllerBase):
                 self._min_seq = max(self._min_seq, self._frame_seq + 1)
             return True
 
-    def capture_frame(self, crop=(0, 0, 1, 1), *, prefer_frame=True, fresh=False) -> FrameCapture:
+    def capture_frame(self, crop=(0, 0, 1, 1), *, prefer_frame=True, fresh=False, health_deadline=None) -> FrameCapture:
         """截图等待暂时无帧时返回 False，断线和登录中断立即抛出 AdbError。"""
         with self._lock:
             if self._failure:
@@ -482,23 +576,35 @@ class AdbGameController(GameControllerBase):
             if self._display_id is None:
                 raise AdbError("no_display", tr("ADB 尚未准备游戏画面，请先启动游戏"))
             self._poll_events()
-            if not self._display_available():
-                return False
             pixels = _pixel_crop(crop)
-            if self._display_id == 0:
+            if not self._display_available():
+                result = False
+            elif self._display_id == 0:
                 result = self._capture_emulator(pixels)
             else:
                 result = self._capture_virtual(pixels, fresh)
             self._poll_events()
-            if not result or not self._display_available():
-                return False
-            seq, image = result
-            if seq < self._min_seq:
-                return False
-            if seq > self._frame_seq:
-                self._frame_seq = seq
-                self._frame_times.append(time.monotonic())
-            return image, pixels, 1
+            frame = False
+            if result and self._display_available():
+                seq, image = result
+                if seq >= self._min_seq:
+                    if seq > self._frame_seq:
+                        self._frame_seq = seq
+                        self._frame_times.append(time.monotonic())
+                    frame = image, pixels, 1
+            features = self._service.client.hello.get("features", ())
+            if self._display_id and self._watching and (health_deadline is not None or "display_focus_recovery" in features):
+                from module.automation.input_base import input_deadline
+                from module.game.adb_frame_health import VirtualFrameHealth
+                if self._frame_health is None:
+                    self._frame_health = VirtualFrameHealth()
+                now = time.monotonic()
+                deadline = min(value for value in (health_deadline, input_deadline.get(), now + 15) if value is not None)
+                full_frame = frame if pixels == (0, 0, *RESOLUTION) else False
+                self._frame_health.check(self, full_frame, now, deadline, startup=health_deadline is not None)
+                if self._frame_seq < self._min_seq or time.monotonic() >= deadline:
+                    return False
+            return frame
 
     def _capture_virtual(self, pixels, fresh):
         min_seq = max(self._min_seq, self._frame_seq + 1 if fresh else self._frame_seq)

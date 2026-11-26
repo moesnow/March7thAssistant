@@ -27,7 +27,7 @@ static int open_fixture(const char *name, int flags) {
 }
 
 static int checked_groups(size_t count, const gid_t *groups) {
-    assert(checked_uid() == 0 && prepared && stage++ == 0 && count == 1 && groups[0] == 3003);
+    assert(checked_uid() == 0 && prepared && stage++ == 0 && count == 2 && groups[0] == 3003 && groups[1] == 3009);
     if (deny_groups) { errno = EPERM; return -1; }
     return 0;
 }

@@ -56,6 +56,30 @@ public class WatchdogTest {
     }
 
     @Test
+    public void newClientsReceiveMoveAndStallTriggersWithoutADuplicateLegacyInjection() throws Exception {
+        Fixture platform = new Fixture();
+        platform.setTask(0, PACKAGE + "/.Main");
+        platform.publishFrame();
+        Watchdog.Config config = config();
+        config.focusRecovery = true;
+        Watchdog dog = new Watchdog(config, platform, platform);
+        dog.poll();
+        dog.poll();
+        assertEquals(0, platform.focusCalls);
+        assertEquals("move_back", platform.details("focus_recovery_needed").getString("reason"));
+        assertTrue(dog.needsMoveFocus(TARGET, 17));
+        assertEquals(1, dog.focusMoveGeneration());
+        platform.now += config.stallMs + 1;
+        dog.poll();
+        assertEquals(0, platform.focusCalls);
+        assertEquals(2, platform.events.stream().filter("focus_recovery_needed"::equals).count());
+        platform.publishFrame();
+        dog.poll();
+        assertFalse(dog.needsMoveFocus(TARGET, 17));
+        assertTrue(platform.events.contains("move_back_succeeded"));
+    }
+
+    @Test
     public void taskArrivalWithoutFramesTimesOutAndLaterReportsRecovery() throws Exception {
         Fixture platform = new Fixture();
         platform.setTask(0, PACKAGE + "/.Main");
@@ -212,6 +236,34 @@ public class WatchdogTest {
         assertEquals(1, platform.focusCalls);
         dog.poll();
         assertTrue(platform.events.contains("frames_resumed"));
+    }
+
+    @Test
+    public void focusRecoveryUsesLiveTaskAndPowerStateForBothDeviceTypes() throws Exception {
+        Fixture platform = new Fixture();
+        platform.setTask(TARGET, PACKAGE + "/.Main");
+        Watchdog.Config config = config();
+        config.autoFocus = false;
+        Watchdog dog = new Watchdog(config, platform, platform);
+        dog.poll();
+        assertEquals(null, dog.focusRecoveryProblem(TARGET, 17));
+        platform.setTask(0, PACKAGE + "/.Main");
+        assertEquals("task_changed", dog.focusRecoveryProblem(TARGET, 17));
+        platform.setTask(TARGET, SDK);
+        assertEquals("sdk_window", dog.focusRecoveryProblem(TARGET, 17));
+        platform.setTask(TARGET, PACKAGE + "/.Main");
+        platform.locked = true;
+        assertEquals("device_unavailable", dog.focusRecoveryProblem(TARGET, 17));
+        platform.locked = false;
+        platform.awake = false;
+        assertEquals("device_unavailable", dog.focusRecoveryProblem(TARGET, 17));
+        platform.awake = true;
+        config.autoFocus = true;
+        assertEquals(null, dog.focusRecoveryProblem(TARGET, 17));
+        config.autoFocus = false;
+        dog.stop();
+        assertEquals("stopped", dog.focusRecoveryProblem(TARGET, 17));
+        assertEquals(0, platform.focusCalls);
     }
 
     private static Watchdog.Config config() {

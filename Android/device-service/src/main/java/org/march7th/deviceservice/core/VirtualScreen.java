@@ -244,6 +244,13 @@ final class VirtualScreen {
         FrameEncoder.copyThumbnail(plane.getBuffer(), plane.getRowStride(), width, height, w, h, out);
     }
 
+    /** 调用方持有 sequencer 锁；最新帧不可用时不能当作黑帧。 */
+    boolean latestIsBlack() {
+        if (released || latest == null) return false;
+        Image.Plane plane = rgbaPlane();
+        return BlackFrame.isBlack(plane.getBuffer(), plane.getRowStride(), width, height);
+    }
+
     private Image.Plane rgbaPlane() {
         Image.Plane plane = latest.getPlanes()[0];
         if (plane.getPixelStride() != 4) {

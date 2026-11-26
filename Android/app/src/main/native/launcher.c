@@ -15,7 +15,7 @@
 #include <time.h>
 #include <unistd.h>
 
-enum { SHELL_UID = 2000, INET_GID = 3003 };
+enum { SHELL_UID = 2000, INET_GID = 3003, READPROC_GID = 3009 };
 
 static void fail(const char *stage) {
     perror(stage);
@@ -123,8 +123,9 @@ static void prepare_service_files(const char *directory) {
 static int exec_service(const char *apk, const char *option, const char *nice_name) {
     if (getuid() == 0) {
         prepare_service_files("/data/local/tmp");
-        const gid_t inet = INET_GID;
-        if (setgroups(1, &inet) || setresgid(SHELL_UID, SHELL_UID, SHELL_UID) ||
+        // /proc 的 hidepid=2 也会限制降权后的 shell；和 adb/Shizuku 一样保留进程读取组。
+        const gid_t groups[] = { INET_GID, READPROC_GID };
+        if (setgroups(sizeof(groups) / sizeof(groups[0]), groups) || setresgid(SHELL_UID, SHELL_UID, SHELL_UID) ||
             setresuid(SHELL_UID, SHELL_UID, SHELL_UID)) fail("drop to shell");
     }
     if (getuid() != SHELL_UID || geteuid() != SHELL_UID) return 2;
