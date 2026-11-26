@@ -8927,10 +8927,6 @@ msgstr "Manual"
 msgid "支援礼盒"
 msgstr "Support gift"
 
-#: module/overview/cards.py:24
-msgid "试用姬子"
-msgstr "Trial Himeko"
-
 #: module/overview/labels.py:8
 msgid "部分失败"
 msgstr "Partially failed"
@@ -11573,10 +11569,6 @@ msgstr "Rotation finished"
 #: app/run/history.py:253
 msgid "失败和异常"
 msgstr "Failures and exceptions"
-
-#: module/accounts/differences.py:86
-msgid "姬子试用"
-msgstr "Trial Himeko"
 
 #: module/accounts/reasons.py:5
 msgid "子运行记录缺失"

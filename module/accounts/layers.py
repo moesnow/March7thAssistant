@@ -14,7 +14,7 @@ SCOPES = {key: item.key_scope(key) for item in SETTINGS for key in item.keys}
 _EXTRA = {
     Scope.STATE: "weekly_relic_cleanup_timestamp already_used_codes",
     Scope.PLAN: (
-        "calyx_golden_preference fuel_ticket_batch_enable daily_himeko_try_enable daily_tasks "
+        "calyx_golden_preference fuel_ticket_batch_enable daily_tasks "
         "divergent_team_type currencywars_remembrance_trailblazer_name"
     ),
     Scope.SECRET: "telemetry_secret",

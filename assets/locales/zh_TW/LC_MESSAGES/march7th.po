@@ -8506,10 +8506,6 @@ msgstr "手動"
 msgid "支援礼盒"
 msgstr "支援禮盒"
 
-#: module/overview/cards.py:24
-msgid "试用姬子"
-msgstr "試用姬子"
-
 #: module/overview/labels.py:8
 msgid "部分失败"
 msgstr "部分失敗"
@@ -11082,10 +11078,6 @@ msgstr "多帳號輪流執行結束"
 #: app/run/history.py:253
 msgid "失败和异常"
 msgstr "失敗和異常"
-
-#: module/accounts/differences.py:86
-msgid "姬子试用"
-msgstr "姬子試用"
 
 #: module/accounts/reasons.py:5
 msgid "子运行记录缺失"

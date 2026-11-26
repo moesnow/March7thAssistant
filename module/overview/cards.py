@@ -28,7 +28,7 @@ OPTIONS = {
                  "activity_journey_highlights_notification_enable": "活动热点通知"},
     "reward": {"reward_dispatch_enable": "委托", "reward_mail_enable": "邮件", "reward_assist_enable": "支援礼盒",
                "reward_srpass_enable": "无名勋礼", "reward_message_enable": "短信", "reward_achievement_enable": "成就"},
-    "daily": {"daily_material_enable": "合成材料", "daily_memory_one_enable": "回忆一", "daily_himeko_try_enable": "试用姬子"},
+    "daily": {"daily_material_enable": "合成材料", "daily_memory_one_enable": "回忆一"},
 }
 
 

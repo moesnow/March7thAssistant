@@ -1080,61 +1080,6 @@
                 "actions_list": [
                     "auto.press_key('esc')"
                 ]
-            },
-            {
-                "target_screen": "himeko_try",
-                "actions_list": [
-                    "auto.click_element('./assets/images/zh_CN/warp/character_trial.png', 'image', 0.9)",
-                    "time.sleep(2)"
-                ]
-            }
-        ]
-    },
-    {
-        "name": "姬子试用",
-        "id": "himeko_try",
-        "image_path": "./assets/images/screen/warp/himeko_try.png",
-        "actions": [
-            {
-                "target_screen": "stellar_warp",
-                "actions_list": [
-                    "auto.press_key('esc')"
-                ]
-            },
-            {
-                "target_screen": "himeko_try_banner",
-                "actions_list": [
-                    "auto.click_element('./assets/images/zh_CN/warp/start_trial.png', 'image', 0.9)",
-                    "time.sleep(2)"
-                ]
-            }
-        ]
-    },
-    {
-        "name": "姬子试用-弹窗",
-        "id": "himeko_try_banner",
-        "image_path": "./assets/images/screen/warp/himeko_try_banner.png",
-        "actions": [
-            {
-                "target_screen": "himeko_prepare",
-                "actions_list": [
-                    "auto.press_key('esc')"
-                ]
-            }
-        ]
-    },
-    {
-        "name": "姬子试用-准备战斗",
-        "id": "himeko_prepare",
-        "image_path": "./assets/images/screen/warp/himeko_prepare.png",
-        "actions": [
-            {
-                "target_screen": "himeko_try",
-                "actions_list": [
-                    "auto.press_key('esc')",
-                    "time.sleep(1)",
-                    "auto.click_element('./assets/images/zh_CN/base/confirm.png', 'image', 0.9, 10)"
-                ]
             }
         ]
     },

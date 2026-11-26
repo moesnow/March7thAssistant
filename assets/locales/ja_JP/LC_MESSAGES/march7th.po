@@ -8587,10 +8587,6 @@ msgstr "手動"
 msgid "支援礼盒"
 msgstr "サポートギフト"
 
-#: module/overview/cards.py:24
-msgid "试用姬子"
-msgstr "体験版の姫子"
-
 #: module/overview/labels.py:8
 msgid "部分失败"
 msgstr "一部失敗"
@@ -11166,10 +11162,6 @@ msgstr "順次実行が終了しました"
 #: app/run/history.py:253
 msgid "失败和异常"
 msgstr "失敗と異常"
-
-#: module/accounts/differences.py:86
-msgid "姬子试用"
-msgstr "お試し姫子"
 
 #: module/accounts/reasons.py:5
 msgid "子运行记录缺失"

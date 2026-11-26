@@ -18,7 +18,6 @@ from tasks.power.power import Power
 from tasks.power.policy import SupportDemand
 from tasks.daily.training import SUPPORT_TASK, MATERIAL_TASK, can_complete, needs_action
 from tasks.reward.quest import Quest
-from tasks.daily.himekotry import HimekoTry
 from tasks.weekly.echoofwar import Echoofwar
 from tasks.daily.buildtarget import BuildTarget
 from tasks.daily.redemption import Redemption
@@ -161,6 +160,4 @@ class Daily:
         if cfg.daily_material_enable:
             actions.append((MATERIAL_TASK, Synthesis.material))
         actions.append(("拍照1次", Photo.photograph))
-        if cfg.daily_himeko_try_enable:
-            actions.extend((("累计施放2次秘技", HimekoTry.technique), ("累计击碎3个可破坏物", HimekoTry.item)))
         return Quest.settle(complete=can_complete(cfg, full_run=full_run), actions=actions)

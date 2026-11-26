@@ -8586,10 +8586,6 @@ msgstr "수동"
 msgid "支援礼盒"
 msgstr "지원 선물"
 
-#: module/overview/cards.py:24
-msgid "试用姬子"
-msgstr "체험 히메코"
-
 #: module/overview/labels.py:8
 msgid "部分失败"
 msgstr "일부 실패"
@@ -11166,10 +11162,6 @@ msgstr "계정 순차 실행 완료"
 #: app/run/history.py:253
 msgid "失败和异常"
 msgstr "실패 및 오류"
-
-#: module/accounts/differences.py:86
-msgid "姬子试用"
-msgstr "체험 히메코"
 
 #: module/accounts/reasons.py:5
 msgid "子运行记录缺失"

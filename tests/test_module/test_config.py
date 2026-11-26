@@ -9,6 +9,32 @@ import pytest
 from module.config.config import _get_env_override, _ENV_OVERRIDE_MAP, _CONFIG_KEY_TO_ENV
 
 
+@pytest.mark.parametrize("readonly", [False, True])
+def test_removed_training_option_is_discarded_without_resetting_other_settings(tmp_path, monkeypatch, readonly):
+    from pathlib import Path
+    from module.config import config as config_module
+    from module.config.config import Config
+
+    monkeypatch.setenv("MARCH7TH_CONFIG_READONLY", "1" if readonly else "0")
+    monkeypatch.setattr(Config, "_readonly", False)
+    monkeypatch.setattr(config_module, "_DIAG_FILE", str(tmp_path / "diag.log"))
+    root = Path(__file__).resolve().parents[2]
+    path = tmp_path / "config.yaml"
+    original = "daily_himeko_try_enable: true\ndaily_material_enable: false\ndaily_memory_one_enable: true\n"
+    path.write_text(original, encoding="utf-8")
+    config = Config.__new__(Config)
+    config.__init__(str(root / "assets/config/version.txt"),
+                    str(root / "assets/config/config.example.yaml"), str(path))
+
+    assert config.get_value("daily_himeko_try_enable") is None
+    assert config.daily_material_enable is False
+    assert config.daily_memory_one_enable is True
+    if readonly:
+        assert path.read_text(encoding="utf-8") == original
+    else:
+        assert "daily_himeko_try_enable" not in config.yaml.load(path)
+
+
 @pytest.mark.parametrize(("system", "settings", "detected", "expected", "reads_registry"), [
     ("win32", {}, {"hotkey_map": "space"}, "space", True),
     ("win32", {}, {}, "n", True),

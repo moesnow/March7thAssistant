@@ -416,18 +416,27 @@ class AccountStore:
 
         self.edit_index(change)
 
+    def _read_settings(self, path, *, repair=False, writing=False):
+        data = read_yaml(path, repair=repair, issue=self.issue, writing=writing)
+        # 旧版账号方案可能保存了已移除的姬子试用开关；只读进程仅在内存中清理。
+        if path.name == "plan.yaml" and "daily_himeko_try_enable" in data:
+            del data["daily_himeko_try_enable"]
+            if repair and not writing:
+                write_yaml(path, data)
+        return data
+
     def read(self, uid, name):
         path = self.path(uid, name)
         if name not in ("plan.yaml", "state.yaml"):
             raise ValueError("只支持读取方案和状态")
         writable = self.role in ("ui", "task")
         if not writable or not path.exists():
-            return read_yaml(path, issue=self.issue)
+            return self._read_settings(path)
         try:
             with self.lock():
-                return read_yaml(path, repair=True, issue=self.issue)
+                return self._read_settings(path, repair=True)
         except OSError:
-            return read_yaml(path, issue=self.issue)
+            return self._read_settings(path)
 
     def modify(self, uid, name, change):
         if name not in ("plan.yaml", "state.yaml"):
@@ -437,7 +446,7 @@ class AccountStore:
         with self.lock():
             if not any(a["uid"] == uid_string(uid) for a in self._read_index()[0]["accounts"]):
                 raise ValueError("账号已经移除，本次没有写入")
-            data = read_yaml(path, repair=True, issue=self.issue, writing=True)
+            data = self._read_settings(path, repair=True, writing=True)
             change(data)
             write_yaml(path, data)
             return data

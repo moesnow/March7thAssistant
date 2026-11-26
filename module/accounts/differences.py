@@ -87,7 +87,7 @@ def value_text(key, value, subkey=None):
 # 隐藏的兼容设置没有独立设置卡，链接到管理它的任务页。
 _HIDDEN = {
     "power": {"calyx_golden_preference": "拟造花萼（金）偏好地区", "fuel_ticket_batch_enable": "助燃券连续挑战"},
-    "daily": {"daily_himeko_try_enable": "姬子试用", "daily_tasks": "每日实训"},
+    "daily": {"daily_tasks": "每日实训"},
     "universe": {"divergent_team_type": "差分宇宙队伍类型"},
     "currencywars": {"currencywars_remembrance_trailblazer_name": "开拓者名称"},
 }

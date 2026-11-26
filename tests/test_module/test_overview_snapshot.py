@@ -100,6 +100,21 @@ def test_power_summary_follows_the_order_of_use():
     assert cards.summary("power", cfg) == "体力计划 · 1 项"
 
 
+@pytest.mark.parametrize("material,memory,expected", [
+    (False, False, "检查实训活跃度"),
+    (True, False, "合成材料"),
+    (False, True, "回忆一"),
+    (True, True, "合成材料 · 回忆一"),
+])
+def test_daily_summary_ignores_removed_trial_option(material, memory, expected):
+    cfg = _Config(**YAML(typ="safe").load(Path("assets/config/config.example.yaml")))
+    cfg.daily_himeko_try_enable = True
+    cfg.daily_material_enable, cfg.daily_memory_one_enable = material, memory
+
+    row = next(row for row in cards.preview(cfg, datetime(2026, 11, 27, 12)) if row.id == "daily")
+    assert row.summary == expected
+
+
 def test_corrupt_missing_and_old_history(tmp_path, monkeypatch):
     monkeypatch.setattr(runs, "runs_dir", lambda: str(tmp_path))
     now = datetime(2026, 11, 23, 13)

@@ -184,6 +184,37 @@ def test_delete_never_archives_password(store):
     store.delete(A)
 
 
+@pytest.mark.parametrize("role", ["observer", "ui", "task"])
+def test_removed_training_option_is_cleaned_from_account_plans(store, role):
+    from module.accounts.files import read_yaml
+
+    path = store.path(A, "plan.yaml")
+    original = "daily_himeko_try_enable: true\ndaily_material_enable: false\ndaily_memory_one_enable: true\n"
+    path.write_text(original, encoding="utf-8")
+    reader = AccountStore(store.root, role=role)
+    expected = {"daily_material_enable": False, "daily_memory_one_enable": True}
+
+    assert reader.read(A, "plan.yaml") == expected
+    if role == "observer":
+        assert path.read_text(encoding="utf-8") == original
+    else:
+        assert read_yaml(path, issue=store.issue) == expected
+        path.write_text(original, encoding="utf-8")
+        expected["daily_memory_one_enable"] = False
+        assert reader.modify(A, "plan.yaml", lambda data: data.update(daily_memory_one_enable=False)) == expected
+        assert read_yaml(path, issue=store.issue) == expected
+
+
+def test_removed_training_option_is_ignored_when_account_cleanup_cannot_be_saved(store, monkeypatch):
+    path = store.path(A, "plan.yaml")
+    original = "daily_himeko_try_enable: true\ndaily_material_enable: false\n"
+    path.write_text(original, encoding="utf-8")
+    monkeypatch.setattr("module.accounts.store.write_yaml", Mock(side_effect=PermissionError("文件暂时不可写")))
+
+    assert store.read(A, "plan.yaml") == {"daily_material_enable": False}
+    assert path.read_text(encoding="utf-8") == original
+
+
 @pytest.mark.parametrize(
     "case", ["wrong_uid", "foreign_section", "nested", "delete", "double_uid", "truncated", "nul"]
 )

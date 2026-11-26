@@ -8282,10 +8282,6 @@ msgstr ""
 msgid "支援礼盒"
 msgstr ""
 
-#: module/overview/cards.py:24
-msgid "试用姬子"
-msgstr ""
-
 #: module/overview/labels.py:8
 msgid "部分失败"
 msgstr ""
@@ -10864,10 +10860,6 @@ msgstr ""
 
 #: app/run/history.py:253
 msgid "失败和异常"
-msgstr ""
-
-#: module/accounts/differences.py:86
-msgid "姬子试用"
 msgstr ""
 
 #: module/accounts/reasons.py:5
