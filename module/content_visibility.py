@@ -11,7 +11,7 @@ TOUCH_PAGES = {"power", "echo", "reward", "daily"}
 TOUCH_HIDDEN = {
     "build_target_enable", "build_target_scheme", "build_target_ornament_weekly_count",
     "build_target_use_user_instance_when_only_erosion_and_ornament", "daily_memory_one_enable",
-    "daily_memory_one_team", "reward_redemption_code_enable", "reward_achievement_enable",
+    "daily_memory_one_team", "reward_achievement_enable",
 }
 
 
@@ -53,6 +53,8 @@ class Visibility:
             return self.windows
         if self.touch and item.id in TOUCH_HIDDEN:
             return False
+        if self.touch and item.id == "reward_redemption_code_enable" and self.backend != "adb":
+            return False
         if item.id in {"currencywarsStrategyCard", "currencywars_strategy", "currencywars_investment_priority",
                        "currencywars_unfinished_match"}:
             return not self.known_strategy if item.role == "header" else self.known_strategy
@@ -65,7 +67,9 @@ class Visibility:
             return self.backend != "adb" and not self.invalid
         if key in ("unlock_fps", "cloud_touch"):
             return self.backend != "adb"
-        if key in ("redemption", "character_export"):
+        if key == "redemption":
+            return self.backend == "adb" or not self.touch
+        if key == "character_export":
             return not self.touch and self.backend != "adb"
         if key == "screen_test":
             return not (self.touch and self.backend == "cloud")

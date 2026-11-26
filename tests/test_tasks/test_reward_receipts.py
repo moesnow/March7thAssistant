@@ -551,7 +551,7 @@ def test_pc_training_recipe_checks_amount_without_reading_the_already_selected_t
 
 def test_redemption_keeps_confirmed_success_when_mail_fails(monkeypatch):
     auto = Mock(matched_text="兑换成功")
-    cfg = Mock(already_used_codes=[])
+    cfg = Mock(already_used_codes=[], control_backend="local")
     monkeypatch.setattr(redemption, "cfg", cfg)
     monkeypatch.setattr(redemption, "auto", auto)
     monkeypatch.setattr(redemption, "get_game_controller", Mock())

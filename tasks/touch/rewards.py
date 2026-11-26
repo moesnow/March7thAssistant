@@ -383,6 +383,7 @@ def routine(*, on_summary=None, full_run=False, on_step=None, only=None):
     """on_step(name, state, summary) 转发 run_steps 的步骤事件，summary 是该步的一行摘要。"""
     from tasks.touch import power
     from tasks.power.policy import SupportDemand
+    from tasks.daily.redemption import Redemption
 
     summaries = []
     step_summaries = {}
@@ -403,6 +404,7 @@ def routine(*, on_summary=None, full_run=False, on_step=None, only=None):
         demand.pending = daily.support_demand(full_run=full_run).pending
 
     actions = {
+        "redemption": Redemption.get,
         "support": query_support,
         "echo": lambda: power.run_weekly_echo(borrow_for_daily=demand),
         "power": lambda: power.run(borrow_for_daily=demand, on_summary=collector("清体力")),

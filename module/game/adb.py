@@ -501,7 +501,7 @@ class AdbGameController(GameControllerBase):
             return self._input
 
     def copy(self, text: str):
-        self.get_input_handler().secretly_write(text)
+        return self.send_input("clipboard", text=text)
 
     def _display_available(self):
         return not (self._sdk_window or self._moving or (

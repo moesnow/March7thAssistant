@@ -98,7 +98,7 @@ class FakeS1(socketserver.ThreadingTCPServer):
             return dict(watchdog=dict(pid=12, task={
                 "display_id": self.display_id, "visible": self.task_visible, "top_activity": self.top_activity,
             })), b""
-        if cmd in ("tap", "swipe", "touch"):
+        if cmd in ("tap", "swipe", "touch", "clipboard"):
             if self.target_mismatch:
                 return {"error": {"code": "inject_failed", "message": "target UID mismatch"}}, b""
             return dict(delivered=True, seq=self.sequence + 1, input_ns=500), b""
@@ -475,6 +475,32 @@ def test_touch_mapping_and_release(adb, s1):
     assert [r["hold_end_ms"] for r in commands[-2:]] == [0, 200]
 
 
+def test_device_clipboard_preserves_unicode_and_input_boundaries(adb, s1):
+    controller, _ = adb
+    controller.start_game_process()
+    sent = []
+    with observe_input_dispatch(sent.append, deadline=0):
+        assert controller.copy("SR8888") is False
+    assert not sent
+    assert not any(r["cmd"] == "clipboard" for r in s1.requests)
+    with observe_input_dispatch(sent.append):
+        assert controller.copy("兑换码SR8888")
+    assert len(sent) == 1
+    request = next(r for r in s1.requests if r["cmd"] == "clipboard")
+    assert request["display_id"] == 42
+    assert request["text"] == "兑换码SR8888"
+    assert controller._input_ns == 500
+
+
+def test_device_clipboard_honors_user_stop(adb, s1, monkeypatch):
+    controller, _ = adb
+    controller.start_game_process()
+    monkeypatch.setattr(pause_ctl, "check_stop", Mock(side_effect=RunStopRequested))
+    with pytest.raises(RunStopRequested):
+        controller.copy("SR8888")
+    assert not any(r["cmd"] == "clipboard" for r in s1.requests)
+
+
 def test_disconnect_aborts_without_replaying_input_and_next_run_reconnects(adb, s1):
     controller, fake = adb
     controller.start_game_process()
@@ -825,7 +851,8 @@ def test_review_emulator_refuses_touch_without_game_foreground(adb, s1, conditio
     assert inputs.mouse_click(38, 59) is False
     assert inputs.mouse_down(38, 59) is False
     assert inputs.mouse_drag(38, 59, 80, 110) is False
-    assert not {"tap", "touch", "swipe"}.intersection(request["cmd"] for request in s1.requests)
+    assert controller.copy("SR8888") is False
+    assert not {"tap", "touch", "swipe", "clipboard"}.intersection(request["cmd"] for request in s1.requests)
 
 
 def test_review_emulator_releases_held_touch_after_backgrounding(adb, s1):

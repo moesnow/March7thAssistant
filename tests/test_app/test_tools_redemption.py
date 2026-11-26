@@ -1,11 +1,24 @@
 from threading import Event
 from unittest.mock import Mock
 
+import pytest
+
 from qfluentwidgets import MessageBox
 from app.common.icon import UiIcon
 from app.common.mascot import Mascot
 from app.toolbox import redemption
 from tests.test_app.mascot_assertions import assert_pose
+
+
+@pytest.mark.parametrize("backend", ["adb", "cloud"])
+def test_remote_backend_fetches_cn_codes_without_desktop_registry(qtbot, monkeypatch, page_config, backend):
+    page_config(f"control_backend: {backend}\n")
+    card = redemption.RedemptionCodeCard(UiIcon.TICKET)
+    qtbot.addWidget(card)
+    if redemption.sys.platform == "win32":
+        monkeypatch.setattr("utils.registry.star_rail_setting.get_server_by_registry",
+                            lambda: pytest.fail("读取了无关的桌面服务器配置"))
+    assert card._get_server() == "cn"
 
 
 def test_fetch_edit_used_codes_and_execute(qtbot, monkeypatch, page_config):

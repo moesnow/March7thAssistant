@@ -1,5 +1,7 @@
 package org.march7th.deviceservice.core;
 
+import android.content.ClipData;
+import android.os.IBinder;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -85,6 +87,7 @@ public final class DeviceService implements Watchdog.Host {
     private volatile boolean shutdownRequested;
     private volatile boolean closed;
     private ExecutorService encodePool;
+    private ClipboardAccess clipboard;
 
     public DeviceService() throws ReflectiveOperationException {
         this(null);
@@ -179,6 +182,8 @@ public final class DeviceService implements Watchdog.Host {
                     return new Message(touch(session, header));
                 case "key":
                     return new Message(key(header));
+                case "clipboard":
+                    return new Message(clipboard(header));
                 case "focus":
                     return new Message(focus(header));
                 case "watchdog":
@@ -251,7 +256,7 @@ public final class DeviceService implements Watchdog.Host {
                 FrameEncoder.RGBA, FrameEncoder.RGB, FrameEncoder.RGB_ZLIB, FrameEncoder.RGBA_ZLIB)));
         out.put("features", new JSONArray(java.util.Arrays.asList(
                 "screen_power", "mute", "stop_app", "events", "focus", "frame_after_ns", "keep_awake", "startup_snapshot",
-                "display_focus_recovery")));
+                "display_focus_recovery", "clipboard")));
         out.put("default_tap_ms", DEFAULT_TAP_MS);
         return out;
     }
@@ -791,6 +796,31 @@ public final class DeviceService implements Watchdog.Host {
         }
         boolean delivered = injector.touch(displayId, code, pointer, x, y, session.id, targetUid);
         return inputResult(request, displayId, delivered);
+    }
+
+    private synchronized JSONObject clipboard(JSONObject request) throws CommandException, JSONException {
+        int displayId = targetDisplay(request);
+        String text = request.getString("text");
+        if (text.length() > 4096) {
+            throw new CommandException(Protocol.E_BAD_REQUEST, "clipboard text must not exceed 4096 characters");
+        }
+        checkInjectable(request, displayId);
+        try {
+            if (clipboard == null) {
+                Object binder = Class.forName("android.os.ServiceManager").getMethod("getService", String.class)
+                        .invoke(null, "clipboard");
+                Object manager = Class.forName("android.content.IClipboard$Stub").getMethod("asInterface", IBinder.class)
+                        .invoke(null, binder);
+                if (manager == null) {
+                    throw new ReflectiveOperationException("clipboard service unavailable");
+                }
+                clipboard = new ClipboardAccess(manager, ClipData.class, ShellContext.PACKAGE, Process.myUid() / 100000);
+            }
+            clipboard.set(ClipData.newPlainText(null, text));
+        } catch (ReflectiveOperationException | RuntimeException error) {
+            throw new CommandException(Protocol.E_UNSUPPORTED, "cannot set device clipboard: " + Logger.describe(error));
+        }
+        return inputResult(request, displayId, true);
     }
 
     private JSONObject key(JSONObject request) throws CommandException, JSONException {

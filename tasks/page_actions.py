@@ -14,7 +14,13 @@ def run_page(page_id, config, *, touch=False):
         if touch:
             from tasks.touch import rewards
             if page_id == "reward":
-                return observe_step("reward", rewards.run)()
+                from module.config.platform import get_control_backend
+                from tasks.daily.redemption import Redemption
+                steps = []
+                if get_control_backend(config) == "adb" and config.reward_redemption_code_enable:
+                    steps.append(("兑换码", observe_step("redemption", Redemption.get)))
+                steps.append(("日常领奖", observe_step("reward", rewards.run)))
+                return run_steps(steps)
             if page_id == "daily":
                 return observe_step("daily", rewards.run_daily_training)()
             if page_id == "echo":

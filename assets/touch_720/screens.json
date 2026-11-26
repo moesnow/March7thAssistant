@@ -64,6 +64,13 @@
                 ]
             },
             {
+                "target_screen": "redemption",
+                "actions_list": [
+                    "auto.click_element((1710 / 1920, 129 / 1080, 0, 0), 'crop')",
+                    "auto.click_element('兑换码', 'text', max_retries=5, retry_delay=0.3, crop=(0.65, 0.12, 0.26, 0.35))"
+                ]
+            },
+            {
                 "target_screen": "incoming_message",
                 "actions_list": [
                     "auto.click_element('短信', 'text', crop=(1121 / 1920, 376 / 1080, 156 / 1920, 646 / 1080), max_retries=3, retry_delay=0.3) or (auto.drag_mouse((1710 / 1920, 474 / 1080), (1710 / 1920, 975 / 1080), 0.6) and (time.sleep(0.7) or auto.click_element('短信', 'text', crop=(1121 / 1920, 376 / 1080, 156 / 1920, 646 / 1080), max_retries=3, retry_delay=0.3)))"
@@ -80,6 +87,20 @@
                 "actions_list": [
                     "auto.click_element('合成', 'text', crop=(1447 / 1920, 556 / 1080, 153 / 1920, 149 / 1080), max_retries=3, retry_delay=0.3)",
                     "auto.find_element('合成', 'text', crop=(121 / 1920, 15 / 1080, 78 / 1920, 36 / 1080), max_retries=6, retry_delay=0.3) and auto.click_element((87 / 1920, 312 / 1080, 0, 0), 'crop')"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "兑换码",
+        "id": "redemption",
+        "image_path": "./assets/touch_720/images/screen/redemption.png",
+        "image_crop": [570, 205, 710, 250],
+        "actions": [
+            {
+                "target_screen": "menu",
+                "actions_list": [
+                    "auto.click_element('取消', 'text', max_retries=3, retry_delay=0.3, crop=(300 / 1280, 440 / 720, 680 / 1280, 90 / 720))"
                 ]
             }
         ]

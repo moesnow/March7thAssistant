@@ -63,7 +63,7 @@ def task_is_supported(task_id, config=None):
     if task_id in HOST_TASKS:
         return True
     if backend == "adb":
-        return task_id in TOUCH_ROUTINE_TASKS
+        return task_id in TOUCH_ROUTINE_TASKS or task_id == "redemption"
     if get_ui_profile(config).name == "touch_720":
         if backend == "cloud":
             return task_id == "mobileui_update"

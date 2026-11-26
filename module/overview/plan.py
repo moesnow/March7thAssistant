@@ -4,6 +4,7 @@ from datetime import date
 import sys
 
 from utils.date import Date
+from module.connection_values import configured_backend
 
 
 @dataclass(frozen=True)
@@ -63,7 +64,7 @@ STEPS = {
     "daily": Step("UiIcon.CLIPBOARD_TASK", "daily_enable"),
 }
 PREPARATION = ("redemption", "relic_cleanup", "build_target", "support", "activity", "echo", "power")
-TOUCH = ("support", "echo", "power", "reward", "daily")
+TOUCH = ("redemption", "support", "echo", "power", "reward", "daily")
 EMBER_ITEMS = (
     ("星轨专票", "asset_ember_special_pass", 5),
     ("星轨通票", "asset_ember_regular_pass", 5),
@@ -105,6 +106,8 @@ def cycle_for(step, cfg):
 def entry_state(key, cfg, *, touch=False, full_run=True, now=None):
     """是否将该函数加入 run_steps。内层自行跳过的操作仍进入原有日志和恢复流程。"""
     step = STEPS[key]
+    if key == "redemption" and touch and configured_backend(cfg) != "adb":
+        return "unsupported"
     if not all(getattr(cfg, switch) for switch in step.switches):
         return "disabled"
     if key == "support" and not cfg.power_enable:

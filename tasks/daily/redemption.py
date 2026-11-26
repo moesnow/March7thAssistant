@@ -4,6 +4,7 @@ from module.config import cfg
 from module.config.platform import get_control_backend
 from module.logger import log
 from module.game import get_game_controller
+from module.game.adb_transport import AdbError
 from utils.color import red, green, yellow
 import tasks.reward as reward
 from tasks.base.task_steps import optional_reward
@@ -14,6 +15,49 @@ import sys
 from typing import List, Dict, Optional
 from module.notification import notif
 from module.notification.notification import NotificationLevel
+
+
+TOUCH_BUTTONS = (300 / 1280, 440 / 720, 680 / 1280, 90 / 720)
+TOUCH_INPUT = (245 / 1280, 325 / 720, 790 / 1280, 52 / 720)
+TOUCH_RESULT = (260 / 1280, 290 / 720, 760 / 1280, 125 / 720)
+TOUCH_RESULT_TITLE = (570 / 1280, 235 / 720, 140 / 1280, 40 / 720)
+TOUCH_ERROR = (245 / 1280, 428 / 720, 790 / 1280, 36 / 720)
+CLIPBOARD_PROMPT = ("请求从剪切板粘贴", "请求从剪贴板粘贴")
+RESULTS = ("兑换成功", "兑换码已过期", "无效的兑换码", "兑换码已被使用")
+
+
+def _wait_for_paste(touch):
+    target = "./assets/images/share/redemption/clear.png"
+    if not touch:
+        return auto.find_element(target, "image", 0.9, max_retries=6, retry_delay=0.5)
+    # 部分 Android 首次读取剪贴板会多一层粘贴确认；不重复点击兑换框中的粘贴图标。
+    allowed = False
+    for _ in range(6):
+        if auto.find_element(target, "image", 0.9, crop=TOUCH_INPUT):
+            return True
+        if not allowed and auto.find_element(CLIPBOARD_PROMPT, "text", include=True, crop=TOUCH_RESULT):
+            allowed = auto.click_element("粘贴", "text", crop=TOUCH_BUTTONS)
+        time.sleep(0.5)
+    return False
+
+
+def _find_result(touch):
+    if not touch:
+        return auto.find_element(RESULTS, "text", include=True)
+    # 成功弹窗与输入框下方的失败提示条位置不同，避开可能含中文的兑换码本身。
+    if auto.find_element("兑换提示", "text", crop=TOUCH_RESULT_TITLE):
+        return auto.find_element(RESULTS, "text", include=True, crop=TOUCH_RESULT)
+    return auto.find_element(RESULTS[1:], "text", include=True, crop=TOUCH_ERROR)
+
+
+def _dismiss(touch):
+    if not touch:
+        return auto.press_key("esc")
+    if auto.find_element("兑换提示", "text", crop=TOUCH_RESULT_TITLE):
+        return auto.click_element("确认", "text", crop=TOUCH_BUTTONS)
+    if auto.find_element(CLIPBOARD_PROMPT, "text", include=True, crop=TOUCH_RESULT):
+        auto.click_element("不粘贴", "text", crop=TOUCH_BUTTONS)
+    return auto.click_element("取消", "text", crop=TOUCH_BUTTONS)
 
 
 def load_codes(path: str) -> List[Dict]:
@@ -137,7 +181,7 @@ class Redemption:
         log.hr("获取最新兑换码", 0)
 
         # 如果云游戏启用，默认使用国服
-        if get_control_backend(cfg) == "cloud":
+        if get_control_backend(cfg) in ("cloud", "adb"):
             server = 'cn'
         elif sys.platform == 'win32':
             from utils.registry.star_rail_setting import get_server_by_registry
@@ -195,52 +239,63 @@ class Redemption:
             used = []
 
         successful_codes = []
+        confirmed_count = 0
+        touch = get_control_backend(cfg) == "adb"
+        confirm_options = {"crop": TOUCH_BUTTONS} if touch else {}
+        paste_options = {"crop": TOUCH_INPUT, "max_retries": 3, "retry_delay": 0.5} if touch else {}
 
         for idx, code in enumerate(codes_to_use, start=1):
             log.info(f"开始使用兑换码: {green(code)} ({idx}/{len(codes_to_use)})")
             screen.change_to('redemption')
             game = get_game_controller()
-            game.copy(code)
-            if auto.click_element("./assets/images/share/redemption/paste.png", "image", 0.9):
+            try:
+                copied = game.copy(code)
+            except AdbError as error:
+                if error.code not in ("unsupported", "unknown_command"):
+                    raise
+                log.error(f"设备剪贴板不可用，跳过兑换码任务：{error}")
+                return False
+            if copied is False:
+                log.error(f"复制兑换码失败，未执行粘贴: {red(code)} ({idx}/{len(codes_to_use)})")
+                continue
+            if auto.click_element("./assets/images/share/redemption/paste.png", "image", 0.9, **paste_options):
                 time.sleep(0.5)
                 # 兑换窗口刚打开时画面可能尚未更新，单次检测会漏判；不重复粘贴，以免输入框内容叠加
-                if auto.find_element("./assets/images/share/redemption/clear.png", "image", 0.9, max_retries=6, retry_delay=0.5):
+                if _wait_for_paste(touch):
                     time.sleep(0.5)
-                    auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
+                    auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, **confirm_options)
                     time.sleep(1)
                     # 结果弹窗可能晚于 1 秒出现（实测约 2 秒），只看一次会把已兑换的码记成失败并按 esc；
                     # 每秒重新截图检测，最多约 10 秒
                     result = None
                     for _ in range(10):
-                        if auto.find_element(
-                            ("兑换成功", "兑换码已过期", "无效的兑换码", "兑换码已被使用"),
-                            "text",
-                            include=True,
-                        ):
+                        if _find_result(touch):
                             result = auto.matched_text
                             break
                         time.sleep(1)
+                    if result:
+                        confirmed_count += 1
                     if result == "兑换成功":
                         log.info(f"兑换码使用成功: {green(code)} ({idx}/{len(codes_to_use)})")
                         if code not in used:
                             used.append(code)
                             successful_codes.append(code)
                             cfg.set_value("already_used_codes", used)
-                        auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9)
+                        auto.click_element("./assets/images/zh_CN/base/confirm.png", "image", 0.9, **confirm_options)
                     elif result:
                         log.info(f"{result}: {yellow(code)} ({idx}/{len(codes_to_use)})")
                         if code not in used:
                             used.append(code)
                             cfg.set_value("already_used_codes", used)
-                        auto.press_key("esc")
+                        _dismiss(touch)
                     else:
                         log.warning(f"兑换结果检测超时: {yellow(code)} ({idx}/{len(codes_to_use)})")
-                        auto.press_key("esc")
+                        _dismiss(touch)
                     screen.wait_for_screen_change('menu')
                     time.sleep(3)
                 else:
                     log.error(f"兑换码使用失败: {red(code)} ({idx}/{len(codes_to_use)})")
-                    auto.press_key("esc")
+                    _dismiss(touch)
                     screen.wait_for_screen_change('menu')
                     time.sleep(3)
             else:
@@ -257,10 +312,16 @@ class Redemption:
                     notif.notify(content=msg, level=NotificationLevel.ALL)
 
             with optional_reward("兑换码邮件奖励"):
-                reward.start_specific("mail")
-            log.hr("完成", 2)
-            return True
+                if touch:
+                    from tasks.touch.rewards import claim_mail
+                    claim_mail()
+                else:
+                    reward.start_specific("mail")
+        elif confirmed_count == len(codes_to_use):
+            log.info("所有兑换码均已处理")
         else:
             log.info("没有成功使用任何兑换码")
-            log.hr("完成", 2)
-            return False
+        if confirmed_count < len(codes_to_use):
+            log.warning(f"仍有{len(codes_to_use) - confirmed_count}个兑换码未确认结果，留待下次重试")
+        log.hr("完成", 2)
+        return confirmed_count == len(codes_to_use)
