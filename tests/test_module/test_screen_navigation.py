@@ -209,12 +209,19 @@ def test_background_window_errors_are_not_swallowed_as_unmatched(monkeypatch):
         screen.perform_operations(["auto.find_element('x', 'image')"])
 
 
-@pytest.mark.parametrize(("header", "button", "expected"), [
-    ("凝滞虚影", "挑战", True),
-    ("凝滞虚影", "开始挑战", False),
-    ("拟造花萼", "挑战", False),
-])
-def test_touch_shadow_checks_category_and_challenge_on_one_frame(monkeypatch, header, button, expected):
+INSTANCE_PAGES = [
+    ("calyx", "回忆之蕾·拟造花萼（金）", "挑战"),
+    ("calyx", "存护之蕾·拟造花萼（赤）", "挑战"),
+    ("stagnant_shadow", "职司之形·凝滞虚影", "挑战"),
+    ("cavern", "弦歌之径·侵蚀隧洞", "挑战"),
+    ("echo", "铁骸的锈冢·历战余响", "挑战"),
+    ("ornament", "浴火钢心", "开始挑战"),
+]
+
+
+@pytest.mark.parametrize(("page", "header", "button"), INSTANCE_PAGES)
+@pytest.mark.parametrize("failure", [None, "wrong-instance", "category-only", "missing-title", "wrong-button"])
+def test_touch_instance_checks_title_and_challenge_on_one_frame(monkeypatch, page, header, button, failure):
     from PIL import Image, ImageDraw
     from module.ocr import ocr
 
@@ -226,8 +233,17 @@ def test_touch_shadow_checks_category_and_challenge_on_one_frame(monkeypatch, he
 
     frame = Image.new("RGB", (1280, 720))
     draw = ImageDraw.Draw(frame)
-    draw.rectangle((0, 0, 200, 64), fill="gold")
-    draw.rectangle((920, 632, 1240, 685), fill="white")
+    header_rect = (503, 74, 888, 114) if page == "ornament" else (802, 70, 1233, 116)
+    draw.rectangle(header_rect, fill="gold")
+    draw.rectangle((920, 630, 1240, 685), fill="white")
+    if failure == "wrong-instance":
+        header = "弦歌之径·侵蚀隧洞" if page == "echo" else "铁骸的锈冢·历战余响"
+    elif failure == "category-only":
+        header = screen.get_name(page)
+    elif failure == "missing-title":
+        header = ""
+    elif failure == "wrong-button":
+        button = "退出关卡"
 
     def capture():
         auto.screenshot = frame
@@ -248,12 +264,13 @@ def test_touch_shadow_checks_category_and_challenge_on_one_frame(monkeypatch, he
     auto.find_element.side_effect = find_element
     monkeypatch.setattr(ocr, "recognize_multi_lines", read_text)
 
-    assert screen.check_screen("stagnant_shadow") is expected
-    assert screen.current_screen == ("stagnant_shadow" if expected else None)
+    assert screen.check_screen(page) is (failure is None)
+    assert screen.current_screen == (page if failure is None else None)
     auto.take_screenshot.assert_called_once()
 
 
-def test_touch_shadow_recovers_from_missing_icon_after_failed_task(monkeypatch):
+@pytest.mark.parametrize(("page", "header", "button"), INSTANCE_PAGES)
+def test_touch_instance_recovers_from_missing_icon_after_failed_task(monkeypatch, page, header, button):
     from PIL import Image, ImageDraw
     from module.ocr import ocr
     from tasks.base import task_steps
@@ -268,14 +285,15 @@ def test_touch_shadow_recovers_from_missing_icon_after_failed_task(monkeypatch):
 
     frame = Image.new("RGB", (1280, 720))
     draw = ImageDraw.Draw(frame)
-    draw.rectangle((0, 0, 200, 64), fill="gold")
-    draw.rectangle((920, 632, 1240, 685), fill="white")
+    header_rect = (503, 74, 888, 114) if page == "ornament" else (802, 70, 1233, 116)
+    draw.rectangle(header_rect, fill="gold")
+    draw.rectangle((920, 630, 1240, 685), fill="white")
 
     def read_text(pixels):
         gold = tuple(pixels[len(pixels) // 2, len(pixels[0]) // 2]) == (255, 215, 0)
-        return [(None, ("凝滞虚影" if gold else "挑战", 1.0))]
+        return [(None, (header if gold else button, 1.0))]
 
-    state = "stagnant_shadow"
+    state = page
     closes = []
 
     def find_element(path, kind, *args, **kwargs):
@@ -290,7 +308,7 @@ def test_touch_shadow_recovers_from_missing_icon_after_failed_task(monkeypatch):
         assert kind == "crop"
         assert target == (1848 / 1920, 55 / 1080, 0, 0)
         closes.append(state)
-        state = {"stagnant_shadow": "guide3", "guide3": "main"}[state]
+        state = {page: "guide3", "guide3": "main"}[state]
         return True
 
     auto.screenshot = frame
@@ -299,10 +317,10 @@ def test_touch_shadow_recovers_from_missing_icon_after_failed_task(monkeypatch):
     monkeypatch.setattr(ocr, "recognize_multi_lines", read_text)
     next_task = MagicMock(return_value=True)
 
-    assert not task_steps.run_steps([("清体力", lambda: False), ("下一项", next_task)])
+    assert not task_steps.run_steps([(header, lambda: False), ("下一项", next_task)])
     next_task.assert_called_once_with()
     assert screen.current_screen == state == "main"
-    assert closes == ["stagnant_shadow", "guide3"]
+    assert closes == [page, "guide3"]
 
 
 @pytest.mark.parametrize("values, expected", [

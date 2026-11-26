@@ -160,6 +160,86 @@ def test_touch_power_reentry_search(monkeypatch, start_page, target_page, panel_
     assert drags == expected_drags
 
 
+@pytest.mark.parametrize(("kind", "name"), [
+    (power.ECHO, "铁骸的锈冢"),
+    (power.CAVERN, "密伶之径"),
+    (power.CRIMSON_CALYX, "支援舱段"),
+    (power.ORNAMENT, "浴火钢心"),
+])
+def test_touch_entry_confirms_the_target_title_after_transition(monkeypatch, kind, name):
+    """副本图标不可靠时，等待转场并处理传送提示，只识别一次确认成功的副本名。"""
+    auto = Mock()
+    nav = Mock(current_screen=None)
+    enter = Mock()
+    confirm = Mock(return_value=True)
+    attempts = 0
+    now = 0.0
+    title = power.get_raw_instance_names()[kind][name] if kind == power.CRIMSON_CALYX else name
+    crop = power.ORNAMENT_TITLE if kind == power.ORNAMENT else power.INSTANCE_TITLE
+
+    def locate(text, mode, **kwargs):
+        nonlocal attempts
+        assert mode == "text", "进入副本应直接读取副本标题"
+        if text == title:
+            assert kwargs["crop"] == crop
+            attempts += 1
+            return attempts >= 3
+        assert kwargs["crop"] == power.DIALOG
+        return attempts == 1
+
+    def sleep(seconds):
+        nonlocal now
+        now += seconds
+
+    auto.find_element.side_effect = locate
+    monkeypatch.setattr(power, "auto", auto)
+    monkeypatch.setattr(power, "screen", nav)
+    monkeypatch.setattr(power, "_click_instance_entry", enter)
+    monkeypatch.setattr(power, "_click_text", confirm)
+    monkeypatch.setattr("utils.wait.time", SimpleNamespace(monotonic=lambda: now, sleep=sleep))
+
+    power._enter_instance(kind, name)
+
+    assert attempts == 3
+    assert nav.current_screen == power.INSTANCES[kind][0]
+    enter.assert_called_once_with(kind, name)
+    confirm.assert_called_once_with("确认", power.DIALOG_CONFIRM)
+    nav.check_screen.assert_not_called()
+
+
+@pytest.mark.parametrize("stop", [False, True], ids=["title-unavailable", "user-stop"])
+def test_touch_entry_does_not_accept_an_unconfirmed_title(monkeypatch, stop):
+    auto = Mock()
+    nav = Mock(current_screen=None)
+    enter = Mock()
+    now = 0.0
+
+    def sleep(seconds):
+        nonlocal now
+        now += seconds
+
+    def locate(*args, **kwargs):
+        if stop:
+            raise RunStopRequested()
+        return None
+
+    auto.find_element.side_effect = locate
+    monkeypatch.setattr(power, "auto", auto)
+    monkeypatch.setattr(power, "screen", nav)
+    monkeypatch.setattr(power, "_click_instance_entry", enter)
+    monkeypatch.setattr(power, "ENTRY_TIMEOUT", 2)
+    monkeypatch.setattr("utils.wait.time", SimpleNamespace(monotonic=lambda: now, sleep=sleep))
+
+    error = RunStopRequested if stop else power.PowerError
+    with pytest.raises(error):
+        power._enter_instance(power.ECHO, "铁骸的锈冢")
+
+    assert nav.current_screen is None
+    enter.assert_called_once_with(power.ECHO, "铁骸的锈冢")
+    auto.click_element.assert_not_called()
+    auto.click_element_with_pos.assert_not_called()
+
+
 @pytest.mark.parametrize(("requested", "available", "stock", "batch"), [
     (6, 174, 10, (6, 0, 6)),
     (6, 174, 4, (6, 80, 4)),

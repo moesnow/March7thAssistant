@@ -196,8 +196,13 @@ def _click_instance_entry(instance_type, name):
 def _enter_instance(instance_type, name):
     _click_instance_entry(instance_type, name)
     instance_screen, _, _ = INSTANCES[instance_type]
+    title = get_raw_instance_names()[instance_type][name] if instance_type == CRIMSON_CALYX else name
+    crop = ORNAMENT_TITLE if instance_type == ORNAMENT else INSTANCE_TITLE
+
     def ready():
-        if screen.check_screen(instance_screen):
+        # 与桌面版一致，直接用副本名称确认进入，避开左上标题的动态背景。
+        if auto.find_element(title, "text", include=True, crop=crop):
+            screen.current_screen = instance_screen
             return True
         if auto.find_element(("是否传送", "是否切换", "不再弹出"), "text", include=True, crop=DIALOG):
             _click_text("确认", DIALOG_CONFIRM)
@@ -205,11 +210,6 @@ def _enter_instance(instance_type, name):
 
     if not wait_until(ready, ENTRY_TIMEOUT, 0.6):
         raise PowerError(f"未能进入指定副本 {name}")
-    title = get_raw_instance_names()[instance_type][name] if instance_type == CRIMSON_CALYX else name
-    crop = ORNAMENT_TITLE if instance_type == ORNAMENT else INSTANCE_TITLE
-    if not auto.find_element(title, "text", include=True, crop=crop,
-                             max_retries=6, retry_delay=0.3):
-        raise PowerError(f"未确认进入指定副本 {name}")
 
 
 def _reenter_instance(instance_type, name):

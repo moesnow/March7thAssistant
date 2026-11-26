@@ -168,6 +168,10 @@
             "./assets/touch_720/images/screen/calyx.png",
             "./assets/touch_720/images/screen/calyx_audition.png"
         ],
+        "text_fallback": [
+            {"instance_types": ["拟造花萼（金）", "拟造花萼（赤）"], "include": true, "crop": [802, 70, 1233, 116]},
+            {"text": "挑战", "crop": [984, 632, 1165, 683]}
+        ],
         "actions": [
             {
                 "target_screen": "main",
@@ -184,7 +188,7 @@
         "id": "stagnant_shadow",
         "image_path": "./assets/touch_720/images/screen/stagnant_shadow.png",
         "text_fallback": [
-            {"text": "凝滞虚影", "crop": [77, 18, 184, 56]},
+            {"instance_types": ["凝滞虚影"], "include": true, "crop": [802, 70, 1233, 116]},
             {"text": "挑战", "crop": [984, 632, 1165, 683]}
         ],
         "actions": [
@@ -202,6 +206,10 @@
         "name": "侵蚀隧洞",
         "id": "cavern",
         "image_path": "./assets/touch_720/images/screen/cavern.png",
+        "text_fallback": [
+            {"instance_types": ["侵蚀隧洞"], "include": true, "crop": [802, 70, 1233, 116]},
+            {"text": "挑战", "crop": [984, 632, 1165, 683]}
+        ],
         "actions": [
             {
                 "target_screen": "main",
@@ -217,6 +225,10 @@
         "name": "历战余响",
         "id": "echo",
         "image_path": "./assets/touch_720/images/screen/echo.png",
+        "text_fallback": [
+            {"instance_types": ["历战余响"], "include": true, "crop": [802, 70, 1233, 116]},
+            {"text": "挑战", "crop": [984, 632, 1165, 683]}
+        ],
         "actions": [
             {
                 "target_screen": "main",
@@ -232,6 +244,10 @@
         "name": "位面饰品提取",
         "id": "ornament",
         "image_path": "./assets/touch_720/images/screen/ornament.png",
+        "text_fallback": [
+            {"instance_types": ["饰品提取"], "include": true, "crop": [503, 74, 888, 114]},
+            {"text": "开始挑战", "crop": [940, 630, 1220, 684]}
+        ],
         "actions": [
             {
                 "target_screen": "main",
