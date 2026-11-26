@@ -13132,3 +13132,7 @@ msgstr "No shortcuts for this connection"
 #: app/content/run_models.py:377
 msgid "复制定时计划"
 msgstr "Duplicate schedule"
+
+#: app/content/tasks/assets.py:67
+msgid "缺乏维护，已禁用"
+msgstr "Disabled due to lack of maintenance"

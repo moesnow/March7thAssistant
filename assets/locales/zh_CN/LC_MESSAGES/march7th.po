@@ -12597,3 +12597,7 @@ msgstr "当前连接方式没有可用的快捷启动"
 #: app/content/run_models.py:377
 msgid "复制定时计划"
 msgstr "复制定时计划"
+
+#: app/content/tasks/assets.py:67
+msgid "缺乏维护，已禁用"
+msgstr "缺乏维护，已禁用"

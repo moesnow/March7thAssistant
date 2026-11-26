@@ -12598,3 +12598,7 @@ msgstr "目前的連線方式沒有可用的快速啟動"
 #: app/content/run_models.py:377
 msgid "复制定时计划"
 msgstr "複製定時計畫"
+
+#: app/content/tasks/assets.py:67
+msgid "缺乏维护，已禁用"
+msgstr "缺乏維護，已停用"

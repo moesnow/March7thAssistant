@@ -12381,3 +12381,7 @@ msgstr ""
 #: app/content/run_models.py:377
 msgid "复制定时计划"
 msgstr ""
+
+#: app/content/tasks/assets.py:67
+msgid "缺乏维护，已禁用"
+msgstr ""

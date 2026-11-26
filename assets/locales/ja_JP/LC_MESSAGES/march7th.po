@@ -12684,3 +12684,7 @@ msgstr "この接続では使えるショートカットがありません"
 #: app/content/run_models.py:377
 msgid "复制定时计划"
 msgstr "スケジュールを複製"
+
+#: app/content/tasks/assets.py:67
+msgid "缺乏维护，已禁用"
+msgstr "メンテナンスが行われていないため無効化されています"

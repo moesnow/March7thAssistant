@@ -12692,3 +12692,7 @@ msgstr "현재 연결에서 쓸 수 있는 바로가기가 없습니다"
 #: app/content/run_models.py:377
 msgid "复制定时计划"
 msgstr "일정 복제"
+
+#: app/content/tasks/assets.py:67
+msgid "缺乏维护，已禁用"
+msgstr "유지보수 중단으로 비활성화됨"
