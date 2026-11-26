@@ -10,43 +10,54 @@ from tasks.base.list_drag import drag_list
 from module.notification.notification import NotificationLevel
 
 
+HEADER_CROP = (375 / 1920, 142 / 1080, 1460 / 1920, 193 / 1080)
+LIST_CROP = (375 / 1920, 335 / 1080, 1460 / 1920, 655 / 1080)
+MAX_SCROLLS = 8
+
+
 def take_journey_highlights_screenshot():
-    frames = []
     anchor_template = None
 
     screen.change_to("reward_guide")
     time.sleep(1.0)
 
-    for _ in range(3):
-        img, _, _ = auto.take_screenshot((375 / 1920, 300 / 1080, 1260 / 1920, 650 / 1080))
-        frame = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+    # 奖励总览固定在顶部，只拼接一次；下方列表单独滚动。
+    header, _, _ = auto.take_screenshot(HEADER_CROP)
+    frames = [np.array(header)]
+
+    for page in range(MAX_SCROLLS + 1):
+        img, _, _ = auto.take_screenshot(LIST_CROP)
+        frame = np.array(img)
 
         if anchor_template is not None:
-            search_region = frame[: int(frame.shape[0] * 0.8), :]
-            result = cv2.matchTemplate(search_region, anchor_template, cv2.TM_CCOEFF_NORMED)
+            # 到底前可能只移动很短一段，锚点也可能仍在画面下方。
+            result = cv2.matchTemplate(frame, anchor_template, cv2.TM_CCOEFF_NORMED)
             _, max_val, _, max_loc = cv2.minMaxLoc(result)
 
             if max_val < 0.85:
-                log.debug("锚点匹配失败，已到底部或丢失，停止滚动")
-                break
+                log.warning("活动日历截图拼接失败，跳过本次提醒")
+                return None
 
             new_content_top = max_loc[1] + anchor_template.shape[0]
+            if new_content_top >= frame.shape[0]:
+                break
             frames.append(frame[new_content_top:, :])
         else:
             frames.append(frame)
 
         anchor_template = frame[frame.shape[0] - 80 :, :]
 
+        if page == MAX_SCROLLS:
+            log.warning("活动日历滚动次数已达上限，未能获取完整截图，跳过本次提醒")
+            return None
+
         if not drag_list(auto, (1370 / 1920, 850 / 1080), (1370 / 1920, 490 / 1080),
-                         crop=(375 / 1920, 300 / 1080, 1260 / 1920, 650 / 1080), duration=1.2):
+                         crop=LIST_CROP, duration=1.2):
             return None
         time.sleep(1.0)
 
-    if not frames:
-        return None
-
     stitched = np.vstack(frames)
-    return Image.fromarray(cv2.cvtColor(stitched, cv2.COLOR_BGR2RGB))
+    return Image.fromarray(stitched)
 
 
 def send_journey_highlights_notification():
