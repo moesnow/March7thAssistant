@@ -7,6 +7,7 @@ from PySide6.QtGui import QDesktopServices, QTextDocument
 from qfluentwidgets import FluentIcon, Theme, qconfig, setTheme, setThemeColor
 
 from app.common.design_tokens import DARK, EVERNIGHT_RED, LIGHT, MARCH7TH_PINK
+from app.help.blocks import TableView
 from app.help.richtext import RichText
 from app.help_interface import HelpInterface
 from module import localization
@@ -38,6 +39,14 @@ def link_colors(page):
     return {fmt.foreground().color().name() for text in page.findChildren(RichText)
             for fmt in (f.toCharFormat() for f in text._doc.allFormats())
             if isinstance(text._links.get(fmt.anchorHref()), Link)}
+
+
+def test_tutorial_annotated_checks_use_status_images(reader):
+    table = reader.currentPage().findChildren(TableView)[0]
+    for row, column, expected in ((1, 3, "是（ADB）"), (5, 2, "是（Termux）"), (5, 3, "是（安卓版）")):
+        cell = table.cells[row][column]
+        assert cell.plainText() == expected
+        assert [f.toImageFormat().name() for f in cell._doc.allFormats() if f.isImageFormat()] == ["m7a-status:yes"]
 
 
 def test_list_internal_link_and_back(reader, qtbot):

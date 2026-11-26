@@ -23,6 +23,7 @@ _MARKER = re.compile(r"^\s*(?:\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]|("
                      + "|".join(map(re.escape, _KIND)) + r")\s*[:：])\s*", re.I)
 _STATUS = {"✅": "yes", "✔": "yes", "✓": "yes", "❌": "no", "✗": "no", "✖": "no",
            "⚠": "partial", "🟡": "partial", "△": "partial", "◐": "partial"}
+_STATUS_PREFIX = re.compile(r"^\s*([" + "".join(_STATUS) + r"])\ufe0f?(?=\s|[（(]|$)")
 _STYLE = {"strong": "bold", "b": "bold", "em": "italic", "i": "italic", "code": "code",
           "kbd": "code", "del": "strike", "s": "strike", "strike": "strike"}
 _BLOCKS = set("p ul ol table blockquote pre hr details div section article main aside figure figcaption".split())
@@ -179,10 +180,9 @@ class Builder:
 
         def cell(node):
             spans = self.spans(node.children)
-            if len(spans) == 1 and isinstance(spans[0], Text) and not spans[0].link:
-                text = spans[0].text
-                if status := _STATUS.get(text.strip().replace("\ufe0f", "")):
-                    return (Status(text, status),)
+            if spans and isinstance(spans[0], Text) and not spans[0].link:
+                if match := _STATUS_PREFIX.match(spans[0].text):
+                    return (Status(match[0], _STATUS[match[1]]),) + span_slice(spans, match.end())
             return spans
 
         rows = list(table_rows(node))

@@ -162,6 +162,31 @@ def test_sample_blocks_inline_marks_and_fallback():
         table.align = ()
 
 
+def test_table_status_annotations_keep_text_styles_and_links(tmp_path):
+    path = tmp_path / "status.md"
+    path.write_text("""| 支持情况 |
+| --- |
+| ✅（ADB） |
+| ✔️ (Termux) |
+| ❌（不支持） |
+| ⚠️（部分支持） |
+| **✅**（**[安卓版](https://example.org/android)**） |
+| [✅（链接）](https://example.org/status) |
+| 普通说明 ✅ |
+""", encoding="utf-8")
+    doc = load_file(path)
+    assert not doc.degraded
+    table = next(b for b in doc.blocks if isinstance(b, Table))
+    cells = [row[0] for row in table.rows]
+    assert [isinstance(cell[0], Status) for cell in cells] == [True] * 5 + [False] * 2
+    assert [cell[0].value for cell in cells[:5]] == ["yes", "yes", "no", "partial", "yes"]
+    assert [inline_text(cell) for cell in cells[:5]] == [
+        "✅（ADB）", "✔️ (Termux)", "❌（不支持）", "⚠️（部分支持）", "✅（安卓版）"]
+    assert any(isinstance(s, Text) and s.bold and s.link == Link("external", "https://example.org/android")
+               for s in cells[4])
+    assert cells[5][0].link == Link("external", "https://example.org/status")
+
+
 @pytest.mark.parametrize("raw,kind,target", [
     ("/assets/docs/Android.md", "doc", "doc:Android"), ("./FAQ.md", "doc", "doc:FAQ"),
     ("FAQ_en_US.md", "doc", "doc:FAQ"), ("doc:FAQ", "doc", "doc:FAQ"),
