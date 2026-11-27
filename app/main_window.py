@@ -983,8 +983,9 @@ class MainWindow(FluentWindow):
         self.runController.setDesktopTwinHosting(active)
         self.accountNavCard.setDisabled(active)
         for page in (self.homeInterface, self.taskInterface, self.settingInterface, self.workflowInterface,
-                     self.warpInterface, self.logInterface, self.accountsInterface):
+                     self.warpInterface, self.accountsInterface):
             page.setDisabled(active)
+        self.logInterface.setDesktopTwinHosting(active)
         start_game = self.navigationInterface.widget('startGameButton')
         if start_game is not None:
             start_game.setDisabled(active)

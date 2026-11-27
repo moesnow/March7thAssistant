@@ -797,7 +797,7 @@ def main_window(qtbot, monkeypatch, tmp_path):
     yield build
 
 
-def test_host_window_explains_why_pages_are_disabled(main_window):
+def test_host_window_explains_why_pages_are_disabled(main_window, qtbot, monkeypatch):
     from app.tools import desktop_twin as ui
 
     window = main_window()
@@ -819,6 +819,20 @@ def test_host_window_explains_why_pages_are_disabled(main_window):
     assert not window.toolsInterface.twinPill.isHidden()
     assert window.toolsInterface.twinPill.text() == ui.tr("运行中")
     assert not window.toolsInterface.gameScreenshotCard.fileButton.isEnabled()
+    run_page = window.logInterface
+    window.stackedWidget.setAnimationEnabled(False)
+    window.switchTo(run_page)
+    run_page.showPage("current")
+    panel = run_page.currentPage.log
+    assert panel.isEnabled() and not run_page.currentPage.card.isEnabled()
+    assert not run_page.historyPage.retryButton.isEnabled() and not run_page.schedulePage.isEnabled()
+    window.runController._append("12:34:56 | DEBUG | 分身调试信息\n")
+    panel.chips["all"].click()
+    qtbot.waitUntil(lambda: "分身调试信息" in panel.view.toPlainText())
+    copy = Mock()
+    monkeypatch.setattr("utils.clipboard.copy", copy)
+    panel.copyButton.click()
+    copy.assert_called_once_with(panel.view.toPlainText())
     notice.openButton.click()
     window.toolsInterface.openDesktopTwin.assert_called_once()
 
@@ -834,6 +848,7 @@ def test_host_window_explains_why_pages_are_disabled(main_window):
 
     window.setDesktopTwinHosting(False)
     assert not notice.isVisible() and window.homeInterface.isEnabled()
+    assert run_page.currentPage.card.isEnabled() and run_page.schedulePage.isEnabled()
     assert window.toolsInterface.twinPill.isHidden()
     assert window.toolsInterface.gameScreenshotCard.fileButton.isEnabled()
     window.hide()
