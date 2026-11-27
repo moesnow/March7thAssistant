@@ -2,10 +2,12 @@ from PySide6.QtWidgets import QFileDialog
 from qfluentwidgets import FluentIcon as FIF
 from qfluentwidgets import PushSettingCard
 from app.common.icon import UiIcon
+from app.card.comboboxsettingcard2 import ComboBoxSettingCard2
 from app.card.switchsettingcard1 import SwitchSettingCard1
 from app.card.expandable_switch_setting_card import ExpandableComboBoxSettingCard
 from module.config import cfg
 from module.localization import tr
+from utils.desktop_twin import in_desktop_twin
 
 
 def build(host):
@@ -35,19 +37,20 @@ def build(host):
         "exit_after_failure",
         parent=host.card_parent,
     )
-    host.afterFinishCard = ExpandableComboBoxSettingCard(
+    twin = in_desktop_twin()
+    actions = {tr('无'): 'None', tr('退出'): 'Exit'}
+    if not twin:
+        actions.update({
+            tr('关机'): 'Shutdown', tr('睡眠'): 'Sleep', tr('休眠'): 'Hibernate', tr('重启'): 'Restart',
+            tr('注销'): 'Logoff', tr('关闭显示器'): 'TurnOffDisplay', tr('运行脚本'): 'RunScript', tr('循环'): 'Loop',
+        })
+    card_type = ComboBoxSettingCard2 if twin else ExpandableComboBoxSettingCard
+    host.afterFinishCard = card_type(
         "after_finish",
         FIF.POWER_BUTTON,
         tr('任务完成后'),
         tr('“退出”会关闭游戏。需要定时运行时，请打开「运行」页的「定时计划」。'),
-        texts={tr('无'): 'None', tr('退出'): 'Exit', tr('关机'): 'Shutdown', tr('睡眠'): 'Sleep', tr('休眠'): 'Hibernate', tr('重启'): 'Restart', tr('注销'): 'Logoff', tr('关闭显示器'): 'TurnOffDisplay', tr('运行脚本'): 'RunScript', tr('循环'): 'Loop'},
-        parent=host.card_parent,
-    )
-    host.ScriptPathCard = PushSettingCard(
-        tr('修改'),
-        FIF.CODE,
-        tr("脚本或程序路径(选择运行脚本时生效)"),
-        cfg.script_path,
+        texts=actions,
         parent=host.card_parent,
     )
     host.exitAppAfterSuccess = SwitchSettingCard1(
@@ -62,6 +65,15 @@ def build(host):
         tr('声音提示'),
         tr('任务完成后列车长唱歌提示帕！'),
         "play_audio",
+        parent=host.card_parent,
+    )
+    if twin:
+        return host.finish("after_run")
+    host.ScriptPathCard = PushSettingCard(
+        tr('修改'),
+        FIF.CODE,
+        tr("脚本或程序路径(选择运行脚本时生效)"),
+        cfg.script_path,
         parent=host.card_parent,
     )
     host.ScriptPathCard.clicked.connect(choose_script)

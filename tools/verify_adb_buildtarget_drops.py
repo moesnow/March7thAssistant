@@ -19,6 +19,8 @@ import unicodedata
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from utils import paths
+
 
 def read_json(path):
     return json.loads(path.read_text(encoding="utf-8"))
@@ -31,7 +33,7 @@ def normalize(value):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--serial", required=True)
-    parser.add_argument("--state-dir", type=Path, default=ROOT / "temp/adb-buildtarget/all-drops")
+    parser.add_argument("--state-dir", type=Path, default=ROOT / paths.ADB_BUILDTARGET_DROPS)
     args = parser.parse_args()
     folder = args.state_dir.resolve()
     folder.mkdir(parents=True, exist_ok=True)

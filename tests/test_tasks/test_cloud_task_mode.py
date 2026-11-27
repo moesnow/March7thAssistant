@@ -1313,18 +1313,21 @@ def test_failed_gui_full_run_does_not_enter_cli_loop(runner, full_run_cleanup):
     full_run_cleanup.controller.shutdown.assert_not_called()
 
 
-def test_failed_desktop_twin_full_run_keeps_system_actions_disabled(runner, full_run_cleanup, monkeypatch):
+@pytest.mark.parametrize("action", ["Shutdown", "Exit"])
+def test_failed_desktop_twin_full_run_only_allows_exit(runner, full_run_cleanup, monkeypatch, action):
     from module.config import cfg
 
     monkeypatch.setenv("MARCH7TH_DESKTOP_TWIN", "1")
-    monkeypatch.setenv("MARCH7TH_AFTER_FINISH", "Shutdown")
+    monkeypatch.setenv("MARCH7TH_AFTER_FINISH", action)
     runner.cfg.after_finish = cfg.after_finish
-    assert runner.cfg.after_finish == "None"
 
     record = run_currency_wars_cli(runner, "main")
 
     assert (record["status"], record["exit_code"]) == ("failed", EXIT_FAILED)
-    full_run_cleanup.controller.shutdown.assert_not_called()
+    if action == "Exit":
+        full_run_cleanup.controller.shutdown.assert_called_once_with("Exit", on_stopped=full_run_cleanup.game._finish_game_run)
+    else:
+        full_run_cleanup.controller.shutdown.assert_not_called()
 
 
 def test_currency_wars_respects_explicit_exit_after_a_settled_loss(runner):

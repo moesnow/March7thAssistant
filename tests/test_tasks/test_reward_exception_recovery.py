@@ -49,7 +49,7 @@ def test_touch_reward_capture_faults_continue_only_with_a_usable_session(monkeyp
         return png.getvalue()
 
     config = SimpleNamespace(
-        control_backend="adb", ui_profile="touch_720", power_enable=False, reward_enable=True,
+        control_backend="adb", ui_profile="touch_720", power_enable=False, build_target_enable=False, reward_enable=True,
         reward_dispatch_enable=True, reward_assist_enable=True, reward_mail_enable=False,
         reward_srpass_enable=False, reward_message_enable=False, reward_redemption_code_enable=False,
     )

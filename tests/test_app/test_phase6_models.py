@@ -124,6 +124,17 @@ def test_parent_child_history_control_tail_and_stale_pid(host, monkeypatch):
     assert _read_json(record["control_file"])["command"] == "stop"
 
 
+def test_host_shows_only_the_twin_game_exit_action(host):
+    from module.overview.labels import post_action_label
+
+    controller = host.runController
+    controller._record = {"task": "main", "invoker": runs.INVOKER_DESKTOP_TWIN}
+    controller._pending_task_meta = {"post_action": "Sleep"}
+    assert controller._finish_text([], 0) == ("", False)
+    controller._record["args"] = ["--after-finish", "Exit"]
+    assert controller._finish_text([], 0) == (post_action_label("Exit"), True)
+
+
 @pytest.mark.skipif(sys.platform != "win32", reason="桌面分身使用 Windows 命名管道")
 def test_desktop_twin_mirrors_gui_output_across_record_refreshes(host, qtbot):
     from app.common.desktop_twin_log import TwinLogPublisher, log_server_key

@@ -439,16 +439,23 @@ def set_after_finish(run_id, action):
     _atomic_write_json(run_file(target, ".after-finish"), {"action": action})
 
 
+def session_after_finish(action, *, invoker=None):
+    """分身只允许退出本会话的游戏，主桌面的配置原值留在共享文件中。"""
+    if (os.environ.get("MARCH7TH_DESKTOP_TWIN") or invoker == INVOKER_DESKTOP_TWIN) and action != "Exit":
+        return "None"
+    return action
+
+
 def effective_after_finish(default, run_id=None):
     if run_id is None and _current_session:
         if _current_session.record.get("parent_run_id"):
             return "None"
         run_id = _current_session.run_id
-    if not is_valid_run_id(run_id):
-        return default
-    data = _read_json(run_file(run_id, ".after-finish")) or {}
-    action = data.get("action")
-    return action if action in AFTER_FINISH_CHOICES else default
+    if is_valid_run_id(run_id):
+        data = _read_json(run_file(run_id, ".after-finish")) or {}
+        if data.get("action") in AFTER_FINISH_CHOICES:
+            default = data["action"]
+    return session_after_finish(default)
 
 
 def observe_step(key, action, skipped=None):

@@ -33,6 +33,8 @@ CRITICAL = {
 }
 LOGS = "logs"
 SCREENSHOTS = "screenshots"
+# 实机验证工具按源码目录保存断点，独立于它为任务创建的临时用户配置。
+ADB_BUILDTARGET_DROPS = "temp/adb-buildtarget/all-drops"
 OPTIONAL = {LOGS: LOGS, SCREENSHOTS: SCREENSHOTS, "browser": PROFILE}
 TOOL_DIRS = {"universe": "3rdparty/Auto_Simulated_Universe", "fight": "3rdparty/Fhoe-Rail"}
 EXTERNAL = {"universe": ("info.yml", "info_old.yml"), "fight": ("config.json",)}

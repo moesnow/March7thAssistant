@@ -44,6 +44,8 @@ class Visibility:
     def setting(self, item):
         if not self.page(item.page):
             return False
+        if self.twin and item.id == "script_path":
+            return False
         if item.page == "run_mode" and item.section != "header":
             return item.section == self.backend and (item.section != "local" or self.windows)
         if item.id in {"update_via_launcher", "launcher_path", "launcher_title_name", "update_game_timeout",
