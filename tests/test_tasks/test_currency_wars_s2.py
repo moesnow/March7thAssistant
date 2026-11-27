@@ -6969,12 +6969,24 @@ def test_treasury_claim_during_takeover(monkeypatch, world, treasury, fault, cla
     world.auto.drag_mouse.assert_not_called()
 
 
-def test_start_advances_counted_skip_without_spending_again_when_the_count_changes(monkeypatch, world):
+@pytest.mark.parametrize(("before_text", "consumed_text"), (
+    ("跳过(2/2)", "跳过(1/2)"),
+    ("跳过（2/2）", "跳过（1/2）"),
+    ("跳过（2/2)", "跳过(1/2）"),
+    ("跳过（ 2 ／ 2 ）", "跳过(1/2)"),
+))
+def test_start_advances_counted_skip_without_spending_again_when_the_count_changes(
+        monkeypatch, world, before_text, consumed_text):
     stage, skip_point = "2-1", (1816, 751)
     common = (("备战阶段", 471, 46), (stage, 469, 78), ("商店", 1624, 982),
               ("前台区域", 974, 314), ("后台区域", 961, 576))
-    before = Frame(CANVAS, labels(*common, ("跳过(2/2)", *skip_point)))
-    consumed = Frame(CANVAS, labels(*common, ("跳过(1/2)", *skip_point)))
+    def observed(text):
+        return Frame.from_ocr(CANVAS, tuple(
+            (((x - 10, y - 10), (x + 10, y - 10), (x + 10, y + 10), (x - 10, y + 10)), (caption, 0.99))
+            for caption, x, y in (*common, (text, *skip_point))
+        ))
+
+    before, consumed = observed(before_text), observed(consumed_text)
     won = page(Page.MATCH_RESULT, ("对局胜利", 960, 260), ("返回货币战争", 960, 899))
     lobby = home()
     team = board(stage=stage)

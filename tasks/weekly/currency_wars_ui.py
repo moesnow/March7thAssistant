@@ -207,7 +207,8 @@ def point(label: "Label | None") -> Point | None:
 
 
 def normalized(text: str) -> str:
-    return re.sub(r'[\s「」『』【】]', '', text).replace("／", "/").replace("－", "-").replace("•", "·")
+    return (re.sub(r'[\s「」『』【】]', '', text).replace("／", "/").replace("－", "-")
+            .replace("•", "·").replace("（", "(").replace("）", ")"))
 
 
 @dataclass(frozen=True)
