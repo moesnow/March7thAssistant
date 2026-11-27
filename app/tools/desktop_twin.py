@@ -1057,6 +1057,8 @@ class DesktopTwinDialog(QDialog):
             else:
                 self._connect_until = None
                 self._connected = True
+                if first_connection:
+                    self._log.startDesktopTwinLog(identity)
                 if auto_launch and (first_connection or self._replace_assistant):
                     self._open_assistant()
                 self.retranslateUi()

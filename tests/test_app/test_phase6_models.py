@@ -124,6 +124,162 @@ def test_parent_child_history_control_tail_and_stale_pid(host, monkeypatch):
     assert _read_json(record["control_file"])["command"] == "stop"
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="桌面分身使用 Windows 命名管道")
+def test_desktop_twin_mirrors_gui_output_across_record_refreshes(host, qtbot):
+    from app.common.desktop_twin_log import TwinLogPublisher, log_server_key
+    from app.content.run_controller import RunController
+    from utils.windows_session import SessionIdentity
+
+    controller, history = host.runController, host.runHistory
+    session = SessionIdentity(2, 100)
+    child = RunController(host)
+    controller.setDesktopTwinHosting(True)
+    controller.startDesktopTwinLog(session)
+    assert controller._twin_log_server is not None, controller.log_entries()
+    child.appendLog("启动前检查失败\n")
+    publisher = TwinLogPublisher(log_server_key(session, os.getpid()), child)
+
+    def same_entries():
+        return controller.log_entries() == child.log_entries()
+
+    qtbot.waitUntil(same_entries)
+    child.clear_log()
+    child._append("12:34:56 | DEBUG | 调试𠮷\n12:34:57 | ERROR | 出错\nTrace")
+    rid = runs.new_run_id()
+    save(rid)
+    Path(runs.run_file(rid, ".log")).write_text("12:34:56 | DEBUG | 调试𠮷\n", encoding="utf-8")
+    qtbot.waitUntil(same_entries)
+    history.refresh()
+    assert same_entries() and controller._remote and not controller.view().can_stop
+
+    publisher.abort()
+    qtbot.waitUntil(lambda: not controller._twin_log_server.has_snapshot)
+    with Path(runs.run_file(rid, ".log")).open("a", encoding="utf-8") as stream:
+        stream.write("断线期间的文件输出\n")
+    history.refresh()
+    assert controller.log_entries()[-1].text == "断线期间的文件输出"
+    child._append("back", final=True)
+    child.appendLog("任务异常结束\n")
+    qtbot.waitUntil(same_entries)
+    controller.setDesktopTwinHosting(False)
+    save(rid, status="failed")
+    history.refresh()
+    assert same_entries()  # 注销时的最后一次记录刷新仍不能重复追加文件内容。
+    assert [e.text for e in controller.log_entries()] == ["调试𠮷", "出错", "Traceback", "任务异常结束"]
+
+    other = runs.new_run_id()
+    save(other)
+    Path(runs.run_file(other, ".log")).write_text("普通命令行任务\n", encoding="utf-8")
+    history.refresh()
+    assert [e.text for e in controller.log_entries()] == ["普通命令行任务"]
+    child.cleanup()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="桌面分身使用 Windows 命名管道")
+@pytest.mark.parametrize("finished_before_refresh", [False, True])
+def test_twin_disconnect_follows_the_same_run_to_its_last_line(host, qtbot, finished_before_refresh):
+    from app.common.desktop_twin_log import TwinLogPublisher, log_server_key
+    from app.content.run_controller import RunController
+    from utils.windows_session import SessionIdentity
+
+    controller, history = host.runController, host.runHistory
+    session = SessionIdentity(2, 102)
+    controller.setDesktopTwinHosting(True)
+    controller.startDesktopTwinLog(session)
+    child = RunController(host)
+    rid = runs.new_run_id()
+    save(rid)
+    path = Path(runs.run_file(rid, ".log"))
+    tick = "12:34:56 | INFO | 等待\n"
+    path.write_text(tick * 2, encoding="utf-8")
+    child._append(tick)
+    child.appendLog("仅分身界面显示的提示\n")
+    child._append(tick)
+    publisher = TwinLogPublisher(log_server_key(session, os.getpid()), child)
+    qtbot.waitUntil(lambda: controller.log_entries() == child.log_entries())
+    history.refresh()
+    assert controller._remote
+
+    # 最后一批管道数据未送达，任务进程继续写同一个文件。
+    with path.open("a", encoding="utf-8") as stream:
+        stream.write(tick + "12:34:57 | ERROR | 文件中的错误\nTrace")
+    publisher.abort()
+    publisher.deleteLater()
+    qtbot.waitUntil(lambda: not controller._twin_log_server.has_snapshot)
+    expected = ["等待", "仅分身界面显示的提示", "等待", "等待", "文件中的错误"]
+    if not finished_before_refresh:
+        history.refresh()
+        history.refresh()
+        assert [entry.text for entry in controller.log_entries()] == expected
+
+    with path.open("a", encoding="utf-8") as stream:
+        stream.write("back")
+    save(rid, status="failed")
+    history.refresh()
+    assert [entry.text for entry in controller.log_entries()] == [*expected, "Traceback"]
+    assert controller.log_entries()[-1].level == "error"
+    controller.setDesktopTwinHosting(False)
+    child.cleanup()
+
+
+def _publish_until_exit(key):
+    from PySide6.QtCore import QCoreApplication, QObject, QTimer, Signal
+    from app.common.desktop_twin_log import TwinLogPublisher
+    from module.overview.run_log import LogEntry
+
+    app = QCoreApplication([])
+    entries = []
+
+    class Source(QObject):
+        logAppended = Signal(list)
+        logCleared = Signal()
+
+        def log_entries(self):
+            return entries
+
+    source = Source()
+    publisher = TwinLogPublisher(key, source)
+
+    def finish_task():
+        entries.extend(LogEntry("", "debug", "调试" * 128, important=False) for _ in range(2000))
+        source.logAppended.emit(entries)
+        entries.append(LogEntry("", "error", "退出前的最后一条错误"))
+        source.logAppended.emit(entries[-1:])
+        app.quit()
+
+    if publisher.state() == publisher.LocalSocketState.ConnectedState:
+        QTimer.singleShot(0, finish_task)
+    else:
+        publisher.connected.connect(finish_task)
+    QTimer.singleShot(5000, app.quit)
+    app.exec()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="桌面分身使用 Windows 命名管道")
+def test_desktop_twin_flushes_last_error_on_gui_exit(host, qtbot):
+    import multiprocessing
+    from app.common.desktop_twin_log import log_server_key
+    from utils.windows_session import SessionIdentity
+
+    controller = host.runController
+    session = SessionIdentity(2, 101)
+    controller.setDesktopTwinHosting(True)
+    controller.startDesktopTwinLog(session)
+    child = multiprocessing.get_context("spawn").Process(target=_publish_until_exit,
+                                                          args=(log_server_key(session, os.getpid()),))
+    child.start()
+    try:
+        qtbot.waitUntil(lambda: not child.is_alive(), timeout=15000)
+        assert child.exitcode == 0
+        qtbot.waitUntil(lambda: len(controller.log_entries()) == 2001)
+        assert controller.log_entries()[-1].text == "退出前的最后一条错误"
+    finally:
+        if child.is_alive():
+            child.terminate()
+        child.join(3)
+        controller.setDesktopTwinHosting(False)
+
+
 def test_history_filters_retry_account_and_caches_unchanged_records(host, monkeypatch):
     h = host.runHistory
     root, child = runs.new_run_id(), runs.new_run_id()

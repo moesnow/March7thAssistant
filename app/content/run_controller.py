@@ -140,6 +140,8 @@ class RunController(QObject):
         self._remote_state = "running"
         self._log_offset = 0
         self._log_identity = None
+        self._twin_log_server = None
+        self._remote_log_source = "file"
         self._finish_skipped = False
         self._account_arg = None
         self._preview = ()
@@ -1569,7 +1571,9 @@ class RunController(QObject):
                 log.warning(f"无法写入外部任务日志：{error}")
         if self._log_overlay and self._overlay_enabled and text:
             self._log_overlay.append_log(text)
-        entries = self._parser.feed(text, internal=internal, final=final)
+        self._appendEntries(self._parser.feed(text, internal=internal, final=final))
+
+    def _appendEntries(self, entries):
         if entries:
             self._entries.extend(entries)
             self.logAppended.emit(entries[-self.MAX_LOG_LINES:])
@@ -1938,8 +1942,35 @@ class RunController(QObject):
                 return "仍有已启用的按时任务"
         return None
 
+    def startDesktopTwinLog(self, session):
+        from app.common.desktop_twin_log import TwinLogServer, log_server_key
+
+        server = TwinLogServer(self)
+        if server.listen(log_server_key(session, os.getpid())):
+            self._twin_log_server = server
+            server.received.connect(self._receiveTwinLog)
+            server.snapshotLost.connect(self._resumeTwinFileLog)
+        else:
+            self.appendLog(f"桌面分身：日志同步启动失败（{server.errorString()}）\n")
+            server.deleteLater()
+
+    def _receiveTwinLog(self, reset, entries):
+        if reset:
+            self._remote_log_source = "twin"
+            self.clear_log()
+        self._appendEntries(entries)
+
+    def _resumeTwinFileLog(self):
+        if self._remote:
+            self._remote_log_source = "resume_file"
+            self._log_identity = None
+
     def setDesktopTwinHosting(self, active):
         self._desktop_twin_hosting = active
+        if not active and self._twin_log_server is not None:
+            self._twin_log_server.close()
+            self._twin_log_server.deleteLater()
+            self._twin_log_server = None
         self.changed.emit()
         if not active:
             # 交回定时时跳过当前分钟，避免和分身实例重复触发同一时间槽。
@@ -2285,7 +2316,12 @@ class RunController(QObject):
             self._follow_log(self._record, final=True)
         if record and record.get("run_id") != self._record.get("run_id"):
             if not local:
-                self.clear_log()
+                # 分身界面送来的日志已经包含这次任务的输出和界面提示。
+                if self._twin_log_server and self._twin_log_server.has_snapshot:
+                    self._remote_log_source = "twin"
+                else:
+                    self._remote_log_source = "file"
+                    self.clear_log()
                 self._finish_skipped = False
                 self._remote_state = "running"
             elif self._finish_skipped:
@@ -2315,9 +2351,10 @@ class RunController(QObject):
         self.changed.emit()
 
     def _follow_log(self, record, *, final=False):
-        from module.overview.run_log import tail_offset
-        if not runs.is_valid_run_id(record.get("run_id")):
+        from module.overview.run_log import merge_twin_file_entries, tail_offset
+        if self._remote_log_source == "twin" or not runs.is_valid_run_id(record.get("run_id")):
             return
+        resuming = self._remote_log_source == "resume_file"
         path = Path(runs.run_file(record["run_id"], ".log"))
         try:
             with path.open("rb") as stream:
@@ -2326,6 +2363,8 @@ class RunController(QObject):
                     self._log_offset = tail_offset(stream)
                     self._log_identity = record["run_id"]
                     self._output_bytes = b""
+                    if resuming:
+                        self._parser.reset()
                 elif size - self._log_offset > 1024 * 1024:
                     # 大量输出涌入时直接追到缓存能够保留的位置。
                     start = tail_offset(stream)
@@ -2334,11 +2373,23 @@ class RunController(QObject):
                         self._output_bytes = b""
                         self._parser.reset()
                 stream.seek(self._log_offset)
-                data = stream.read() if final else stream.read(256 * 1024)
+                data = stream.read() if final or resuming else stream.read(256 * 1024)
                 self._log_offset = stream.tell()
         except OSError:
+            if resuming:
+                return
             data = b""
         data = self._output_bytes + data
         end = len(data) if final else data.rfind(b"\n") + 1
         self._output_bytes = data[end:]
-        self._append(data[:end].decode("utf-8", "replace"), final=final)
+        text = data[:end].decode("utf-8", "replace")
+        if not resuming:
+            self._append(text, final=final)
+            return
+        recorded = self._parser.feed(text, final=final)
+        if recorded:
+            entries = merge_twin_file_entries(self._entries, recorded)
+            self._entries.clear()
+            self.logCleared.emit()
+            self._appendEntries(entries)
+            self._remote_log_source = "file"

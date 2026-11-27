@@ -6662,6 +6662,10 @@ msgstr "模拟器 display 0 当前为 {width}×{height}。请在模拟器设置�
 msgid "游戏需要手动登录，请在 Android 实体屏或模拟器中完成登录后重试"
 msgstr "游戏需要手动登录，请在 Android 实体屏或模拟器中完成登录后重试"
 
+#: module/game/adb_transport.py:496
+msgid "未能唤醒 Android 设备，请检查设备电源状态后重试"
+msgstr "未能唤醒 Android 设备，请检查设备电源状态后重试"
+
 #: module/game/adb.py:152
 msgid "Android 游戏进程已退出，请检查游戏与设备的后台设置后重试"
 msgstr "Android 游戏进程已退出，请检查游戏与设备的后台设置后重试"

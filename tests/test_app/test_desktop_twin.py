@@ -92,6 +92,7 @@ def test_login_opens_gui_and_hide_keeps_session(qtbot, monkeypatch):
     dialog.show()
 
     dialog._poll_connection(0)
+    dialog._log.startDesktopTwinLog.assert_called_once_with(identity)
     launcher.start.assert_called_once_with(identity)
     dialog._poll()
     launcher.remove_registration.assert_called_once()
