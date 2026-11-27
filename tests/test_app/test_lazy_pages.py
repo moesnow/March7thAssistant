@@ -60,6 +60,47 @@ def test_failed_build_can_retry(window, monkeypatch):
     assert "helpInterface" not in window._page_builders
 
 
+def test_remembered_autoplot_restores_without_opening_toolbox(window, monkeypatch):
+    from app import main_window, tools_interface
+    values = {'autoplot_remember_enable': True, 'autoplot_enable': True}
+    original_get = main_window.cfg.get_value
+    monkeypatch.setattr(main_window.cfg, 'get_value', lambda key, default=None: values.get(key, original_get(key, default)))
+    monkeypatch.setattr(main_window.sys, 'platform', 'win32')
+    starts = []
+    monkeypatch.setattr(tools_interface.tool, 'start', lambda name: starts.append(name))
+    monkeypatch.setattr(tools_interface.tool, 'update_plot_options', lambda options: None)
+
+    window._restoreAutoPlot()
+    assert starts == ['plot']
+    assert window.builtPage('toolsInterface') is not None
+    window._restoreAutoPlot()
+    assert starts == ['plot']
+
+
+def test_startup_schedules_remembered_autoplot(window, monkeypatch, qtbot):
+    from app import main_window
+
+    original_get = main_window.cfg.get_value
+    values = {'autoplot_remember_enable': True, 'autoplot_enable': True}
+    monkeypatch.setattr(main_window.cfg, 'get_value', lambda key, default=None: values.get(key, original_get(key, default)))
+    monkeypatch.setattr(main_window.sys, 'platform', 'win32')
+    calls = []
+    monkeypatch.setattr(window, '_restoreAutoPlot', lambda: calls.append(True))
+    monkeypatch.setattr(window, 'startup_task', None)
+    monkeypatch.setattr(window, 'start_minimized_to_tray', True)
+    window._finishStartup()
+    qtbot.waitUntil(lambda: bool(calls), timeout=1000)
+    assert calls == [True]
+
+
+def test_lazy_pages_respect_desktop_twin_access(window):
+    window._desktop_twin_hosting = True
+    help_page = window.ensurePage('helpInterface')
+    task_page = window.ensurePage('taskInterface')
+    assert help_page.isEnabled()
+    assert not task_page.isEnabled()
+
+
 def test_language_switch_keeps_visited_category_state(window, qtbot):
     """切语言后，已访问但非当前分类的滚动位置与展开状态要保留。"""
     setting = window.settingInterface

@@ -304,6 +304,10 @@ class MainWindow(FluentWindow):
         self._finishStartup()
 
     def _finishStartup(self):
+        # 记住的自动对话是后台功能，不能依赖用户打开工具箱。
+        if (sys.platform == 'win32' and cfg.get_value('autoplot_remember_enable', False)
+                and cfg.get_value('autoplot_enable', False)):
+            QTimer.singleShot(0, self, self._restoreAutoPlot)
         # 如果有启动任务，延迟执行
         if self.startup_task:
             QTimer.singleShot(1000, self._executeStartupTask)
@@ -315,6 +319,16 @@ class MainWindow(FluentWindow):
             QTimer.singleShot(0, self, self._openInitialSetup)
         else:
             self._scheduleStartupChecks()
+
+    def _restoreAutoPlot(self):
+        # 复用工具箱既有的平台、连接状态及选项检查；已创建时不会再次启动。
+        if self._desktop_twin_hosting or not (cfg.get_value('autoplot_remember_enable', False)
+                                              and cfg.get_value('autoplot_enable', False)):
+            return
+        try:
+            self.ensurePage('toolsInterface')
+        except Exception as exc:
+            log.error(f'恢复自动对话失败，请打开工具箱检查自动对话状态：{type(exc).__name__}: {exc}')
 
     def _scheduleStartupChecks(self, delay=200):
         """首帧渲染之后再检查更新和公告。
@@ -709,7 +723,8 @@ class MainWindow(FluentWindow):
         # 构造成功后才摘除构建器：构造失败时下次访问仍会重试，不会把页面变成死键。
         self._page_builders.pop(name, None)
         page.setProperty('isStackedTransparent', False)
-        if self._desktop_twin_hosting:
+        if self._desktop_twin_hosting and name in ('taskInterface', 'settingInterface',
+                                                    'workflowInterface', 'warpInterface'):
             # 桌面分身接管期间新建的页面同样要禁用，否则会出现可操作窗口期。
             page.setDisabled(True)
         slot = self._page_slots.pop(name, None)
