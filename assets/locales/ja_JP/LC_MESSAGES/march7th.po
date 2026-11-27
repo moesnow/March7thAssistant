@@ -12976,3 +12976,7 @@ msgstr "アカウントの設定項目が不明です"
 #: module/accounts/store.py:385
 msgid "未知的切换方式"
 msgstr "アカウントの切り替え方法が不明です"
+
+#: app/overview/greeting.py:178
+msgid "别戳啦！本姑娘头好晕( ꩜ ᯅ ꩜;)"
+msgstr "もうつつかないでよ！目が回っちゃう～ ( ꩜ ᯅ ꩜;)"

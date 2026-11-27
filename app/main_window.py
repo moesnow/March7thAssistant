@@ -611,9 +611,15 @@ class MainWindow(FluentWindow):
             QTimer.singleShot(0, self._play_evey_animation)
 
     def _on_logo_clicked(self):
-        result = self._evernight.record_click()
+        self._on_easter_egg_click('logo')
+
+    def _on_mascot_clicked(self):
+        self._on_easter_egg_click('mascot')
+
+    def _on_easter_egg_click(self, source):
+        result = self._evernight.record_click(source)
         if result == 'warning':
-            self.homeInterface.playLogoHint()
+            self.homeInterface.playLogoHint(source)
             return
         if result != 'unlocked':
             return
@@ -650,6 +656,7 @@ class MainWindow(FluentWindow):
         from app.content.account_model import AccountModel
         self.accountModel = AccountModel(self)
         self.homeInterface = OverviewInterface(self)
+        self.homeInterface.mascotClicked.connect(self._on_mascot_clicked)
         self.runController = RunController(self)
         self.logInterface = RunInterface(self)
         self.homeInterface.attachModel(OverviewModel(self, config_changed=self.config_watcher.request_check))

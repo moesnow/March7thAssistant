@@ -13485,3 +13485,7 @@ msgstr "Unknown account setting"
 #: module/accounts/store.py:385
 msgid "未知的切换方式"
 msgstr "Unknown account switching method"
+
+#: app/overview/greeting.py:178
+msgid "别戳啦！本姑娘头好晕( ꩜ ᯅ ꩜;)"
+msgstr "Stop poking me! I'm getting dizzy! ( ꩜ ᯅ ꩜;)"

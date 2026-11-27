@@ -12871,3 +12871,7 @@ msgstr "未知的帳號設定"
 #: module/accounts/store.py:385
 msgid "未知的切换方式"
 msgstr "未知的切換方式"
+
+#: app/overview/greeting.py:178
+msgid "别戳啦！本姑娘头好晕( ꩜ ᯅ ꩜;)"
+msgstr "別戳啦！本姑娘頭好暈( ꩜ ᯅ ꩜;)"

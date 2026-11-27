@@ -48,6 +48,7 @@ def squash_amount(elapsed, start=0.0):
 
 class MascotWidget(QWidget):
     """Q 版小人。点一下会压扁再弹回，连点时从当前的形变继续。"""
+    clicked = Signal()  # 左键完整地点了一下；总览用它数长夜彩蛋的连点
 
     def __init__(self, parent=None, *, max_width=MASCOT_MAX_WIDTH, overview=False):
         super().__init__(parent)
@@ -129,6 +130,7 @@ class MascotWidget(QWidget):
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton and self.rect().contains(event.position().toPoint()):
             self.bounce()
+            self.clicked.emit()
         super().mouseReleaseEvent(event)
 
     def paintEvent(self, event):
@@ -144,11 +146,12 @@ class MascotWidget(QWidget):
 
 
 class LogoHint(QLabel):
-    """连点 LOGO 时的提示，从小人左侧往上飘（沿用旧主页横幅上的写法）。"""
+    """连点 LOGO 或总览小人时的提示，从小人左侧往上飘（沿用旧主页横幅上的写法）。"""
 
     def __init__(self, parent, anchor):
         super().__init__(parent)
         self._anchor = anchor
+        self._source = "logo"
         self.setTextFormat(Qt.TextFormat.PlainText)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setStyleSheet('color: #ff91c1; font-family: "Sans Serif Collection", "Microsoft YaHei UI", '
@@ -170,7 +173,10 @@ class LogoHint(QLabel):
         self.hide()
 
     def retranslateUi(self):
-        text = tr('别晃啦！本姑娘头好晕( ꩜ ᯅ ꩜;)')
+        if self._source == "mascot":
+            text = tr('别戳啦！本姑娘头好晕( ꩜ ᯅ ꩜;)')
+        else:
+            text = tr('别晃啦！本姑娘头好晕( ꩜ ᯅ ꩜;)')
         if text != self.text():
             self.setText(text)
             if self.animation.state() != QAbstractAnimation.State.Stopped:
@@ -190,8 +196,9 @@ class LogoHint(QLabel):
         stroke.setWidth(4.0)
         self._shadow_path = stroke.createStroke(self._text_path).united(self._text_path).translated(0, 2.0)
 
-    def play(self):
+    def play(self, source="logo"):
         self.animation.stop()
+        self._source = source
         self.retranslateUi()
         self._prepareText()
         self.setGeometry(self.parentWidget().rect())
@@ -236,6 +243,7 @@ class LogoHint(QLabel):
 class GreetingCard(QWidget):
     actionTriggered = Signal(object, object)  # Button、被点的控件
     menuRequested = Signal(QPoint)
+    mascotClicked = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -265,6 +273,7 @@ class GreetingCard(QWidget):
         self.buttonLayout.setContentsMargins(0, 0, 0, 0)
         self.buttonLayout.setSpacing(8)
         self.mascot = MascotWidget(self, overview=True)
+        self.mascot.clicked.connect(self.mascotClicked)
         self.crossfade = ImageCrossFade(self)
         self.logoHint = LogoHint(self, self._hintRight)
         self.logoHint.animation.finished.connect(lambda: self.mascot.setOverride(None))
@@ -394,10 +403,10 @@ class GreetingCard(QWidget):
             self._evernight = active
         self.update()
 
-    def playLogoHint(self):
+    def playLogoHint(self, source="logo"):
         if not self.mascot.isHidden():
             self.mascot.setOverride(Mascot.DIZZY)
-        self.logoHint.play()
+        self.logoHint.play(source)
 
     def dismissLogoHint(self):
         self.logoHint.dismiss()

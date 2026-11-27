@@ -16,7 +16,7 @@
 | chibi_search.webp | 放大镜 | 抽卡记录为空，搜索无结果，首次配置向导 |
 | chibi_viewfinder.webp | 取景器 | 首次配置向导识别游戏路径 |
 | chibi_cloud.webp | 云端 | 首次配置向导选云·星穹铁道时 |
-| chibi_dizzy.webp | 眼花 | 连点 LOGO 的提示 |
+| chibi_dizzy.webp | 眼花 | 连点 LOGO 或总览小人的提示 |
 | chibi_later.webp | 下次一定 | 赞赏 |
 | chibi_stamp.webp | 盖章 | 首次配置向导完成，数据已恢复、已导入 |
 | chibi_startled.webp | 吓一跳 | 抽卡记录、流程导入导出失败 |

@@ -3,7 +3,7 @@
 import importlib.util
 import os
 
-from PySide6.QtCore import QPoint, Qt
+from PySide6.QtCore import QPoint, Qt, Signal
 from PySide6.QtWidgets import QBoxLayout, QFileDialog, QGridLayout, QVBoxLayout, QWidget
 from qfluentwidgets import Action, FluentIcon as FIF, MenuAnimationType, RoundMenu, ScrollArea, qconfig
 
@@ -21,6 +21,8 @@ NAVIGATION_ACTIONS = {"configure", "view_reason", "view_result", "view_run"}
 
 
 class OverviewInterface(ScrollArea):
+    mascotClicked = Signal()  # 问候区的小人被点了一下，主窗口用来数长夜彩蛋的连点
+
     def __init__(self, parent=None):
         super().__init__(parent=parent)
         self.setObjectName("homeInterface")
@@ -70,6 +72,7 @@ class OverviewInterface(ScrollArea):
 
         self.greeting.actionTriggered.connect(self._onAction)
         self.greeting.menuRequested.connect(self._showGreetingMenu)
+        self.greeting.mascotClicked.connect(self.mascotClicked)
         for card in (self.powerCard, self.dailyCard, self.weeklyCard, self.scheduleCard, self.planCard,
                      self.lastRunCard, self.checksCard):
             card.linkActivated.connect(self._navigate)
@@ -102,8 +105,8 @@ class OverviewInterface(ScrollArea):
         self.greeting.setEvernightMode(active, animate=animate)
         self._rerender()
 
-    def playLogoHint(self):
-        self.greeting.playLogoHint()
+    def playLogoHint(self, source="logo"):
+        self.greeting.playLogoHint(source)
 
     def dismissLogoHint(self):
         self.greeting.dismissLogoHint()
