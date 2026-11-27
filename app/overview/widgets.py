@@ -1,4 +1,4 @@
-"""总览页的小控件：胶囊、文字链接、进度条、图标底块、可省略的文字和运行阶段条。"""
+"""总览页的小控件：胶囊、胶囊按钮、文字链接、进度条、图标底块、可省略的文字和运行阶段条。"""
 from PySide6.QtCore import QPointF, QRect, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter, QPen
 from PySide6.QtWidgets import QLabel, QPushButton, QSizePolicy, QWidget
@@ -135,6 +135,42 @@ class LinkButton(QPushButton):
             f"QPushButton {{ background: transparent; border: none; padding: 0px; color: {css(color)}; }}"
             f"QPushButton:hover {{ text-decoration: underline; }}"
             f"QPushButton:pressed {{ color: {css(with_alpha(color, 0.7))}; }}")
+
+
+class ChipButton(QPushButton):
+    """和状态胶囊一样高的小按钮：图标加文字，深色实底加一圈强调色描边，悬停、按下时加深。"""
+
+    def __init__(self, icon, parent=None, *, height=24):
+        super().__init__(parent)
+        self._icon = icon
+        self._evernight = False
+        self._style_key = None
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setFixedHeight(height)
+        self.setIconSize(QSize(14, 14))
+        setFont(self, 12, QFont.Weight.DemiBold)
+        self.refreshStyle()
+
+    def setEvernight(self, evernight):
+        self._evernight = evernight
+        self.refreshStyle()
+
+    def refreshStyle(self):
+        dark = isDarkTheme() or self._evernight
+        if (self._evernight, dark) == self._style_key:
+            return
+        self._style_key = (self._evernight, dark)
+        color = accent(self._evernight)
+        self.setIcon(self._icon.icon(color=color))
+        # 按钮在问候区右侧，自选背景在那里几乎不被遮罩，底色要够实才看得清字。
+        surface = QColor(24, 22, 30) if dark else QColor(255, 255, 255)
+        rest, hover, pressed = (0.74, 0.86, 0.94) if dark else (0.92, 0.98, 0.82)
+        self.setStyleSheet(
+            f"QPushButton {{ background: {css(with_alpha(surface, rest))}; border: 1px solid {css(with_alpha(color, 0.45))};"
+            f" border-radius: {self.height() // 2}px; padding: 0px 12px 0px 10px; color: {css(color)}; }}"
+            f"QPushButton:hover {{ background: {css(with_alpha(surface, hover))}; }}"
+            f"QPushButton:pressed {{ background: {css(with_alpha(surface, pressed))};"
+            f" color: {css(with_alpha(color, 0.75))}; }}")
 
 
 class MeterBar(QWidget):

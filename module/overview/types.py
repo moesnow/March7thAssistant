@@ -144,3 +144,4 @@ class OverviewSnapshot:
     show_mascot: bool
     unavailable: tuple[str, ...]
     shortcuts_hidden: bool = False  # 有快捷启动，但当前连接方式都不支持
+    theme_button: bool = True  # 长夜主题下问候区的「界面主题」按钮，点过一次就不再显示

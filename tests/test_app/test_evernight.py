@@ -753,6 +753,7 @@ def test_mascot_unlocks_after_ten_and_five_more_then_stays_quiet(window, qtbot, 
     greeting = window.homeInterface.greeting
     mascot, hint = greeting.mascot, greeting.logoHint
     original_pose = mascot.pose()
+    assert greeting.themeButton.isHidden()
     click_mascot(window, qtbot, 9)
     assert hint.isHidden() and mascot.pose() == original_pose
     click_mascot(window, qtbot)
@@ -770,11 +771,11 @@ def test_mascot_unlocks_after_ten_and_five_more_then_stays_quiet(window, qtbot, 
     animation = window._evey_animation
     assert animation is not None
     animation.timeline.setCurrentTime(animation.DURATION_MS // 2)
-    assert greeting._mode() == 'evernight'
+    assert greeting._mode() == 'evernight' and greeting.themeButton.isVisible()
 
     # 解锁以后再连点：小人照样弹，但不出提示、不换眼花，也不改用户选的主题。
     combo.setCurrentIndex(combo.findData('light'))
-    assert window._evey_animation is None
+    assert window._evey_animation is None and greeting.themeButton.isHidden()
     writes = cfg.set_value.call_count
     click_mascot(window, qtbot, 15)
     click_logo(window, qtbot, 10)
@@ -802,6 +803,47 @@ def test_mascot_click_signal_counts_completed_left_clicks_even_without_motion(qt
     qtbot.mouseClick(mascot, Qt.MouseButton.LeftButton)
     assert len(clicks) == 2
     assert mascot.animation.state() == mascot.animation.State.Stopped  # 关闭动画时不弹，但照样计数
+
+
+@pytest.mark.parametrize('window', [{'ui_theme': 'evernight', 'evernight_unlocked': True}], indirect=True)
+def test_evernight_greeting_button_opens_the_theme_setting(window, qtbot):
+    from app.navigation import _CardHighlight
+    window.stackedWidget.setAnimationEnabled(False)
+    window.switchTo(window.homeInterface)
+    greeting = window.homeInterface.greeting
+    button = greeting.themeButton
+    assert greeting._mode() == 'evernight'
+    qtbot.waitUntil(button.isVisible)
+    assert button.text() == '界面主题'
+    art = greeting.mascot.imageRect().translated(greeting.mascot.pos())
+    assert button.geometry().right() < art.left()
+    assert abs(button.geometry().center().y() - greeting.pill.geometry().center().y()) <= 1
+    assert not button.geometry().intersects(greeting.titleLabel.geometry())
+    cfg.set_value.reset_mock()
+    qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
+    settings = window.settingInterface
+    assert window.stackedWidget.currentWidget() is settings
+    card = settings.themeCard
+    target = getattr(card, 'card', card)
+    qtbot.waitUntil(lambda: target.findChild(_CardHighlight) is not None)
+    cfg.set_value.assert_called_once_with('evernight_theme_button_used', True)
+    window.switchTo(window.homeInterface)
+    assert greeting._mode() == 'evernight' and button.isHidden()  # 点过一次就不再出现
+    combo = card.comboBox
+    combo.setCurrentIndex(combo.findData('dark'))
+    assert greeting._mode() == 'dark' and button.isHidden()
+    combo.setCurrentIndex(combo.findData('evernight'))
+    assert greeting._mode() == 'evernight' and button.isHidden()
+
+
+@pytest.mark.parametrize('window', [{'ui_theme': 'evernight', 'evernight_unlocked': True,
+                                     'evernight_theme_button_used': True}], indirect=True)
+def test_used_theme_button_is_not_shown_after_restart(window, qtbot):
+    window.stackedWidget.setAnimationEnabled(False)
+    window.switchTo(window.homeInterface)
+    greeting = window.homeInterface.greeting
+    qtbot.waitUntil(lambda: greeting._mode() == 'evernight')
+    assert greeting.isVisible() and greeting.themeButton.isHidden()
 
 
 def test_logo_hint_rises_fades_and_restarts(qtbot):

@@ -16,7 +16,7 @@ from module.overview.snapshot import PHASE_NAMES
 
 from .star_track import COLORS, paint_background, paint_star_track, rgba
 from .style import GREETING_TONES, accent, animations_enabled, primary_button_qss, tinted_button_qss, with_alpha
-from .widgets import PHASES, ElidedTitleLabel, LinkButton, PhaseProgress, Pill
+from .widgets import PHASES, ChipButton, ElidedTitleLabel, LinkButton, PhaseProgress, Pill
 
 MASCOT_HEIGHT = 172
 MASCOT_MAX_WIDTH = 236
@@ -244,6 +244,7 @@ class GreetingCard(QWidget):
     actionTriggered = Signal(object, object)  # Button、被点的控件
     menuRequested = Signal(QPoint)
     mascotClicked = Signal()
+    themeRequested = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -255,8 +256,14 @@ class GreetingCard(QWidget):
         self._buttons_key = None
         self._buttons = []
         self._state = "ready"
+        self._themeWanted = True  # 快照里记的：还没点过「界面主题」按钮
+        self._themeUsed = False  # 本次运行点过；保存失败时也不再出现
 
         self.pill = Pill(self, dot=True, strong=True, height=24)
+        # 只在长夜主题下显示、点过一次就不再出现：不知道去哪切回原主题的人，点这里直接到设置里的「界面主题」。
+        self.themeButton = ChipButton(FIF.BRUSH, self, height=24)
+        self.themeButton.clicked.connect(self._onThemeClicked)
+        self.themeButton.hide()
         self.titleLabel = ElidedTitleLabel(self)
         self.descriptionLabel = BodyLabel(self)
         self.descriptionLabel.setWordWrap(True)
@@ -281,7 +288,13 @@ class GreetingCard(QWidget):
         self.vBox = QVBoxLayout(self)
         self.vBox.setContentsMargins(28, 20, 28, 20)
         self.vBox.setSpacing(0)
-        self.vBox.addWidget(self.pill, 0, Qt.AlignmentFlag.AlignLeft)
+        self.topRow = QHBoxLayout()
+        self.topRow.setContentsMargins(0, 0, 0, 0)
+        self.topRow.setSpacing(12)
+        self.topRow.addWidget(self.pill, 0, Qt.AlignmentFlag.AlignVCenter)
+        self.topRow.addStretch(1)
+        self.topRow.addWidget(self.themeButton, 0, Qt.AlignmentFlag.AlignVCenter)
+        self.vBox.addLayout(self.topRow)
         self.vBox.addSpacing(8)
         self.vBox.addWidget(self.titleLabel)
         self.vBox.addSpacing(2)
@@ -295,8 +308,10 @@ class GreetingCard(QWidget):
         self.customContextMenuRequested.connect(lambda pos: self.menuRequested.emit(self.mapToGlobal(pos)))
 
     # ---------- 数据 ----------
-    def render(self, greeting, *, show_mascot=True, background="", evernight=False):
+    def render(self, greeting, *, show_mascot=True, background="", evernight=False, theme_button=True):
         self._evernight = evernight
+        self._themeWanted = theme_button
+        self._syncThemeButton()
         if greeting is None:
             state, badge, title, description, pose, buttons, phase = (
                 "ready", tr("总览"), tr("暂时读不到运行状态"), tr("稍后会自动重试。"), "chibi_full", (), None)
@@ -401,7 +416,18 @@ class GreetingCard(QWidget):
         else:
             self.crossfade.finish()
             self._evernight = active
+        self._syncThemeButton()
         self.update()
+
+    def _syncThemeButton(self):
+        self.themeButton.setText(tr("界面主题"))
+        self.themeButton.setEvernight(self._evernight)
+        self.themeButton.setVisible(self._evernight and self._themeWanted and not self._themeUsed)
+
+    def _onThemeClicked(self):
+        self._themeUsed = True
+        self._syncThemeButton()
+        self.themeRequested.emit()
 
     def playLogoHint(self, source="logo"):
         if not self.mascot.isHidden():

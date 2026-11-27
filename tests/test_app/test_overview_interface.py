@@ -48,10 +48,49 @@ def test_sample_renders(page, state, theme):
         art = page.greeting.mascot.imageRect()  # 压到底和弹起时都不会被裁掉
         assert art.width() * (1 + greeting.SQUASH_WIDTH) <= page.greeting.mascot.width()
         assert art.height() * (1 + greeting.SQUASH_HEIGHT * greeting.STRETCH) < page.greeting.height() - 1
+        button = page.greeting.themeButton  # 只在长夜主题下出现，放在状态胶囊那一行、小人左边
+        assert button.isVisible() == (theme == "evernight")
+        if button.isVisible():
+            art = page.greeting.mascot.imageRect().translated(page.greeting.mascot.pos())
+            assert button.geometry().right() < art.left()
+            assert abs(button.geometry().center().y() - page.greeting.pill.geometry().center().y()) <= 1
+            assert not button.geometry().intersects(page.greeting.titleLabel.geometry())
         image = page.view.grab()
         assert image.width() >= 900 and image.height() >= page.greeting.height() and not image.isNull()
     finally:
         setTheme(previous, save=False)
+
+
+@pytest.mark.parametrize("save_fails", [False, True])
+def test_evernight_theme_button_opens_the_theme_setting_only_once(page, monkeypatch, save_fails):
+    from module.navigation import resolve_link
+    from module.overview.snapshot import THEME_BUTTON_USED
+    assert resolve_link(ui.THEME_LINK).item.widget == "themeCard"
+    set_value = Mock(side_effect=PermissionError("配置文件不可写") if save_fails else None)
+    monkeypatch.setattr(cfg, "set_value", set_value)
+    page.setEvernightMode(False)
+    snapshot = sample_snapshot("ready")
+    assert snapshot.theme_button
+    page.render(snapshot)
+    button = page.greeting.themeButton
+    assert button.isHidden()
+    page.setEvernightMode(True)
+    assert button.isVisible() and button.text() == tr("界面主题")
+    button.click()
+    page.window().navigate.assert_called_once_with(ui.THEME_LINK)
+    set_value.assert_called_once_with(THEME_BUTTON_USED, True)
+    assert button.isHidden()
+    # 快照还没刷新、或者保存失败时，本次运行也不再出现。
+    page.render(snapshot)
+    page.setEvernightMode(False)
+    page.setEvernightMode(True)
+    assert button.isHidden()
+
+
+def test_used_theme_button_stays_hidden_after_restart(page):
+    page.setEvernightMode(True)
+    page.render(replace(sample_snapshot("ready"), theme_button=False))
+    assert page.greeting._mode() == "evernight" and page.greeting.themeButton.isHidden()
 
 
 @pytest.mark.parametrize("state", ["ready", "running", "completed", "failed", "setup", "stopped"])

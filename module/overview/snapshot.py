@@ -89,6 +89,9 @@ def make_greeting(now, live, setup, history, rows, daily, refresh_hour=4):
                     "chibi_full", (Button("start_full", tr("开始完整运行")), Button("choose_task", tr("运行单项"))))
 
 
+THEME_BUTTON_USED = "evernight_theme_button_used"  # 点过问候区的「界面主题」按钮后由界面写入
+
+
 def build_snapshot(config, *, now=None, live=None, history_reader=read_history, shortcuts_reader=display_shortcuts,
                    connection=None, is_file=Path.is_file):
     """now 为本机墙上时间。传入 connection=(backend, touch, error) 可离线构造。"""
@@ -140,5 +143,6 @@ def build_snapshot(config, *, now=None, live=None, history_reader=read_history, 
         "shortcuts", lambda: any(item.menu or item.id != "menu" for item in load_shortcuts(config)), False)
     background = block("background", lambda: cards.background_path(config), "")
     mascot = block("show_mascot", lambda: bool(config.get_value("overview_show_mascot", True)), True)
+    theme_button = block("theme_button", lambda: config.get_value(THEME_BUTTON_USED, False) is not True, True)
     return OverviewSnapshot(now, greeting, power, daily, weekly, schedule, rows, history.last if history else None,
-                            checks, shortcuts, background, mascot, tuple(unavailable), hidden)
+                            checks, shortcuts, background, mascot, tuple(unavailable), hidden, theme_button)

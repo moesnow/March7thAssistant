@@ -27,7 +27,8 @@ _EXTRA = {
         "browser_debug_port browser_mirror_urls hotkey_toggle_autoplot_enable genshin_starRail_fps_unlocker_path "
         "scheduled_run_enable autoplot_phone_detect_enable window_x adb_service_jar autoplot_enable "
         "window_height auto_update browser_dump_cookies_enable log_retention_days autoplot_hero_chronicle_enable "
-        "window_width evernight_unlocked scheduled_on_conflict game_title_name fight_path game_process_name universe_path"
+        "window_width evernight_unlocked evernight_theme_button_used scheduled_on_conflict game_title_name fight_path "
+        "game_process_name universe_path"
     ),
 }
 for scope, names in _EXTRA.items():

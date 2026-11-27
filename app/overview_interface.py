@@ -8,7 +8,9 @@ from PySide6.QtWidgets import QBoxLayout, QFileDialog, QGridLayout, QVBoxLayout,
 from qfluentwidgets import Action, FluentIcon as FIF, MenuAnimationType, RoundMenu, ScrollArea, qconfig
 
 from module.localization import tr
+from module.logger import log
 from module.overview.labels import post_action_label
+from module.overview.snapshot import THEME_BUTTON_USED
 
 from .common.design_tokens import CARD_SPACING, PAGE_MARGIN
 from .common.icon import UiIcon
@@ -18,6 +20,7 @@ from .overview.style import bar_success, brand, format_when, palette
 
 WIDE_LAYOUT = 860
 NAVIGATION_ACTIONS = {"configure", "view_reason", "view_result", "view_run"}
+THEME_LINK = "setting:ui_theme"
 
 
 class OverviewInterface(ScrollArea):
@@ -73,6 +76,7 @@ class OverviewInterface(ScrollArea):
         self.greeting.actionTriggered.connect(self._onAction)
         self.greeting.menuRequested.connect(self._showGreetingMenu)
         self.greeting.mascotClicked.connect(self.mascotClicked)
+        self.greeting.themeRequested.connect(self._openThemeSetting)
         for card in (self.powerCard, self.dailyCard, self.weeklyCard, self.scheduleCard, self.planCard,
                      self.lastRunCard, self.checksCard):
             card.linkActivated.connect(self._navigate)
@@ -135,7 +139,7 @@ class OverviewInterface(ScrollArea):
         evernight = self._evernight
         now = snapshot.now
         self.greeting.render(snapshot.greeting, show_mascot=snapshot.show_mascot, background=snapshot.background,
-                             evernight=evernight)
+                             evernight=evernight, theme_button=snapshot.theme_button)
         self.powerCard.setReading(snapshot.power, now, unavailable="power" in unavailable, evernight=evernight)
         self._renderDaily(snapshot.daily, now, "daily" in unavailable)
         self._renderWeekly(snapshot.weekly, "weekly" in unavailable)
@@ -232,6 +236,15 @@ class OverviewInterface(ScrollArea):
         navigate = getattr(self.window(), "navigate", None)
         if link and callable(navigate):
             navigate(link)
+
+    def _openThemeSetting(self):
+        """问候区的「界面主题」按钮只用一次：记下点过，再跳到设置。保存失败也照样跳转。"""
+        from module.config import cfg
+        try:
+            cfg.set_value(THEME_BUTTON_USED, True)
+        except OSError as error:
+            log.warning(f'无法保存「界面主题」按钮的使用记录：{error}')
+        self._navigate(THEME_LINK)
 
     def _onAction(self, button, widget):
         if button.id == "choose_task":

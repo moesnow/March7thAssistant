@@ -50,6 +50,19 @@ def test_refresh_priority_and_later_success(status, before, after):
     assert state(now, records=history.History(replace(last, status="success"))) == "ready"
 
 
+@pytest.mark.parametrize("used,offered", [(False, True), (True, False)])
+def test_theme_button_is_offered_until_used(used, offered):
+    from module.accounts import layers
+    from module.overview.snapshot import THEME_BUTTON_USED
+    cfg = _Config(**YAML(typ="safe").load(Path("assets/config/config.example.yaml")))
+    assert getattr(cfg, THEME_BUTTON_USED) is False
+    assert layers.SCOPES[THEME_BUTTON_USED] == Scope.GLOBAL  # 多账号时也只记一次
+    setattr(cfg, THEME_BUTTON_USED, used)
+    snapshot = build_snapshot(cfg, history_reader=lambda now: None, shortcuts_reader=lambda config: (),
+                              connection=("local", False, None), is_file=lambda path: False)
+    assert snapshot.theme_button is offered
+
+
 @pytest.mark.parametrize("hour,prefix", [(4, "晚上"), (5, "早上"), (10, "早上"), (11, "中午"), (13, "中午"),
                                          (14, "下午"), (17, "下午"), (18, "晚上"), (23, "晚上")])
 def test_greeting_hours(hour, prefix):
