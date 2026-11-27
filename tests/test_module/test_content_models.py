@@ -151,7 +151,8 @@ PLAN = [["凝滞虚影", "空海之形", 2]]
     ({"power_plan": PLAN, "build_target_enable": True, "power_plan_continue": False}, ("first", "skip", "skip")),
     ({"instance_names": {"侵蚀隧洞": "无"}}, ("skip", "skip", "warning")),
     ({"instance_names": {"侵蚀隧洞": "无"}, "power_plan": PLAN}, ("first", "skip", "skip")),
-    ({"build_target_enable": True, "control_backend": "adb", "ui_profile": "touch_720"}, ("skip", "skip", "first")),
+    ({"build_target_enable": True, "control_backend": "adb", "ui_profile": "touch_720"}, ("skip", "first", "then")),
+    ({"build_target_enable": True, "control_backend": "cloud", "ui_profile": "touch_720"}, ("skip", "skip", "first")),
 ])
 def test_power_order_says_what_the_next_run_will_use(values, expected):
     cfg = SampleConfig()

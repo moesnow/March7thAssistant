@@ -131,11 +131,11 @@ class OrderState:
 
 def power_order(config):
     """清体力依次考虑的三个来源，以及按现在的设置会不会用到。顺序和 Power.run 一致。"""
-    from module.content_visibility import Visibility
+    from module.connection_values import build_target_supported
     from tasks.power.policy import remaining_plan
     plan, remaining = config.power_plan, remaining_plan(config)
     stop = bool(remaining) and not config.power_plan_continue
-    target = bool(config.build_target_enable) and not Visibility.read(config).touch
+    target = bool(config.build_target_enable) and build_target_supported(config)
     name = (config.instance_names or {}).get(config.instance_type)
     chosen = bool(name) and name != "无"
     after = ("skip", tr("计划刷完就停，不会刷")) if stop else ("then", tr("计划刷完再刷"))

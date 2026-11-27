@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from module.connection_values import build_target_supported
 from module.localization import get_current_language, tr
 from module.settings_registry import SETTINGS
 from module.task_catalog import step_page
@@ -42,7 +43,7 @@ def summary(key, cfg, touch=False):
     if key == "power":
         if cfg.power_plan:
             return tr("体力计划 · {count} 项").format(count=len(cfg.power_plan))
-        if cfg.build_target_enable and not touch:
+        if cfg.build_target_enable and build_target_supported(cfg, touch=touch):
             return tr("培养目标")
         name = cfg.instance_names.get(cfg.instance_type, "")
         return tr(name) if name else tr(cfg.instance_type)

@@ -4,7 +4,7 @@ from datetime import date
 import sys
 
 from utils.date import Date
-from module.connection_values import configured_backend
+from module.connection_values import build_target_supported, configured_backend
 
 
 @dataclass(frozen=True)
@@ -64,7 +64,7 @@ STEPS = {
     "daily": Step("UiIcon.CLIPBOARD_TASK", "daily_enable"),
 }
 PREPARATION = ("redemption", "relic_cleanup", "build_target", "support", "activity", "echo", "power")
-TOUCH = ("redemption", "support", "echo", "power", "reward", "daily")
+TOUCH = ("redemption", "build_target", "support", "echo", "power", "reward", "daily")
 EMBER_ITEMS = (
     ("星轨专票", "asset_ember_special_pass", 5),
     ("星轨通票", "asset_ember_regular_pass", 5),
@@ -79,7 +79,9 @@ def main_order(cfg):
 
 
 def plan_order(cfg, touch=False):
-    return TOUCH if touch else PREPARATION + main_order(cfg)[1:]
+    if touch:
+        return TOUCH if build_target_supported(cfg, touch=True) else tuple(key for key in TOUCH if key != "build_target")
+    return PREPARATION + main_order(cfg)[1:]
 
 
 def planned_steps(cfg, task, *, touch, backend):
@@ -107,6 +109,8 @@ def entry_state(key, cfg, *, touch=False, full_run=True, now=None):
     """是否将该函数加入 run_steps。内层自行跳过的操作仍进入原有日志和恢复流程。"""
     step = STEPS[key]
     if key == "redemption" and touch and configured_backend(cfg) != "adb":
+        return "unsupported"
+    if key == "build_target" and not build_target_supported(cfg, touch=touch):
         return "unsupported"
     if not all(getattr(cfg, switch) for switch in step.switches):
         return "disabled"
@@ -224,7 +228,7 @@ def select_steps(order, cfg, actions, *, full_run=True, touch=False, only=None):
         if entry_state(only, cfg, full_run=full_run, touch=touch) != "pending":
             return []
         prerequisites.add("support")
-        if not touch:
+        if build_target_supported(cfg, touch=touch):
             prerequisites.add("build_target")
     for key in order:
         if only and key != only and key not in prerequisites and not (key == "prepare" and only in PREPARATION):

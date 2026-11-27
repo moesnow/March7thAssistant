@@ -79,6 +79,32 @@ def test_readings_are_observed_values_and_survive_save_failure(monkeypatch):
     assert power.Power.get() == 92
 
 
+@pytest.mark.parametrize("value", [0, 186, 300, 302])
+def test_power_reading_survives_round_trip_yaml_reload(value):
+    now = datetime(2026, 11, 27, 15, 45)
+    cfg = _Config(**YAML(typ="safe").load(Path("assets/config/config.example.yaml")))
+    cfg.overview_power = YAML().load(f"value: {value}\ntimestamp: {now.timestamp()}\n")
+    reading = readings.power_reading(cfg)
+    assert reading.value == value
+    assert type(reading.value) is int
+    assert reading.read_at == now
+    assert reading.full_at == now + timedelta(seconds=readings.seconds_until_full(value))
+
+
+def test_daily_activity_survives_round_trip_yaml_reload():
+    now = datetime(2026, 11, 27, 15, 45)
+    cfg = _Config(**YAML(typ="safe").load(Path("assets/config/config.example.yaml")))
+    cfg.overview_daily_activity = YAML().load(f"value: 0\ntimestamp: {now.timestamp()}\n")
+    assert readings.daily_training(cfg, now).activity == 0
+
+
+@pytest.mark.parametrize("value", [True, False, -1, 1.5, "0"])
+def test_invalid_power_values_are_not_treated_as_integers(value):
+    cfg = _Config(overview_power={"value": value, "timestamp": datetime(2026, 11, 27).timestamp()})
+    with pytest.raises(ValueError, match="开拓力读数无效"):
+        readings.power_reading(cfg)
+
+
 @pytest.mark.parametrize("value,minutes,expected,left", [
     (186, 0, 186, 360), (186, 5.5, 186, 30), (186, 6, 187, 360), (186, 17, 188, 60), (186, -10, 186, 360),
     (299, 5, 299, 60), (299, 6, 300, None), (0, 3 * 24 * 60, 300, None), (300, 1, 300, None), (302, 60, 302, None),
@@ -96,6 +122,8 @@ def test_power_summary_follows_the_order_of_use():
     assert cards.summary("power", cfg) == "睿治之径"
     cfg.build_target_enable = True
     assert (cards.summary("power", cfg), cards.summary("power", cfg, touch=True)) == ("培养目标", "睿治之径")
+    cfg.control_backend, cfg.ui_profile = "adb", "touch_720"
+    assert cards.summary("power", cfg, touch=True) == "培养目标"
     cfg.power_plan = [["侵蚀隧洞", "睿治之径", 1]]
     assert cards.summary("power", cfg) == "体力计划 · 1 项"
 

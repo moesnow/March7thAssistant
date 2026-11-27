@@ -384,6 +384,7 @@ def routine(*, on_summary=None, full_run=False, on_step=None, only=None):
     from tasks.touch import power
     from tasks.power.policy import SupportDemand
     from tasks.daily.redemption import Redemption
+    from tasks.daily.buildtarget import BuildTarget
 
     summaries = []
     step_summaries = {}
@@ -405,6 +406,7 @@ def routine(*, on_summary=None, full_run=False, on_step=None, only=None):
 
     actions = {
         "redemption": Redemption.get,
+        "build_target": BuildTarget.init_build_targets,
         "support": query_support,
         "echo": lambda: power.run_weekly_echo(borrow_for_daily=demand),
         "power": lambda: power.run(borrow_for_daily=demand, on_summary=collector("清体力")),

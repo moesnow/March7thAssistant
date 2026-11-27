@@ -42,8 +42,9 @@ def power_reading(config):
     if not reading:
         return PowerReading(None, None, None)
     value = reading["value"]
-    if type(value) is not int or value < 0:
+    if not isinstance(value, int) or isinstance(value, bool) or value < 0:
         raise ValueError("开拓力读数无效")
+    value = int(value)
     read_at = datetime.fromtimestamp(reading["timestamp"])
     return PowerReading(value, read_at, read_at + timedelta(seconds=seconds_until_full(value)))
 
@@ -55,7 +56,7 @@ def daily_training(config, now):
     reading = config.get_value("overview_daily_activity")
     if reading and not Date.is_next_x_am(reading["timestamp"], config.refresh_hour, now=now):
         value = reading["value"]
-        if type(value) is not int or not 0 <= value <= 500:
+        if not isinstance(value, int) or isinstance(value, bool) or not 0 <= value <= 500:
             raise ValueError("每日实训活跃度无效")
-        activity = value
+        activity = int(value)
     return DailyTraining(completed, datetime.fromtimestamp(stamp) if completed else None, activity)

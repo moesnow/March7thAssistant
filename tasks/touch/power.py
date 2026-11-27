@@ -10,6 +10,7 @@ from module.automation import auto
 from module.automation.automation import screenshot_retry_timeout
 from module.automation.input_base import input_deadline, input_deadline_reached, limit_input_deadline
 from module.config import cfg
+from module.connection_values import build_target_supported
 from module.overview.plan import echo_day_due
 from module.overview.readings import save_reading
 from module.game.adb_transport import AdbError
@@ -758,6 +759,16 @@ def run_weekly_echo(*, borrow_for_daily=False):
         log.info(f"历战余响设为周{cfg.echo_of_war_start_day_of_week}开始，跳过本次")
         return True
     name = cfg.instance_names.get(ECHO)
+    if build_target_supported(cfg, touch=True) and getattr(cfg, "build_target_enable", False):
+        from tasks.daily.buildtarget import BuildTarget
+
+        try:
+            if target := BuildTarget.get_target_echo_instance():
+                name = target[1]
+        except FATAL_GAME_ERRORS:
+            raise
+        except Exception as error:
+            log.warning(f"获取培养目标副本失败，使用配置的副本：{error}")
     if name == "无":
         return True
     with screenshot_retry_timeout(5):
@@ -785,9 +796,20 @@ def _run(borrow_for_daily, on_settlement=None):
             return True
 
     instance_type = cfg.instance_type
+    name = cfg.instance_names.get(instance_type)
+    if build_target_supported(cfg, touch=True) and getattr(cfg, "build_target_enable", False):
+        from tasks.daily.buildtarget import BuildTarget
+
+        try:
+            if target := BuildTarget.get_target_instance():
+                instance_type, name = target
+                log.info(f"使用培养目标副本：{instance_type} · {name}")
+        except FATAL_GAME_ERRORS:
+            raise
+        except Exception as error:
+            log.warning(f"获取培养目标副本失败，使用配置的副本：{error}")
     if not isinstance(instance_type, str) or instance_type not in INSTANCES:
         raise PowerError(f"触屏清体力暂不支持 {instance_type}")
-    name = cfg.instance_names.get(instance_type)
     if name == "无":
         log.info(f"{instance_type}未开启")
         return True

@@ -1,4 +1,5 @@
 """Normalize stored backend/profile choices without loading a configuration instance."""
+import sys
 
 def configured_backend(config):
     value = getattr(config, "control_backend", None)
@@ -13,3 +14,9 @@ def configured_profile(config):
     if backend is None and profile == "touch_720" and getattr(config, "cloud_game_enable", False):
         return "pc_1080"
     return "pc_1080" if profile is None else profile
+
+
+def build_target_supported(config, *, touch=None):
+    if touch is None:
+        touch = configured_profile(config) == "touch_720"
+    return not touch or (configured_backend(config) == "adb" and sys.platform != "android")

@@ -12,6 +12,8 @@ from module.screen import screen
 from module.automation import auto
 from module.logger import log
 from module.config import cfg
+from module.config.platform import get_ui_profile
+from module.connection_values import build_target_supported
 from module.notification.notification import NotificationLevel
 from module.localization import get_raw_instance_names
 from tasks.base.base import Base
@@ -21,6 +23,8 @@ from utils.image_utils import ImageUtils
 
 class BuildTargetHandler(ABC):
     """待刷副本的识别方案接口"""
+
+    PAGE_CROP = (688 / 1920, 286 / 1080, 969 / 1920, 676 / 1080)
 
     @abstractmethod
     def collect(self) -> list[tuple[str, str]]:
@@ -97,7 +101,7 @@ class DefaultHandler(BuildTargetHandler):
 
     def collect(self) -> list[tuple[str, str]]:
         results = []
-        page_crop = (688.0 / 1920, 286.0 / 1080, 969.0 / 1920, 676.0 / 1080)
+        page_crop = self.PAGE_CROP
 
         for instance in self._iter_scroll_windows(page_crop, self._capture_items_in_window):
             if not instance:
@@ -311,7 +315,7 @@ class DropHandler(BuildTargetHandler):
 
     def collect(self) -> list[tuple[str, str]]:
         results = []
-        page_crop = (688.0 / 1920, 286.0 / 1080, 969.0 / 1920, 676.0 / 1080)
+        page_crop = self.PAGE_CROP
 
         for instance in self._iter_scroll_windows(page_crop, self._capture_items_in_window):
             if not instance:
@@ -534,8 +538,13 @@ class BuildTarget:
         screenshot = None
 
         if BuildTarget._enter_build_target_page():
-            auto.take_screenshot()
-            screenshot = auto.screenshot
+            if get_ui_profile(cfg).name == "touch_720" and build_target_supported(cfg):
+                from tasks.touch.buildtarget import capture_target_page
+
+                screenshot = capture_target_page()
+            else:
+                auto.take_screenshot()
+                screenshot = auto.screenshot
 
             for instance_type, instance_name in handler.collect():
                 BuildTarget._target_instances.setdefault(instance_type, []).append(instance_name)
@@ -549,6 +558,11 @@ class BuildTarget:
 
     @staticmethod
     def _enter_build_target_page():
+        if get_ui_profile(cfg).name == "touch_720" and build_target_supported(cfg):
+            from tasks.touch.buildtarget import enter_build_target
+
+            entered, BuildTarget._build_target_name = enter_build_target()
+            return entered
         screen.change_to("guide3")
 
         if not auto.click_element("培养目标", "text", max_retries=5, crop=(300.0 / 1920, 291.0 / 1080, 147.0 / 1920, 104.0 / 1080)):
@@ -572,6 +586,10 @@ class BuildTarget:
     @staticmethod
     def _get_handler() -> BuildTargetHandler:
         scheme = cfg.build_target_scheme
+        if get_ui_profile(cfg).name == "touch_720" and build_target_supported(cfg):
+            from tasks.touch.buildtarget import TouchDefaultHandler, TouchDropHandler
+
+            return TouchDefaultHandler() if scheme == "instance" else TouchDropHandler()
         if scheme == "instance":
             return DefaultHandler()
         else:

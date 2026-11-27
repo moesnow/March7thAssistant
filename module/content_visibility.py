@@ -8,11 +8,11 @@ from tasks.weekly.currency_wars_strategy import STRATEGY_NAMES
 from utils.desktop_twin import in_desktop_twin
 
 TOUCH_PAGES = {"power", "echo", "reward", "daily"}
-TOUCH_HIDDEN = {
+BUILD_TARGET_SETTINGS = {
     "build_target_enable", "build_target_scheme", "build_target_ornament_weekly_count",
-    "build_target_use_user_instance_when_only_erosion_and_ornament", "daily_memory_one_enable",
-    "daily_memory_one_team", "reward_achievement_enable",
+    "build_target_use_user_instance_when_only_erosion_and_ornament",
 }
+TOUCH_HIDDEN = {"daily_memory_one_enable", "daily_memory_one_team", "reward_achievement_enable"}
 
 
 @dataclass(frozen=True)
@@ -52,6 +52,8 @@ class Visibility:
         if item.id in {"autostart_open_gui", "uacFreeCard", "debug_mode_enable", "notify_winotify_enable"}:
             return self.windows
         if self.touch and item.id in TOUCH_HIDDEN:
+            return False
+        if self.touch and item.id in BUILD_TARGET_SETTINGS and self.backend != "adb":
             return False
         if self.touch and item.id == "reward_redemption_code_enable" and self.backend != "adb":
             return False
