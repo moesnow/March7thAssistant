@@ -135,7 +135,7 @@ class Quest(RewardTemplate):
                                 can_claim_milestones = False
                                 success = False
                                 break
-                        continue
+                        # 结果可能已生效，返回后仍领取已完成卡片，再决定是否需要补做。
                     if not collect and not read_more_actions:
                         break
                     activity, tasks, claimed = Quest.scan(collect, read_tasks=read_more_actions)

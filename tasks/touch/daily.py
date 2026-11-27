@@ -175,6 +175,7 @@ def run(*, complete_training=False, on_summary=None, full_run=False):
     activity = None
     received = 0
     success = True
+    action_failed = False
     cards_checked = False
     read_tasks = complete and cfg.daily_material_enable
     log.hr("开始触屏每日实训", 1)
@@ -187,17 +188,14 @@ def run(*, complete_training=False, on_summary=None, full_run=False):
             if read_tasks and needs_action(activity, tasks) and tasks.get(MATERIAL_TASK):
                 from tasks.touch import synthesis
 
-                try:
+                synthesized = False
+                with optional_reward("实训材料合成"):
                     synthesized = synthesis.material()
-                except DailyTrainingError as error:
-                    log.error(f"实训材料合成未确认：{error}")
-                    synthesized = False
-                    success = False
+                action_failed = not synthesized
                 if collect:
                     screen.change_to("guide2", max_recursion=1)
-                if synthesized and collect:
-                    # 合成已经到账。这里继续查待领奖励，不再用卡片文字判定合成结果。
-                    activity, card_available, extra_claims, _ = scan_cards(read_activity(), collect, read_tasks=False)
+                    # 结果弹窗可能迟到或漏读，仍回到实训页领取已完成卡片，不重发合成。
+                    activity, card_available, extra_claims, tasks = scan_cards(read_activity(), collect, read_tasks=False)
                     received += extra_claims
             cards_checked = True
         if not cards_checked:
@@ -228,4 +226,4 @@ def run(*, complete_training=False, on_summary=None, full_run=False):
 
     if on_summary is not None and activity is not None:
         on_summary(tr("每日实训活跃度 {activity}/{maximum}").format(activity=activity, maximum=MAX_ACTIVITY))
-    return success
+    return success and not (action_failed and needs_action(activity, tasks))

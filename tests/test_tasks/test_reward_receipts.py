@@ -454,7 +454,7 @@ def test_pc_training_does_not_rescan_after_the_last_action_when_collection_is_di
     quest.screen.change_to.assert_not_called()
 
 
-@pytest.mark.parametrize("case", ["milestone", "action_error", "next_action", "return_failed"])
+@pytest.mark.parametrize("case", ["milestone", "action_error", "next_action", "still_pending", "return_failed"])
 def test_pc_training_returns_to_guide_after_an_action_leaves_the_page(monkeypatch, case):
     config = SimpleNamespace(
         daily_enable=True, daily_material_enable=True, daily_memory_one_enable=False,
@@ -488,7 +488,10 @@ def test_pc_training_returns_to_guide_after_an_action_leaves_the_page(monkeypatc
     auto = Mock(find_element=Mock(side_effect=milestone), click_element_with_pos=Mock(return_value=True))
     screen = Mock(change_to=Mock(side_effect=change_page))
     cards = quest.TrainingCards({pc_daily.MATERIAL_TASK: True, "拍照1次": case in ("next_action", "return_failed")})
-    scan = Mock(side_effect=[(400, cards, 1), (500, quest.TrainingCards({}), 1)])
+    after_action = (400, quest.TrainingCards({"拍照1次": True}), 0) if case == "next_action" else (
+        (400, quest.TrainingCards({}), 0) if case == "still_pending" else (500, quest.TrainingCards({}), 1)
+    )
+    scan = Mock(side_effect=[(400, cards, 1), after_action, (500, quest.TrainingCards({}), 1)])
     synthesize = Mock(side_effect=synthesize)
     photograph = Mock(side_effect=photograph)
     confirm = Mock()
@@ -505,20 +508,26 @@ def test_pc_training_returns_to_guide_after_an_action_leaves_the_page(monkeypatc
     monkeypatch.setattr(quest, "notify_reward", notify)
     monkeypatch.setattr(quest, "time", SimpleNamespace(sleep=Mock()))
 
-    assert pc_daily.Daily.run() is (case == "next_action")
+    assert pc_daily.Daily.run() is (case not in ("return_failed", "still_pending"))
 
     synthesize.assert_called_once_with()
     screen.change_to.assert_called_once_with("guide2", max_recursion=1)
     if case == "next_action":
         photograph.assert_called_once_with()
+        assert scan.call_args_list == [call(True, read_tasks=True), call(True, read_tasks=True),
+                                       call(True, read_tasks=False)]
+        config.save_timestamp.assert_called_once_with("last_run_timestamp")
+        notify.assert_called_once_with(auto, "每日实训已完成")
+    elif case in ("return_failed", "still_pending"):
+        photograph.assert_not_called()
+        assert scan.call_count == (1 if case == "return_failed" else 2)
+        config.save_timestamp.assert_not_called()
+        notify.assert_called_once_with(auto, "已领取实训奖励，活跃度 400/500")
+    else:
+        photograph.assert_not_called()
         assert scan.call_args_list == [call(True, read_tasks=True), call(True, read_tasks=False)]
         config.save_timestamp.assert_called_once_with("last_run_timestamp")
         notify.assert_called_once_with(auto, "每日实训已完成")
-    else:
-        photograph.assert_not_called()
-        scan.assert_called_once_with(True, read_tasks=True)
-        config.save_timestamp.assert_not_called()
-        notify.assert_called_once_with(auto, "已领取实训奖励，活跃度 400/500")
     if case == "return_failed":
         auto.find_element.assert_not_called()
         auto.click_element_with_pos.assert_not_called()
