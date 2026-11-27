@@ -25,16 +25,20 @@ class Mascot(str, Enum):
     BOX = "chibi_box"
 
 
-def mascot_path(pose: Mascot, *, evernight: bool = False) -> str:
+def mascot_path(pose: Mascot, *, evernight: bool = False, overview: bool = False) -> str:
     root = "./assets/app/images/mascot"
     filename = f"{pose.value}.webp"
+    # 先确定默认主题的原图。同一张三月七在所有场景共用同一张长夜月。
+    if overview and Path(root, "overview", filename).is_file():
+        filename = f"overview/{filename}"
     if evernight and Path(root, "evernight", filename).is_file():
         return f"{root}/evernight/{filename}"
     return f"{root}/{filename}"
 
 
-def load_mascot(pose: Mascot, height: int, dpr: float = 1.0, *, evernight: bool = False) -> QPixmap:
-    path = mascot_path(pose, evernight=evernight)
+def load_mascot(pose: Mascot, height: int, dpr: float = 1.0, *, evernight: bool = False,
+                overview: bool = False) -> QPixmap:
+    path = mascot_path(pose, evernight=evernight, overview=overview)
     if height <= 0 or dpr <= 0:
         return QPixmap()
     key = f"mascot:{Path(path).absolute()}:{height}:{dpr}"

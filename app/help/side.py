@@ -221,7 +221,7 @@ class TocView(QWidget):
 
 
 class SupportCard(QWidget):
-    """「没找到答案？」：认真姿势的三月七，引导去常见问题，或带上日志去 QQ 群提问。"""
+    """「没找到答案？」：引导去常见问题，或带上日志去 QQ 群提问。"""
 
     faqClicked = Signal()
     qqClicked = Signal()

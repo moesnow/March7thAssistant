@@ -83,7 +83,7 @@ class HitRow(QWidget):
 
 
 class EmptyState(QWidget):
-    """搜不到时：拿放大镜的三月七和「换个说法试试」。"""
+    """搜不到时显示当前主题的放大镜插画和搜索建议。"""
 
     suggestionClicked = Signal(str)
     MASCOT_HEIGHT = 200

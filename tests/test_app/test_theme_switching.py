@@ -146,7 +146,10 @@ def test_overview_refresh_allows_window_to_apply_external_settings(qtbot, tmp_pa
     qtbot.waitUntil(lambda: window.homeInterface.greeting.mascot.isHidden(), timeout=2500)
 
 
-@pytest.mark.parametrize('theme,image', [(Theme.LIGHT, 'sponsor.jpg'), (Theme.DARK, 'sponsor_dark.jpg')])
+@pytest.mark.parametrize('window,theme,image', [
+    ({}, Theme.LIGHT, 'sponsor.jpg'), ({}, Theme.DARK, 'sponsor_dark.jpg'),
+    ({'evernight_unlocked': True, 'ui_theme': 'evernight'}, Theme.DARK, 'sponsor_evernight.webp'),
+], indirect=['window'])
 def test_sponsor_code_follows_theme(window, monkeypatch, theme, image):
     from app import main_window as module
     box = Mock()

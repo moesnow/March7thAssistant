@@ -73,6 +73,18 @@ With `Cloud Honkai: Star Rail` enabled, tasks such as spending Trailblaze Power,
 
 The cloud game does not depend on a local game window and can also run on macOS, Linux, [Docker](/assets/docs/Docker.md), and [Termux on Android](/assets/docs/Termux.md); see the [Usage Guide](/assets/docs/Tutorial_en_US.md) for how to enable it.
 
+## Desktop Twin (experimental)
+
+In `Toolbox → Desktop Twin`, select **Open**. The assistant signs in to a separate desktop on this PC with your Windows account. The game and the assistant run in the foreground there, and you can view them in the Desktop Twin window. Tasks leave your mouse, keyboard and active window free. You can hide or minimize the window while tasks run. Desktop Twin uses a built-in Windows child session and requires no multi-user Remote Desktop patch.
+
+- Use Windows 10 or 11 Pro or Enterprise, and set a sign-in password for your Windows account.
+- Use the local game client and select **Launch directly**. Launching through Epic and playing the cloud version are currently unsupported.
+- Multi-user Remote Desktop patches such as RDPWrap can prevent Desktop Twin from working.
+
+Desktop Twin uses the signed-in game account’s task plan and completion status. Return to your main Windows desktop to manage account snapshots, switch accounts or run accounts in sequence.
+
+For setup, window controls and troubleshooting, see the [Desktop Twin guide (in Chinese)](/assets/docs/DesktopTwin.md).
+
 ## Remote Local Multi-User Desktop (Advanced)
 
 > On the same computer (no second computer needed), sign in to another Windows user session through local Remote Desktop and let the game and the assistant run there in foreground mode, without using the keyboard and mouse of your current desktop at all. This requires patching the system to allow multiple simultaneous sign-ins, the setup is more involved, and the patch may stop working after system updates. In most cases, try Windows background mode first.

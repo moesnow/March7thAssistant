@@ -30,12 +30,44 @@ def test_all_assets():
 def test_evernight_assets():
     directory = Path(mascot_path(Mascot.FULL)).parent / "evernight"
     assert {p.stem for p in directory.glob("*.webp")} == {POSES[name] for name in EVERNIGHT}
-    assert sum(p.stat().st_size for p in directory.glob("*.webp")) < 400_000
+    assert sum(p.stat().st_size for p in directory.glob("*.webp")) < 75_000 * len(EVERNIGHT)
+    for asset in directory.rglob("*.webp"):
+        image = QImage(str(asset))
+        assert image.hasAlphaChannel() and max(image.width(), image.height()) == 512
     for state in ("ready", "running", "completed", "failed", "setup", "stopped"):
-        path = Path(mascot_path(Mascot(sample_snapshot(state).greeting.mascot), evernight=True))
-        assert path.parent == directory
-        img = QImage(str(path))
-        assert img.hasAlphaChannel() and max(img.width(), img.height()) == 512
+        pose = Mascot(sample_snapshot(state).greeting.mascot)
+        path = Path(mascot_path(pose, evernight=True, overview=True))
+        if state == "setup":
+            assert path.parent == directory / "overview"
+            assert Path(mascot_path(pose, evernight=True)).parent == directory
+        else:
+            assert path.parent == directory
+        regular = Path(mascot_path(pose, overview=True))
+        if state == "setup":
+            assert regular == directory.parent / "overview" / "chibi_ok.webp"
+            assert Path(mascot_path(pose)) == directory.parent / "chibi_ok.webp"
+            full_body = QImage(str(regular))
+            assert full_body.hasAlphaChannel() and 0 < full_body.width() < full_body.height() == 512
+        else:
+            assert regular == Path(mascot_path(pose))
+
+
+def test_same_default_art_uses_same_evernight_art():
+    root = Path(mascot_path(Mascot.FULL)).parent
+    for pose in Mascot:
+        for overview in (False, True):
+            regular = Path(mascot_path(pose, overview=overview))
+            themed = root / "evernight" / regular.relative_to(root)
+            expected = themed if themed.is_file() else regular
+            assert Path(mascot_path(pose, evernight=True, overview=overview)) == expected
+
+
+def test_empty_pages_use_a_bust_and_overview_uses_a_full_figure():
+    for evernight in (False, True):
+        bust = QImage(mascot_path(Mascot.OK, evernight=evernight))
+        overview = QImage(mascot_path(Mascot.OK, evernight=evernight, overview=True))
+        assert bust.width() > bust.height() > 0
+        assert overview.height() > overview.width() > 0
 
 
 def test_setup_rail_keeps_march7th_in_evernight(qtbot):

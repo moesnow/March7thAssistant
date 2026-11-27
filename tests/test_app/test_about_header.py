@@ -41,6 +41,8 @@ def test_header_actions_and_theme_assets(qtbot, monkeypatch):
                                    (Theme.DARK, EVERNIGHT_RED, True), (Theme.DARK, MARCH7TH_PINK, False)):
             setTheme(theme, save=False)
             setThemeColor(color, save=False)
+            name = about.tr("长夜月小助手") if night else about.tr("三月七小助手")
+            assert header.titleLabel.text() == name and name in host.agentPromptCard.contentLabel.text()
             image = header.logo.pixmap()
             expected = QIcon(application_icon_path(night)).pixmap(image.deviceIndependentSize().toSize(),
                                                                   image.devicePixelRatio())

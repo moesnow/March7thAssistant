@@ -5989,9 +5989,14 @@ msgstr "複製提示詞"
 msgid "AI 助手"
 msgstr "AI 助手"
 
-#: app/setting_interface.py:2534
+#: module/search/setting_text.py:43
 msgid "复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作三月七小助手"
 msgstr "複製提示詞並傳給 DeepSeek Harness、Codex、Claude Code 等 AI 助手，讓它學會操作三月七小助手"
+
+#: app/content/settings/about.py
+#, python-brace-format
+msgid "复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作{name}"
+msgstr "複製提示詞並傳給 DeepSeek Harness、Codex、Claude Code 等 AI 助手，讓它學會操作{name}"
 
 #: app/tools/agent_prompt.py:16
 msgid ""
@@ -6662,6 +6667,10 @@ msgstr "模擬器 display 0 當前為 {width}×{height}。請在模擬器設定�
 #: module/game/adb.py:150
 msgid "游戏需要手动登录，请在 Android 实体屏或模拟器中完成登录后重试"
 msgstr "遊戲需要手動登入，請在 Android 實體屏或模擬器中完成登入後重試"
+
+#: module/game/adb_transport.py:496
+msgid "未能唤醒 Android 设备，请检查设备电源状态后重试"
+msgstr "未能喚醒 Android 裝置，請檢查裝置的電源狀態後再試一次"
 
 #: module/game/adb.py:152
 msgid "Android 游戏进程已退出，请检查游戏与设备的后台设置后重试"

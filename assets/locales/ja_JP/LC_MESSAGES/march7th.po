@@ -6033,11 +6033,18 @@ msgstr "プロンプトをコピー"
 msgid "AI 助手"
 msgstr "AI アシスタント"
 
-#: app/setting_interface.py:2534
+#: module/search/setting_text.py:43
 msgid "复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作三月七小助手"
 msgstr ""
 "DeepSeek Harness、Codex、Claude Code などの AI "
 "アシスタントに渡すプロンプトをコピーして、三月なのかアシスタントの操作方法を教えます"
+
+#: app/content/settings/about.py
+#, python-brace-format
+msgid "复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作{name}"
+msgstr ""
+"DeepSeek Harness、Codex、Claude Code などの AI "
+"アシスタントに渡すプロンプトをコピーして、{name}の操作方法を教えます"
 
 #: app/tools/agent_prompt.py:16
 msgid ""
@@ -6721,6 +6728,10 @@ msgstr ""
 #: module/game/adb.py:150
 msgid "游戏需要手动登录，请在 Android 实体屏或模拟器中完成登录后重试"
 msgstr "Android の実機またはエミュレーターでゲームにログインしてから再試行してください。"
+
+#: module/game/adb_transport.py:496
+msgid "未能唤醒 Android 设备，请检查设备电源状态后重试"
+msgstr "Android 端末をスリープから復帰させられませんでした。端末の電源状態を確認してから、もう一度お試しください。"
 
 #: module/game/adb.py:152
 msgid "Android 游戏进程已退出，请检查游戏与设备的后台设置后重试"

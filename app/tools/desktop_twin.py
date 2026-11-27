@@ -8,7 +8,7 @@ from ctypes import wintypes
 import win32con
 import win32gui
 from PySide6.QtCore import QEvent, QRect, QRectF, QSize, Qt, QTimer, Signal
-from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QTextLayout
+from PySide6.QtGui import QColor, QPainter, QPen, QTextLayout
 from PySide6.QtWidgets import (QApplication, QBoxLayout, QDialog, QFrame, QHBoxLayout, QLayout, QPushButton,
                                QSizePolicy, QVBoxLayout, QWidget)
 from qfluentwidgets import (BodyLabel, Dialog, HyperlinkButton, IconWidget, IndeterminateProgressRing, InfoBar, InfoBarIcon,
@@ -20,8 +20,11 @@ from utils import paths
 from app.common.icon import UiIcon
 from app.common.local_instance import notify_existing_instance
 from app.common.style_sheet import StyleSheet
+from app.common.theme_assets import application_icon_path, application_name
+from app.common.window_icon import set_window_icon
 from app.components.notice_bar import NoticeBar
 from app.components.pill_label import PillLabel, pill_colors
+from app.pages.common import is_evernight
 from app.tools.process_audio import ProcessAudioMuter
 from app.tools.desktop_twin_policy import TwinAuthPolicy
 from app.tools.rdp_control import DESKTOP_SIZE, RdpControl
@@ -269,7 +272,6 @@ class DesktopTwinDialog(QDialog):
         self.setWindowFlag(Qt.WindowType.WindowMinMaxButtonsHint)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setObjectName("desktopTwinDialog")
-        self.setWindowIcon(QIcon("./assets/logo/March7th.ico"))
         self._log = log_page
         self._check_ready = check_ready
         self._lease = None
@@ -321,7 +323,7 @@ class DesktopTwinDialog(QDialog):
         self._docs_button.setIcon(FIF.HELP)
         self._credentials_button = PushButton(FIF.FINGERPRINT, "", self._footerBar)
         self._connect_button = PrimaryPushButton(self._footerBar)
-        self._assistant_button = PushButton(QIcon("./assets/logo/March7th.ico"), "", self._footerBar)
+        self._assistant_button = PushButton(self._footerBar)
         self._mute_button = PushButton(self._footerBar)
         self._mute_button.setCheckable(True)
         self._hide_button = PushButton(FIF.HIDE, "", self._footerBar)
@@ -367,6 +369,8 @@ class DesktopTwinDialog(QDialog):
         self._logoff_button.clicked.connect(self._request_logoff)
         StyleSheet.DESKTOP_TWIN.apply(self)
         qconfig.themeChanged.connect(self._applyFrameTheme)
+        qconfig.themeColorChanged.connect(self._updateBrandIcon)
+        self._updateBrandIcon()
         self._timer = QTimer(self, interval=250)
         self._timer.timeout.connect(self._poll)
         self._timer.start()
@@ -739,6 +743,11 @@ class DesktopTwinDialog(QDialog):
         if str(error) != self._audio_error:
             self._audio_error = str(error)
             self._log.appendLog(f"桌面分身：无法切换分身声音（{error}）\n")
+
+    def _updateBrandIcon(self):
+        evernight = is_evernight()
+        set_window_icon(self, application_icon_path(evernight), application_name(evernight))
+        self._assistant_button.setIcon(self.windowIcon())
 
     def _applyFrameTheme(self):
         if not self.isVisible():

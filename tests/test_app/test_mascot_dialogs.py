@@ -54,9 +54,8 @@ def test_confirmations_fit_in_five_languages(qtbot, monkeypatch, content_window,
     color = qconfig.get(qconfig.themeColor)
     try:
         setThemeColor(EVERNIGHT_RED, save=False)
-        assert "/evernight/" in mascot_path(Mascot.WAVE, evernight=True)
-        for pose in (Mascot.SERIOUS, Mascot.LATER, Mascot.STARTLED, Mascot.BOX, Mascot.STAMP, Mascot.GIFT):
-            assert mascot_path(pose, evernight=True) == mascot_path(pose)
+        for pose in (Mascot.WAVE, Mascot.SERIOUS, Mascot.STARTLED, Mascot.BOX, Mascot.STAMP, Mascot.LATER):
+            assert "/evernight/" in mascot_path(pose, evernight=True)
         for lang in LOCALES:
             localization.load_language(lang)
             seen.clear()

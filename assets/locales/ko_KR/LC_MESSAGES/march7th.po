@@ -6023,11 +6023,17 @@ msgstr "프롬프트 복사"
 msgid "AI 助手"
 msgstr "AI 도우미"
 
-#: app/setting_interface.py:2534
+#: module/search/setting_text.py:43
 msgid "复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作三月七小助手"
 msgstr ""
 "DeepSeek Harness, Codex, Claude Code 등의 AI 도우미에 전달할 프롬프트를 복사하여 March 7th "
 "도우미를 조작할 수 있도록 합니다"
+
+#: app/content/settings/about.py
+#, python-brace-format
+msgid "复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作{name}"
+msgstr ""
+"DeepSeek Harness, Codex, Claude Code 등의 AI 도우미에 전달할 프롬프트를 복사하여 {name}를 조작할 수 있도록 합니다"
 
 #: app/tools/agent_prompt.py:16
 msgid ""
@@ -6714,6 +6720,10 @@ msgstr ""
 #: module/game/adb.py:150
 msgid "游戏需要手动登录，请在 Android 实体屏或模拟器中完成登录后重试"
 msgstr "Android 기기 또는 에뮬레이터에서 게임에 로그인한 뒤 다시 시도하세요."
+
+#: module/game/adb_transport.py:496
+msgid "未能唤醒 Android 设备，请检查设备电源状态后重试"
+msgstr "Android 기기를 깨울 수 없습니다. 기기의 전원 상태를 확인한 후 다시 시도하세요."
 
 #: module/game/adb.py:152
 msgid "Android 游戏进程已退出，请检查游戏与设备的后台设置后重试"

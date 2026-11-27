@@ -36,14 +36,18 @@ def build(host):
                 parent=host.card_parent
             )
 
+    def prompt_description(name):
+        return tr("复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作{name}").format(name=name)
+
     host.aboutCard = AboutHeader(cfg.version, host.card_parent)
     host.agentPromptCard = PushSettingCard(
         tr('复制提示词'),
         FIF.ROBOT,
         tr('AI 助手'),
-        tr('复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作三月七小助手'),
+        prompt_description(host.aboutCard.titleLabel.text()),
         parent=host.card_parent,
     )
+    host.aboutCard.nameChanged.connect(lambda name: host.agentPromptCard.setContent(prompt_description(name)))
     host.bilibiliCard = PushSettingCard(
         tr('立即前往'),
         BrandIcon.BILIBILI,

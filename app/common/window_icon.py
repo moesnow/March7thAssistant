@@ -48,12 +48,16 @@ class _TaskbarProperties(QObject):
 
 
 def set_application_icon(window, icon_path, display_name):
-    icon = QIcon(icon_path)
+    set_window_icon(window, icon_path, display_name)
+    icon = window.windowIcon()
     QApplication.setWindowIcon(icon)
-    window.setWindowIcon(icon)
     if hasattr(window, 'tray_icon'):
         window.tray_icon.setIcon(icon)
 
+
+def set_window_icon(window, icon_path, display_name):
+    """Brand this top-level window and its taskbar button."""
+    window.setWindowIcon(QIcon(icon_path))
     if sys.platform != 'win32':
         return
     from pywintypes import com_error

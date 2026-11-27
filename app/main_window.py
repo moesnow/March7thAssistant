@@ -28,7 +28,7 @@ from .run_interface import RunInterface
 from .common.signal_bus import signalBus
 from .common.evernight import EvernightEasterEgg
 from .common.evernight_artwork import evernight_artwork
-from .common.theme_assets import application_icon_path
+from .common.theme_assets import application_icon_path, application_name, sponsor_image_path
 from .common.window_icon import set_application_icon
 from .components.evey_animation import EveyAnimation
 
@@ -251,9 +251,9 @@ class MainWindow(FluentWindow):
         self.detected_update_version = None
         self.updateVersionBadge = None
         self._evernight = EvernightEasterEgg()
-        self._evernight_active = False
         self._evey_animation = None
         self._evernight.selected = self._load_evernight_selection()
+        self._evernight_active = self._evernight.selected
 
         self.initWindow()
 
@@ -318,7 +318,7 @@ class MainWindow(FluentWindow):
         # 要求 PySideSix-Frameless-Window>=0.7.0
         # self.setMicaEffectEnabled(False)
 
-        setThemeColor(MARCH7TH_PINK, lazy=True)
+        setThemeColor(EVERNIGHT_RED if self._evernight_active else MARCH7TH_PINK, lazy=True)
         applyTheme(self)
 
         # 禁用最大化
@@ -353,8 +353,8 @@ class MainWindow(FluentWindow):
         self.titleBar.hBoxLayout.setContentsMargins(14, 0, 0, 0)
         easter_egg_click = EasterEggClickFilter(self.titleBar.iconLabel)
         easter_egg_click.clicked.connect(self._on_logo_clicked)
-        set_application_icon(self, application_icon_path(), 'March7th Assistant')
-        self.setWindowTitle("March7th Assistant")
+        set_application_icon(self, application_icon_path(self._evernight_active), self._assistant_name())
+        self.setWindowTitle(self._assistant_name())
         # 分离系统窗口标题与应用内标题栏文本
         self._refreshWindowTitleBar()
 
@@ -407,7 +407,7 @@ class MainWindow(FluentWindow):
         return f"{self._assistant_name()} {cfg.version}"
 
     def _assistant_name(self):
-        return 'Evernight Assistant' if self._evernight_active else 'March7th Assistant'
+        return application_name(self._evernight_active)
 
     def _refreshDesktopTwinBadge(self):
         """分身内的小助手在标题栏标出身份，透过分身画面也能和主桌面的小助手区分开。"""
@@ -662,7 +662,7 @@ class MainWindow(FluentWindow):
             lambda: MessageBoxSupport(
                 tr('支持作者🥰'),
                 tr('此程序为免费开源项目，如果你付了钱请立刻退款\n如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕\n您的支持就是作者开发和维护项目的动力🚀'),
-                './assets/app/images/sponsor_dark.jpg' if isDarkTheme() else './assets/app/images/sponsor.jpg',
+                sponsor_image_path(self._evernight_active, isDarkTheme()),
                 self
             ).exec(),
             selectable=False, position=NavigationItemPosition.BOTTOM
@@ -699,7 +699,7 @@ class MainWindow(FluentWindow):
         patch_macos_tray()
         self.tray_icon = QSystemTrayIcon(self)
         self.tray_icon.setIcon(self.windowIcon())
-        self.tray_icon.setToolTip('March7th Assistant')
+        self.tray_icon.setToolTip(self._assistant_name())
 
         # 创建托盘菜单
         tray_menu = SystemTrayMenu(parent=self)
