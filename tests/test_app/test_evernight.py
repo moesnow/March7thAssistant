@@ -806,8 +806,12 @@ def test_mascot_click_signal_counts_completed_left_clicks_even_without_motion(qt
 
 
 @pytest.mark.parametrize('window', [{'ui_theme': 'evernight', 'evernight_unlocked': True}], indirect=True)
-def test_evernight_greeting_button_opens_the_theme_setting(window, qtbot):
+@pytest.mark.parametrize('system_dark', [False, True])
+def test_evernight_greeting_button_opens_the_theme_setting(window, qtbot, monkeypatch, system_dark):
     from app.navigation import _CardHighlight
+    from app.tools import check_theme_change
+    monkeypatch.setattr(check_theme_change.darkdetect, 'isDark', lambda: system_dark)
+    monkeypatch.setattr(cfg, 'set_value', Mock(side_effect=lambda key, value: cfg.config.__setitem__(key, value)))
     window.stackedWidget.setAnimationEnabled(False)
     window.switchTo(window.homeInterface)
     greeting = window.homeInterface.greeting
