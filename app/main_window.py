@@ -2,7 +2,7 @@ from utils.game_options import game_option_enabled
 from utils.desktop_twin import in_desktop_twin
 from PySide6.QtCore import Qt, QSize, QPoint, QFileSystemWatcher, Signal, QObject, QTimer, QThread, QSignalBlocker, QEvent, QVariantAnimation
 from PySide6.QtGui import QAction, QKeySequence, QPainter, QShortcut
-from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsEffect, QWidget
+from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsEffect, QWidget, QStackedWidget
 
 from .components.evey_decoration import EveyControlDecoration, EveyTitleDecoration
 from .common.accent import MARCH7TH_PINK, EVERNIGHT_RED, set_accent_color
@@ -737,9 +737,16 @@ class MainWindow(FluentWindow):
         """用真正的页面顶替占位页，过程中不发出导航事件。"""
         view = self.stackedWidget.view
         was_current = self.stackedWidget.currentWidget() is slot
-        with QSignalBlocker(self.stackedWidget):
+        index = view.indexOf(slot)
+        with QSignalBlocker(self.stackedWidget), QSignalBlocker(view):
             view.addWidget(page)
+            # Fluent 的 addWidget 会同步创建动画信息；将新页面和对应动画一起移回
+            # 占位页的位置，避免正在运行的导航动画持有的目标索引发生变化。
+            info = view.aniInfos.pop()
             view.removeWidget(slot)
+            QStackedWidget.removeWidget(view, page)
+            QStackedWidget.insertWidget(view, index, page)
+            view.aniInfos.insert(index, info)
             if was_current:
                 # 绕过 Fluent 的 switchTo，它会清零滚动位置。
                 view.setCurrentWidget(page)

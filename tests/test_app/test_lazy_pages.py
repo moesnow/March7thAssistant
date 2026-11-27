@@ -35,6 +35,19 @@ def test_navigation_builds_page_in_place(window):
     assert "settingInterface" not in window._pages
 
 
+def test_background_page_creation_preserves_navigation_animation(window, qtbot):
+    window.openPage('helpInterface')
+    help_page = window.helpInterface
+    view = window.stackedWidget.view
+    assert window._navigation_animation_running
+    help_index = view.indexOf(help_page)
+    window.ensurePage('toolsInterface')
+    assert view.indexOf(help_page) == help_index
+    qtbot.waitUntil(lambda: not window._navigation_animation_running, timeout=2000)
+    assert view.currentWidget() is help_page
+    assert all(info.widget is view.widget(i) for i, info in enumerate(view.aniInfos))
+
+
 def test_failed_build_can_retry(window, monkeypatch):
     """构造失败不能把页面变成死键：构建器要保留，下次访问仍能重试。"""
     from app.help_interface import HelpInterface
