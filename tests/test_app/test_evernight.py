@@ -275,6 +275,15 @@ def test_tenth_logo_click_saves_unlock_and_theme(
         window, qtbot, monkeypatch, preference, system_dark, cancel_after_midpoint, cancel_theme):
     from PySide6.QtCore import QSignalBlocker
     from app.tools import check_theme_change
+    play_animation = window._play_evey_animation
+
+    def play_paused_animation():
+        play_animation()
+        if window._evey_animation is not None:
+            window._evey_animation.timeline.pause()
+
+    # 按实际启动回执等待，暂停时间线后再核对动画前半段和中点的状态。
+    monkeypatch.setattr(window, '_play_evey_animation', play_paused_animation)
     monkeypatch.setattr(check_theme_change.darkdetect, 'isDark', lambda: system_dark)
     monkeypatch.setattr(cfg, 'set_value', Mock(side_effect=lambda key, value: cfg.config.__setitem__(key, value)))
     monkeypatch.setattr(cfg, 'set_values', Mock(side_effect=cfg.config.update))
@@ -305,8 +314,8 @@ def test_tenth_logo_click_saves_unlock_and_theme(
     assert combo.currentText() == '长夜'
     cfg.set_value.assert_not_called()
     cfg.set_values.assert_called_once_with({'ui_theme': 'evernight', 'evernight_unlocked': True})
+    qtbot.waitUntil(lambda: window._evey_animation is not None, timeout=5000)
     assert window._evernight.animation_played
-    assert window._evey_animation is not None
     check_theme_change.applyTheme(window, Theme.LIGHT)  # System events cannot override Evernight.
     assert isDarkTheme()
     assert window.homeInterface.greeting._mode() == "dark"
