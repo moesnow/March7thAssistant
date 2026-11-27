@@ -264,6 +264,9 @@ class MainWindow(FluentWindow):
         self._config_reload_timer = QTimer(self)
         self._config_reload_timer.setSingleShot(True)
         self._config_reload_timer.timeout.connect(self._on_config_file_changed)
+        self._startup_checks_timer = QTimer(self)
+        self._startup_checks_timer.setSingleShot(True)
+        self._startup_checks_timer.timeout.connect(self._runStartupChecks)
         self.startup_task = task  # 保存启动时要执行的任务
         self.exit_on_complete = exit_on_complete  # 命令行指定的单次退出请求
         self._task_exit_pending = False
@@ -311,8 +314,23 @@ class MainWindow(FluentWindow):
             self._setup_checks_pending = True
             QTimer.singleShot(0, self, self._openInitialSetup)
         else:
+            self._scheduleStartupChecks()
+
+    def _scheduleStartupChecks(self, delay=200):
+        """首帧渲染之后再检查更新和公告。
+
+        两者都会起线程跑网络请求，放在窗口构造末尾会和首帧的排版、绘制抢资源；
+        推迟一拍不影响用户看到界面，提示出现也只是晚了一瞬。用可取消的定时器，
+        首次配置向导打开期间要取消，避免向导还没结束就弹出更新提示。
+        """
+        self._startup_checks_timer.start(delay)
+
+    def _runStartupChecks(self):
+        try:
             checkUpdate(self, flag=True)
             checkAnnouncement(self)
+        except Exception as exc:
+            log.warning(f'启动检查更新或公告失败：{type(exc).__name__}: {exc}')
 
     @property
     def setupModel(self):
@@ -332,8 +350,7 @@ class MainWindow(FluentWindow):
     def _finishSetupChecks(self):
         if self._setup_checks_pending:
             self._setup_checks_pending = False
-            checkUpdate(self, flag=True)
-            checkAnnouncement(self)
+            self._scheduleStartupChecks()
 
     def _executeStartupTask(self):
         """执行启动时指定的任务"""
@@ -866,6 +883,8 @@ class MainWindow(FluentWindow):
             InfoBar.error(tr("无法打开首次配置向导"), str(error), parent=self)
             return False
         self._setup_dialog = dialog
+        # 向导还没走完时不要弹更新提示。
+        self._startup_checks_timer.stop()
         actions = []
 
         def after_close(action):
@@ -916,8 +935,7 @@ class MainWindow(FluentWindow):
         super().showEvent(event)
         if self._defer_startup_checks:
             self._defer_startup_checks = False
-            checkUpdate(self, flag=True)
-            checkAnnouncement(self)
+            self._scheduleStartupChecks()
         if self._evernight.unlocked and not self._evernight.animation_played:
             QTimer.singleShot(0, self._play_evey_animation)
 
