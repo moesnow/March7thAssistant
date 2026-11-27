@@ -7,6 +7,7 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import top.m7a.BuildTargetScheme
 import top.m7a.Catalog
 import top.m7a.GameState
 import top.m7a.InstanceType
@@ -46,6 +47,8 @@ internal val TaskId.icon: ImageVector
 
 internal val StepId.title: Int
     get() = when (this) {
+        StepId.REDEMPTION -> R.string.redemption
+        StepId.BUILD_TARGET -> R.string.step_build_target
         StepId.ECHO -> R.string.instance_echo
         StepId.POWER -> R.string.power
         StepId.REWARDS -> R.string.rewards
@@ -162,6 +165,18 @@ internal val InstanceType.title: Int
         InstanceType.CAVERN -> R.string.instance_cavern
         InstanceType.ECHO -> R.string.instance_echo
         InstanceType.ORNAMENT -> R.string.instance_ornament
+    }
+
+internal val BuildTargetScheme.title: Int
+    get() = when (this) {
+        BuildTargetScheme.INSTANCE -> R.string.build_target_scheme_instance
+        BuildTargetScheme.DROP -> R.string.build_target_scheme_drop
+    }
+
+internal val BuildTargetScheme.detail: Int
+    get() = when (this) {
+        BuildTargetScheme.INSTANCE -> R.string.build_target_scheme_instance_detail
+        BuildTargetScheme.DROP -> R.string.build_target_scheme_drop_detail
     }
 
 /** 出错后界面能直接带用户去的地方。 */

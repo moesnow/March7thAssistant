@@ -18,6 +18,9 @@ fun plannedSteps(task: TaskId, config: TaskConfig, today: Int): List<StepResult>
             val rewards = config.rewardEnable &&
                 (config.dispatch || config.mail || config.assist || config.srpass || config.message)
             listOf(
+                step(StepId.REDEMPTION, config.rewardEnable && config.redemption),
+                // 「日常」里只有历战余响和清体力用到培养目标，两者都随清体力关闭。
+                step(StepId.BUILD_TARGET, config.powerEnable && config.buildTarget),
                 step(StepId.ECHO, echo, config.echoStartDay.takeIf { echo && today < it }),
                 step(StepId.POWER, config.powerEnable),
                 step(StepId.REWARDS, rewards),

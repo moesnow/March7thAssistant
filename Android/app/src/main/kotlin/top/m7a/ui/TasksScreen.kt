@@ -48,6 +48,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import top.m7a.BuildTargetScheme
 import top.m7a.Catalog
 import top.m7a.CatalogItem
 import top.m7a.InstanceType
@@ -215,8 +216,11 @@ private fun powerBrief(config: TaskConfig, catalog: Catalog): String {
     val type = config.instanceType
     val name = instanceLabel(type, config.instanceName(type, catalog), catalog)
     val plan = config.powerPlan
+    // 打开培养目标时，体力计划之后先按目标选副本，读不到才刷这里选的副本。
     val main = when {
+        plan.isEmpty() && config.buildTarget -> tr(R.string.task_power_target, name)
         plan.isEmpty() -> tr(R.string.task_power_default, name)
+        config.planContinue && config.buildTarget -> tr(R.string.task_power_plan_then_target, planSize(plan))
         config.planContinue -> tr(R.string.task_power_plan_then_default, planSize(plan), name)
         else -> tr(R.string.task_power_plan_only, planSize(plan))
     }
@@ -232,7 +236,8 @@ private fun powerBrief(config: TaskConfig, catalog: Catalog): String {
 @Composable
 private fun powerSummary(config: TaskConfig, catalog: Catalog): String {
     val type = config.instanceType
-    return tr(R.string.option_instance_summary, tr(type.title), instanceLabel(type, config.instanceName(type, catalog), catalog))
+    val name = instanceLabel(type, config.instanceName(type, catalog), catalog)
+    return if (config.buildTarget) tr(R.string.power_group_target, name) else tr(R.string.option_instance_summary, tr(type.title), name)
 }
 
 @Composable
@@ -244,6 +249,7 @@ private fun rewardsSummary(config: TaskConfig): String {
         tr(R.string.option_assist).takeIf { config.assist },
         tr(R.string.option_quest).takeIf { config.quest },
         tr(R.string.option_srpass).takeIf { config.srpass },
+        tr(R.string.redemption).takeIf { config.redemption },
         tr(R.string.option_message).takeIf { config.message },
     ).ifEmpty { listOf(tr(R.string.rewards_none)) }.joinToString(tr(R.string.list_separator))
 }
@@ -271,7 +277,7 @@ private fun NoteText(text: String) {
     )
 }
 
-private enum class Picker { TYPE, INSTANCE, SUPPORTS, ECHO_INSTANCE, ECHO_DAY, COUNTS }
+private enum class Picker { TYPE, INSTANCE, SUPPORTS, ECHO_INSTANCE, ECHO_DAY, COUNTS, SCHEME }
 
 private enum class Confirm { FUEL, RELIC }
 
@@ -299,6 +305,31 @@ private fun PowerOptions(state: TaskState, catalog: Catalog, enabled: Boolean, a
         onClick = { navigator.open(SubPage.POWER_PLAN) },
     )
     RowDivider()
+    // 与清体力选副本的顺序一致：体力计划、培养目标、下面选的副本。
+    SwitchRow(
+        tr(R.string.option_build_target), config.buildTarget, { update(config.copy(buildTarget = it)) },
+        summary = tr(R.string.option_build_target_summary), enabled = enabled,
+    )
+    if (config.buildTarget) {
+        Nested {
+            SettingRow(
+                tr(R.string.option_build_target_scheme), value = tr(config.buildTargetScheme.title),
+                summary = tr(R.string.option_build_target_scheme_summary),
+                enabled = enabled, onClick = { picker = Picker.SCHEME },
+            )
+            SwitchRow(
+                tr(R.string.option_target_fallback), config.targetFallback, { update(config.copy(targetFallback = it)) },
+                summary = tr(R.string.option_target_fallback_summary), enabled = enabled,
+            )
+            // 改刷选好的副本时，用不到饰品提取的天数。
+            StepperRow(
+                tr(R.string.option_ornament_days), config.ornamentDays, 0..TaskConfig.MAX_ORNAMENT_DAYS,
+                { update(config.copy(ornamentDays = it)) },
+                summary = tr(R.string.option_ornament_days_summary), enabled = enabled && !config.targetFallback,
+            )
+        }
+    }
+    RowDivider()
     SettingRow(
         tr(R.string.option_instance_type), value = tr(type.title), summary = tr(R.string.instance_cost, type.cost),
         enabled = enabled, onClick = { picker = Picker.TYPE },
@@ -307,7 +338,7 @@ private fun PowerOptions(state: TaskState, catalog: Catalog, enabled: Boolean, a
         tr(R.string.option_instance), value = instance?.title ?: config.instanceName(type, catalog), summary = instance?.detail,
         enabled = enabled, onClick = { picker = Picker.INSTANCE },
     )
-    NoteText(tr(R.string.option_instance_note))
+    NoteText(tr(if (config.buildTarget) R.string.option_instance_note_target else R.string.option_instance_note))
     RowDivider()
     SwitchRow(
         tr(R.string.option_reserve), config.reserve, { update(config.copy(reserve = it)) },
@@ -461,6 +492,16 @@ private fun PowerOptions(state: TaskState, catalog: Catalog, enabled: Boolean, a
             onDismiss = ::close,
         )
         Picker.COUNTS -> ChallengeCountsDialog(config, update, ::close)
+        Picker.SCHEME -> ChoiceDialog(
+            tr(R.string.option_build_target_scheme),
+            BuildTargetScheme.entries.map { CatalogItem(it.name, tr(it.title), tr(it.detail)) },
+            config.buildTargetScheme.name,
+            onSelect = {
+                update(config.copy(buildTargetScheme = BuildTargetScheme.valueOf(it)))
+                close()
+            },
+            onDismiss = ::close,
+        )
         null -> {}
     }
     ownerOf?.takeIf { enabled }?.let { key ->
@@ -605,6 +646,10 @@ private fun RewardOptions(config: TaskConfig, enabled: Boolean, actions: AppActi
     SwitchRow(
         tr(R.string.option_srpass), config.srpass, { update(config.copy(srpass = it)) },
         summary = tr(R.string.option_srpass_summary), enabled = items,
+    )
+    SwitchRow(
+        tr(R.string.redemption), config.redemption, { update(config.copy(redemption = it)) },
+        summary = tr(R.string.option_redemption_summary), enabled = items,
     )
     SwitchRow(
         tr(R.string.option_message), config.message, { update(config.copy(message = it)) },

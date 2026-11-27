@@ -114,6 +114,9 @@ def entry_state(key, cfg, *, touch=False, full_run=True, now=None):
         return "unsupported"
     if not all(getattr(cfg, switch) for switch in step.switches):
         return "disabled"
+    if key == "build_target" and touch and not cfg.power_enable:
+        # 触屏只有历战余响和清体力用到培养目标，两者都随清体力关闭。
+        return "disabled"
     if key == "support" and not cfg.power_enable:
         if touch or not (cfg.activity_enable and (cfg.activity_gardenofplenty_enable
                          or cfg.activity_realmofthestrange_enable or cfg.activity_planarfissure_enable)):

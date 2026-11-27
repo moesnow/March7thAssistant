@@ -480,6 +480,13 @@ class BuildTarget:
     _target_instances: dict[str, list[str]] = {}
 
     @staticmethod
+    def reset():
+        """丢弃已读到的培养目标，下次取副本时重新读取。"""
+        BuildTarget._initialized = False
+        BuildTarget._build_target_name = None
+        BuildTarget._target_instances = {}
+
+    @staticmethod
     def get_target_instance() -> tuple[str, str] | None:
         """尝试获取培养目标普通副本信息"""
         if not BuildTarget._initialized:

@@ -75,9 +75,10 @@ private val MID_RUN_ERRORS = setOf("device_asleep", "runtime_error")
 private const val POWER_SUMMARY = "已完成 6 次挑战，剩余开拓力 3/300"
 private const val DAILY_SUMMARY = "每日实训活跃度 500/500"
 
-/** 日常做到第二个启用的步骤，单个任务正在进行它唯一的一步。 */
+/** 日常做到第三个启用的步骤，单个任务正在进行它唯一的一步。 */
 private fun running(task: TaskId, planned: List<StepResult>): List<StepResult> = when (task) {
     TaskId.ROUTINE -> planned
+        .onStepEvent("兑换码", "started", null).onStepEvent("兑换码", "succeeded", null)
         .onStepEvent("清体力", "started", null).onStepEvent("清体力", "succeeded", POWER_SUMMARY)
         .onStepEvent("日常领奖", "started", null)
     else -> planned.onStepEvent(planned.single().name, "started", null)

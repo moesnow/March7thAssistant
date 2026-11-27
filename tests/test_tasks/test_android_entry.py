@@ -36,15 +36,17 @@ WINDOWS_TARGETS = {
     "power": "tasks.touch.power.run_standalone",
 }
 APP_TASKS = {"ROUTINE": "routine", "DAILY": "daily", "POWER": "power"}
-# 界面契约里设置对照表的 30 个键。
+# 界面契约里设置对照表的 35 个键。
 SETTING_KEYS = {
     "power_enable", "power_plan", "power_plan_keep", "power_plan_continue", "instance_type", "instance_names",
-    "use_reserved_trailblaze_power", "use_fuel", "instance_team_enable", "instance_team_number", "instance_teams",
+    "use_reserved_trailblaze_power", "use_fuel", "build_target_enable", "build_target_scheme",
+    "build_target_ornament_weekly_count", "build_target_use_user_instance_when_only_erosion_and_ornament",
+    "instance_team_enable", "instance_team_number", "instance_teams",
     "borrow_enable", "borrow_character_enable", "borrow_friends", "borrow_scroll_times", "echo_of_war_enable",
     "echo_of_war_start_day_of_week", "tp_before_instance", "relic_bag_cleanup_enable",
     "instance_names_challenge_count", "auto_battle_detect_enable", "reward_enable", "reward_dispatch_enable",
     "reward_mail_enable", "reward_assist_enable", "reward_quest_enable", "reward_srpass_enable",
-    "reward_message_enable", "daily_enable", "daily_material_enable",
+    "reward_redemption_code_enable", "reward_message_enable", "daily_enable", "daily_material_enable",
 }
 
 
@@ -90,7 +92,7 @@ def test_single_steps_use_the_routine_step_names(entry):
 
 def test_setting_keys_match_the_contract_and_exist_in_the_template(entry):
     assert entry.SETTING_KEYS == SETTING_KEYS
-    assert len(SETTING_KEYS) == 30
+    assert len(SETTING_KEYS) == 35
     template = YAML(typ="safe").load((ROOT / "assets" / "config" / "config.example.yaml").read_text(encoding="utf-8"))
     assert SETTING_KEYS <= template.keys()
     assert entry.FIXED_SETTINGS.keys() <= template.keys()
@@ -1103,6 +1105,22 @@ def test_single_tasks_report_one_step_around_the_windows_entry(entry, device, mo
     detail = "每日实训活跃度 500/500" if result else "触屏清体力：未能确认当前开拓力"
     assert bridge.steps == [(name, "started", None), (name, "succeeded" if result else "failed", detail)]
     assert bridge.summary == (detail if result else None)
+
+
+def test_each_run_reads_the_build_target_again(entry, device, monkeypatch):
+    # App 进程会连续执行多轮，上一轮读到的培养目标不能留给单独运行的清体力。
+    from tasks.daily.buildtarget import BuildTarget
+
+    monkeypatch.setattr(BuildTarget, "_initialized", True)
+    monkeypatch.setattr(BuildTarget, "_target_instances", {"侵蚀隧洞": ["睿治之径"]})
+
+    def run(*, on_summary):
+        assert not BuildTarget._initialized
+        assert BuildTarget._target_instances == {}
+        return True
+
+    monkeypatch.setattr(power, "run_standalone", run)
+    assert start(entry, "POWER", Bridge()) == "success"
 
 
 def test_android_entry_exports_debug_and_traceback_and_restores_log_levels(entry, device, monkeypatch):

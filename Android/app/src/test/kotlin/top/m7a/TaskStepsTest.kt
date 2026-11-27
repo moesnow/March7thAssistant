@@ -14,26 +14,53 @@ class TaskStepsTest {
 
     private fun pending(id: StepId) = StepResult(id, id.pythonName, StepStatus.PENDING)
     private fun disabled(id: StepId, startDay: Int? = null) = StepResult(id, id.pythonName, StepStatus.DISABLED, startDay = startDay)
+    private fun List<StepResult>.of(id: StepId) = single { it.step == id }
 
     @Test
-    fun routineByDefaultSkipsOnlyTheEcho() {
+    fun routineByDefaultSkipsTheBuildTargetAndTheEcho() {
         assertEquals(
-            listOf(disabled(StepId.ECHO), pending(StepId.POWER), pending(StepId.REWARDS), pending(StepId.DAILY)),
+            listOf(
+                pending(StepId.REDEMPTION), disabled(StepId.BUILD_TARGET), disabled(StepId.ECHO),
+                pending(StepId.POWER), pending(StepId.REWARDS), pending(StepId.DAILY),
+            ),
             plannedSteps(TaskId.ROUTINE, TaskConfig(), monday),
         )
+    }
+
+    @Test
+    fun redemptionNeedsTheRewardSwitchButNoOtherReward() {
+        fun steps(config: TaskConfig) = statuses(plannedSteps(TaskId.ROUTINE, config, monday))
+        val none = TaskConfig(dispatch = false, mail = false, assist = false, srpass = false, message = false)
+
+        assertEquals(StepStatus.DISABLED, steps(TaskConfig(redemption = false))[StepId.REDEMPTION])
+        assertEquals(StepStatus.DISABLED, steps(TaskConfig(rewardEnable = false))[StepId.REDEMPTION])
+        // 兑换码自成一步，不算在领奖这一步里。
+        assertEquals(StepStatus.PENDING, steps(none)[StepId.REDEMPTION])
+        assertEquals(StepStatus.DISABLED, steps(none)[StepId.REWARDS])
+        assertEquals(StepStatus.DISABLED, steps(none.copy(srpass = true, redemption = false))[StepId.REDEMPTION])
+    }
+
+    @Test
+    fun buildTargetIsReadOnlyWhenTheRoutineSpendsPower() {
+        fun target(config: TaskConfig) = statuses(plannedSteps(TaskId.ROUTINE, config, monday))[StepId.BUILD_TARGET]
+
+        assertEquals(StepStatus.PENDING, target(TaskConfig(buildTarget = true)))
+        assertEquals(StepStatus.DISABLED, target(TaskConfig(buildTarget = true, powerEnable = false)))
+        // 单独运行清体力时，培养目标在清体力这一步里读取。
+        assertEquals(listOf(pending(StepId.POWER)), plannedSteps(TaskId.POWER, TaskConfig(buildTarget = true), monday))
     }
 
     @Test
     fun echoNeedsPowerAndItsStartDay() {
         val echo = TaskConfig(echoEnable = true, echoStartDay = 3)
 
-        assertEquals(disabled(StepId.ECHO, startDay = 3), plannedSteps(TaskId.ROUTINE, echo, 2).first())
-        assertEquals(pending(StepId.ECHO), plannedSteps(TaskId.ROUTINE, echo, 3).first())
-        assertEquals(pending(StepId.ECHO), plannedSteps(TaskId.ROUTINE, echo, sunday).first())
+        assertEquals(disabled(StepId.ECHO, startDay = 3), plannedSteps(TaskId.ROUTINE, echo, 2).of(StepId.ECHO))
+        assertEquals(pending(StepId.ECHO), plannedSteps(TaskId.ROUTINE, echo, 3).of(StepId.ECHO))
+        assertEquals(pending(StepId.ECHO), plannedSteps(TaskId.ROUTINE, echo, sunday).of(StepId.ECHO))
         // 关闭清体力时，历战余响和清体力都跳过，不提开始日期。
         val noPower = plannedSteps(TaskId.ROUTINE, echo.copy(powerEnable = false), 2)
-        assertEquals(disabled(StepId.ECHO), noPower[0])
-        assertEquals(disabled(StepId.POWER), noPower[1])
+        assertEquals(disabled(StepId.ECHO), noPower.of(StepId.ECHO))
+        assertEquals(disabled(StepId.POWER), noPower.of(StepId.POWER))
     }
 
     @Test
@@ -78,23 +105,28 @@ class TaskStepsTest {
     @Test
     fun eventsMoveStepsThroughTheirStates() {
         var steps = plannedSteps(TaskId.ROUTINE, TaskConfig(), monday)
+        steps = steps.onStepEvent("兑换码", "started", null)
+        assertEquals(StepId.REDEMPTION, steps.progress()!!.step.step)
+        steps = steps.onStepEvent("兑换码", "succeeded", null)
         steps = steps.onStepEvent("查询支援实训", "started", null).onStepEvent("查询支援实训", "succeeded", null)
         // 未启用的历战余响照样会被 Python 报开始和成功。
         steps = steps.onStepEvent("历战余响", "started", null).onStepEvent("历战余响", "succeeded", null)
         steps = steps.onStepEvent("清体力", "started", null)
         assertEquals(StepStatus.RUNNING, statuses(steps)[StepId.POWER])
         assertEquals(StepId.POWER, steps.progress()!!.step.step)
-        assertEquals(1, steps.progress()!!.number)
-        assertEquals(3, steps.progress()!!.total)
+        assertEquals(2, steps.progress()!!.number)
+        assertEquals(4, steps.progress()!!.total)
         steps = steps.onStepEvent("清体力", "succeeded", "已完成 6 次挑战，剩余开拓力 3/300")
             .onStepEvent("日常领奖", "started", null)
             .onStepEvent("日常领奖", "failed", "邮件失败：未确认邮箱附件状态")
             .onStepEvent("每日实训", "started", null)
-        assertEquals(3, steps.progress()!!.number)
+        assertEquals(4, steps.progress()!!.number)
         steps = steps.onStepEvent("每日实训", "succeeded", "每日实训活跃度 500/500")
 
         assertEquals(
             listOf(
+                StepResult(StepId.REDEMPTION, "兑换码", StepStatus.DONE),
+                disabled(StepId.BUILD_TARGET),
                 disabled(StepId.ECHO),
                 StepResult(StepId.POWER, "清体力", StepStatus.DONE, "已完成 6 次挑战，剩余开拓力 3/300"),
                 StepResult(StepId.REWARDS, "日常领奖", StepStatus.FAILED, "邮件失败：未确认邮箱附件状态"),
@@ -124,24 +156,28 @@ class TaskStepsTest {
         assertEquals(echo, echo.onStepEvent("清体力", "succeeded", "摘要"))
         assertEquals(
             StepResult(StepId.ECHO, "历战余响", StepStatus.FAILED, "原因"),
-            echo.onStepEvent("历战余响", "failed", "原因").first(),
+            echo.onStepEvent("历战余响", "failed", "原因").of(StepId.ECHO),
         )
-        assertEquals(StepStatus.FAILED, echo.onStepEvent("清体力", "failed", null)[1].status)
+        assertEquals(StepStatus.FAILED, echo.onStepEvent("清体力", "failed", null).of(StepId.POWER).status)
     }
 
     @Test
     fun finishingMarksOnlyTheRunningStep() {
         val running = plannedSteps(TaskId.ROUTINE, TaskConfig(), monday)
+            .onStepEvent("兑换码", "started", null).onStepEvent("兑换码", "succeeded", null)
             .onStepEvent("清体力", "started", null).onStepEvent("清体力", "succeeded", null)
             .onStepEvent("日常领奖", "started", null)
 
         assertEquals(
-            listOf(StepStatus.DISABLED, StepStatus.DONE, StepStatus.STOPPED, StepStatus.PENDING),
+            listOf(
+                StepStatus.DONE, StepStatus.DISABLED, StepStatus.DISABLED,
+                StepStatus.DONE, StepStatus.STOPPED, StepStatus.PENDING,
+            ),
             running.finished("stopped").map { it.status },
         )
         val failed = running.finished("device_asleep")
-        assertEquals(StepResult(StepId.REWARDS, "日常领奖", StepStatus.FAILED), failed[2])
-        assertEquals(StepStatus.PENDING, failed[3].status)
+        assertEquals(StepResult(StepId.REWARDS, "日常领奖", StepStatus.FAILED), failed.of(StepId.REWARDS))
+        assertEquals(StepStatus.PENDING, failed.of(StepId.DAILY).status)
     }
 
     @Test

@@ -32,6 +32,10 @@ class TaskModelTest {
         ),
         "use_reserved_trailblaze_power" to false,
         "use_fuel" to false,
+        "build_target_enable" to false,
+        "build_target_scheme" to "instance",
+        "build_target_ornament_weekly_count" to 1,
+        "build_target_use_user_instance_when_only_erosion_and_ornament" to false,
         "instance_team_enable" to false,
         "instance_team_number" to "6",
         "instance_teams" to emptyList<Any>(),
@@ -53,6 +57,7 @@ class TaskModelTest {
         "reward_assist_enable" to true,
         "reward_quest_enable" to true,
         "reward_srpass_enable" to true,
+        "reward_redemption_code_enable" to true,
         "reward_message_enable" to false,
         "daily_enable" to true,
         "daily_material_enable" to true,
@@ -72,6 +77,10 @@ class TaskModelTest {
         instanceNames = TaskConfig.DEFAULT_INSTANCE_NAMES + mapOf(
             InstanceType.CAVERN to "霜风之径", InstanceType.STAGNANT_SHADOW to "巽风之形", InstanceType.ORNAMENT to "已下架",
         ),
+        buildTarget = true,
+        buildTargetScheme = BuildTargetScheme.DROP,
+        ornamentDays = 0,
+        targetFallback = true,
         reserve = true,
         fuel = true,
         teamEnable = true,
@@ -93,6 +102,7 @@ class TaskModelTest {
         assist = false,
         quest = false,
         srpass = false,
+        redemption = false,
         message = true,
         dailyEnable = false,
         synthesis = false,
@@ -103,7 +113,7 @@ class TaskModelTest {
         val settings = TaskConfig().toSettings(catalog)
 
         assertEquals(defaultSettings, settings)
-        assertEquals(30, settings.size)
+        assertEquals(35, settings.size)
         assertEquals("6", settings["instance_team_number"])
     }
 
@@ -122,6 +132,10 @@ class TaskModelTest {
             ),
             "use_reserved_trailblaze_power" to true,
             "use_fuel" to true,
+            "build_target_enable" to true,
+            "build_target_scheme" to "drop",
+            "build_target_ornament_weekly_count" to 0,
+            "build_target_use_user_instance_when_only_erosion_and_ornament" to true,
             "instance_team_enable" to true,
             "instance_team_number" to "12",
             "instance_teams" to listOf(mapOf("instance_name" to "霜风之径", "team_number" to 3)),
@@ -143,6 +157,7 @@ class TaskModelTest {
             "reward_assist_enable" to false,
             "reward_quest_enable" to false,
             "reward_srpass_enable" to false,
+            "reward_redemption_code_enable" to false,
             "reward_message_enable" to true,
             "daily_enable" to false,
             "daily_material_enable" to false,
@@ -178,6 +193,7 @@ class TaskModelTest {
         assertEquals(TaskConfig(), decodeTaskConfig("[1, 2]"))
         val partial = decodeTaskConfig(
             """{"fuel": true, "teamNumber": 13, "echoStartDay": 0, "instanceType": "ECHO", "borrowScrollTimes": "5",
+               "ornamentDays": 8, "buildTargetScheme": "OCR", "redemption": "false",
                "powerPlan": [["ECHO", "寒潭指月", 0], ["CAVERN", "睿治之径", 2], ["UNKNOWN", "x", 1], ["CAVERN", "", 1]],
                "challengeCounts": {"CAVERN": 7, "ECHO": 2}, "supports": [["March7th", ""], ["March7th", "重复"]]}"""
         )
@@ -211,6 +227,8 @@ class TaskModelTest {
             TaskConfig(borrowScrollTimes = 11),
             TaskConfig(echoStartDay = 0),
             TaskConfig(echoStartDay = 8),
+            TaskConfig(ornamentDays = -1),
+            TaskConfig(ornamentDays = 8),
             TaskConfig(challengeCounts = TaskConfig.DEFAULT_CHALLENGE_COUNTS + (InstanceType.STAGNANT_SHADOW to 9)),
             TaskConfig(challengeCounts = TaskConfig.DEFAULT_CHALLENGE_COUNTS + (InstanceType.ECHO to 0)),
         )

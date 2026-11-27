@@ -286,10 +286,10 @@ def test_detail_retry_shares_deadline_and_stop_with_input(mobile, fault, stopped
 
 
 @pytest.mark.parametrize("platform,backend,expected", [
-    ("win32", "adb", True), ("linux", "adb", True), ("android", "adb", False),
+    ("win32", "adb", True), ("linux", "adb", True), ("android", "adb", True),
     ("win32", "cloud", False),
 ])
-def test_desktop_adb_only_exposes_and_uses_build_targets(monkeypatch, platform, backend, expected):
+def test_adb_exposes_and_uses_build_targets(monkeypatch, platform, backend, expected):
     config = SampleConfig()
     config.set_values({"control_backend": backend, "ui_profile": "touch_720"})
     monkeypatch.setattr(sys, "platform", platform)
@@ -322,19 +322,18 @@ def test_adb_power_uses_shared_target_after_the_power_plan(monkeypatch, continue
     assert lookup.call_count == int(continue_plan)
 
 
-def test_adb_weekly_echo_uses_target_and_android_keeps_its_setting(monkeypatch):
+@pytest.mark.parametrize("platform", ["win32", "android"])
+def test_adb_weekly_echo_uses_the_target(monkeypatch, platform):
     config = SampleConfig()
     config.set_values({"control_backend": "adb", "ui_profile": "touch_720", "build_target_enable": True,
                        "echo_of_war_start_day_of_week": 1, "instance_names": {ECHO: "不死的神实"}})
     monkeypatch.setattr(power, "cfg", config)
+    monkeypatch.setattr(sys, "platform", platform)
     monkeypatch.setattr(shared.BuildTarget, "get_target_echo_instance", Mock(return_value=(ECHO, "毁灭的开端")))
     runs = Mock(return_value=iter(()))
     monkeypatch.setattr(power, "_run_instance", runs)
     assert power.run_weekly_echo()
     assert runs.call_args.args == (ECHO, "毁灭的开端", None)
-    monkeypatch.setattr(sys, "platform", "android")
-    assert power.run_weekly_echo()
-    assert runs.call_args.args == (ECHO, "不死的神实", None)
 
 
 def test_adb_retry_prepares_targets_before_echo_without_other_tasks(monkeypatch):

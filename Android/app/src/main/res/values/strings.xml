@@ -3,11 +3,13 @@
 <resources>
     <string name="app_name">三月七小助手</string>
 
-    <!-- 任务和步骤。步骤名里的「领取奖励」对应 Python 的「日常领奖」。 -->
+    <!-- 任务和步骤。步骤名里的「领取奖励」对应 Python 的「日常领奖」，「读取培养目标」对应「培养目标」。 -->
     <string name="routine">日常</string>
     <string name="daily">每日实训</string>
     <string name="rewards">领取奖励</string>
     <string name="power">清体力</string>
+    <string name="redemption">兑换码</string>
+    <string name="step_build_target">读取培养目标</string>
     <string name="list_separator">、</string>
     <string name="step_separator">" → "</string>
 
@@ -144,6 +146,8 @@
     <string name="task_daily_nothing">现在什么都不会做</string>
     <string name="task_power_default">一直刷「%1$s」，直到开拓力不够再打一次</string>
     <string name="task_power_plan_then_default">先打体力计划（%1$s），再刷「%2$s」到开拓力不够</string>
+    <string name="task_power_target">按培养目标刷到开拓力不够，读不到时刷「%1$s」</string>
+    <string name="task_power_plan_then_target">先打体力计划（%1$s），再按培养目标刷到开拓力不够</string>
     <string name="task_power_plan_only">只打体力计划（%1$s）</string>
     <string name="task_power_uses_reserve">会使用后备开拓力</string>
     <string name="task_power_uses_fuel">会使用燃料</string>
@@ -152,8 +156,8 @@
     <string name="tasks_idle_warning">所选任务现在什么都不会做。到下面的设置里打开要做的事，或者换一个任务。</string>
     <string name="tasks_settings">设置</string>
     <string name="tasks_settings_shared">三个任务共用，改一次就行</string>
-    <string name="tasks_order_note">「日常」按历战余响、清体力、领取奖励、每日实训的顺序执行。某一步没完成，后面的照常继续。</string>
-    <string name="tasks_scope_note">兑换码、货币战争和差分宇宙等其他任务尚未支持，请使用电脑版。</string>
+    <string name="tasks_order_note">「日常」按兑换码、读取培养目标、历战余响、清体力、领取奖励、每日实训的顺序执行。某一步没完成，后面的照常继续。</string>
+    <string name="tasks_scope_note">货币战争和差分宇宙等其他任务尚未支持，请使用电脑版。</string>
     <string name="task_expand">展开选项</string>
     <string name="task_collapse">收起选项</string>
     <string name="state_expanded">已展开</string>
@@ -164,11 +168,24 @@
 
     <!-- 清体力设置。名称沿用电脑版设置页。 -->
     <string name="option_power_enable">启用清体力</string>
-    <string name="option_power_enable_summary">关闭后，「日常」会跳过历战余响和清体力。单独运行「清体力」不受影响。</string>
+    <string name="option_power_enable_summary">关闭后，「日常」会跳过读取培养目标、历战余响和清体力。单独运行「清体力」不受影响。</string>
     <string name="option_plan">体力计划</string>
     <string name="option_plan_summary">想先打别的副本几次，就加到这里。</string>
     <string name="plan_none">没有计划</string>
     <string name="plan_size">%1$d 项，共 %2$d 次</string>
+    <string name="option_build_target">启用培养目标</string>
+    <string name="option_build_target_summary">清体力和历战余响按游戏里的培养目标选副本，读不到时用下面选的副本。</string>
+    <string name="option_build_target_scheme">识别方案</string>
+    <string name="option_build_target_scheme_summary">读错副本时可以换另一种。</string>
+    <string name="build_target_scheme_instance">副本名称识别</string>
+    <string name="build_target_scheme_instance_detail">逐个进入副本页读取名称</string>
+    <string name="build_target_scheme_drop">掉落物识别</string>
+    <string name="build_target_scheme_drop_detail">按列表里的掉落物匹配副本</string>
+    <string name="option_target_fallback">只剩遗器副本时改刷所选副本</string>
+    <string name="option_target_fallback_summary">培养目标只剩侵蚀隧洞和饰品提取时，改刷下面「副本名称」里选的副本。</string>
+    <string name="option_ornament_days">每周饰品提取天数</string>
+    <string name="option_ornament_days_summary">培养目标只剩侵蚀隧洞和饰品提取时，每周最后几天刷饰品提取，其余几天刷侵蚀隧洞。</string>
+    <string name="power_group_target">按培养目标刷，读不到时刷「%1$s」</string>
     <string name="option_instance_type">副本类型</string>
     <string name="option_instance">副本名称</string>
     <string name="instance_golden_calyx">拟造花萼（金）</string>
@@ -180,6 +197,7 @@
     <string name="instance_cost">每次挑战 %1$d 开拓力</string>
     <string name="option_instance_summary">%1$s · %2$s</string>
     <string name="option_instance_note">开拓力会一直用在这个副本上，直到不够再打一次。</string>
+    <string name="option_instance_note_target">读不到培养目标时，开拓力会一直用在这个副本上，直到不够再打一次。</string>
     <string name="instance_search">搜索副本</string>
     <string name="option_reserve">使用后备开拓力</string>
     <string name="option_reserve_summary">每打一项副本前补一次，取出游戏弹窗允许的最大数量。</string>
@@ -245,6 +263,7 @@
     <string name="option_quest_summary">领取每日实训的活跃度和已达成的档位礼盒。</string>
     <string name="option_srpass">无名勋礼</string>
     <string name="option_srpass_summary">领取无名勋礼任务的经验。付费档还没解锁时，也领取等级奖励。</string>
+    <string name="option_redemption_summary">获取最新的兑换码并兑换，兑换时会覆盖剪贴板内容</string>
     <string name="option_message">短信</string>
     <string name="option_message_summary">回复未读短信并领取奖励，有多个回复时选第一个</string>
     <string name="rewards_off">不领取奖励</string>

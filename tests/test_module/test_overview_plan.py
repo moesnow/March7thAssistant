@@ -34,7 +34,7 @@ def legacy(cfg, *, touch, full):
     if not touch:
         if cfg.power_enable:
             result.append("relic_cleanup")
-    if cfg.build_target_enable and (not touch or cfg.control_backend == "adb"):
+    if cfg.build_target_enable and (not touch or (cfg.control_backend == "adb" and cfg.power_enable)):
         result.append("build_target")
     has_activity = cfg.activity_enable and (cfg.activity_gardenofplenty_enable or
                                             cfg.activity_realmofthestrange_enable or cfg.activity_planarfissure_enable)
