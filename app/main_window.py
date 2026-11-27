@@ -551,28 +551,35 @@ class MainWindow(FluentWindow):
         return (self._evernight.unlocked and cfg.get_value('ui_theme') == 'evernight'
                 and self._prepare_evernight())
 
-    def _apply_ui_theme(self, evernight_selected):
+    def _apply_ui_theme(self, evernight_selected, *, play_intro=False):
         selection_changed = evernight_selected != self._evernight.selected
         previous_palette = qconfig.theme
         self._evernight.selected = evernight_selected
+        if selection_changed:
+            self._evernight.animation_pending = play_intro
+            self._evernight.reset_clicks()
+            self.homeInterface.dismissLogoHint()
         applyTheme(self)
         # 深色和长夜共用调色板，切换时 Qt 可能不发出 themeChanged。
         if selection_changed and qconfig.theme == previous_palette:
             self._on_theme_changed()
 
-    def set_ui_theme(self, preference, *, unlock_evernight=False):
+    def set_ui_theme(self, preference, *, from_easter_egg=False):
         if cfg.writes_suspended:
             return False
         selected = preference == 'evernight'
-        if selected and (not self._evernight.unlocked or not self._prepare_evernight()):
+        first_unlock = selected and from_easter_egg and not self._evernight.unlocked
+        if selected and not (self._evernight.unlocked or first_unlock):
+            return False
+        if selected and not self._prepare_evernight():
             return False
 
         values = {'ui_theme': preference}
-        if unlock_evernight:
+        if first_unlock:
             values['evernight_unlocked'] = True
         previous = {key: cfg.config[key] for key in values if key in cfg.config}
         try:
-            if unlock_evernight:
+            if first_unlock:
                 cfg.set_values(values)
             else:
                 cfg.set_value('ui_theme', preference)
@@ -583,7 +590,9 @@ class MainWindow(FluentWindow):
             log.warning(f'无法保存界面主题：{error}')
             return False
 
-        self._apply_ui_theme(selected)
+        if first_unlock:
+            self._evernight.unlocked = True
+        self._apply_ui_theme(selected, play_intro=selected and from_easter_egg)
         return True
 
     def _on_theme_changed(self):
@@ -591,8 +600,8 @@ class MainWindow(FluentWindow):
         if not selected and self._evey_animation is not None:
             self._evey_animation.close()  # closed 回调按当前主题统一刷新。
             return
-        # 首次动画到中点时替换角色，动画继续；之后随主题即时切换。
-        active = (selected and self._evernight.animation_played
+        # 彩蛋动画到中点时替换角色；从设置切换主题时立即替换。
+        active = (selected and not self._evernight.animation_pending
                   and (self._evey_animation is None
                        or self._evey_animation.timeline.currentValue() >= 0.5))
         if active != self._evernight_active:
@@ -606,8 +615,8 @@ class MainWindow(FluentWindow):
         self._evey_settings_decoration.setActive(active)
         self.homeInterface.setEvernightMode(active, animate=self._evey_animation is not None)
         self._refreshWindowTitleBar()
-        # 先让深色三月七界面重绘，再播放首次替换动画。
-        if selected and not self._evernight.animation_played:
+        # 先让深色三月七界面重绘，再播放替换动画。
+        if self._evernight.animation_pending:
             QTimer.singleShot(0, self._play_evey_animation)
 
     def _on_logo_clicked(self):
@@ -615,19 +624,19 @@ class MainWindow(FluentWindow):
         if result == 'warning':
             self.homeInterface.playLogoHint()
             return
-        if result != 'unlocked':
+        if result != 'triggered':
             return
-        self.homeInterface.dismissLogoHint()
-        if not self.set_ui_theme('evernight', unlock_evernight=True):
-            self._evernight.unlocked = False
+        if not self.set_ui_theme('evernight', from_easter_egg=True):
+            self.homeInterface.dismissLogoHint()
             return
         self.settingInterface.themeCard.showEvernightOption()
 
     def _play_evey_animation(self):
         if not self.isVisible() or self.isMinimized():
             return
-        if not self._evernight.consume_animation(self._evernight.selected):
+        if not self._evernight.animation_pending:
             return
+        self._evernight.animation_pending = False
         animation = EveyAnimation(self)
         self._evey_animation = animation
         animation.midpointReached.connect(self._on_theme_changed)
@@ -958,7 +967,7 @@ class MainWindow(FluentWindow):
         if self._defer_startup_checks:
             self._defer_startup_checks = False
             self._scheduleStartupChecks()
-        if self._evernight.unlocked and not self._evernight.animation_played:
+        if self._evernight.animation_pending:
             QTimer.singleShot(0, self._play_evey_animation)
 
     def _show_main_window(self):

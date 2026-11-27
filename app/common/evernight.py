@@ -1,4 +1,4 @@
-"""Logo click sequence and first-unlock animation state."""
+"""Logo click sequence and Evernight theme state."""
 from collections import deque
 from time import monotonic
 
@@ -13,30 +13,25 @@ class EvernightEasterEgg:
         self._warning_until = None
         self.unlocked = unlocked
         self.selected = False
-        self.animation_played = unlocked
+        self.animation_pending = False
+
+    def reset_clicks(self):
+        self._clicks.clear()
+        self._warning_until = None
 
     def record_click(self):
-        """Five quick clicks warn; five more within the warning unlock the egg."""
-        if self.unlocked:
+        """Five quick clicks warn; five more within the warning trigger the egg."""
+        if self.selected:
             return None
         now = self._clock()
         if self._warning_until is not None and now > self._warning_until:
-            self._warning_until = None
-            self._clicks.clear()
+            self.reset_clicks()
         self._clicks.append(now)
         if len(self._clicks) == 5 and now - self._clicks[0] <= 5:
             self._clicks.clear()
             if self._warning_until is None:
                 self._warning_until = now + 5
                 return 'warning'
-            self.unlocked = True
             self._warning_until = None
-            return 'unlocked'
+            return 'triggered'
         return None
-
-    def consume_animation(self, selected):
-        """Claim the first-unlock animation while the theme is selected."""
-        if not selected or not self.unlocked or self.animation_played:
-            return False
-        self.animation_played = True
-        return True

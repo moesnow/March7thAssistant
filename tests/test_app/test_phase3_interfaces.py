@@ -124,7 +124,6 @@ def test_pages_keep_theme_language_and_task_state(window, editable, qtbot):
     window._search_popup.close()
     window.taskInterface.showTask("assets")
     window.taskInterface.pages["assets"].views["relics"].setExpanded(True)
-    window._evernight.animation_played = True
     for theme in ("light", "dark", "evernight"):
         assert window.set_ui_theme(theme)
         assert len(window.settingInterface.pages) == len(window.taskInterface.pages) == 10

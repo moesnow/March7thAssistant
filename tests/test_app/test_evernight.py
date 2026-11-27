@@ -20,7 +20,8 @@ from module.config import cfg
 from tests.test_app.test_language_switch import window, switch_language
 
 
-@pytest.mark.parametrize('times,warnings,unlocked', [
+@pytest.mark.parametrize('unlocked', [False, True])
+@pytest.mark.parametrize('times,warnings,triggered', [
     ([0, 1, 2, 3], 0, False),
     ([0, 1, 2, 3, 5], 1, False),
     ([0, 1, 2, 3, 5.001], 0, False),
@@ -30,19 +31,12 @@ from tests.test_app.test_language_switch import window, switch_language
     ([0, 1, 2, 3, 4, 8, 8.2, 8.4, 8.6, 9.001, 9.2, 9.4, 9.6, 9.8,
       10, 10.2, 10.4, 10.6, 10.8], 2, True),
 ])
-def test_two_five_click_windows_and_expired_sequence(times, warnings, unlocked):
+def test_two_five_click_windows_and_expired_sequence(times, warnings, triggered, unlocked):
     clock = iter(times)
-    state = EvernightEasterEgg(clock=lambda: next(clock))
+    state = EvernightEasterEgg(clock=lambda: next(clock), unlocked=unlocked)
     results = [state.record_click() for _ in times]
-    assert state.unlocked is unlocked
     assert results.count('warning') == warnings
-    assert results.count('unlocked') == int(unlocked)
-    if unlocked:
-        assert state.record_click() is None
-    assert state.consume_animation(False) is False
-    assert state.consume_animation(True) is unlocked
-    assert state.consume_animation(True) is False
-    assert EvernightEasterEgg().unlocked is False
+    assert results.count('triggered') == int(triggered)
 
 
 
@@ -211,7 +205,7 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
     assert window.windowTitle() == 'March7th Assistant'
     combo.setCurrentIndex(combo.findData('evernight'))
     assert window.windowTitle() == 'Evernight Assistant'
-    assert window._evey_animation is None  # the intro only plays on first unlock
+    assert window._evey_animation is None  # Selecting the theme in settings skips the intro.
     start_task.assert_not_called()
     assert [call.args for call in cfg.set_value.call_args_list] == [
         ('ui_theme', 'light'), ('ui_theme', 'dark'), ('ui_theme', 'evernight'),
@@ -239,7 +233,6 @@ def test_tenth_logo_click_saves_unlock_and_theme(
         setTheme(Theme.LIGHT)
         setTheme(Theme.DARK)
     assert not window._evernight.unlocked
-    assert not window._evernight.animation_played
     check_theme_change.applyTheme(window)
     original_dark = isDarkTheme()
     click_logo(window, qtbot, 5)
@@ -257,7 +250,6 @@ def test_tenth_logo_click_saves_unlock_and_theme(
     assert combo.currentText() == '长夜'
     cfg.set_value.assert_not_called()
     cfg.set_values.assert_called_once_with({'ui_theme': 'evernight', 'evernight_unlocked': True})
-    assert window._evernight.animation_played
     assert window._evey_animation is not None
     check_theme_change.applyTheme(window, Theme.LIGHT)  # System events cannot override Evernight.
     assert isDarkTheme()
@@ -274,9 +266,24 @@ def test_tenth_logo_click_saves_unlock_and_theme(
     assert window.windowTitle() == 'March7th Assistant'
     assert isDarkTheme() is (system_dark if cancel_theme == 'auto' else cancel_theme == 'dark')
     writes_before = cfg.set_value.call_count
-    click_logo(window, qtbot, 10)
-    assert combo.currentData() == cancel_theme  # Later logo clicks do not override the user's choice.
+    click_logo(window, qtbot, 5)
+    assert window.homeInterface.greeting.logoHint.isVisible()
+    click_logo(window, qtbot, 4)
+    assert combo.currentData() == cancel_theme
     assert cfg.set_value.call_count == writes_before
+    click_logo(window, qtbot)
+    assert combo.currentData() == 'evernight'
+    assert window.homeInterface.greeting.logoHint.isHidden()
+    cfg.set_value.assert_called_with('ui_theme', 'evernight')
+    assert cfg.set_value.call_count == writes_before + 1
+    cfg.set_values.assert_called_once_with({'ui_theme': 'evernight', 'evernight_unlocked': True})
+    replay = window._evey_animation
+    replay.timeline.setCurrentTime(replay.DURATION_MS // 2)
+    assert window.windowTitle() == 'Evernight Assistant'
+    replay.close()
+    click_logo(window, qtbot, 10)
+    assert window._evey_animation is None and window.homeInterface.greeting.logoHint.isHidden()
+    assert cfg.set_value.call_count == writes_before + 1
     combo.setCurrentIndex(combo.findData('dark'))
     assert window.windowTitle() == 'March7th Assistant'
     combo.setCurrentIndex(combo.findData('evernight'))
@@ -343,8 +350,13 @@ def test_unlocked_theme_survives_settings_reload_and_restart(window, qtbot, monk
         assert restarted.windowTitle() == 'March7th Assistant'
         assert qconfig.get(qconfig.themeColor).name() == MARCH7TH_PINK
         assert evernight_artwork.cache_info().currsize == 0
-        combo.setCurrentIndex(combo.findData('evernight'))
-        assert cfg._read_file_config()['ui_theme'] == 'evernight'
+        restarted.show()
+        click_logo(restarted, qtbot, 10)
+        assert combo.currentData() == 'evernight'
+        saved = cfg._read_file_config()
+        assert saved['evernight_unlocked'] is True and saved['ui_theme'] == 'evernight'
+        replay = restarted._evey_animation
+        replay.timeline.setCurrentTime(replay.DURATION_MS)
     assert restarted.windowTitle() == 'Evernight Assistant'
     assert restarted.homeInterface.greeting._mode() == 'evernight'
     assert qconfig.get(qconfig.themeColor).name() == EVERNIGHT_RED
@@ -352,20 +364,26 @@ def test_unlocked_theme_survives_settings_reload_and_restart(window, qtbot, monk
 
 
 @pytest.mark.parametrize('writes_suspended', [False, True])
-def test_unlock_can_be_retried_when_config_is_unwritable(window, qtbot, monkeypatch, writes_suspended):
+@pytest.mark.parametrize('window', [
+    {'ui_theme': 'light', 'evernight_unlocked': False}, {'ui_theme': 'light', 'evernight_unlocked': True},
+], indirect=True)
+def test_logo_can_be_retried_when_config_is_unwritable(window, qtbot, monkeypatch, writes_suspended):
+    monkeypatch.setattr(cfg, 'set_value', type(cfg).set_value.__get__(cfg))
     monkeypatch.setattr(cfg, 'set_values', type(cfg).set_values.__get__(cfg))
     cfg.save_config()
     combo = window.settingInterface.themeCard.comboBox
     previous = combo.currentData()
+    unlocked = window._evernight.unlocked
     with monkeypatch.context() as blocked:
         if writes_suspended:
             blocked.setattr(cfg, 'writes_suspended', True)
         else:
             blocked.setattr(cfg, 'save_config', Mock(side_effect=PermissionError('配置文件不可写')))
         click_logo(window, qtbot, 10)
-    assert not window._evernight.unlocked
-    assert combo.findData('evernight') < 0 and combo.currentData() == previous
-    assert cfg.get_value('evernight_unlocked') is False
+    assert window._evernight.unlocked is unlocked
+    assert (combo.findData('evernight') >= 0) is unlocked
+    assert combo.currentData() == previous and window._evey_animation is None
+    assert cfg.get_value('evernight_unlocked') is unlocked
     assert cfg.get_value('ui_theme') == previous
 
     click_logo(window, qtbot, 10)
