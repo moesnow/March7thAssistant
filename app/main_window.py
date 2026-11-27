@@ -1,8 +1,10 @@
 from utils.game_options import game_option_enabled
 from utils.desktop_twin import in_desktop_twin
-from PySide6.QtCore import Qt, QSize, QPoint, QFileSystemWatcher, Signal, QObject, QTimer, QThread, QSignalBlocker, QEvent, QVariantAnimation
+from PySide6.QtCore import (QAbstractAnimation, QEasingCurve, QEvent, QFileSystemWatcher, QObject, QPoint, QSignalBlocker,
+                            QSize, QThread, QTimer, Qt, Signal, QVariantAnimation)
 from PySide6.QtGui import QAction, QKeySequence, QPainter, QShortcut
-from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsEffect, QWidget, QStackedWidget
+from PySide6.QtWidgets import (QAbstractScrollArea, QApplication, QGraphicsEffect, QHBoxLayout, QLabel, QStackedWidget,
+                               QSystemTrayIcon, QVBoxLayout, QWidget)
 
 from .components.evey_decoration import EveyControlDecoration, EveyTitleDecoration
 from .common.accent import MARCH7TH_PINK, EVERNIGHT_RED, set_accent_color
@@ -768,8 +770,34 @@ class MainWindow(FluentWindow):
         self.switchTo(page)
         return True
 
+    def switchTo(self, interface):
+        # 和 Fluent 的页面切换一样，打开整页滚动区域时先回到顶部。
+        if isinstance(interface, QAbstractScrollArea):
+            interface.verticalScrollBar().setValue(0)
+        self.stackedWidget.view.setCurrentWidget(interface, duration=150)
+
+    @staticmethod
+    def _speedUpNavigationIndicator(navigation):
+        motion = navigation.panel.indicator.scaleSlideAni
+
+        def shorten(state, _previous):
+            if state != QAbstractAnimation.State.Running:
+                return
+            # Fluent 每次启动都会重设时长和曲线，所以在动画组开始时调整。
+            for animation in (motion.slidePosAni1, motion.slideLengthAni1):
+                animation.setDuration(55)
+                animation.setEasingCurve(QEasingCurve.Type.OutQuad)
+            for animation in (motion.slidePosAni2, motion.slideLengthAni2):
+                animation.setDuration(105)
+            for animation in (motion.crossPosAni, motion.crossLenAni):
+                animation.setDuration(160)
+
+        motion.slideAniGroup.stateChanged.connect(shorten)
+        motion.crossAniGroup.stateChanged.connect(shorten)
+
     def initNavigation(self):
         navigation = self.navigationInterface
+        self._speedUpNavigationIndicator(navigation)
         navigation.setReturnButtonVisible(False)
         # 侧栏常驻展开：只看图标很难分辨页面。标题栏占满窗口宽度，侧栏从标题栏下方开始。
         navigation.setMenuButtonVisible(False)
