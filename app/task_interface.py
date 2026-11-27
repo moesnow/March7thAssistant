@@ -264,7 +264,9 @@ class TaskInterface(QWidget):
         return state
 
     def restoreViewState(self, state):
-        # 目标任务的页面要先建出来，否则它的展开状态和滚动位置无处还原。
+        # 状态里出现过的任务页要全部建出来，否则切语言后已看过的任务会丢展开状态和滚动位置。
+        for task_id in state.get("scroll", {}):
+            self.ensurePage(task_id)
         self.ensurePage(state.get("task"))
         for task_id, page in self.pages.built().items():
             for key, expanded in state.get("sections", {}).get(task_id, {}).items():

@@ -348,7 +348,9 @@ class SettingInterface(QWidget):
         return state
 
     def restoreViewState(self, state):
-        # 目标分类要先建出来，否则它的展开状态和滚动位置无处还原。
+        # 状态里出现过的分类要全部建出来，否则切语言后已看过的分类会丢展开状态和滚动位置。
+        for key in state.get("scroll", {}):
+            self.ensurePage(key)
         self.ensurePage(state.get("category"))
         for key, page in self.pages.built().items():
             for sid, expanded in state.get("sections", {}).get(key, {}).items():

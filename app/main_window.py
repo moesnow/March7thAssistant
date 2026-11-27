@@ -65,6 +65,25 @@ def fit_menu_width(menu):
     menu.adjustSize()
 
 
+def _lazy_interface(name):
+    """把页面属性改成「取用时才构建」。
+
+    启动时先只建总览，其余页面等第一次显示或第一次被访问时再构造；构建前的
+    赋值（例如语言切换时替换设置页）直接写进页面表，不会触发多余构建。
+    """
+
+    def fget(self):
+        page = self.ensurePage(name)
+        if page is None:
+            raise AttributeError(name)
+        return page
+
+    def fset(self, widget):
+        self._pages[name] = widget
+
+    return property(fget, fset)
+
+
 class ConfigWatcher(QObject):
     """配置文件监视器"""
     config_changed = Signal()
@@ -217,9 +236,19 @@ class NavIconDecoration(EveyControlDecoration):
 
 class MainWindow(FluentWindow):
     TASK_EXIT_DELAY_MS = 5000
+    # 这些页面启动时先放占位页，取用时才真正构造（见 _lazy_interface）。
+    taskInterface = _lazy_interface('taskInterface')
+    settingInterface = _lazy_interface('settingInterface')
+    warpInterface = _lazy_interface('warpInterface')
+    toolsInterface = _lazy_interface('toolsInterface')
+    workflowInterface = _lazy_interface('workflowInterface')
+    helpInterface = _lazy_interface('helpInterface')
 
     def __init__(self, task=None, exit_on_complete=False, start_minimized_to_tray=False):
         super().__init__()
+        self._pages = {}  # 已构建的页面，键是页面属性名
+        self._page_slots = {}  # 未构建页面的占位控件，占住导航和堆栈位置
+        self._page_builders = {}
         self._desktop_twin_hosting = False
         self._desktop_twin_tray_action = None
         self._desktop_twin_notice = None
@@ -590,10 +619,6 @@ class MainWindow(FluentWindow):
         from app.content.account_model import AccountModel
         self.accountModel = AccountModel(self)
         self.homeInterface = OverviewInterface(self)
-        self.helpInterface = HelpInterface(self)
-        self.warpInterface = WarpInterface(self)
-        self.toolsInterface = ToolsInterface(self)
-        self.workflowInterface = WorkflowInterface(self)
         self.runController = RunController(self)
         self.logInterface = RunInterface(self)
         self.homeInterface.attachModel(OverviewModel(self, config_changed=self.config_watcher.request_check))
@@ -601,9 +626,24 @@ class MainWindow(FluentWindow):
         self._search_popup = None
         self.searchIndex = SearchIndex(cfg)
         self.destroyed.connect(self.searchIndex.close)
-        self.taskInterface = TaskInterface(self)
         self.accountsInterface = AccountsInterface(self)
-        self.settingInterface = SettingInterface(self)
+        # 设置页和任务页原本在构造时顺手创建这两个模型，页面改为按需构建后由
+        # 主窗口先建好，向导模型和搜索在启动阶段就会用到它们。
+        from .content.notify_model import NotifyModel
+        from .content.task_model import TaskModel
+        from .pages.common import shared
+        self.notifyModel = shared(self, 'notifyModel', lambda: NotifyModel(self))
+        self.taskModel = shared(self, 'taskModel', lambda: TaskModel(self))
+        # 其余页面在首次显示或首次被访问时构造：十个分类/任务全建要 1 秒以上，
+        # 而启动后只会显示总览。
+        self._page_builders = {
+            'taskInterface': lambda: TaskInterface(self),
+            'settingInterface': lambda: SettingInterface(self),
+            'warpInterface': lambda: WarpInterface(self),
+            'toolsInterface': lambda: ToolsInterface(self),
+            'workflowInterface': lambda: WorkflowInterface(self),
+            'helpInterface': lambda: HelpInterface(self),
+        }
         self.accountModel.bindingChanged.connect(self._accountBindingChanged)
         self.accountModel.changed.connect(self.homeInterface.model.request_refresh)
         self.accountModel.changed.connect(self.runController.changed)
@@ -624,6 +664,57 @@ class MainWindow(FluentWindow):
         # 连接自动对话切换信号
         self.runController.autoplotToggleRequested.connect(self._onAutoplotToggleRequested)
 
+    def _addLazySubInterface(self, name, icon, text, position):
+        """先放一个占位页占住导航和堆栈位置，页面在取用时才真正构造。"""
+        slot = QWidget(self)
+        slot.setObjectName(name)
+        slot.setProperty('isStackedTransparent', False)
+        self.stackedWidget.addWidget(slot)
+        self._page_slots[name] = slot
+        self.navigationInterface.addItem(
+            routeKey=name, icon=icon, text=text,
+            onClick=lambda: self.openPage(name), position=position,
+        )
+
+    def ensurePage(self, name):
+        """构建页面并顶替占位页；已构建则直接返回。"""
+        page = self._pages.get(name)
+        if page is not None:
+            return page
+        builder = self._page_builders.get(name)
+        if builder is None:
+            return None
+        page = builder()
+        # 构造成功后才摘除构建器：构造失败时下次访问仍会重试，不会把页面变成死键。
+        self._page_builders.pop(name, None)
+        page.setProperty('isStackedTransparent', False)
+        slot = self._page_slots.pop(name, None)
+        if slot is not None:
+            self._swap_slot(slot, page)
+        self._pages[name] = page
+        return page
+
+    def _swap_slot(self, slot, page):
+        """用真正的页面顶替占位页，过程中不发出导航事件。"""
+        view = self.stackedWidget.view
+        was_current = self.stackedWidget.currentWidget() is slot
+        with QSignalBlocker(self.stackedWidget):
+            view.addWidget(page)
+            view.removeWidget(slot)
+            if was_current:
+                # 绕过 Fluent 的 switchTo，它会清零滚动位置。
+                view.setCurrentWidget(page)
+        slot.deleteLater()
+        self._updateStackedBackground()
+
+    def openPage(self, name):
+        """导航项点击入口：确保页面已构建再切换。"""
+        page = self.ensurePage(name)
+        if page is None:
+            return False
+        self.switchTo(page)
+        return True
+
     def initNavigation(self):
         navigation = self.navigationInterface
         navigation.setReturnButtonVisible(False)
@@ -639,13 +730,13 @@ class MainWindow(FluentWindow):
         self.searchBox = NavigationSearchBox(self)
         navigation.addWidget('searchBox', self.searchBox, self.openSearch, NavigationItemPosition.TOP)
         self.addSubInterface(self.homeInterface, FIF.HOME, tr('总览'))
-        self.addSubInterface(self.taskInterface, FIF.CHECKBOX, tr('任务'))
+        self._addLazySubInterface('taskInterface', FIF.CHECKBOX, tr('任务'), NavigationItemPosition.TOP)
         self.addSubInterface(self.logInterface, FIF.COMMAND_PROMPT, tr('运行'))
-        self.addSubInterface(self.warpInterface, FIF.SHARE, tr('抽卡记录'))
-        self.addSubInterface(self.toolsInterface, FIF.DEVELOPER_TOOLS, tr('工具箱'))
-        self.addSubInterface(self.workflowInterface, FIF.CODE, tr('流程编排'))
+        self._addLazySubInterface('warpInterface', FIF.SHARE, tr('抽卡记录'), NavigationItemPosition.TOP)
+        self._addLazySubInterface('toolsInterface', FIF.DEVELOPER_TOOLS, tr('工具箱'), NavigationItemPosition.TOP)
+        self._addLazySubInterface('workflowInterface', FIF.CODE, tr('流程编排'), NavigationItemPosition.TOP)
         navigation.addSeparator()
-        self.addSubInterface(self.helpInterface, FIF.BOOK_SHELF, tr('帮助'))
+        self._addLazySubInterface('helpInterface', FIF.BOOK_SHELF, tr('帮助'), NavigationItemPosition.TOP)
         # self.addSubInterface(self.changelogInterface, FIF.UPDATE, '更新日志')
 
         navigation.addItem('startGameButton', FIF.PLAY, tr('启动游戏'), self.startGame, selectable=False,
@@ -671,12 +762,7 @@ class MainWindow(FluentWindow):
         self._refreshAccountNavigation()
 
         # 回调每次读取当前实例，替换设置页时不删除导航项或污染导航历史。
-        self.settingInterface.setProperty('isStackedTransparent', False)
-        self.stackedWidget.addWidget(self.settingInterface)
-        self.navigationInterface.addItem(
-            routeKey=self.settingInterface.objectName(), icon=FIF.SETTING, text=tr('设置'),
-            onClick=lambda: self.switchTo(self.settingInterface), position=NavigationItemPosition.BOTTOM
-        )
+        self._addLazySubInterface('settingInterface', FIF.SETTING, tr('设置'), NavigationItemPosition.BOTTOM)
         self._evey_settings_decoration = NavIconDecoration(
             self.navigationInterface.widget('settingInterface'),
             'evey-decoration-upright.png', (-4, -9, 4, 3))
@@ -717,7 +803,7 @@ class MainWindow(FluentWindow):
 
         if sys.platform == "win32" and not in_desktop_twin():
             self._desktop_twin_tray_action = QAction(tr("桌面分身"), self)
-            self._desktop_twin_tray_action.triggered.connect(self.toolsInterface.openDesktopTwin)
+            self._desktop_twin_tray_action.triggered.connect(lambda: self.toolsInterface.openDesktopTwin())
             tray_menu.addAction(self._desktop_twin_tray_action)
 
         tray_menu.addSeparator()
