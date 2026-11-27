@@ -14,6 +14,11 @@ POSES = {
     "抱纸箱": "chibi_box",
 }
 EVERNIGHT = ("全身站立", "敲电脑", "挥手", "拿地图发懵", "探头比OK")
+EVERNIGHT_VARIANTS = {
+    "查看终端": "chibi_typing", "单手撑黑伞": "chibi_wave",
+    "检查任务单": "chibi_lost", "托起忆灵": "overview/chibi_ok",
+    "手持空相框": "chibi_ok", "半身手持空相框": "chibi_ok",
+}
 
 
 def prepare(source: Path, destination: Path = DESTINATION, *, evernight: bool = False):
@@ -21,11 +26,13 @@ def prepare(source: Path, destination: Path = DESTINATION, *, evernight: bool = 
     if evernight:
         # 允许逐张补图。长夜月的原图单独放在一个目录。
         prefix = "长夜月_"
-        poses = {name: POSES[name] for name in EVERNIGHT if (source / f"{prefix}{name}.png").is_file()}
+        candidates = {name: POSES[name] for name in EVERNIGHT} | EVERNIGHT_VARIANTS
+        poses = {name: stem for name, stem in candidates.items() if (source / f"{prefix}{name}.png").is_file()}
         destination = destination / "evernight"
         if not poses:
-            raise ValueError("指定目录中没有长夜月的五种问候姿势")
-    destination.mkdir(parents=True, exist_ok=True)
+            raise ValueError("指定目录中没有可用的长夜月原图")
+    elif (source / "全身比OK.png").is_file():
+        poses = POSES | {"全身比OK": "overview/chibi_ok"}
     for name, stem in poses.items():
         with Image.open(source / f"{prefix}{name}.png") as original:
             rgba = original.convert("RGBA")
@@ -35,7 +42,9 @@ def prepare(source: Path, destination: Path = DESTINATION, *, evernight: bool = 
         left, top, right, bottom = box
         cropped = rgba.crop((left - 6, top - 6, right + 6, bottom + 6))
         cropped.thumbnail((512, 512), Image.Resampling.LANCZOS, reducing_gap=None)
-        cropped.save(destination / f"{stem}.webp", "WEBP", quality=88, method=6)
+        target = destination / f"{stem}.webp"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        cropped.save(target, "WEBP", quality=88, method=6)
 
 
 if __name__ == "__main__":

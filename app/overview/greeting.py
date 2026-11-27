@@ -49,10 +49,11 @@ def squash_amount(elapsed, start=0.0):
 class MascotWidget(QWidget):
     """Q 版小人。点一下会压扁再弹回，连点时从当前的形变继续。"""
 
-    def __init__(self, parent=None, *, max_width=MASCOT_MAX_WIDTH):
+    def __init__(self, parent=None, *, max_width=MASCOT_MAX_WIDTH, overview=False):
         super().__init__(parent)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self._max_width = max_width
+        self._overview = overview
         self._pose = Mascot.FULL
         self._override = None
         self._evernight = False
@@ -82,10 +83,10 @@ class MascotWidget(QWidget):
         pose = self.pose()
         ratio = self.devicePixelRatioF() or 1.0
         self._ratio = ratio
-        pixmap = load_mascot(pose, MASCOT_HEIGHT, ratio, evernight=self._evernight)
+        pixmap = load_mascot(pose, MASCOT_HEIGHT, ratio, evernight=self._evernight, overview=self._overview)
         if not pixmap.isNull() and pixmap.width() / ratio > self._max_width:
             height = int(MASCOT_HEIGHT * self._max_width / (pixmap.width() / ratio))
-            pixmap = load_mascot(pose, height, ratio, evernight=self._evernight)
+            pixmap = load_mascot(pose, height, ratio, evernight=self._evernight, overview=self._overview)
         self._pixmap = pixmap
         # 压扁时变宽，弹起时变高，两侧和上方留出余量。
         self.setFixedSize(self.imageSize().width() + 2 * self._sideRoom(),
@@ -263,7 +264,7 @@ class GreetingCard(QWidget):
         self.buttonLayout = QHBoxLayout(self.buttonBox)
         self.buttonLayout.setContentsMargins(0, 0, 0, 0)
         self.buttonLayout.setSpacing(8)
-        self.mascot = MascotWidget(self)
+        self.mascot = MascotWidget(self, overview=True)
         self.crossfade = ImageCrossFade(self)
         self.logoHint = LogoHint(self, self._hintRight)
         self.logoHint.animation.finished.connect(lambda: self.mascot.setOverride(None))
