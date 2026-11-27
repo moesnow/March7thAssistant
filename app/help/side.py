@@ -289,8 +289,7 @@ class SupportCard(QWidget):
         gradient.setColorAt(1, sky)
         painter.fillPath(path, gradient)
         if self._pixmap is None:
-            self._pixmap = load_mascot(Mascot.SERIOUS, self.MASCOT_HEIGHT, self.devicePixelRatioF(),
-                                       evernight=evernight)
+            self._pixmap = load_mascot(Mascot.SERIOUS, self.MASCOT_HEIGHT, self.devicePixelRatioF(), evernight=evernight)
         if self._pixmap is not None and not self._pixmap.isNull():
             ratio = self._pixmap.devicePixelRatio() or 1
             width = self._pixmap.width() / ratio

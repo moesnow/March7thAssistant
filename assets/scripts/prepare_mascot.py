@@ -20,7 +20,7 @@ EVERNIGHT = (
 EVERNIGHT_VARIANTS = {
     "查看终端": "chibi_typing", "单手撑黑伞": "chibi_wave",
     "检查任务单": "chibi_lost", "托起忆灵": "overview/chibi_ok",
-    "帮助提示": "chibi_serious", "手持空相框": "chibi_ok", "半身手持空相框": "chibi_ok",
+    "帮助提示": "chibi_serious", "半身手持空相框": "chibi_ok",
     "收纳记忆匣": "chibi_box", "封存印记": "chibi_stamp", "察看断片": "chibi_startled",
     "举相机取景": "chibi_camera", "提裙致谢": "chibi_later", "递出礼盒": "chibi_gift",
 }
