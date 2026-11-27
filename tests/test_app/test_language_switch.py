@@ -491,8 +491,9 @@ def test_config_reload_failure_disposes_unused_settings(window, monkeypatch, fai
     warning = Mock()
     monkeypatch.setattr(module.InfoBar, 'warning', warning)
     method = '_refreshHints' if failure_stage == 'constructor' else 'restoreViewState'
-    monkeypatch.setattr(module.SettingInterface, method, Mock(side_effect=RuntimeError('test failure')))
+    # 设置页现在是按需构建：先取到旧页面，再打桩让重建失败。
     old = window.settingInterface
+    monkeypatch.setattr(module.SettingInterface, method, Mock(side_effect=RuntimeError('test failure')))
     window.stackedWidget.setAnimationEnabled(False)
     window.switchTo(old)
     for _ in range(2):

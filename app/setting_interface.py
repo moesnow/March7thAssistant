@@ -16,7 +16,7 @@ from module.localization import tr
 from module.logger import log
 from module.search import SearchIndex
 from .pages.category_list import CategoryList
-from .pages.common import NoticeStrip, SectionView, border_color, is_evernight, secondary, shared
+from .pages.common import LazyPageMap, NoticeStrip, SectionView, border_color, is_evernight, secondary, shared
 from .pages.decorations import CardDecorations
 from .pages.notify import ChannelPanel
 from .pages.run_mode import RunModeChooser
@@ -202,14 +202,12 @@ class SettingInterface(QWidget):
         side.addStretch(1)
         side.addWidget(self.hint)
         self.stack = QStackedWidget(self)
-        self.pages = {}
-        for page in PAGES:
-            if page.kind != "setting":
-                continue
-            widget = SettingPage(self, page)
-            self.pages[page.id] = widget
-            self.stack.addWidget(widget)
-            self.categoryList.addCategory(page.id, page.icon, tr(page.name))
+        # 只建当前分类和「外观」（主题、语言卡片在启动阶段就要用），其余分类等到
+        # 用户点开时再建；十个分类全建约 0.65 秒。
+        specs = {page.id: page for page in PAGES if page.kind == "setting"}
+        self.pages = LazyPageMap(specs, self._create_page)
+        for page_id, page in specs.items():
+            self.categoryList.addCategory(page_id, page.icon, tr(page.name))
         self.results = SearchResultsPage(self)
         self.stack.addWidget(self.results)
         layout = QHBoxLayout(self)
@@ -217,7 +215,7 @@ class SettingInterface(QWidget):
         layout.setSpacing(0)
         layout.addWidget(self.sidePanel)
         layout.addWidget(self.stack, 1)
-        appearance = self.pages.get("appearance")
+        appearance = self.pages["appearance"] if "appearance" in self.pages else None
         self.themeCard = getattr(appearance.host, "themeCard", None) if appearance else None
         self.languageCard = getattr(appearance.host, "languageCard", None) if appearance else None
         self._searchTimer = QTimer(self)
@@ -233,6 +231,17 @@ class SettingInterface(QWidget):
         self._restyle()
         if self.pages:
             self.showCategory(next(iter(self.pages)))
+
+    def _create_page(self, page):
+        widget = SettingPage(self, page)
+        self.stack.addWidget(widget)
+        return widget
+
+    def ensurePage(self, category_id):
+        """构建指定分类（已构建则直接返回），没有该分类时返回 None。"""
+        if category_id not in self.pages:
+            return None
+        return self.pages[category_id]
 
     def _restyle(self, *_):
         self.hint.setKind("info", is_evernight())
@@ -254,14 +263,16 @@ class SettingInterface(QWidget):
         return self.categoryList.current()
 
     def showCategory(self, category_id):
-        if category_id not in self.pages:
+        # 先建页面再切换分类：currentChanged 会回调本方法，页面缺失时会让切换空转。
+        page = self.ensurePage(category_id)
+        if page is None:
             return False
         if self.searchBox.text():
             self.searchBox.blockSignals(True)
             self.searchBox.clear()
             self.searchBox.blockSignals(False)
         self.categoryList.setCurrent(category_id)
-        self.stack.setCurrentWidget(self.pages[category_id])
+        self.stack.setCurrentWidget(page)
         return True
 
     def _search(self):
@@ -291,7 +302,7 @@ class SettingInterface(QWidget):
     def locate(self, setting):
         if not setting_visible(setting):
             return False
-        page = self.pages.get(setting.page)
+        page = self.ensurePage(setting.page)
         if page is None or not self.showCategory(setting.page):
             return False
         widget = page.target(setting)
@@ -327,7 +338,7 @@ class SettingInterface(QWidget):
     def captureViewState(self):
         state = {"category": self.currentCategory(), "scroll": {}, "sections": {}, "cards": {},
                  "search": self.searchBox.text()}
-        for key, page in self.pages.items():
+        for key, page in self.pages.built().items():
             state["scroll"][key] = page.verticalScrollBar().value()
             state["sections"][key] = {sid: view.isExpanded() for sid, view in page.views.items()}
             try:
@@ -337,7 +348,11 @@ class SettingInterface(QWidget):
         return state
 
     def restoreViewState(self, state):
-        for key, page in self.pages.items():
+        # 状态里出现过的分类要全部建出来，否则切语言后已看过的分类会丢展开状态和滚动位置。
+        for key in state.get("scroll", {}):
+            self.ensurePage(key)
+        self.ensurePage(state.get("category"))
+        for key, page in self.pages.built().items():
             for sid, expanded in state.get("sections", {}).get(key, {}).items():
                 view = page.views.get(sid)
                 if view is not None and view.header is not None:
@@ -350,7 +365,7 @@ class SettingInterface(QWidget):
             self.searchBox.setText(state["search"])
             self._search()
         scroll = state.get("scroll", {})
-        for key, page in self.pages.items():
+        for key, page in self.pages.built().items():
             page.view.layout().activate()
             page.verticalScrollBar().setValue(scroll.get(key, 0))
 

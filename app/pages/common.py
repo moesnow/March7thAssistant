@@ -1,4 +1,6 @@
 """新页面共用的配色、图标和小控件。"""
+from collections.abc import Mapping
+
 from PySide6.QtCore import QEvent, QObject, QPointF, QRectF, QTimer, Qt, Signal
 from PySide6.QtGui import QColor, QPainter, QPen, QPolygonF
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
@@ -18,6 +20,48 @@ SECONDARY = (QColor(96, 96, 96), QColor(206, 206, 206))
 
 def is_evernight():
     return qconfig.get(qconfig.themeColor).name() == tokens.EVERNIGHT_RED
+
+
+class LazyPageMap(Mapping):
+    """按需构建的分类页集合。
+
+    启动时只构造真正会显示的分类，其余在首次取用时才建，避免把十来个分类
+    全部建好却只有第一个会显示。字典式访问保持不变（`pages[category]`、
+    `category in pages`、`len(pages)`），所以调用方和测试不需要改写。
+
+    注意：`items()` / `values()` 由 Mapping 提供，会逐项构建页面。遍历「已经
+    建好的页面」请用 `built()`，否则一次遍历就会把所有分类都建出来。
+    """
+
+    def __init__(self, specs, builder):
+        self._specs = dict(specs)  # 保持注册顺序，决定默认显示的分类
+        self._builder = builder  # (spec) -> 页面控件，负责挂到底层 stack 上
+        self._built = {}
+
+    def __getitem__(self, key):
+        page = self._built.get(key)
+        if page is not None:
+            return page
+        try:
+            spec = self._specs[key]
+        except KeyError:
+            raise KeyError(key) from None
+        page = self._builder(spec)
+        self._built[key] = page
+        return page
+
+    def __contains__(self, key):
+        return key in self._specs
+
+    def __iter__(self):
+        return iter(self._specs)
+
+    def __len__(self):
+        return len(self._specs)
+
+    def built(self):
+        """已构建的页面（id -> 控件），遍历时不会触发构建。"""
+        return self._built
 
 
 def icon_of(name, default=FluentIcon.APPLICATION):

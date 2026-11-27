@@ -14,7 +14,7 @@ from module.localization import tr
 from module.logger import log
 from app.content.account_model import AccountModel
 from .accounts.editing import EditingAccount
-from .pages.common import NoticeStrip, SectionView, is_evernight, secondary, shared
+from .pages.common import LazyPageMap, NoticeStrip, SectionView, is_evernight, secondary, shared
 from .pages.decorations import CardDecorations
 from .pages.power_order import PowerOrderView
 from .pages.tasks import ChecksCard, TaskHeader, TaskListPanel
@@ -126,13 +126,15 @@ class TaskInterface(QWidget):
 
     def _build(self):
         stack = QStackedWidget(self)
-        pages = {}
+        pages = None
         try:
-            for task in self.model.tasks():
-                page = TaskPage(self, task, stack)
-                pages[task.id] = page
-                stack.addWidget(page)
+            # 十个任务页全建约 0.8 秒，但只有当前选中的那个会显示，
+            # 所以其余任务页在第一次点开时再构造。
+            tasks = {task.id: task for task in self.model.tasks()}
+            pages = LazyPageMap(tasks, lambda task: self._create_page(task, stack))
             panel = TaskListPanel(self.model, self)
+            if pages:
+                pages[next(iter(pages))]  # 默认显示的任务页立即构造
         except Exception:
             stack.deleteLater()
             raise
@@ -150,6 +152,12 @@ class TaskInterface(QWidget):
         if first:
             self.showTask(first)
 
+    def _create_page(self, task, stack=None):
+        target = stack if stack is not None else self.stack
+        page = TaskPage(self, task, target)
+        target.addWidget(page)
+        return page
+
     def rebuild(self, *, account_changed=False):
         """切换语言后重建列表和各任务页，保留所选任务、滚动位置和展开状态。"""
         state = self.captureViewState()
@@ -166,11 +174,11 @@ class TaskInterface(QWidget):
 
     def refresh(self):
         self.listPanel.refresh()
-        for page in self.pages.values():
+        for page in self.pages.built().values():
             page.refresh()
 
     def _restyle(self, *_):
-        for page in self.pages.values():
+        for page in self.pages.built().values():
             page.header.restyle()
             page.refresh()
         self.update()
@@ -178,11 +186,19 @@ class TaskInterface(QWidget):
     def currentTask(self):
         return self.listPanel.current() if self.listPanel else None
 
-    def showTask(self, task_id):
+    def ensurePage(self, task_id):
+        """构建指定任务的页面（已构建则直接返回），没有该任务时返回 None。"""
         if task_id not in self.pages:
+            return None
+        return self.pages[task_id]
+
+    def showTask(self, task_id):
+        # 先建页面再切换：列表的 currentChanged 会回调本方法。
+        page = self.ensurePage(task_id)
+        if page is None:
             return False
         self.listPanel.setCurrent(task_id)
-        self.stack.setCurrentWidget(self.pages[task_id])
+        self.stack.setCurrentWidget(page)
         return True
 
     def _target(self, page, setting):
@@ -203,7 +219,7 @@ class TaskInterface(QWidget):
     def locate(self, setting):
         if not setting_visible(setting):
             return False
-        page = self.pages.get(setting.page)
+        page = self.ensurePage(setting.page)
         if page is None or not self.showTask(setting.page):
             return False
         widget = self._target(page, setting)
@@ -238,7 +254,7 @@ class TaskInterface(QWidget):
 
     def captureViewState(self):
         state = {"task": self.currentTask(), "scroll": {}, "sections": {}, "cards": {}}
-        for task_id, page in self.pages.items():
+        for task_id, page in self.pages.built().items():
             state["scroll"][task_id] = page.verticalScrollBar().value()
             state["sections"][task_id] = {key: view.isExpanded() for key, view in page.views.items()}
             try:
@@ -248,7 +264,11 @@ class TaskInterface(QWidget):
         return state
 
     def restoreViewState(self, state):
-        for task_id, page in self.pages.items():
+        # 状态里出现过的任务页要全部建出来，否则切语言后已看过的任务会丢展开状态和滚动位置。
+        for task_id in state.get("scroll", {}):
+            self.ensurePage(task_id)
+        self.ensurePage(state.get("task"))
+        for task_id, page in self.pages.built().items():
             for key, expanded in state.get("sections", {}).get(task_id, {}).items():
                 if key in page.views and page.views[key].header is not None:
                     page.views[key].setExpanded(expanded)
@@ -261,4 +281,4 @@ class TaskInterface(QWidget):
             self.showTask(state["task"])
         scroll = state.get("scroll", {})
         QTimer.singleShot(0, self.stack, lambda: [page.verticalScrollBar().setValue(scroll.get(key, 0))
-                                      for key, page in self.pages.items()])
+                                      for key, page in self.pages.built().items()])

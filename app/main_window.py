@@ -2,7 +2,7 @@ from utils.game_options import game_option_enabled
 from utils.desktop_twin import in_desktop_twin
 from PySide6.QtCore import Qt, QSize, QPoint, QFileSystemWatcher, Signal, QObject, QTimer, QThread, QSignalBlocker, QEvent, QVariantAnimation
 from PySide6.QtGui import QAction, QKeySequence, QPainter, QShortcut
-from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsEffect, QWidget
+from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QLabel, QHBoxLayout, QVBoxLayout, QGraphicsEffect, QWidget, QStackedWidget
 
 from .components.evey_decoration import EveyControlDecoration, EveyTitleDecoration
 from .common.accent import MARCH7TH_PINK, EVERNIGHT_RED, set_accent_color
@@ -63,6 +63,25 @@ def fit_menu_width(menu):
     view.setMinimumWidth(0)
     view.adjustSize()
     menu.adjustSize()
+
+
+def _lazy_interface(name):
+    """把页面属性改成「取用时才构建」。
+
+    启动时先只建总览，其余页面等第一次显示或第一次被访问时再构造；构建前的
+    赋值（例如语言切换时替换设置页）直接写进页面表，不会触发多余构建。
+    """
+
+    def fget(self):
+        page = self.ensurePage(name)
+        if page is None:
+            raise AttributeError(name)
+        return page
+
+    def fset(self, widget):
+        self._pages[name] = widget
+
+    return property(fget, fset)
 
 
 class ConfigWatcher(QObject):
@@ -217,9 +236,19 @@ class NavIconDecoration(EveyControlDecoration):
 
 class MainWindow(FluentWindow):
     TASK_EXIT_DELAY_MS = 5000
+    # 这些页面启动时先放占位页，取用时才真正构造（见 _lazy_interface）。
+    taskInterface = _lazy_interface('taskInterface')
+    settingInterface = _lazy_interface('settingInterface')
+    warpInterface = _lazy_interface('warpInterface')
+    toolsInterface = _lazy_interface('toolsInterface')
+    workflowInterface = _lazy_interface('workflowInterface')
+    helpInterface = _lazy_interface('helpInterface')
 
     def __init__(self, task=None, exit_on_complete=False, start_minimized_to_tray=False):
         super().__init__()
+        self._pages = {}  # 已构建的页面，键是页面属性名
+        self._page_slots = {}  # 未构建页面的占位控件，占住导航和堆栈位置
+        self._page_builders = {}
         self._desktop_twin_hosting = False
         self._desktop_twin_tray_action = None
         self._desktop_twin_notice = None
@@ -235,6 +264,9 @@ class MainWindow(FluentWindow):
         self._config_reload_timer = QTimer(self)
         self._config_reload_timer.setSingleShot(True)
         self._config_reload_timer.timeout.connect(self._on_config_file_changed)
+        self._startup_checks_timer = QTimer(self)
+        self._startup_checks_timer.setSingleShot(True)
+        self._startup_checks_timer.timeout.connect(self._runStartupChecks)
         self.startup_task = task  # 保存启动时要执行的任务
         self.exit_on_complete = exit_on_complete  # 命令行指定的单次退出请求
         self._task_exit_pending = False
@@ -272,6 +304,10 @@ class MainWindow(FluentWindow):
         self._finishStartup()
 
     def _finishStartup(self):
+        # 记住的自动对话是后台功能，不能依赖用户打开工具箱。
+        if (sys.platform == 'win32' and cfg.get_value('autoplot_remember_enable', False)
+                and cfg.get_value('autoplot_enable', False)):
+            QTimer.singleShot(0, self, self._restoreAutoPlot)
         # 如果有启动任务，延迟执行
         if self.startup_task:
             QTimer.singleShot(1000, self._executeStartupTask)
@@ -282,8 +318,33 @@ class MainWindow(FluentWindow):
             self._setup_checks_pending = True
             QTimer.singleShot(0, self, self._openInitialSetup)
         else:
+            self._scheduleStartupChecks()
+
+    def _restoreAutoPlot(self):
+        # 复用工具箱既有的平台、连接状态及选项检查；已创建时不会再次启动。
+        if self._desktop_twin_hosting or not (cfg.get_value('autoplot_remember_enable', False)
+                                              and cfg.get_value('autoplot_enable', False)):
+            return
+        try:
+            self.ensurePage('toolsInterface')
+        except Exception as exc:
+            log.error(f'恢复自动对话失败，请打开工具箱检查自动对话状态：{type(exc).__name__}: {exc}')
+
+    def _scheduleStartupChecks(self, delay=200):
+        """首帧渲染之后再检查更新和公告。
+
+        两者都会起线程跑网络请求，放在窗口构造末尾会和首帧的排版、绘制抢资源；
+        推迟一拍不影响用户看到界面，提示出现也只是晚了一瞬。用可取消的定时器，
+        首次配置向导打开期间要取消，避免向导还没结束就弹出更新提示。
+        """
+        self._startup_checks_timer.start(delay)
+
+    def _runStartupChecks(self):
+        try:
             checkUpdate(self, flag=True)
             checkAnnouncement(self)
+        except Exception as exc:
+            log.warning(f'启动检查更新或公告失败：{type(exc).__name__}: {exc}')
 
     @property
     def setupModel(self):
@@ -303,8 +364,7 @@ class MainWindow(FluentWindow):
     def _finishSetupChecks(self):
         if self._setup_checks_pending:
             self._setup_checks_pending = False
-            checkUpdate(self, flag=True)
-            checkAnnouncement(self)
+            self._scheduleStartupChecks()
 
     def _executeStartupTask(self):
         """执行启动时指定的任务"""
@@ -590,10 +650,6 @@ class MainWindow(FluentWindow):
         from app.content.account_model import AccountModel
         self.accountModel = AccountModel(self)
         self.homeInterface = OverviewInterface(self)
-        self.helpInterface = HelpInterface(self)
-        self.warpInterface = WarpInterface(self)
-        self.toolsInterface = ToolsInterface(self)
-        self.workflowInterface = WorkflowInterface(self)
         self.runController = RunController(self)
         self.logInterface = RunInterface(self)
         self.homeInterface.attachModel(OverviewModel(self, config_changed=self.config_watcher.request_check))
@@ -601,9 +657,24 @@ class MainWindow(FluentWindow):
         self._search_popup = None
         self.searchIndex = SearchIndex(cfg)
         self.destroyed.connect(self.searchIndex.close)
-        self.taskInterface = TaskInterface(self)
         self.accountsInterface = AccountsInterface(self)
-        self.settingInterface = SettingInterface(self)
+        # 设置页和任务页原本在构造时顺手创建这两个模型，页面改为按需构建后由
+        # 主窗口先建好，向导模型和搜索在启动阶段就会用到它们。
+        from .content.notify_model import NotifyModel
+        from .content.task_model import TaskModel
+        from .pages.common import shared
+        self.notifyModel = shared(self, 'notifyModel', lambda: NotifyModel(self))
+        self.taskModel = shared(self, 'taskModel', lambda: TaskModel(self))
+        # 其余页面在首次显示或首次被访问时构造：十个分类/任务全建要 1 秒以上，
+        # 而启动后只会显示总览。
+        self._page_builders = {
+            'taskInterface': lambda: TaskInterface(self),
+            'settingInterface': lambda: SettingInterface(self),
+            'warpInterface': lambda: WarpInterface(self),
+            'toolsInterface': lambda: ToolsInterface(self),
+            'workflowInterface': lambda: WorkflowInterface(self),
+            'helpInterface': lambda: HelpInterface(self),
+        }
         self.accountModel.bindingChanged.connect(self._accountBindingChanged)
         self.accountModel.changed.connect(self.homeInterface.model.request_refresh)
         self.accountModel.changed.connect(self.runController.changed)
@@ -624,6 +695,72 @@ class MainWindow(FluentWindow):
         # 连接自动对话切换信号
         self.runController.autoplotToggleRequested.connect(self._onAutoplotToggleRequested)
 
+    def _addLazySubInterface(self, name, icon, text, position):
+        """先放一个占位页占住导航和堆栈位置，页面在取用时才真正构造。"""
+        slot = QWidget(self)
+        slot.setObjectName(name)
+        slot.setProperty('isStackedTransparent', False)
+        self.stackedWidget.addWidget(slot)
+        self._page_slots[name] = slot
+        self.navigationInterface.addItem(
+            routeKey=name, icon=icon, text=text,
+            onClick=lambda: self.openPage(name), position=position,
+        )
+
+    def builtPage(self, name):
+        """已构建的页面；未构建返回 None，不会触发构建。"""
+        return self._pages.get(name)
+
+    def ensurePage(self, name):
+        """构建页面并顶替占位页；已构建则直接返回。"""
+        page = self._pages.get(name)
+        if page is not None:
+            return page
+        builder = self._page_builders.get(name)
+        if builder is None:
+            return None
+        page = builder()
+        # 构造成功后才摘除构建器：构造失败时下次访问仍会重试，不会把页面变成死键。
+        self._page_builders.pop(name, None)
+        page.setProperty('isStackedTransparent', False)
+        if self._desktop_twin_hosting and name in ('taskInterface', 'settingInterface',
+                                                    'workflowInterface', 'warpInterface'):
+            # 桌面分身接管期间新建的页面同样要禁用，否则会出现可操作窗口期。
+            page.setDisabled(True)
+        slot = self._page_slots.pop(name, None)
+        if slot is not None:
+            self._swap_slot(slot, page)
+        self._pages[name] = page
+        return page
+
+    def _swap_slot(self, slot, page):
+        """用真正的页面顶替占位页，过程中不发出导航事件。"""
+        view = self.stackedWidget.view
+        was_current = self.stackedWidget.currentWidget() is slot
+        index = view.indexOf(slot)
+        with QSignalBlocker(self.stackedWidget), QSignalBlocker(view):
+            view.addWidget(page)
+            # Fluent 的 addWidget 会同步创建动画信息；将新页面和对应动画一起移回
+            # 占位页的位置，避免正在运行的导航动画持有的目标索引发生变化。
+            info = view.aniInfos.pop()
+            view.removeWidget(slot)
+            QStackedWidget.removeWidget(view, page)
+            QStackedWidget.insertWidget(view, index, page)
+            view.aniInfos.insert(index, info)
+            if was_current:
+                # 绕过 Fluent 的 switchTo，它会清零滚动位置。
+                view.setCurrentWidget(page)
+        slot.deleteLater()
+        self._updateStackedBackground()
+
+    def openPage(self, name):
+        """导航项点击入口：确保页面已构建再切换。"""
+        page = self.ensurePage(name)
+        if page is None:
+            return False
+        self.switchTo(page)
+        return True
+
     def initNavigation(self):
         navigation = self.navigationInterface
         navigation.setReturnButtonVisible(False)
@@ -639,13 +776,13 @@ class MainWindow(FluentWindow):
         self.searchBox = NavigationSearchBox(self)
         navigation.addWidget('searchBox', self.searchBox, self.openSearch, NavigationItemPosition.TOP)
         self.addSubInterface(self.homeInterface, FIF.HOME, tr('总览'))
-        self.addSubInterface(self.taskInterface, FIF.CHECKBOX, tr('任务'))
+        self._addLazySubInterface('taskInterface', FIF.CHECKBOX, tr('任务'), NavigationItemPosition.TOP)
         self.addSubInterface(self.logInterface, FIF.COMMAND_PROMPT, tr('运行'))
-        self.addSubInterface(self.warpInterface, FIF.SHARE, tr('抽卡记录'))
-        self.addSubInterface(self.toolsInterface, FIF.DEVELOPER_TOOLS, tr('工具箱'))
-        self.addSubInterface(self.workflowInterface, FIF.CODE, tr('流程编排'))
+        self._addLazySubInterface('warpInterface', FIF.SHARE, tr('抽卡记录'), NavigationItemPosition.TOP)
+        self._addLazySubInterface('toolsInterface', FIF.DEVELOPER_TOOLS, tr('工具箱'), NavigationItemPosition.TOP)
+        self._addLazySubInterface('workflowInterface', FIF.CODE, tr('流程编排'), NavigationItemPosition.TOP)
         navigation.addSeparator()
-        self.addSubInterface(self.helpInterface, FIF.BOOK_SHELF, tr('帮助'))
+        self._addLazySubInterface('helpInterface', FIF.BOOK_SHELF, tr('帮助'), NavigationItemPosition.TOP)
         # self.addSubInterface(self.changelogInterface, FIF.UPDATE, '更新日志')
 
         navigation.addItem('startGameButton', FIF.PLAY, tr('启动游戏'), self.startGame, selectable=False,
@@ -671,12 +808,7 @@ class MainWindow(FluentWindow):
         self._refreshAccountNavigation()
 
         # 回调每次读取当前实例，替换设置页时不删除导航项或污染导航历史。
-        self.settingInterface.setProperty('isStackedTransparent', False)
-        self.stackedWidget.addWidget(self.settingInterface)
-        self.navigationInterface.addItem(
-            routeKey=self.settingInterface.objectName(), icon=FIF.SETTING, text=tr('设置'),
-            onClick=lambda: self.switchTo(self.settingInterface), position=NavigationItemPosition.BOTTOM
-        )
+        self._addLazySubInterface('settingInterface', FIF.SETTING, tr('设置'), NavigationItemPosition.BOTTOM)
         self._evey_settings_decoration = NavIconDecoration(
             self.navigationInterface.widget('settingInterface'),
             'evey-decoration-upright.png', (-4, -9, 4, 3))
@@ -717,7 +849,7 @@ class MainWindow(FluentWindow):
 
         if sys.platform == "win32" and not in_desktop_twin():
             self._desktop_twin_tray_action = QAction(tr("桌面分身"), self)
-            self._desktop_twin_tray_action.triggered.connect(self.toolsInterface.openDesktopTwin)
+            self._desktop_twin_tray_action.triggered.connect(lambda: self.toolsInterface.openDesktopTwin())
             tray_menu.addAction(self._desktop_twin_tray_action)
 
         tray_menu.addSeparator()
@@ -773,6 +905,8 @@ class MainWindow(FluentWindow):
             InfoBar.error(tr("无法打开首次配置向导"), str(error), parent=self)
             return False
         self._setup_dialog = dialog
+        # 向导还没走完时不要弹更新提示。
+        self._startup_checks_timer.stop()
         actions = []
 
         def after_close(action):
@@ -823,8 +957,7 @@ class MainWindow(FluentWindow):
         super().showEvent(event)
         if self._defer_startup_checks:
             self._defer_startup_checks = False
-            checkUpdate(self, flag=True)
-            checkAnnouncement(self)
+            self._scheduleStartupChecks()
         if self._evernight.unlocked and not self._evernight.animation_played:
             QTimer.singleShot(0, self._play_evey_animation)
 
@@ -917,7 +1050,11 @@ class MainWindow(FluentWindow):
         self.accountNavCard.setAccount(*self.accountModel.card())
 
     def _accountBindingChanged(self):
-        self.taskInterface.rebuild(account_changed=True)
+        try:
+            self.taskInterface.rebuild(account_changed=True)
+        except Exception as exc:
+            # 切账号后重建任务页失败不应该让绑定流程整体失败。
+            log.warning(f'切换账号后刷新任务页失败：{type(exc).__name__}: {exc}')
         self.searchIndex.invalidate()
         self.homeInterface.model.request_refresh()
 
@@ -953,7 +1090,10 @@ class MainWindow(FluentWindow):
             self._backend_connection = connection
         self.accountModel.refresh()
         self.homeInterface.refreshBackendTasks()
-        self.toolsInterface.refreshBackendTasks(connection_changed=changed)
+        try:
+            self.toolsInterface.refreshBackendTasks(connection_changed=changed)
+        except Exception as exc:
+            log.warning(f'刷新工具箱失败：{type(exc).__name__}: {exc}')
 
     def _onHotkeyChanged(self):
         """处理热键配置改变信号"""
@@ -982,9 +1122,11 @@ class MainWindow(FluentWindow):
         self._cancelTaskExit()
         self.runController.setDesktopTwinHosting(active)
         self.accountNavCard.setDisabled(active)
-        for page in (self.homeInterface, self.taskInterface, self.settingInterface, self.workflowInterface,
-                     self.warpInterface, self.accountsInterface):
-            page.setDisabled(active)
+        for page in (self.homeInterface, self.builtPage('taskInterface'), self.builtPage('settingInterface'),
+                     self.builtPage('workflowInterface'), self.builtPage('warpInterface'),
+                     self.accountsInterface):
+            if page is not None:
+                page.setDisabled(active)
         self.logInterface.setDesktopTwinHosting(active)
         start_game = self.navigationInterface.widget('startGameButton')
         if start_game is not None:
@@ -1344,7 +1486,7 @@ class MainWindow(FluentWindow):
         """执行退出前的清理并退出程序
         e: 可选的 QCloseEvent，用于调用 e.accept()
         """
-        close_twin = getattr(getattr(self, "toolsInterface", None), "closeDesktopTwin", None)
+        close_twin = getattr(self.builtPage('toolsInterface'), "closeDesktopTwin", None)
         if close_twin and not close_twin():
             if e is not None:
                 e.ignore()
