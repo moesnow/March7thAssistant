@@ -412,7 +412,7 @@ class MainWindow(FluentWindow):
         # 标题栏从窗口最左边开始，给图标留出和侧栏一致的左边距。
         self.titleBar.hBoxLayout.setContentsMargins(14, 0, 0, 0)
         easter_egg_click = EasterEggClickFilter(self.titleBar.iconLabel)
-        easter_egg_click.clicked.connect(self._on_logo_clicked)
+        easter_egg_click.clicked.connect(self._on_easter_egg_clicked)
         set_application_icon(self, application_icon_path(self._evernight_active), self._assistant_name())
         self.setWindowTitle(self._assistant_name())
         # 分离系统窗口标题与应用内标题栏文本
@@ -558,7 +558,7 @@ class MainWindow(FluentWindow):
         if selection_changed:
             self._evernight.animation_pending = play_intro
             self._evernight.reset_clicks()
-            self.homeInterface.dismissLogoHint()
+            self.homeInterface.dismissLogoHint(keep_dizzy=play_intro)
         applyTheme(self)
         # 深色和长夜共用调色板，切换时 Qt 可能不发出 themeChanged。
         if selection_changed and qconfig.theme == previous_palette:
@@ -619,7 +619,7 @@ class MainWindow(FluentWindow):
         if self._evernight.animation_pending:
             QTimer.singleShot(0, self._play_evey_animation)
 
-    def _on_logo_clicked(self):
+    def _on_easter_egg_clicked(self):
         result = self._evernight.record_click()
         if result == 'warning':
             self.homeInterface.playLogoHint()
@@ -659,6 +659,7 @@ class MainWindow(FluentWindow):
         from app.content.account_model import AccountModel
         self.accountModel = AccountModel(self)
         self.homeInterface = OverviewInterface(self)
+        self.homeInterface.greeting.mascot.clicked.connect(self._on_easter_egg_clicked)
         self.runController = RunController(self)
         self.logInterface = RunInterface(self)
         self.homeInterface.attachModel(OverviewModel(self, config_changed=self.config_watcher.request_check))

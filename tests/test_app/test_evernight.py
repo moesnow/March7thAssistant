@@ -47,6 +47,71 @@ def click_logo(window, qtbot, count=1):
         qtbot.wait(10)
 
 
+@pytest.mark.parametrize('window', [{'ui_theme': 'light', 'overview_show_mascot': True}], indirect=True)
+def test_overview_mascot_triggers_evernight_and_bounces_while_dizzy(window, qtbot, monkeypatch):
+    from app.overview import greeting
+
+    monkeypatch.setattr(greeting, 'animations_enabled', lambda: True)
+    card = window.homeInterface.greeting
+    mascot = card.mascot
+    point = mascot.imageRect().center()
+    hit = mascot.mapTo(card, point)
+    assert card.childAt(hit) is mascot
+    qtbot.mouseClick(mascot, Qt.MouseButton.RightButton, pos=point)
+    qtbot.mousePress(mascot, Qt.MouseButton.LeftButton, pos=point)
+    qtbot.mouseRelease(mascot, Qt.MouseButton.LeftButton, pos=QPoint(-5, point.y()))
+    for _ in range(4):
+        qtbot.mouseClick(mascot, Qt.MouseButton.LeftButton, pos=point)
+    assert card.logoHint.isHidden() and mascot.pose() != Mascot.DIZZY
+    qtbot.mouseClick(mascot, Qt.MouseButton.LeftButton, pos=point)
+    assert card.logoHint.isVisible() and mascot.pose() == Mascot.DIZZY
+    assert card.childAt(hit) is mascot  # The hint covers the card but leaves the mascot clickable.
+
+    mascot.animation.setCurrentTime(mascot.animation.duration())
+    resting = mascot.grab().toImage()
+    qtbot.mouseClick(mascot, Qt.MouseButton.LeftButton, pos=point)
+    assert mascot.animation.state() == mascot.animation.State.Running
+    mascot.animation.pause()
+    mascot.animation.setCurrentTime(greeting.PRESS_MS)
+    assert mascot._scale() == pytest.approx((1.14, 0.78))
+    assert mascot.grab().toImage() != resting
+    for _ in range(3):
+        qtbot.mouseClick(mascot, Qt.MouseButton.LeftButton, pos=point)
+    assert card.logoHint.isVisible() and not window._evernight.selected
+    dizzy_image = mascot._pixmap.cacheKey()
+    qtbot.mouseClick(mascot, Qt.MouseButton.LeftButton, pos=point)
+    assert card.logoHint.isHidden() and window.settingInterface.themeCard.comboBox.currentData() == 'evernight'
+    assert mascot._pixmap.cacheKey() == dizzy_image
+    qtbot.waitUntil(lambda: window._evey_animation is not None)
+    window._evey_animation.close()
+    assert mascot._evernight and mascot.pose() != Mascot.DIZZY
+    for _ in range(10):
+        qtbot.mouseClick(mascot, Qt.MouseButton.LeftButton, pos=point)
+        assert card.logoHint.isHidden()
+    assert window._evey_animation is None
+    cfg.set_values.assert_called_once_with({'ui_theme': 'evernight', 'evernight_unlocked': True})
+    cfg.set_value.assert_not_called()
+
+
+@pytest.mark.parametrize('window', [
+    {'ui_theme': 'dark', 'evernight_unlocked': True, 'overview_show_mascot': True},
+], indirect=True)
+def test_unlocked_logo_and_mascot_share_clicks_with_reduced_motion(window, qtbot, monkeypatch):
+    monkeypatch.setattr('app.overview.greeting.animations_enabled', lambda: False)
+    card = window.homeInterface.greeting
+    click_logo(window, qtbot, 4)
+    qtbot.mouseClick(card.mascot, Qt.MouseButton.LeftButton)
+    assert card.logoHint.isVisible() and card.mascot.pose() == Mascot.DIZZY
+    for _ in range(4):
+        qtbot.mouseClick(card.mascot, Qt.MouseButton.LeftButton)
+    assert card.mascot.animation.state() == card.mascot.animation.State.Stopped
+    assert not window._evernight.selected
+    click_logo(window, qtbot)
+    assert window._evernight.selected and card.logoHint.isHidden()
+    cfg.set_value.assert_called_once_with('ui_theme', 'evernight')
+    cfg.set_values.assert_not_called()
+
+
 
 def test_greeting_background_crossfades_at_midpoint_below_text_and_buttons(window, qtbot):
     window.resize(1100, 800)
@@ -117,6 +182,7 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
     click_logo(window, qtbot)
     hint = page.greeting.logoHint
     assert hint.isVisible() and mascot.pose() == Mascot.DIZZY
+    dizzy_image = mascot._pixmap.cacheKey()
     assert hint.text() == '别晃啦！本姑娘头好晕( ꩜ ᯅ ꩜;)'
     assert '#ff91c1' in hint.styleSheet()
     assert hint.width() >= hint.sizeHint().width()
@@ -133,7 +199,7 @@ def test_real_button_changes_all_branding_and_restores_without_starting_tasks(wi
         animation.timeline.setCurrentTime(moment)
         assert page.greeting._mode() == 'dark'
         assert window.windowTitle() == 'March7th Assistant'
-        assert mascot.pose() == original_pose
+        assert mascot.pose() == Mascot.DIZZY and mascot._pixmap.cacheKey() == dizzy_image
         assert window.windowIcon().pixmap(32, 32).toImage() == dark_march_icon
         assert window.titleBar.iconLabel.pixmap().toImage() == dark_march_titlebar
         assert all(art.isHidden() for art in (
@@ -261,6 +327,7 @@ def test_tenth_logo_click_saves_unlock_and_theme(
         assert window.windowTitle() == 'Evernight Assistant'
     combo.setCurrentIndex(combo.findData(cancel_theme))
     assert window._evey_animation is None
+    assert window.homeInterface.greeting.mascot.pose() != Mascot.DIZZY
     assert window.homeInterface.greeting.crossfade.isHidden()
     assert window.homeInterface.greeting.crossfade._previous is None
     assert window.windowTitle() == 'March7th Assistant'
@@ -278,7 +345,9 @@ def test_tenth_logo_click_saves_unlock_and_theme(
     assert cfg.set_value.call_count == writes_before + 1
     cfg.set_values.assert_called_once_with({'ui_theme': 'evernight', 'evernight_unlocked': True})
     replay = window._evey_animation
+    assert window.homeInterface.greeting.mascot.pose() == Mascot.DIZZY
     replay.timeline.setCurrentTime(replay.DURATION_MS // 2)
+    assert window.homeInterface.greeting.mascot.pose() != Mascot.DIZZY
     assert window.windowTitle() == 'Evernight Assistant'
     replay.close()
     click_logo(window, qtbot, 10)

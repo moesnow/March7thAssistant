@@ -49,6 +49,8 @@ def squash_amount(elapsed, start=0.0):
 class MascotWidget(QWidget):
     """Q 版小人。点一下会压扁再弹回，连点时从当前的形变继续。"""
 
+    clicked = Signal()
+
     def __init__(self, parent=None, *, max_width=MASCOT_MAX_WIDTH, overview=False):
         super().__init__(parent)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -67,6 +69,9 @@ class MascotWidget(QWidget):
         self.animation.valueChanged.connect(self._advance)
 
     def setPose(self, pose, *, evernight=False):
+        if evernight != self._evernight:
+            # 动画中点换角色时，一次换成新主题下的状态立绘。
+            self._override = None
         if (pose, evernight) != (self._pose, self._evernight) or self._pixmap.isNull():
             self._pose, self._evernight = pose, evernight
             self._reload()
@@ -126,9 +131,18 @@ class MascotWidget(QWidget):
         if abs((self.devicePixelRatioF() or 1.0) - self._ratio) > 0.01:
             self._reload()
 
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            event.accept()
+            return
+        super().mousePressEvent(event)
+
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton and self.rect().contains(event.position().toPoint()):
+            self.clicked.emit()
             self.bounce()
+            event.accept()
+            return
         super().mouseReleaseEvent(event)
 
     def paintEvent(self, event):
@@ -399,9 +413,10 @@ class GreetingCard(QWidget):
             self.mascot.setOverride(Mascot.DIZZY)
         self.logoHint.play()
 
-    def dismissLogoHint(self):
+    def dismissLogoHint(self, *, keep_dizzy=False):
         self.logoHint.dismiss()
-        self.mascot.setOverride(None)
+        if not keep_dizzy:
+            self.mascot.setOverride(None)
 
     # ---------- 布局与绘制 ----------
     def _hintRight(self):

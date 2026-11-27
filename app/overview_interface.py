@@ -105,8 +105,8 @@ class OverviewInterface(ScrollArea):
     def playLogoHint(self):
         self.greeting.playLogoHint()
 
-    def dismissLogoHint(self):
-        self.greeting.dismissLogoHint()
+    def dismissLogoHint(self, *, keep_dizzy=False):
+        self.greeting.dismissLogoHint(keep_dizzy=keep_dizzy)
 
     # ---------- 显示 ----------
     def _retranslateStatic(self):
