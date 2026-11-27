@@ -30,6 +30,8 @@ fun plannedSteps(task: TaskId, config: TaskConfig, today: Int): List<StepResult>
         TaskId.DAILY -> listOf(step(StepId.DAILY, daily))
         // 单独运行清体力不受「启用清体力」影响。
         TaskId.POWER -> listOf(step(StepId.POWER, true))
+        // 和电脑版工具箱一样只看填写的兑换码，不受领取奖励的开关影响。
+        TaskId.REDEEM -> listOf(step(StepId.REDEMPTION, config.redemptionCodes.isNotEmpty()))
     }
 }
 
@@ -80,8 +82,16 @@ fun List<StepResult>.progress(): StepProgress? {
     return if (index < 0) null else StepProgress(enabled[index], index + 1, enabled.size)
 }
 
-/** 一轮结束后 Python 交回的进度。plan 为 null 表示没有可用的计划数据；时间是毫秒，没有记录为 null。 */
-class TaskProgress(val plan: List<PlanItem>?, val lastDailyDone: Long?, val lastEchoDone: Long?)
+/**
+ * 一轮里 Python 交回的进度。plan 为 null 表示没有可用的计划数据；时间是毫秒，没有记录为 null。
+ * usedCodes 是 Python 记下的已使用兑换码，为 null 表示没有交回。
+ */
+class TaskProgress(
+    val plan: List<PlanItem>?,
+    val lastDailyDone: Long?,
+    val lastEchoDone: Long?,
+    val usedCodes: List<String>? = null,
+)
 
 /** 解析 reportProgress 的 JSON，整份读不出时返回 null。体力计划逐项校验，不合格的项丢弃。 */
 fun parseProgress(json: String): TaskProgress? {
@@ -97,7 +107,17 @@ fun parseProgress(json: String): TaskProgress? {
             null
         }
     }?.take(TaskConfig.MAX_PLAN_ITEMS)
-    return TaskProgress(plan, epochMillis(root["last_run_timestamp"]), epochMillis(root["echo_of_war_timestamp"]))
+    return TaskProgress(
+        plan, epochMillis(root["last_run_timestamp"]), epochMillis(root["echo_of_war_timestamp"]),
+        parseUsedCodes(root["already_used_codes"]),
+    )
+}
+
+/** 把进度并入设置：体力计划换成剩下的；已使用的兑换码以 Python 为准，并移出待兑换列表。 */
+fun TaskConfig.withProgress(progress: TaskProgress): TaskConfig {
+    val planned = progress.plan?.let { copy(powerPlan = it) } ?: this
+    val used = progress.usedCodes ?: return planned
+    return planned.copy(usedCodes = used, redemptionCodes = planned.redemptionCodes - used.toSet())
 }
 
 /** Python 用秒记时间戳，0 表示没有记录。 */

@@ -59,6 +59,8 @@ class TaskModelTest {
         "reward_srpass_enable" to true,
         "reward_redemption_code_enable" to true,
         "reward_message_enable" to false,
+        "redemption_code" to emptyList<Any>(),
+        "already_used_codes" to emptyList<Any>(),
         "daily_enable" to true,
         "daily_material_enable" to true,
     )
@@ -103,6 +105,8 @@ class TaskModelTest {
         quest = false,
         srpass = false,
         redemption = false,
+        redemptionCodes = listOf("ABC123", "永远不会抛弃你"),
+        usedCodes = listOf("OLD1", "OLD2"),
         message = true,
         dailyEnable = false,
         synthesis = false,
@@ -113,7 +117,7 @@ class TaskModelTest {
         val settings = TaskConfig().toSettings(catalog)
 
         assertEquals(defaultSettings, settings)
-        assertEquals(35, settings.size)
+        assertEquals(37, settings.size)
         assertEquals("6", settings["instance_team_number"])
     }
 
@@ -159,6 +163,8 @@ class TaskModelTest {
             "reward_srpass_enable" to false,
             "reward_redemption_code_enable" to false,
             "reward_message_enable" to true,
+            "redemption_code" to listOf("ABC123", "永远不会抛弃你"),
+            "already_used_codes" to listOf("OLD1", "OLD2"),
             "daily_enable" to false,
             "daily_material_enable" to false,
         )
@@ -194,6 +200,7 @@ class TaskModelTest {
         val partial = decodeTaskConfig(
             """{"fuel": true, "teamNumber": 13, "echoStartDay": 0, "instanceType": "ECHO", "borrowScrollTimes": "5",
                "ornamentDays": 8, "buildTargetScheme": "OCR", "redemption": "false",
+               "redemptionCodes": ["ABC123", 5, "ABC123", "永远不会抛弃你"], "usedCodes": ["OLD1", 3, "", "OLD1"],
                "powerPlan": [["ECHO", "寒潭指月", 0], ["CAVERN", "睿治之径", 2], ["UNKNOWN", "x", 1], ["CAVERN", "", 1]],
                "challengeCounts": {"CAVERN": 7, "ECHO": 2}, "supports": [["March7th", ""], ["March7th", "重复"]]}"""
         )
@@ -203,6 +210,8 @@ class TaskModelTest {
             powerPlan = listOf(PlanItem(InstanceType.CAVERN, "睿治之径", 2)),
             challengeCounts = TaskConfig.DEFAULT_CHALLENGE_COUNTS + (InstanceType.ECHO to 2),
             supports = listOf(Support("March7th")),
+            redemptionCodes = listOf("ABC123", "永远不会抛弃你"),
+            usedCodes = listOf("OLD1"),
         ), partial)
     }
 
@@ -229,10 +238,39 @@ class TaskModelTest {
             TaskConfig(echoStartDay = 8),
             TaskConfig(ornamentDays = -1),
             TaskConfig(ornamentDays = 8),
+            TaskConfig(redemptionCodes = List(TaskConfig.MAX_CODES + 1) { "CODE$it" }),
+            TaskConfig(redemptionCodes = listOf("ABC123", "ABC123")),
+            TaskConfig(redemptionCodes = listOf("ABC 123")),
+            TaskConfig(redemptionCodes = listOf("")),
+            TaskConfig(usedCodes = List(TaskConfig.MAX_USED_CODES + 1) { "USED$it" }),
+            TaskConfig(usedCodes = listOf("OLD1", "OLD1")),
+            TaskConfig(usedCodes = listOf(" ")),
             TaskConfig(challengeCounts = TaskConfig.DEFAULT_CHALLENGE_COUNTS + (InstanceType.STAGNANT_SHADOW to 9)),
             TaskConfig(challengeCounts = TaskConfig.DEFAULT_CHALLENGE_COUNTS + (InstanceType.ECHO to 0)),
         )
         for (config in invalid) assertFalse(config.toString(), config.isValid)
+    }
+
+    @Test
+    fun redemptionCodesKeepTheWindowsCharactersAndSplitOnSeparators() {
+        assertEquals(
+            listOf("ABC123", "DEF456", "永远不会抛弃你", "ghi789"),
+            parseRedemptionCodes("ABC123 DEF456\n永远不会抛弃你，ABC123、 ghi-789;；\n\n${"X".repeat(TaskConfig.MAX_CODE_LENGTH + 1)}"),
+        )
+        assertEquals(TaskConfig.MAX_CODES, parseRedemptionCodes((1..30).joinToString(" ") { "CODE$it" }).size)
+        assertEquals(emptyList<String>(), parseRedemptionCodes(" ，、\n"))
+    }
+
+    @Test
+    fun fetchedCodesJoinTheListWithoutUsedOnes() {
+        val config = TaskConfig(redemptionCodes = listOf("MANUAL1", "OLD1"), usedCodes = listOf("OLD1", "OLD2"))
+
+        assertEquals(
+            listOf("MANUAL1", "NEW1", "NEW2"),
+            config.withFetchedCodes(listOf("OLD2", "NEW1", "MANUAL1", "NEW2")).redemptionCodes,
+        )
+        assertEquals(TaskConfig.MAX_CODES, TaskConfig().withFetchedCodes(List(30) { "NEW$it" }).redemptionCodes.size)
+        assertTrue(config.withFetchedCodes(listOf("NEW1")).isValid)
     }
 
     @Test

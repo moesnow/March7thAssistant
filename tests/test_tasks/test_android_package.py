@@ -150,7 +150,7 @@ def cold_start(workspace, task):
     )
 
 
-@pytest.mark.parametrize("task", ["ROUTINE", "DAILY", "POWER"])
+@pytest.mark.parametrize("task", ["ROUTINE", "DAILY", "POWER", "REDEEM"])
 def test_packaged_android_tasks_finish_python_initialization(packaged_project, task):
     result = cold_start(packaged_project, task)
     assert result.returncode == 0, result.stdout + result.stderr

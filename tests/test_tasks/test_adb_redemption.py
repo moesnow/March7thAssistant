@@ -114,6 +114,13 @@ def test_shared_batch_keeps_confirmed_outcomes_and_never_resubmits(monkeypatch, 
         assert ui.keys == []
 
 
+def test_batch_reports_how_many_codes_got_each_result(monkeypatch):
+    install(monkeypatch, "adb", ["兑换码已被使用", "兑换成功"])
+    summary = Mock()
+    assert redemption.Redemption.start(on_summary=summary)
+    summary.assert_called_once_with("兑换成功 1 个，兑换码已被使用 1 个")
+
+
 def test_adb_accepts_first_clipboard_prompt_without_pasting_twice(monkeypatch):
     cfg, ui, _, _ = install(monkeypatch, "adb", ["兑换成功"], permission=True)
     assert redemption.Redemption.start(["中文兑换码"])

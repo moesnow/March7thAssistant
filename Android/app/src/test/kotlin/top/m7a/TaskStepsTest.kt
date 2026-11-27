@@ -88,6 +88,13 @@ class TaskStepsTest {
     }
 
     @Test
+    fun redeemNeedsAtLeastOneCodeButNotTheRewardSwitches() {
+        assertEquals(listOf(disabled(StepId.REDEMPTION)), plannedSteps(TaskId.REDEEM, TaskConfig(), monday))
+        val codes = TaskConfig(redemptionCodes = listOf("ABC123"), rewardEnable = false, redemption = false)
+        assertEquals(listOf(pending(StepId.REDEMPTION)), plannedSteps(TaskId.REDEEM, codes, monday))
+    }
+
+    @Test
     fun powerAloneIgnoresThePowerSwitch() {
         assertEquals(listOf(pending(StepId.POWER)), plannedSteps(TaskId.POWER, TaskConfig(powerEnable = false), monday))
     }
@@ -98,6 +105,7 @@ class TaskStepsTest {
 
         assertTrue(plannedSteps(TaskId.ROUTINE, nothing, monday).idle)
         assertTrue(plannedSteps(TaskId.DAILY, nothing, monday).idle)
+        assertTrue(plannedSteps(TaskId.REDEEM, nothing, monday).idle)
         assertFalse(plannedSteps(TaskId.POWER, nothing, monday).idle)
         assertFalse(plannedSteps(TaskId.ROUTINE, nothing.copy(dailyEnable = true), monday).idle)
     }
@@ -186,7 +194,8 @@ class TaskStepsTest {
             """{"power_plan": [["拟造花萼（金）", "回忆之蕾", 1], ["拟造花萼（金）", "回忆之蕾", 0],
                 ["未知副本", "x", 2], ["侵蚀隧洞", "无", 1], ["凝滞虚影", "空海之形", 2.5], ["侵蚀隧洞", "睿治之径"],
                 "坏数据", ["历战余响", "寒潭指月", 3]],
-               "last_run_timestamp": 1762900000.25, "echo_of_war_timestamp": 0}"""
+               "last_run_timestamp": 1762900000.25, "echo_of_war_timestamp": 0,
+               "already_used_codes": ["OLD1", "", 3, "OLD1", "NEW1"]}"""
         )!!
 
         assertEquals(
@@ -195,11 +204,27 @@ class TaskStepsTest {
         )
         assertEquals(1762900000250L, progress.lastDailyDone)
         assertNull(progress.lastEchoDone)
+        assertEquals(listOf("OLD1", "NEW1"), progress.usedCodes)
+    }
+
+    @Test
+    fun progressMovesUsedCodesOutOfTheRedeemList() {
+        val config = TaskConfig(
+            powerPlan = listOf(PlanItem(InstanceType.CAVERN, "睿治之径", 2)), redemptionCodes = listOf("ABC123", "DEF456"),
+        )
+        val updated = config.withProgress(TaskProgress(null, null, null, listOf("OLD1", "ABC123")))
+
+        assertEquals(listOf("DEF456"), updated.redemptionCodes)
+        assertEquals(listOf("OLD1", "ABC123"), updated.usedCodes)
+        assertEquals(config.powerPlan, updated.powerPlan)
+        // 没交回兑换码时只换体力计划。
+        assertEquals(config.copy(powerPlan = emptyList()), config.withProgress(TaskProgress(emptyList(), null, null)))
     }
 
     @Test
     fun progressWithoutAPlanKeepsTheCurrentOne() {
         assertEquals(emptyList<PlanItem>(), parseProgress("""{"power_plan": []}""")!!.plan)
+        assertNull(parseProgress("""{"power_plan": []}""")!!.usedCodes)
         assertNull(parseProgress("""{"power_plan": null, "last_run_timestamp": 5}""")!!.plan)
         assertNull(parseProgress("不是 JSON"))
         assertNull(parseProgress("[]"))

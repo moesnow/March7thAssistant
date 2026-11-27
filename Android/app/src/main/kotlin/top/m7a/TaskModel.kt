@@ -1,7 +1,7 @@
 package top.m7a
 
-/** 与 Windows 触屏入口一一对应：日常、每日实训、清体力。 */
-enum class TaskId { ROUTINE, DAILY, POWER }
+/** 与 Windows 的入口一一对应：日常、每日实训、清体力和兑换码。 */
+enum class TaskId { ROUTINE, DAILY, POWER, REDEEM }
 
 /**
  * typeName 对应共享配置的副本类型，声明顺序与 Windows 的副本清单相同。
@@ -112,6 +112,10 @@ data class TaskConfig(
     val quest: Boolean = true,
     val srpass: Boolean = true,
     val redemption: Boolean = true,
+    /** 「兑换码」任务要兑换的码，按 [parseRedemptionCodes] 整理过。 */
+    val redemptionCodes: List<String> = emptyList(),
+    /** 兑换过、过期或无效的码，Python 记下新的就交回。获取最新和「日常」都跳过它们。 */
+    val usedCodes: List<String> = emptyList(),
     val message: Boolean = false,
     val dailyEnable: Boolean = true,
     val synthesis: Boolean = true,
@@ -123,6 +127,8 @@ data class TaskConfig(
             instanceType != InstanceType.ECHO &&
             instanceNames.values.all { it.isNotBlank() } &&
             ornamentDays in 0..MAX_ORNAMENT_DAYS &&
+            redemptionCodes == parseRedemptionCodes(redemptionCodes.joinToString("\n")) &&
+            usedCodes == parseUsedCodes(usedCodes) &&
             teamNumber in 1..MAX_TEAM &&
             teamRules.all { it.team in 1..MAX_TEAM && it.instance.isNotBlank() } &&
             teamRules.distinctBy { it.instance }.size == teamRules.size &&
@@ -152,6 +158,9 @@ data class TaskConfig(
         const val MAX_TEAM = 12
         const val MAX_SCROLL_TIMES = 10
         const val MAX_ORNAMENT_DAYS = 7
+        const val MAX_CODES = 20
+        const val MAX_CODE_LENGTH = 32
+        const val MAX_USED_CODES = 200
 
         // 取自 config.example.yaml。模板里凝滞虚影是「无」，没有记录时取清单第一项。
         val DEFAULT_INSTANCE_NAMES = mapOf(
@@ -163,6 +172,30 @@ data class TaskConfig(
         )
         val DEFAULT_CHALLENGE_COUNTS = InstanceType.entries.associateWith { it.maxBatch }
     }
+}
+
+private val CODE_SEPARATOR = Regex("[\\s,，、;；]+")
+private val NON_CODE_CHARACTER = Regex("[^A-Za-z0-9\\u4e00-\\u9fff]")
+
+/**
+ * 把输入框里的文字整理成兑换码。空白、逗号、顿号和分号都算分隔，和电脑版一样只保留字母、数字和汉字。
+ * 去掉重复的和超过 [TaskConfig.MAX_CODE_LENGTH] 个字的片段，最多保留 [TaskConfig.MAX_CODES] 个。
+ */
+fun parseRedemptionCodes(text: String): List<String> = text.split(CODE_SEPARATOR)
+    .map { it.replace(NON_CODE_CHARACTER, "") }
+    .filter { it.isNotEmpty() && it.length <= TaskConfig.MAX_CODE_LENGTH }
+    .distinct()
+    .take(TaskConfig.MAX_CODES)
+
+/** 已使用的兑换码原样保留，去掉空项和重复，只留最近的 [TaskConfig.MAX_USED_CODES] 个。不是列表时返回 null。 */
+fun parseUsedCodes(value: Any?): List<String>? = (value as? List<*>)
+    ?.filterIsInstance<String>()?.filter { it.isNotBlank() }?.distinct()?.takeLast(TaskConfig.MAX_USED_CODES)
+
+/** 获取到的兑换码并入待兑换列表：原有的排在前面，已使用的都去掉。 */
+fun TaskConfig.withFetchedCodes(fetched: List<String>): TaskConfig {
+    val used = usedCodes.toSet()
+    val codes = (redemptionCodes + fetched).filterNot { it in used }
+    return copy(redemptionCodes = parseRedemptionCodes(codes.joinToString("\n")))
 }
 
 /** 写入 Python 配置的设置，键与 android_task.SETTING_KEYS 一一对应。 */
@@ -201,6 +234,8 @@ fun TaskConfig.toSettings(catalog: Catalog): Map<String, Any> = linkedMapOf(
     "reward_srpass_enable" to srpass,
     "reward_redemption_code_enable" to redemption,
     "reward_message_enable" to message,
+    "redemption_code" to redemptionCodes,
+    "already_used_codes" to usedCodes,
     "daily_enable" to dailyEnable,
     "daily_material_enable" to synthesis,
 )
@@ -242,6 +277,8 @@ fun TaskConfig.encode(): String = Json.encode(
         "quest" to quest,
         "srpass" to srpass,
         "redemption" to redemption,
+        "redemptionCodes" to redemptionCodes,
+        "usedCodes" to usedCodes,
         "message" to message,
         "dailyEnable" to dailyEnable,
         "synthesis" to synthesis,
@@ -319,6 +356,8 @@ fun decodeTaskConfig(text: String?): TaskConfig {
         quest = flag("quest", default.quest),
         srpass = flag("srpass", default.srpass),
         redemption = flag("redemption", default.redemption),
+        redemptionCodes = parseRedemptionCodes((root["redemptionCodes"] as? List<*>).orEmpty().filterIsInstance<String>().joinToString("\n")),
+        usedCodes = parseUsedCodes(root["usedCodes"]).orEmpty(),
         message = flag("message", default.message),
         dailyEnable = flag("dailyEnable", default.dailyEnable),
         synthesis = flag("synthesis", default.synthesis),

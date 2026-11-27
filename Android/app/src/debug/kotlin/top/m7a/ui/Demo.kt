@@ -26,9 +26,10 @@ import top.m7a.plannedSteps
 internal fun demoFrom(intent: Intent): Demo? {
     val name = intent.getStringExtra("demo") ?: return null
     val task = TaskId.entries.firstOrNull { it.name == intent.getStringExtra("task") } ?: TaskId.ROUTINE
-    // 演示用周一，历战余响不会因为开始日期被跳过。
-    val planned = plannedSteps(task, TaskConfig(), 1)
-    val ready = TaskState(permission = PermissionState.READY, task = task)
+    // 演示用周一，历战余响不会因为开始日期被跳过；兑换码任务带几个示例兑换码。
+    val config = if (task == TaskId.REDEEM) TaskConfig(redemptionCodes = DEMO_CODES, usedCodes = listOf("OLDCODE1")) else TaskConfig()
+    val planned = plannedSteps(task, config, 1)
+    val ready = TaskState(permission = PermissionState.READY, task = task, config = config)
     val live = ready.copy(service = ServiceState.CONNECTED, displayId = 65, gameDisplayId = 65, game = GameState.STARTING)
     val state = when (name) {
         "ready" -> ready
@@ -47,7 +48,7 @@ internal fun demoFrom(intent: Intent): Demo? {
         "panel" -> live.copy(phase = TaskPhase.RUNNING, game = GameState.READY, panelOff = true, steps = running(task, planned))
         "stopping" -> live.copy(phase = TaskPhase.STOPPING, game = GameState.READY, steps = running(task, planned))
         "cleaning" -> ready.copy(phase = TaskPhase.CLEANING, service = ServiceState.CLEANING, steps = running(task, planned))
-        "done" -> ready.copy(phase = TaskPhase.SUCCEEDED, steps = done(planned), summary = summary(task))
+        "done" -> ready.copy(phase = TaskPhase.SUCCEEDED, steps = done(task, planned), summary = summary(task))
         "partial" -> ready.copy(phase = TaskPhase.FAILED, errorCode = "task_failed", steps = partial(task, planned))
         "stopped" -> ready.copy(phase = TaskPhase.STOPPED, steps = running(task, planned).finished("stopped"))
         // 息屏和运行时错误发生在执行途中，其余错误发生在步骤开始之前。
@@ -74,6 +75,8 @@ internal fun demoFrom(intent: Intent): Demo? {
 private val MID_RUN_ERRORS = setOf("device_asleep", "runtime_error")
 private const val POWER_SUMMARY = "已完成 6 次挑战，剩余开拓力 3/300"
 private const val DAILY_SUMMARY = "每日实训活跃度 500/500"
+private const val REDEEM_SUMMARY = "兑换成功 2 个，兑换码已被使用 1 个"
+private val DEMO_CODES = listOf("ABC123DEF", "永远不会抛弃你", "XYZ789")
 
 /** 日常做到第三个启用的步骤，单个任务正在进行它唯一的一步。 */
 private fun running(task: TaskId, planned: List<StepResult>): List<StepResult> = when (task) {
@@ -84,7 +87,7 @@ private fun running(task: TaskId, planned: List<StepResult>): List<StepResult> =
     else -> planned.onStepEvent(planned.single().name, "started", null)
 }
 
-private fun done(planned: List<StepResult>): List<StepResult> = planned.map { step ->
+private fun done(task: TaskId, planned: List<StepResult>): List<StepResult> = planned.map { step ->
     if (step.status != StepStatus.PENDING) {
         step
     } else {
@@ -93,6 +96,7 @@ private fun done(planned: List<StepResult>): List<StepResult> = planned.map { st
             detail = when (step.name) {
                 "清体力" -> POWER_SUMMARY
                 "每日实训" -> DAILY_SUMMARY
+                "兑换码" -> REDEEM_SUMMARY.takeIf { task == TaskId.REDEEM }
                 else -> null
             },
         )
@@ -103,13 +107,18 @@ private fun summary(task: TaskId) = when (task) {
     TaskId.ROUTINE -> "$POWER_SUMMARY；$DAILY_SUMMARY"
     TaskId.DAILY -> DAILY_SUMMARY
     TaskId.POWER -> POWER_SUMMARY
+    TaskId.REDEEM -> REDEEM_SUMMARY
 }
 
 /** 领奖一步失败，其余照常完成；单个任务就是唯一的一步失败。 */
 private fun partial(task: TaskId, planned: List<StepResult>): List<StepResult> {
     val failing = if (task == TaskId.ROUTINE) "日常领奖" else planned.single().name
-    val reason = if (task == TaskId.ROUTINE) "邮件失败：未确认邮箱附件状态" else "每日实训页：400 档礼盒点击后仍显示可领取"
-    return done(planned).map { if (it.name == failing) it.copy(status = StepStatus.FAILED, detail = reason) else it }
+    val reason = when (task) {
+        TaskId.ROUTINE -> "邮件失败：未确认邮箱附件状态"
+        TaskId.REDEEM -> "兑换码使用失败: XYZ789 (3/3)"
+        else -> "每日实训页：400 档礼盒点击后仍显示可领取"
+    }
+    return done(task, planned).map { if (it.name == failing) it.copy(status = StepStatus.FAILED, detail = reason) else it }
 }
 
 private fun sample(

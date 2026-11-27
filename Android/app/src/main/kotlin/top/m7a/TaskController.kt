@@ -456,7 +456,7 @@ class TaskController private constructor(private val context: Context) {
             stateData.update { it.copy(steps = it.steps.onStepEvent(name, state, detail)) }
         }
 
-        /** 体力计划的剩余次数和完成时间。不回写的话，已经打掉的次数下一轮会被恢复。 */
+        /** 体力计划的剩余次数、完成时间和已使用的兑换码。不回写的话，已经打掉的次数下一轮会被恢复。 */
         fun reportProgress(json: String) {
             val progress = parseProgress(json)
             if (progress == null) {
@@ -465,7 +465,7 @@ class TaskController private constructor(private val context: Context) {
             }
             stateData.update {
                 it.copy(
-                    config = progress.plan?.let { plan -> it.config.copy(powerPlan = plan) } ?: it.config,
+                    config = it.config.withProgress(progress),
                     lastDailyDone = progress.lastDailyDone,
                     lastEchoDone = progress.lastEchoDone,
                 )

@@ -7,21 +7,28 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -32,12 +39,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -48,11 +58,15 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 import top.m7a.BuildTargetScheme
 import top.m7a.Catalog
 import top.m7a.CatalogItem
 import top.m7a.InstanceType
+import top.m7a.PermissionState
 import top.m7a.R
+import top.m7a.RedemptionCodeList
 import top.m7a.StepResult
 import top.m7a.StepStatus
 import top.m7a.Support
@@ -60,7 +74,9 @@ import top.m7a.TaskConfig
 import top.m7a.TaskId
 import top.m7a.TaskState
 import top.m7a.idle
+import top.m7a.parseRedemptionCodes
 import top.m7a.plannedSteps
+import top.m7a.withFetchedCodes
 import java.time.LocalDate
 import kotlin.math.roundToInt
 
@@ -87,7 +103,10 @@ internal fun TasksScreen(state: TaskState, catalog: () -> Catalog, actions: AppA
                 TaskCard(task, task == state.task, enabled, taskBrief(task, config, catalog, today)) { actions.selectTask(task) }
             }
         }
-        if (plannedSteps(state.task, config, today).idle) {
+        // 兑换码只在「兑换码」任务里用到，选中时才显示。面板自己会提示还没有要兑换的码。
+        if (state.task == TaskId.REDEEM) {
+            RedeemCodes(state, enabled, actions, navigator)
+        } else if (plannedSteps(state.task, config, today).idle) {
             Notice(tr(R.string.tasks_idle_warning), tone = Tone.WARNING, icon = M7Icons.Warning)
         }
         Column {
@@ -179,6 +198,183 @@ private fun taskBrief(task: TaskId, config: TaskConfig, catalog: () -> Catalog, 
         )
     )
     TaskId.POWER -> Brief(powerBrief(config, catalog()))
+    TaskId.REDEEM -> Brief(
+        if (config.redemptionCodes.isEmpty()) {
+            tr(R.string.task_redeem_empty)
+        } else {
+            tr(R.string.task_redeem_codes, config.redemptionCodes.size)
+        }
+    )
+}
+
+private enum class CodesDialog { EDIT, USED, CLEAR }
+
+/** 获取最新兑换码的结果。failed 为真时什么列表都没拿到；bundled 为真时联网失败，用的是安装包自带的列表。 */
+private class FetchResult(val added: Int, val bundled: Boolean = false, val failed: Boolean = false)
+
+/** 「兑换码」任务的面板：获取最新兑换码、编辑要兑换的码、查看和清空已使用的码，然后一键开始。 */
+@Composable
+private fun RedeemCodes(state: TaskState, enabled: Boolean, actions: AppActions, navigator: Navigator) {
+    val config = state.config
+    val current by rememberUpdatedState(config)
+    val context = LocalContext.current.applicationContext
+    val scope = rememberCoroutineScope()
+    var dialog by rememberSaveable { mutableStateOf<CodesDialog?>(null) }
+    var fetching by remember { mutableStateOf(false) }
+    var result by remember { mutableStateOf<FetchResult?>(null) }
+    val codes = config.redemptionCodes
+    val used = config.usedCodes
+    val ready = state.permission == PermissionState.READY
+
+    fun fetch() {
+        fetching = true
+        result = null
+        scope.launch {
+            result = try {
+                val latest = RedemptionCodeList.latest(context)
+                val before = current
+                val merged = before.withFetchedCodes(latest.codes)
+                val added = merged.redemptionCodes.count { it !in before.redemptionCodes }
+                if (merged != before) actions.updateConfig(merged)
+                FetchResult(added, bundled = latest.bundled)
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                FetchResult(0, failed = true)
+            } finally {
+                fetching = false
+            }
+        }
+    }
+
+    PanelCard(padding = PaddingValues(0.dp)) {
+        Column(Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp)) {
+            OutlinedButton(::fetch, Modifier.fillMaxWidth().heightIn(min = 48.dp), enabled = enabled && !fetching) {
+                if (fetching) {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                } else {
+                    Icon(M7Icons.Download, null, Modifier.size(18.dp))
+                }
+                Spacer(Modifier.width(8.dp))
+                Text(tr(if (fetching) R.string.redeem_fetching else R.string.redeem_fetch))
+            }
+            result?.let { Notice(fetchText(it), Modifier.padding(top = 8.dp), tone = fetchTone(it)) }
+        }
+        SettingRow(
+            tr(R.string.redeem_codes), icon = M7Icons.Ticket,
+            value = if (codes.isEmpty()) tr(R.string.redeem_codes_none) else tr(R.string.redeem_codes_count, codes.size),
+            summary = if (codes.isEmpty()) tr(R.string.redeem_codes_summary) else codes.joinToString(tr(R.string.list_separator)),
+            summaryMaxLines = 2, enabled = enabled && !fetching, onClick = { dialog = CodesDialog.EDIT },
+        )
+        SettingRow(
+            tr(R.string.redeem_used),
+            value = if (used.isEmpty()) tr(R.string.redeem_used_none) else tr(R.string.redeem_codes_count, used.size),
+            summary = tr(R.string.redeem_used_summary),
+            enabled = enabled, onClick = if (used.isEmpty()) null else ({ dialog = CodesDialog.USED }),
+        )
+        NoteText(tr(R.string.redeem_note))
+        // 和首页的开始按钮走同一个入口；没有授权时先去权限引导。
+        Button(
+            onClick = {
+                if (ready) {
+                    actions.start()
+                    navigator.openTab(Tab.HOME)
+                } else {
+                    navigator.open(SubPage.GUIDE)
+                }
+            },
+            Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp).fillMaxWidth().heightIn(min = 48.dp),
+            enabled = enabled && !fetching && state.permission != PermissionState.CHECKING && (codes.isNotEmpty() || !ready),
+        ) {
+            Icon(if (ready) M7Icons.Play else M7Icons.Shield, null, Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(tr(if (ready) R.string.redeem_start else R.string.go_authorize))
+        }
+    }
+
+    fun close() {
+        dialog = null
+    }
+    when (dialog.takeIf { enabled }) {
+        CodesDialog.EDIT -> EditCodesDialog(
+            codes,
+            onConfirm = {
+                actions.updateConfig(current.copy(redemptionCodes = it))
+                close()
+            },
+            onDismiss = ::close,
+        )
+        CodesDialog.USED -> UsedCodesDialog(used, onClear = { dialog = CodesDialog.CLEAR }, onDismiss = ::close)
+        CodesDialog.CLEAR -> ConfirmDialog(
+            tr(R.string.redeem_clear_title), tr(R.string.redeem_clear_body),
+            onConfirm = {
+                actions.updateConfig(current.copy(usedCodes = emptyList()))
+                close()
+            },
+            onDismiss = { dialog = CodesDialog.USED },
+        )
+        null -> {}
+    }
+}
+
+@Composable
+private fun fetchText(result: FetchResult): String {
+    if (result.failed) return tr(R.string.redeem_fetch_failed)
+    val text = if (result.added > 0) tr(R.string.redeem_fetch_added, result.added) else tr(R.string.redeem_fetch_none)
+    return if (result.bundled) tr(R.string.redeem_fetch_bundled, text) else text
+}
+
+private fun fetchTone(result: FetchResult) = when {
+    result.failed || result.bundled -> Tone.WARNING
+    result.added > 0 -> Tone.SUCCESS
+    else -> Tone.NEUTRAL
+}
+
+/** 已使用的兑换码，最近的在前，可以长按复制，也可以清空。 */
+@Composable
+private fun UsedCodesDialog(used: List<String>, onClear: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = { TextButton(onClick = onDismiss) { Text(tr(R.string.done)) } },
+        dismissButton = {
+            TextButton(onClick = onClear) { Text(tr(R.string.redeem_clear_used), color = MaterialTheme.colorScheme.error) }
+        },
+        title = { Text(tr(R.string.redeem_used)) },
+        text = {
+            SelectionContainer {
+                Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState())) {
+                    for (code in used.asReversed()) {
+                        Text(code, Modifier.padding(vertical = 4.dp), style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+            }
+        },
+    )
+}
+
+/** 多行填写兑换码，下方实时显示整理后识别到几个，确定后才写回。 */
+@Composable
+private fun EditCodesDialog(initial: List<String>, onConfirm: (List<String>) -> Unit, onDismiss: () -> Unit) {
+    var text by rememberSaveable { mutableStateOf(initial.joinToString("\n")) }
+    val codes = parseRedemptionCodes(text)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = { TextButton(onClick = { onConfirm(codes) }) { Text(tr(R.string.confirm)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(tr(R.string.cancel)) } },
+        title = { Text(tr(R.string.redeem_codes)) },
+        text = {
+            Column {
+                OutlinedTextField(
+                    text, { text = it }, Modifier.fillMaxWidth(),
+                    placeholder = { Text(tr(R.string.redeem_codes_placeholder)) }, minLines = 4, maxLines = 8,
+                )
+                Text(
+                    tr(R.string.redeem_codes_found, codes.size, TaskConfig.MAX_CODES), Modifier.padding(top = 8.dp),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+    )
 }
 
 /** 步骤链，这一轮不做的步骤置灰并划掉，读屏时读出原因。 */

@@ -1,5 +1,5 @@
 """Chaquopy 入口。游戏任务、界面图、OCR 和 Android 控制器都来自仓库。"""
-from functools import lru_cache
+from functools import lru_cache, reduce
 from hashlib import file_digest
 import importlib
 import json
@@ -17,15 +17,17 @@ _MODELS = {
     "Cls": ("ch_ppocr_mobile_v2.0_cls_infer.onnx", "e47acedf663230f8863ff1ab0e64dd2d82b838fceb5957146dab185a89d6215c"),
 }
 
-# 与 main.py 的 touch_actions 保持一致，tests/test_tasks/test_android_entry.py 会对照。
+# 前三项与 main.py 的 touch_actions 一致，兑换码与 main.py 的 redemption 子任务一致。
+# tests/test_tasks/test_android_entry.py 会对照。
 TASK_TARGETS = {
     "ROUTINE": ("tasks.touch.rewards", "routine"),
     "DAILY": ("tasks.touch.rewards", "run_daily_training"),
     "POWER": ("tasks.touch.power", "run_standalone"),
+    "REDEEM": ("tasks.daily.redemption", "Redemption.start"),
 }
-# 单任务入口的步骤名，与 routine 里的步骤名相同。
-SINGLE_STEPS = {"DAILY": "每日实训", "POWER": "清体力"}
-PROGRESS_KEYS = ("power_plan", "last_run_timestamp", "echo_of_war_timestamp")
+# 单任务入口的步骤名，与 module.overview.plan 的步骤名相同。
+SINGLE_STEPS = {"DAILY": "每日实训", "POWER": "清体力", "REDEEM": "兑换码"}
+PROGRESS_KEYS = ("power_plan", "last_run_timestamp", "echo_of_war_timestamp", "already_used_codes")
 # 手机上固定的配置。game_optimization_enable 只用来放行自动战斗检测。
 FIXED_SETTINGS = {
     "control_backend": "adb",
@@ -45,7 +47,7 @@ SETTING_KEYS = frozenset({
     "tp_before_instance", "relic_bag_cleanup_enable", "instance_names_challenge_count", "auto_battle_detect_enable",
     "reward_enable", "reward_dispatch_enable", "reward_mail_enable", "reward_assist_enable",
     "reward_quest_enable", "reward_srpass_enable", "reward_redemption_code_enable", "reward_message_enable",
-    "daily_enable", "daily_material_enable",
+    "redemption_code", "already_used_codes", "daily_enable", "daily_material_enable",
 })
 
 
@@ -247,7 +249,7 @@ def run(workdir, token, sdk, version, model, is_emulator, task, settings, panel_
         from module.game.adb_transport import (
             GAME_PACKAGE, AdbDevice, AdbEnvironment, AdbError, ServiceClient, check_service_hello)
         from module.ocr import ocr
-        target = getattr(importlib.import_module(module_name), entry)
+        target = reduce(getattr, entry.split("."), importlib.import_module(module_name))
         # App 进程会连续执行多轮，培养目标读到的副本缓存在类上。每轮和电脑版一样重新读取。
         build_target = sys.modules.get("tasks.daily.buildtarget")
         if build_target is not None:

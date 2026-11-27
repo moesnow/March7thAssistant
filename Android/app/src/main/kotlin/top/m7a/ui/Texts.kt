@@ -36,6 +36,7 @@ internal val TaskId.title: Int
         TaskId.ROUTINE -> R.string.routine
         TaskId.DAILY -> R.string.daily
         TaskId.POWER -> R.string.power
+        TaskId.REDEEM -> R.string.redemption
     }
 
 internal val TaskId.icon: ImageVector
@@ -43,6 +44,7 @@ internal val TaskId.icon: ImageVector
         TaskId.ROUTINE -> M7Icons.Routine
         TaskId.DAILY -> M7Icons.Daily
         TaskId.POWER -> M7Icons.Bolt
+        TaskId.REDEEM -> M7Icons.Ticket
     }
 
 internal val StepId.title: Int

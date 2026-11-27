@@ -219,8 +219,8 @@ class Redemption:
         return handled.issuperset(codes)
 
     @staticmethod
-    def start(codes: Optional[List[str]] = None, send_notification: bool = False) -> bool:
-        """使用给定的兑换码列表（若为 None，则使用配置中的 `cfg.redemption_code`）。"""
+    def start(codes: Optional[List[str]] = None, send_notification: bool = False, on_summary=None) -> bool:
+        """使用给定的兑换码列表（若为 None，则使用配置中的 `cfg.redemption_code`）。on_summary 收到各类明确结果的个数。"""
         log.hr("准备使用兑换码", 0)
 
         codes_to_use = cfg.redemption_code if codes is None else codes
@@ -239,6 +239,7 @@ class Redemption:
 
         successful_codes = []
         confirmed_count = 0
+        outcomes = {}
         touch = get_control_backend(cfg) == "adb"
         confirm_options = {"crop": TOUCH_BUTTONS} if touch else {}
         paste_options = {"crop": TOUCH_INPUT, "max_retries": 3, "retry_delay": 0.5} if touch else {}
@@ -274,6 +275,7 @@ class Redemption:
                         time.sleep(1)
                     if result:
                         confirmed_count += 1
+                        outcomes[result] = outcomes.get(result, 0) + 1
                     if result == "兑换成功":
                         log.info(f"兑换码使用成功: {green(code)} ({idx}/{len(codes_to_use)})")
                         if code not in used:
@@ -324,5 +326,8 @@ class Redemption:
             log.info("没有成功使用任何兑换码")
         if confirmed_count < len(codes_to_use):
             log.warning(f"仍有{len(codes_to_use) - confirmed_count}个兑换码未确认结果，留待下次重试")
+        if on_summary is not None and outcomes:
+            names = sorted(outcomes, key=lambda name: RESULTS.index(name) if name in RESULTS else len(RESULTS))
+            on_summary("，".join(f"{name} {outcomes[name]} 个" for name in names))
         log.hr("完成", 2)
         return confirmed_count == len(codes_to_use)
