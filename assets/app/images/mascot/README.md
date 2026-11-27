@@ -45,5 +45,8 @@ python assets/scripts/prepare_mascot.py --source "D:\素材\长夜月" --evernig
 | 账号页与运行历史为空（两种主题均为半身构图） | 长夜月_半身手持空相框.png | chibi_ok.webp |
 | 帮助侧栏提示，账号密码及设置确认 | 长夜月_帮助提示.png | chibi_serious.webp |
 | 帮助搜索无结果，全局搜索初始和无结果，抽卡记录为空 | 长夜月_放大镜.png | chibi_search.webp |
+| 删除账号、通知渠道、计划和流程，清除登录、兑换码，清空或替换抽卡记录 | 长夜月_收纳记忆匣.png | chibi_box.webp |
+| 数据恢复或导入成功 | 长夜月_封存印记.png | chibi_stamp.webp |
+| 抽卡记录或流程导入、导出失败 | 长夜月_察看断片.png | chibi_startled.webp |
 
 长夜月的原图单独放在一个目录，可以只放要更新的几张；仍可用原来的文件名导出。若同一输出同时有新旧两张原图，以上表的原图为准。
