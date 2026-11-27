@@ -14,6 +14,7 @@ from app.content.visibility import page_visible, section_visible, setting_visibl
 from module.config import cfg
 from module.content_pages import PAGES
 from module.settings_registry import SETTINGS, Scope, find_setting
+from utils.runs import AFTER_FINISH_CHOICES
 
 
 @pytest.fixture
@@ -149,6 +150,42 @@ def test_external_reload_emits_actual_keys(pages):
     cfg._load_config(save=False)
     assert any("play_audio" in spy.at(i)[0] for i in range(spy.count()))
     assert hosts["after_run"].playAudioCard.switchButton.isChecked() == data["play_audio"]
+
+
+def test_desktop_twin_after_finish_uses_shared_setting(qtbot, page_config, monkeypatch):
+    monkeypatch.delenv("MARCH7TH_AFTER_FINISH", raising=False)
+    config = page_config("after_finish: Exit\n")
+    monkeypatch.setenv("MARCH7TH_DESKTOP_TWIN", "1")
+    window = QWidget()
+    qtbot.addWidget(window)
+    host = PageHost(window, window)
+    build_page("after_run", host)
+    combo = host.afterFinishCard.comboBox
+    assert [combo.itemData(i) for i in range(combo.count())] == ["None", "Exit"]
+    assert card_for("script_path", host) is None
+    assert not setting_visible(find_setting("script_path"))
+    assert combo.currentData() == "Exit"
+
+    path = Path(config.config_path)
+    for action in AFTER_FINISH_CHOICES:
+        path.write_text(f"after_finish: {action}\n", encoding="utf-8")
+        config._load_config(save=False)
+        expected = "Exit" if action == "Exit" else "None"
+        assert combo.currentData() == config.after_finish == expected
+        # 分身中保存其他设置也要保留共享配置里的原操作。
+        config.set_value("play_audio", not config.play_audio)
+        assert YAML(typ="safe").load(path)["after_finish"] == action
+
+    for action in ("Exit", "None"):
+        combo.setCurrentIndex(combo.findData(action))
+        assert YAML(typ="safe").load(path)["after_finish"] == action
+        assert config.after_finish == action
+    monkeypatch.delenv("MARCH7TH_DESKTOP_TWIN")
+    main_host = PageHost(window, window)
+    build_page("after_run", main_host)
+    main_combo = main_host.afterFinishCard.comboBox
+    assert {main_combo.itemData(i) for i in range(main_combo.count())} == set(AFTER_FINISH_CHOICES)
+    assert main_combo.currentData() == "None"
 
 
 def test_resets_cover_composite_and_editor_cards(pages, monkeypatch):

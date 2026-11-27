@@ -11,6 +11,7 @@ from contextlib import contextmanager
 import traceback
 from ruamel.yaml import YAML
 from utils import paths
+from utils.runs import session_after_finish
 from utils.singleton import SingletonMeta
 
 # ── 配置读写诊断日志 ──────────────────────────────────────────────────
@@ -147,7 +148,6 @@ _DESKTOP_TWIN_OVERRIDES = {
     "auto_lower_graphics_enable": False,
     "auto_set_resolution_enable": False,
     "auto_set_game_path_enable": False,
-    "after_finish": "None",
 }
 
 
@@ -572,9 +572,12 @@ class Config(metaclass=SingletonMeta):
         # 先检查环境变量覆盖
         has_override, override_value = _get_env_override(key)
         if has_override:
-            return override_value
-        layer = self._account_layer
-        value = layer.values[key] if layer and key in layer.values else self.config.get(key, default)
+            value = override_value
+        else:
+            layer = self._account_layer
+            value = layer.values[key] if layer and key in layer.values else self.config.get(key, default)
+        if key == "after_finish":
+            value = session_after_finish(value)
         # 如果是可变对象（如列表、字典等），返回拷贝
         if isinstance(value, (list, dict, set)):
             return copy.deepcopy(value)  # 使用深拷贝确保嵌套对象安全

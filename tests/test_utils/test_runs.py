@@ -55,6 +55,14 @@ class TestRunId:
 
 
 class TestRunSession:
+    def test_desktop_twin_filters_live_after_finish_overrides(self, workdir, monkeypatch):
+        session = _begin(invoker=runs.INVOKER_DESKTOP_TWIN)
+        monkeypatch.setenv("MARCH7TH_DESKTOP_TWIN", "1")
+        for action in runs.AFTER_FINISH_CHOICES:
+            runs.set_after_finish(session.run_id, action)
+            expected = "Exit" if action == "Exit" else "None"
+            assert runs.effective_after_finish("Exit") == expected
+
     def test_begin_writes_running_record(self, workdir):
         session = _begin(argv=["daily", "--non-interactive"], invoker="non_interactive")
         record = runs.load_run(session.run_id)

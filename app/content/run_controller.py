@@ -2242,9 +2242,11 @@ class RunController(QObject):
     def _finish_text(self, accounts, index):
         from module.overview.labels import post_action_label
         meta = self._pending_task_meta or {}
-        action = meta.get("post_action") or "None"
+        invoker = self._record.get("invoker")
+        action = runs.session_after_finish(meta.get("post_action") or "None", invoker=invoker)
         if action == "None" and self._record.get("task", self.current_task) in PAUSABLE_TASKS:
             action = self._original_action if self._finish_skipped else self._after_action()
+            action = runs.session_after_finish(action, invoker=invoker)
         text = post_action_label(action) if action != "None" else ""
         can_skip = bool(text)
         if self._active_task_chain:
