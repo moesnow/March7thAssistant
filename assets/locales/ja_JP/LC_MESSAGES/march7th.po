@@ -6033,11 +6033,18 @@ msgstr "プロンプトをコピー"
 msgid "AI 助手"
 msgstr "AI アシスタント"
 
-#: app/setting_interface.py:2534
+#: module/search/setting_text.py:43
 msgid "复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作三月七小助手"
 msgstr ""
 "DeepSeek Harness、Codex、Claude Code などの AI "
 "アシスタントに渡すプロンプトをコピーして、三月なのかアシスタントの操作方法を教えます"
+
+#: app/content/settings/about.py
+#, python-brace-format
+msgid "复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作{name}"
+msgstr ""
+"DeepSeek Harness、Codex、Claude Code などの AI "
+"アシスタントに渡すプロンプトをコピーして、{name}の操作方法を教えます"
 
 #: app/tools/agent_prompt.py:16
 msgid ""

@@ -6188,11 +6188,18 @@ msgstr "Copy prompt"
 msgid "AI 助手"
 msgstr "AI Assistant"
 
-#: app/setting_interface.py:2534
+#: module/search/setting_text.py:43
 msgid "复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作三月七小助手"
 msgstr ""
 "Copy a prompt for AI assistants such as DeepSeek Harness, Codex or Claude "
 "Code so they can operate March7th Assistant"
+
+#: app/content/settings/about.py
+#, python-brace-format
+msgid "复制一段提示词发给 DeepSeek Harness、Codex、Claude Code 等 AI 助手，让它学会操作{name}"
+msgstr ""
+"Copy a prompt for AI assistants such as DeepSeek Harness, Codex or Claude "
+"Code so they can operate {name}"
 
 #: app/tools/agent_prompt.py:16
 msgid ""

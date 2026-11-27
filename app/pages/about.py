@@ -19,6 +19,7 @@ LOGO = 60
 
 
 class AboutHeader(QWidget):
+    nameChanged = Signal(str)
     updateClicked = Signal()
     homeClicked = Signal()
     changelogClicked = Signal()
@@ -28,7 +29,7 @@ class AboutHeader(QWidget):
         self.setFixedHeight(196)
         self._version = version
         self.logo = QLabel(self)
-        self.titleLabel = TitleLabel(tr("三月七小助手"), self)
+        self.titleLabel = TitleLabel(self)
         self.versionPill = Pill(self, height=24, strong=True)
         self.textLabel = BodyLabel(tr("崩坏：星穹铁道自动化助手，免费开源"), self)
         self.textLabel.setWordWrap(True)
@@ -75,6 +76,10 @@ class AboutHeader(QWidget):
 
     def restyle(self, *_):
         evernight = is_evernight()
+        name = tr("长夜月小助手") if evernight else tr("三月七小助手")
+        if self.titleLabel.text() != name:
+            self.titleLabel.setText(name)
+            self.nameChanged.emit(name)
         self.logo.setPixmap(QIcon(application_icon_path(evernight)).pixmap(QSize(LOGO, LOGO), self.devicePixelRatioF()))
         surface = QColor(0, 0, 0, 72) if isDarkTheme() or evernight else QColor(255, 255, 255, 235)
         self.versionPill.setPill(self._version, "accent", evernight=evernight, surface=surface)
