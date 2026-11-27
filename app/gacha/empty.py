@@ -1,4 +1,4 @@
-"""没有抽卡记录时的空状态：Q 版三月七拿放大镜，加三步引导。"""
+"""没有抽卡记录时显示当前主题的放大镜插画和记录导入引导。"""
 from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import QFont, QFontMetricsF, QPainter
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout, QWidget

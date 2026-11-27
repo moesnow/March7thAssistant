@@ -13,11 +13,11 @@ POSES = {
     "下次一定": "chibi_later", "盖章": "chibi_stamp", "吓一跳": "chibi_startled",
     "抱纸箱": "chibi_box",
 }
-EVERNIGHT = ("全身站立", "敲电脑", "挥手", "拿地图发懵", "探头比OK")
+EVERNIGHT = ("全身站立", "敲电脑", "挥手", "拿地图发懵", "探头比OK", "放大镜", "认真")
 EVERNIGHT_VARIANTS = {
     "查看终端": "chibi_typing", "单手撑黑伞": "chibi_wave",
     "检查任务单": "chibi_lost", "托起忆灵": "overview/chibi_ok",
-    "手持空相框": "chibi_ok", "半身手持空相框": "chibi_ok",
+    "帮助提示": "chibi_serious", "手持空相框": "chibi_ok", "半身手持空相框": "chibi_ok",
 }
 
 

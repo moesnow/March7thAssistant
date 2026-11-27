@@ -43,5 +43,7 @@ python assets/scripts/prepare_mascot.py --source "D:\素材\长夜月" --evernig
 | 任务需要处理 | 长夜月_检查任务单.png | chibi_lost.webp |
 | 还差一步就能开始（默认主题为全身比 OK） | 长夜月_托起忆灵.png | overview/chibi_ok.webp |
 | 账号页与运行历史为空（两种主题均为半身构图） | 长夜月_半身手持空相框.png | chibi_ok.webp |
+| 帮助侧栏提示，账号密码及设置确认 | 长夜月_帮助提示.png | chibi_serious.webp |
+| 帮助搜索无结果，全局搜索初始和无结果，抽卡记录为空 | 长夜月_放大镜.png | chibi_search.webp |
 
 长夜月的原图单独放在一个目录，可以只放要更新的几张；仍可用原来的文件名导出。若同一输出同时有新旧两张原图，以上表的原图为准。
