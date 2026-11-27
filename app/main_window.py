@@ -28,7 +28,7 @@ from .run_interface import RunInterface
 from .common.signal_bus import signalBus
 from .common.evernight import EvernightEasterEgg
 from .common.evernight_artwork import evernight_artwork
-from .common.theme_assets import application_icon_path
+from .common.theme_assets import application_icon_path, sponsor_image_path
 from .common.window_icon import set_application_icon
 from .components.evey_animation import EveyAnimation
 
@@ -662,7 +662,7 @@ class MainWindow(FluentWindow):
             lambda: MessageBoxSupport(
                 tr('支持作者🥰'),
                 tr('此程序为免费开源项目，如果你付了钱请立刻退款\n如果喜欢本项目，可以微信赞赏送作者一杯咖啡☕\n您的支持就是作者开发和维护项目的动力🚀'),
-                './assets/app/images/sponsor_dark.jpg' if isDarkTheme() else './assets/app/images/sponsor.jpg',
+                sponsor_image_path(self._evernight_active, isDarkTheme()),
                 self
             ).exec(),
             selectable=False, position=NavigationItemPosition.BOTTOM
