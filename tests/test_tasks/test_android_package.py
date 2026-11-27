@@ -101,6 +101,9 @@ class Bridge:
         assert isinstance(load_codes("assets/config/redemption_codes.json"), list)
         assert TouchDropHandler()._instance_drops
         assert TouchDefaultHandler()._valid_instance_names
+        # 培养目标读完后会走真实通知入口，关闭推送也不能依赖 APK 外的模块。
+        from tasks.base.base import Base
+        Base.send_notification_with_screenshot("培养目标已读取", screenshot=Image.new("RGB", (1280, 720)))
         from module.accounts.errors import AccountError
         account_error = AccountError("account_mismatch", "测试账号不符")
         class WrongAccountConfig:

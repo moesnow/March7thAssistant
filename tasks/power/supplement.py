@@ -70,20 +70,28 @@ def _prepare_exchange(auto, screen, config, locate_entry, return_screen, desktop
 
     max_buttons = PC_MAX_BUTTONS if desktop else TOUCH_MAX_BUTTONS
     stock_y, stock_height = (362, 29) if desktop else (364, 26)
-    for enabled, source, label, x in (
-        (config.use_reserved_trailblaze_power, "后备开拓力", "取出等量后备开拓力", 550 if desktop else 528),
-        (config.use_fuel, "燃料", "兑换60开拓力", 640),
+    for enabled, source, label in (
+        (config.use_reserved_trailblaze_power, "后备开拓力", "取出等量后备开拓力"),
+        (config.use_fuel, "燃料", "兑换60开拓力"),
     ):
         if not enabled:
             continue
-        if desktop:
-            # PC 会把未耗尽的资源卡片重新居中；按图标定位，避免读到相邻星琼卡片。
-            template = "reserved_trailblaze_power" if source == "后备开拓力" else "fuel"
-            card = auto.find_element(f"./assets/images/share/power/trailblaze_power/{template}.png",
-                                     "image", 0.9, relative=True, scale_range=(0.9, 1.1))
-            if not card:
-                continue
-            x = (card[0][0] + card[1][0]) * 640 / auto.screenshot.width
+        # 桌面和触屏都会隐藏已耗尽的资源并将剩余卡片居中，按图标定位当前资源。
+        if source == "后备开拓力":
+            template = "reserved_trailblaze_power" if desktop else "reserve"
+        else:
+            template = "fuel"
+        directory = "./assets/images/share/power/trailblaze_power" if desktop else "./assets/touch_720/images/power"
+        card = auto.find_element(f"{directory}/{template}.png", "image", 0.9,
+                                 relative=True, scale_range=(0.9, 1.1), max_retries=3, retry_delay=0.3)
+        if not card and not desktop:
+            # 触屏选中卡片会放大；在同一新画面上兼容另一种大小。
+            state = "unselected" if source == "后备开拓力" else "selected"
+            card = auto.find_element(f"{directory}/{template}_{state}.png", "image", 0.9,
+                                     take_screenshot=False, relative=True)
+        if not card:
+            continue
+        x = (card[0][0] + card[1][0]) * 640 / auto.screenshot.width
         _tap(auto, x, 327)
         if not _find_text(auto, label, DESCRIPTION, retries=6):
             raise PowerError("未确认开拓力补充方式")

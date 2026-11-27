@@ -121,6 +121,7 @@ def stage = tasks.register('stageProjectAssets', Zip) {
         include 'LICENSE', 'README.md'
         include 'module/config/__init__.py', 'module/config/config.py', 'module/config/platform.py'
         include 'module/connection_values.py', 'module/accounts/__init__.py', 'module/accounts/errors.py'
+        include 'module/accounts/messages.py', 'module/accounts/reasons.py'
         include 'module/channel_catalog.py', 'module/channel_tutorials.py'
         include 'module/instance_limits.py'
         include 'module/overview/__init__.py', 'module/overview/plan.py'

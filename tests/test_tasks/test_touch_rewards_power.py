@@ -354,8 +354,10 @@ def test_touch_power_supplement_keeps_the_callers_frame_retry_window(monkeypatch
             return False
         return frame, (0, 0, 1280, 720), 1
 
-    def find(target, kind, **_kwargs):
+    def find(target, kind, *_args, **_kwargs):
         capture.take_screenshot()
+        if kind == "image" and page == "supplement":
+            return ((490, 291), (566, 363))
         if kind == "crop" or page == "supplement":
             return target
 
@@ -367,7 +369,7 @@ def test_touch_power_supplement_keeps_the_callers_frame_retry_window(monkeypatch
             page = "guide3"
 
     clock = SimpleNamespace(monotonic=lambda: now, sleep=sleep)
-    auto = Mock(find_element=Mock(side_effect=find), click_element_with_pos=Mock(side_effect=click))
+    auto = Mock(screenshot=frame, find_element=Mock(side_effect=find), click_element_with_pos=Mock(side_effect=click))
     stock = Mock(return_value=0)
     cfg = SimpleNamespace(
         power_plan=[[power.GOLDEN_CALYX, "回忆之蕾", 3]], power_plan_keep=False, power_plan_continue=False,
@@ -1062,11 +1064,23 @@ def test_sms_pending_thread_accepts_sticker_reply(monkeypatch):
     auto.click_element_with_pos.assert_called_once_with(sticker, offset=(55, 62))
 
 
+def _supplement_auto():
+    auto = Mock(screenshot=SimpleNamespace(width=1280))
+
+    def find(target, kind, *_args, **_kwargs):
+        if kind == "image":
+            x = 528 if target.endswith("/reserve.png") else 640
+            return ((x - 38, 291), (x + 38, 363))
+        return target if target != "获得物品" else None
+
+    auto.find_element.side_effect = find
+    return auto
+
+
 @pytest.mark.parametrize("stocks,after", [([630], 620), ([630], 380), ([0, 7], 440)])
 def test_supplement_uses_maximum_and_accepts_the_actual_balance(monkeypatch, stocks, after):
     cfg = SimpleNamespace(use_reserved_trailblaze_power=True, use_fuel=True)
-    auto = Mock()
-    auto.find_element.side_effect = lambda label, *_args, **_kwargs: label if label != "获得物品" else None
+    auto = _supplement_auto()
     read = Mock(side_effect=stocks)
     monkeypatch.setattr(supplement, "read_number", read)
     navigate = Mock(check_screen=Mock(return_value=True))
@@ -1082,8 +1096,7 @@ def test_supplement_uses_maximum_and_accepts_the_actual_balance(monkeypatch, sto
 @pytest.mark.parametrize("after", [80, power.PowerError("未能确认当前开拓力")])
 def test_supplement_reuses_previous_budget_without_resending_unconfirmed_exchange(monkeypatch, after):
     cfg = SimpleNamespace(use_reserved_trailblaze_power=True, use_fuel=False)
-    auto = Mock()
-    auto.find_element.side_effect = lambda label, *_args, **_kwargs: label if label != "获得物品" else None
+    auto = _supplement_auto()
     screen = Mock(check_screen=Mock(return_value=True))
     read_balance = Mock(side_effect=[after])
     stock = Mock(side_effect=[30])
