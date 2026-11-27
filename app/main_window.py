@@ -676,6 +676,10 @@ class MainWindow(FluentWindow):
             onClick=lambda: self.openPage(name), position=position,
         )
 
+    def builtPage(self, name):
+        """已构建的页面；未构建返回 None，不会触发构建。"""
+        return self._pages.get(name)
+
     def ensurePage(self, name):
         """构建页面并顶替占位页；已构建则直接返回。"""
         page = self._pages.get(name)
@@ -688,6 +692,9 @@ class MainWindow(FluentWindow):
         # 构造成功后才摘除构建器：构造失败时下次访问仍会重试，不会把页面变成死键。
         self._page_builders.pop(name, None)
         page.setProperty('isStackedTransparent', False)
+        if self._desktop_twin_hosting:
+            # 桌面分身接管期间新建的页面同样要禁用，否则会出现可操作窗口期。
+            page.setDisabled(True)
         slot = self._page_slots.pop(name, None)
         if slot is not None:
             self._swap_slot(slot, page)
@@ -1003,7 +1010,11 @@ class MainWindow(FluentWindow):
         self.accountNavCard.setAccount(*self.accountModel.card())
 
     def _accountBindingChanged(self):
-        self.taskInterface.rebuild(account_changed=True)
+        try:
+            self.taskInterface.rebuild(account_changed=True)
+        except Exception as exc:
+            # 切账号后重建任务页失败不应该让绑定流程整体失败。
+            log.warning(f'切换账号后刷新任务页失败：{type(exc).__name__}: {exc}')
         self.searchIndex.invalidate()
         self.homeInterface.model.request_refresh()
 
@@ -1039,7 +1050,10 @@ class MainWindow(FluentWindow):
             self._backend_connection = connection
         self.accountModel.refresh()
         self.homeInterface.refreshBackendTasks()
-        self.toolsInterface.refreshBackendTasks(connection_changed=changed)
+        try:
+            self.toolsInterface.refreshBackendTasks(connection_changed=changed)
+        except Exception as exc:
+            log.warning(f'刷新工具箱失败：{type(exc).__name__}: {exc}')
 
     def _onHotkeyChanged(self):
         """处理热键配置改变信号"""
@@ -1068,9 +1082,11 @@ class MainWindow(FluentWindow):
         self._cancelTaskExit()
         self.runController.setDesktopTwinHosting(active)
         self.accountNavCard.setDisabled(active)
-        for page in (self.homeInterface, self.taskInterface, self.settingInterface, self.workflowInterface,
-                     self.warpInterface, self.logInterface, self.accountsInterface):
-            page.setDisabled(active)
+        for page in (self.homeInterface, self.builtPage('taskInterface'), self.builtPage('settingInterface'),
+                     self.builtPage('workflowInterface'), self.builtPage('warpInterface'),
+                     self.logInterface, self.accountsInterface):
+            if page is not None:
+                page.setDisabled(active)
         start_game = self.navigationInterface.widget('startGameButton')
         if start_game is not None:
             start_game.setDisabled(active)
@@ -1429,7 +1445,7 @@ class MainWindow(FluentWindow):
         """执行退出前的清理并退出程序
         e: 可选的 QCloseEvent，用于调用 e.accept()
         """
-        close_twin = getattr(getattr(self, "toolsInterface", None), "closeDesktopTwin", None)
+        close_twin = getattr(self.builtPage('toolsInterface'), "closeDesktopTwin", None)
         if close_twin and not close_twin():
             if e is not None:
                 e.ignore()
