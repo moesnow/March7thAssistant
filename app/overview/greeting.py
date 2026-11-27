@@ -253,6 +253,7 @@ class GreetingCard(QWidget):
         self._background_path = None
         self._background = QImage()
         self._cover = (QSize(), QImage())
+        self._surface_cache = None
         self._buttons_key = None
         self._buttons = []
         self._state = "ready"
@@ -484,9 +485,8 @@ class GreetingCard(QWidget):
             self._cover = (QSize(size), image.copy(x, y, size.width(), size.height()))
         return self._cover[1]
 
-    def _paintSurface(self, painter):
+    def _paintSurface(self, painter, mode, mascot_center):
         rect = QRectF(self.rect())
-        mode = self._mode()
         if not self._background.isNull():
             painter.drawImage(rect.topLeft(), self._coverImage())
             veil = QLinearGradient(rect.topLeft(), rect.topRight())
@@ -497,29 +497,33 @@ class GreetingCard(QWidget):
             painter.fillRect(rect, veil)
             return
         paint_background(painter, rect, mode)
-        paint_star_track(painter, rect, mode, self._mascotCenter(), fade_from=min(rect.width() * 0.46, 520))
+        paint_star_track(painter, rect, mode, mascot_center, fade_from=min(rect.width() * 0.46, 520))
 
     def _surfaceImage(self):
+        size = self.size()
         ratio = self.devicePixelRatioF() or 1.0
-        image = QImage(max(1, round(self.width() * ratio)), max(1, round(self.height() * ratio)),
+        mode = self._mode()
+        mascot_center = self._mascotCenter() if self._background.isNull() else None
+        key = (size, ratio, mode, self._background.cacheKey(), mascot_center)
+        if self._surface_cache is not None and self._surface_cache[0] == key:
+            return self._surface_cache[1]
+
+        image = QImage(max(1, round(size.width() * ratio)), max(1, round(size.height() * ratio)),
                        QImage.Format.Format_ARGB32_Premultiplied)
         image.setDevicePixelRatio(ratio)
         image.fill(Qt.GlobalColor.transparent)
         painter = QPainter(image)
         painter.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.SmoothPixmapTransform)
         painter.setClipPath(self._clipPath())
-        self._paintSurface(painter)
+        self._paintSurface(painter, mode, mascot_center)
         painter.end()
+        self._surface_cache = (key, image)
         return image
 
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.SmoothPixmapTransform)
-        path = self._clipPath()
-        painter.save()
-        painter.setClipPath(path)
-        self._paintSurface(painter)
-        painter.restore()
+        painter.drawImage(QPoint(0, 0), self._surfaceImage())
         painter.setPen(QPen(rgba(COLORS[self._mode()]["border"]), 1))
         painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.drawPath(path)
+        painter.drawPath(self._clipPath())
