@@ -139,7 +139,15 @@ def test_overview_refresh_allows_window_to_apply_external_settings(qtbot, tmp_pa
     external = tmp_path / "external.yaml"
     with external.open("w", encoding="utf-8") as stream:
         cfg.yaml.dump(replacement, stream)
-    external.replace(path)
+
+    def replace_config():
+        try:
+            external.replace(path)
+        except PermissionError as error:
+            raise AssertionError(f"临时配置文件仍被占用：{error}") from error
+
+    # Windows 的短暂读取句柄可能阻止原子替换，等待占用释放后再触发刷新。
+    qtbot.waitUntil(replace_config, timeout=2000)
     window.homeInterface.model.refresh()  # The overview's debounce fires before the main window's.
     qtbot.waitUntil(lambda: window.settingInterface is not original, timeout=7000)
     assert window.settingInterface.themeCard.comboBox.currentData() == "dark" and isDarkTheme()
