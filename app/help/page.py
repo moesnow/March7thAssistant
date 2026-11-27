@@ -2,9 +2,10 @@
 from PySide6.QtCore import QCoreApplication, QEvent, QPoint, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QVBoxLayout, QWidget
-from qfluentwidgets import (CaptionLabel, FluentIcon, InfoBar, InfoBarPosition, PushButton, ScrollArea,
+from qfluentwidgets import (CaptionLabel, FluentIcon, InfoBar, InfoBarPosition, PushButton,
                             TransparentToolButton, setFont)
 
+from app.common.scroll_area import PageScrollArea
 from app.navigation import highlight
 from app.pages.common import NoticeStrip, is_evernight, secondary
 from module.docs.catalog import DOCUMENTS, current_version, source_for, website_url
@@ -57,7 +58,7 @@ class MetaRow(QWidget):
         self.websiteButton.setText(tr("在官网查看"))
 
 
-class DocPage(ScrollArea):
+class DocPage(PageScrollArea):
     anchorChanged = Signal(str)
 
     def __init__(self, interface, doc):

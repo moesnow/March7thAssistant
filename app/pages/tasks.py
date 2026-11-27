@@ -5,9 +5,10 @@ from PySide6.QtCore import QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QPainter
 from PySide6.QtWidgets import QGridLayout, QHBoxLayout, QVBoxLayout, QWidget
 from qfluentwidgets import (Action, BodyLabel, CaptionLabel, CheckBox, DropDownPushButton, FluentIcon, IconWidget,
-                            InfoBar, PrimaryPushButton, PrimarySplitPushButton, RoundMenu, ScrollArea,
+                            InfoBar, PrimaryPushButton, PrimarySplitPushButton, RoundMenu,
                             SearchLineEdit, SimpleCardWidget, StrongBodyLabel, SubtitleLabel, isDarkTheme)
 
+from app.common.scroll_area import PageScrollArea
 from app.overview.style import accent, brand, primary_button_qss, text_color, tone
 from app.overview.widgets import ElidedLabel, IconTile, LinkButton, Pill
 from module.localization import tr
@@ -137,7 +138,7 @@ class TaskListPanel(SimpleCardWidget):
         self.filterBox = SearchLineEdit(self)
         self.filterBox.setPlaceholderText(tr("筛选任务"))
         self.filterBox.textChanged.connect(self._filter)
-        self.scroll = ScrollArea(self)
+        self.scroll = PageScrollArea(self)
         self.scroll.setWidgetResizable(True)
         self.scroll.enableTransparentBackground()
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)

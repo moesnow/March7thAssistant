@@ -5,9 +5,9 @@
 from PySide6.QtCore import QPoint, QRect, Qt, QTimer
 from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import QHBoxLayout, QStackedWidget, QVBoxLayout, QWidget
-from qfluentwidgets import (BodyLabel, CaptionLabel, ExpandSettingCard, ScrollArea, SearchLineEdit, StrongBodyLabel,
-                            TitleLabel, qconfig)
+from qfluentwidgets import BodyLabel, CaptionLabel, ExpandSettingCard, SearchLineEdit, StrongBodyLabel, TitleLabel, qconfig
 
+from app.common.scroll_area import PageScrollArea
 from app.content import PAGES, PageHost, build_page
 from app.content.base import card_for
 from app.content.visibility import setting_visible
@@ -50,7 +50,7 @@ def _channel_of(setting):
     return None
 
 
-class SettingPage(ScrollArea):
+class SettingPage(PageScrollArea):
     """一个分类：面包屑、标题、说明和若干组设置。"""
 
     def __init__(self, interface, page):
@@ -114,7 +114,7 @@ class SettingPage(ScrollArea):
         return self.views.get(setting.section)
 
 
-class SearchResultsPage(ScrollArea):
+class SearchResultsPage(PageScrollArea):
     """设置页内搜索的结果，只列设置项。"""
 
     def __init__(self, interface):
