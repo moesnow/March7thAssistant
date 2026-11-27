@@ -26,6 +26,7 @@ from module.game.adb_ready import wait_for_game as wait_for_game_frames
 from module.logger import log
 from tasks.daily.redemption import Redemption
 from tasks.touch import power, rewards
+from utils.color import green, red, yellow
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -189,12 +190,12 @@ def test_task_log_keeps_the_reason_instead_of_the_generic_step_line(entry):
     handler = entry._TaskLog(bridge)
 
     handler.begin_step("日常领奖")
-    handler.emit(record(logging.ERROR, "邮件失败：未确认邮箱附件状态"))
+    handler.emit(record(logging.ERROR, f"邮件失败：{red('未确认邮箱附件状态')}"))
     handler.emit(record(logging.ERROR, "日常领奖未完成"))
     assert handler.last_error == "邮件失败：未确认邮箱附件状态"
     handler.begin_step("每日实训")
     assert handler.last_error is None
-    handler.emit(record(logging.INFO, "=== 开始 ===", section_title="开始触屏每日实训"))
+    handler.emit(record(logging.INFO, "=== 开始 ===", section_title=green("开始触屏每日实训")))
     assert handler.last_error is None
     assert bridge.calls[-1] == ("log", "INFO", "开始触屏每日实训")
 
@@ -1136,6 +1137,10 @@ def test_redeem_uses_the_codes_from_the_app(entry, device, monkeypatch):
 
     def run(*, on_summary):
         seen.append(cfg.redemption_code)
+        log.hr("准备使用兑换码", 0)
+        log.info(f"开始使用兑换码: {green('ABC123')} (1/2)")
+        log.info(f"当前界面: {green('主界面')}")
+        log.info(f"兑换码已被使用: {yellow('永远不会抛弃你')} (2/2)")
         on_summary("兑换成功 1 个，兑换码已被使用 1 个")
         return True
 
@@ -1144,6 +1149,10 @@ def test_redeem_uses_the_codes_from_the_app(entry, device, monkeypatch):
 
     assert start(entry, "REDEEM", bridge, redemption_code=["ABC123", "永远不会抛弃你"]) == "success"
     assert seen == [["ABC123", "永远不会抛弃你"]]
+    assert [call[2] for call in bridge.calls if call[:2] == ("log", "INFO")][-4:] == [
+        "准备使用兑换码", "开始使用兑换码: ABC123 (1/2)", "当前界面: 主界面",
+        "兑换码已被使用: 永远不会抛弃你 (2/2)",
+    ]
     assert bridge.steps == [("兑换码", "started", None), ("兑换码", "succeeded", "兑换成功 1 个，兑换码已被使用 1 个")]
 
 
@@ -1178,7 +1187,8 @@ def test_android_entry_exports_debug_and_traceback_and_restores_log_levels(entry
     def fail(*, on_summary):
         adb_ready._match(Image.new("RGB", (1280, 720)), "menu", None)
         OCR.log_results(SimpleNamespace(logger=log), [{"txt": "委托"}])
-        raise GameRecoveryError("委托失败后无法回到可操作界面")
+        log.debug(f"识别目标: {green('委托')}")
+        raise GameRecoveryError(red("委托失败后无法回到可操作界面"))
 
     monkeypatch.setattr(rewards, "run_daily_training", fail)
     bridge = Bridge()
@@ -1188,6 +1198,8 @@ def test_android_entry_exports_debug_and_traceback_and_restores_log_levels(entry
     assert len(diagnostics) == 1
     assert "ADB 启动模板 menu" in diagnostics[0] and "相似度=0.450 阈值=0.90" in diagnostics[0]
     assert "OCR识别结果: ['委托']" in diagnostics[0]
+    assert "识别目标: 委托" in diagnostics[0]
+    assert all("\033[" not in call[2] for call in bridge.calls if call[0] == "log")
     assert any(call[:2] == ("log", "ERROR") and "Traceback (most recent call last):" in call[2]
                for call in bridge.calls)
     assert log.logger.level == original_level

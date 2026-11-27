@@ -86,8 +86,10 @@ class _TaskLog(logging.Handler):
     """把任务日志转给 Kotlin，并记下当前步骤里最后一条错误，作为这一步失败的原因。"""
 
     def __init__(self, bridge, visible_level=logging.INFO):
+        from utils.logger.colorcodefilter import ColorCodeFilter
+
         super().__init__(logging.DEBUG)
-        self.setFormatter(logging.Formatter())
+        self.setFormatter(ColorCodeFilter())
         self.bridge = bridge
         self.visible_level = visible_level
         self.step = None
@@ -101,7 +103,7 @@ class _TaskLog(logging.Handler):
 
     def emit(self, record):
         title = getattr(record, "section_title", None)
-        message = title if title is not None else self.format(record)
+        message = self.formatter.color_pattern.sub("", title) if title is not None else self.format(record)
         time_ms = int(record.created * 1000)
         if record.levelno < logging.INFO:
             stamp = self.formatter.formatTime(record, "%H:%M:%S")
