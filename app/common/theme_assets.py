@@ -8,6 +8,10 @@ def application_icon_path(evernight=False):
     return './assets/logo/evernight/icon.ico'
 
 
+def application_name(evernight):
+    return 'Evernight Assistant' if evernight else 'March7th Assistant'
+
+
 def sponsor_image_path(evernight, dark):
     if evernight:
         return './assets/app/images/sponsor_evernight.webp'

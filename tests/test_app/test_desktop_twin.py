@@ -71,6 +71,36 @@ def test_tools_button_opens_one_desktop_twin_window(qtbot, monkeypatch):
     qtbot.waitUntil(lambda: page._desktop_twin is None)
 
 
+def test_window_taskbar_and_launcher_follow_the_theme(qtbot):
+    from pathlib import Path
+    from PySide6.QtGui import QIcon
+    from PySide6.QtWidgets import QWidget
+    from qfluentwidgets import qconfig, setThemeColor
+    from win32com.propsys import propsys, pscon
+    from app.common.design_tokens import EVERNIGHT_RED, MARCH7TH_PINK
+    from app.common.theme_assets import application_icon_path
+    from app.tools.desktop_twin import DesktopTwinDialog
+
+    parent = QWidget()
+    qtbot.addWidget(parent)
+    previous = qconfig.get(qconfig.themeColor)
+    try:
+        setThemeColor(EVERNIGHT_RED, save=False)
+        dialog = DesktopTwinDialog(parent, Mock())
+        dialog.show()
+        for connected_view, night in ((False, True), (True, True), (True, False), (False, False)):
+            dialog._set_screen_visible(connected_view)
+            setThemeColor(EVERNIGHT_RED if night else MARCH7TH_PINK, save=False)
+            path = application_icon_path(night)
+            expected = QIcon(path).pixmap(32, 32).toImage()
+            assert dialog.windowIcon().pixmap(32, 32).toImage() == expected
+            assert dialog._assistant_button.icon().pixmap(32, 32).toImage() == expected
+            store = propsys.SHGetPropertyStoreForWindow(int(dialog.winId()))
+            assert store.GetValue(pscon.PKEY_AppUserModel_RelaunchIconResource).GetValue() == str(Path(path).resolve()) + ',0'
+    finally:
+        setThemeColor(previous, save=False)
+
+
 def test_login_opens_gui_and_hide_keeps_session(qtbot, monkeypatch):
     from PySide6.QtWidgets import QWidget
     from app.tools import desktop_twin as ui

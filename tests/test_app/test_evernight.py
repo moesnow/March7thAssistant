@@ -288,6 +288,7 @@ def test_tenth_logo_click_saves_unlock_and_theme(
 @pytest.mark.parametrize('last_theme,system_dark', [
     ('evernight', False), ('auto', False), ('auto', True), ('light', True), ('dark', False),
 ])
+@pytest.mark.parametrize('window', [{'test_tray': True}], indirect=True)
 def test_unlocked_theme_survives_settings_reload_and_restart(window, qtbot, monkeypatch, last_theme, system_dark):
     from app.common.evernight_artwork import evernight_artwork
     from app.main_window import MainWindow
@@ -329,6 +330,10 @@ def test_unlocked_theme_survives_settings_reload_and_restart(window, qtbot, monk
     cfg._load_config(None, save=False)
     restarted = MainWindow(start_minimized_to_tray=True)
     qtbot.addWidget(restarted)
+    expected_icon = QIcon(application_icon_path(last_theme == 'evernight')).pixmap(32, 32).toImage()
+    for icon in (restarted.splashScreen.icon(), restarted.windowIcon(), QApplication.windowIcon(), restarted.tray_icon.icon()):
+        assert icon.pixmap(32, 32).toImage() == expected_icon
+    assert restarted.tray_icon.toolTip() == restarted.windowTitle()
     combo = restarted.settingInterface.themeCard.comboBox
     assert [combo.itemData(i) for i in range(combo.count())] == ['auto', 'light', 'dark', 'evernight']
     assert combo.currentData() == last_theme
