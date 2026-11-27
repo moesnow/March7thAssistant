@@ -201,6 +201,14 @@ class RunInterface(QWidget):
     def page(self):
         return PAGES[self.stack.currentIndex()]
 
+    def setDesktopTwinHosting(self, active):
+        self.currentPage.card.setDisabled(active)
+        self.historyPage.retryButton.setDisabled(active)
+        self.schedulePage.setDisabled(active)
+        self.segment.items["schedule"].setDisabled(active)
+        if active and self.page() == "schedule":
+            self.showPage("current")
+
     def showPage(self, key):
         if key not in PAGES:
             return False

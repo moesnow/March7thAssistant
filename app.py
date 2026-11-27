@@ -394,6 +394,9 @@ if __name__ == "__main__":
         if _server is None:
             w.quitApp()
             sys.exit(1)
+        from app.common.desktop_twin_log import TwinLogPublisher, log_server_key
+        _log_publisher = TwinLogPublisher(
+            log_server_key(_desktop_twin_context.session, _desktop_twin_context.host_pid), w.runController)
         _session_timer = QTimer(w, interval=1000)
 
         def check_desktop_twin_host():

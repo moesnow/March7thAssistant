@@ -1,5 +1,5 @@
 """进程输出与历史文件共用的增量式解析器。"""
-from collections import deque
+from collections import defaultdict, deque
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -88,6 +88,30 @@ class LogParser:
         title = " ".join(self.box or ())
         self.box = None
         return [LogEntry("", "info", title, "title")] if title else []
+
+
+def merge_twin_file_entries(mirrored, recorded):
+    """断线时按出现顺序对齐两份日志，保留仅在界面显示的提示和仅写入文件的输出。"""
+    positions = defaultdict(deque)
+    for index, entry in enumerate(recorded):
+        positions[entry.text if entry.kind == "output" else entry].append(index)
+
+    merged = deque(maxlen=MAX_LINES)
+    start = 0
+    for entry in mirrored:
+        # 格式化日志按时间和级别等完整字段匹配。普通文件输出没有 GUI 补上的时间。
+        for key in (entry, entry.text):
+            matches = positions.get(key)
+            while matches and matches[0] < start:
+                matches.popleft()
+            if matches:
+                index = matches.popleft()
+                merged.extend(recorded[start:index])
+                start = index + 1
+                break
+        merged.append(entry)
+    merged.extend(recorded[start:])
+    return list(merged)
 
 
 def tail_offset(stream, limit=MAX_LINES):
