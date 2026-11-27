@@ -6,7 +6,6 @@ from module.logger import log
 from module.game import get_game_controller
 from module.game.adb_transport import AdbError
 from utils.color import red, green, yellow
-import tasks.reward as reward
 from tasks.base.task_steps import optional_reward
 import time
 import json
@@ -316,6 +315,8 @@ class Redemption:
                     from tasks.touch.rewards import claim_mail
                     claim_mail()
                 else:
+                    # 电脑版领奖模块不随安卓 App 打包，只在这条分支导入。
+                    import tasks.reward as reward
                     reward.start_specific("mail")
         elif confirmed_count == len(codes_to_use):
             log.info("所有兑换码均已处理")

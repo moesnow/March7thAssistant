@@ -94,6 +94,13 @@ class Bridge:
         # 日常编排和体力进度在进入游戏后才调用这些延迟依赖。
         select_steps(TOUCH, cfg, dict.fromkeys(TOUCH, lambda: True), touch=True)
         save_reading(cfg, "overview_power", 120)
+        # routine 里延迟导入的兑换码和培养目标，连同它们读取的数据文件。
+        from tasks.daily.buildtarget import BuildTarget
+        from tasks.daily.redemption import Redemption, load_codes
+        from tasks.touch.buildtarget import TouchDefaultHandler, TouchDropHandler
+        assert isinstance(load_codes("assets/config/redemption_codes.json"), list)
+        assert TouchDropHandler()._instance_drops
+        assert TouchDefaultHandler()._valid_instance_names
         from module.accounts.errors import AccountError
         account_error = AccountError("account_mismatch", "测试账号不符")
         class WrongAccountConfig:

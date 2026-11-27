@@ -96,7 +96,7 @@ def install(monkeypatch, backend, outcomes, **options):
     monkeypatch.setattr(redemption, "screen", ui)
     monkeypatch.setattr(redemption, "get_game_controller", lambda: game)
     monkeypatch.setattr(redemption, "time", SimpleNamespace(sleep=lambda _: None))
-    monkeypatch.setattr(redemption.reward, "start_specific", mail)
+    monkeypatch.setattr("tasks.reward.start_specific", mail)
     monkeypatch.setattr("tasks.touch.rewards.claim_mail", mail)
     return config, ui, game, mail
 

@@ -557,7 +557,7 @@ def test_redemption_keeps_confirmed_success_when_mail_fails(monkeypatch):
     monkeypatch.setattr(redemption, "get_game_controller", Mock())
     monkeypatch.setattr(redemption, "screen", Mock())
     monkeypatch.setattr(redemption, "time", SimpleNamespace(sleep=Mock()))
-    monkeypatch.setattr(redemption.reward, "start_specific", Mock(side_effect=receipt.RewardError("邮件待领取")))
+    monkeypatch.setattr("tasks.reward.start_specific", Mock(side_effect=receipt.RewardError("邮件待领取")))
 
     assert redemption.Redemption.start(codes=["TEST_REDEMPTION"])
     cfg.set_value.assert_called_once_with("already_used_codes", ["TEST_REDEMPTION"])
