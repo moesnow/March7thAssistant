@@ -4,8 +4,9 @@
 """
 from PySide6.QtCore import QPoint, Qt, QTimer
 from PySide6.QtWidgets import QHBoxLayout, QStackedWidget, QVBoxLayout, QWidget
-from qfluentwidgets import BodyLabel, ExpandSettingCard, ScrollArea, TitleLabel, qconfig
+from qfluentwidgets import BodyLabel, ExpandSettingCard, TitleLabel, qconfig
 
+from app.common.scroll_area import PageScrollArea
 from app.content import PageHost, build_page
 from app.content.base import card_for
 from app.content.visibility import setting_visible
@@ -20,7 +21,7 @@ from .pages.power_order import PowerOrderView
 from .pages.tasks import ChecksCard, TaskHeader, TaskListPanel
 
 
-class TaskPage(ScrollArea):
+class TaskPage(PageScrollArea):
     def __init__(self, interface, task, parent=None):
         super().__init__(parent or interface)
         self.interface, self.task = interface, task

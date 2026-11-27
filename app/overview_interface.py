@@ -5,7 +5,7 @@ import os
 
 from PySide6.QtCore import QPoint, Qt, Signal
 from PySide6.QtWidgets import QBoxLayout, QFileDialog, QGridLayout, QVBoxLayout, QWidget
-from qfluentwidgets import Action, FluentIcon as FIF, MenuAnimationType, RoundMenu, ScrollArea, qconfig
+from qfluentwidgets import Action, FluentIcon as FIF, MenuAnimationType, RoundMenu, qconfig
 
 from module.localization import tr
 from module.logger import log
@@ -14,6 +14,7 @@ from module.overview.snapshot import THEME_BUTTON_USED
 
 from .common.design_tokens import CARD_SPACING, PAGE_MARGIN
 from .common.icon import UiIcon
+from .common.scroll_area import PageScrollArea
 from .overview.cards import ChecksCard, LastRunCard, PlanCard, PowerCard, ShortcutsCard, StatCard
 from .overview.greeting import GreetingCard
 from .overview.style import bar_success, brand, format_when, palette
@@ -23,7 +24,7 @@ NAVIGATION_ACTIONS = {"configure", "view_reason", "view_result", "view_run"}
 THEME_LINK = "setting:ui_theme"
 
 
-class OverviewInterface(ScrollArea):
+class OverviewInterface(PageScrollArea):
     mascotClicked = Signal()  # 问候区的小人被点了一下，主窗口用来数长夜彩蛋的连点
 
     def __init__(self, parent=None):

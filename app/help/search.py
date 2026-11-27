@@ -4,9 +4,10 @@ import html
 from PySide6.QtCore import QRectF, Qt, Signal
 from PySide6.QtGui import QColor, QFont, QPainter
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
-from qfluentwidgets import CaptionLabel, ScrollArea, SubtitleLabel, isDarkTheme, setFont
+from qfluentwidgets import CaptionLabel, SubtitleLabel, isDarkTheme, setFont
 
 from app.common.mascot import Mascot, load_mascot
+from app.common.scroll_area import PageScrollArea
 from app.overview.style import accent, css, text_color
 from app.overview.widgets import LinkButton
 from app.pages.common import Divider, is_evernight, secondary
@@ -141,7 +142,7 @@ class EmptyState(QWidget):
         painter.drawPixmap(round((self.width() - width) / 2), 8, self._pixmap)
 
 
-class HelpSearchPage(ScrollArea):
+class HelpSearchPage(PageScrollArea):
     hitClicked = Signal(object)
     suggestionClicked = Signal(str)
 

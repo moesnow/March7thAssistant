@@ -6,8 +6,9 @@
 from PySide6.QtCore import QTimer, QUrl, Qt
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QHBoxLayout, QStackedWidget, QVBoxLayout, QWidget
-from qfluentwidgets import CaptionLabel, ScrollArea, SearchLineEdit, TitleLabel, qconfig
+from qfluentwidgets import CaptionLabel, SearchLineEdit, TitleLabel, qconfig
 
+from app.common.scroll_area import PageScrollArea
 from app.content.help_state import ChangelogBadge, open_link
 from app.help.page import DocPage
 from app.help.search import HelpSearchPage
@@ -42,7 +43,7 @@ class HelpInterface(QWidget):
         self.docList = DocList(SIDEBAR, self.sidePanel)
         self.tocLabel = secondary(CaptionLabel(tr("本页目录"), self.sidePanel))
         self.toc = TocView()
-        self.tocScroll = ScrollArea(self.sidePanel)
+        self.tocScroll = PageScrollArea(self.sidePanel)
         self.tocScroll.setWidget(self.toc)
         self.tocScroll.setWidgetResizable(True)
         self.tocScroll.enableTransparentBackground()
