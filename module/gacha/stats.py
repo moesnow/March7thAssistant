@@ -64,7 +64,7 @@ def pool_stats(pool_id, records):
                 unknown.add(kind)
             continue
         five_pity += 1
-        stars = int(record["rank_type"])
+        stars = int(record["rank_type"] or 0)  # 0: a saved record without its rank
         row = Detail(str(record["id"]), record["time"], record["name"], record["item_type"],
                      stars, kind, len(details) + 1, five_pity)
         details.append(row)

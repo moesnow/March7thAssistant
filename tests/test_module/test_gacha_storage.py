@@ -72,6 +72,23 @@ def test_split_with_existing(tmp_path, conflict):
         assert page.pools["11"].total == 2
 
 
+def test_split_and_show_old_file_missing_optional_fields(tmp_path):
+    # #1465: records that an old version imported without name, type or rank must stay visible.
+    store = GachaStore(layout_for(tmp_path, "userdata"))
+    old = data((1, 2, 3), uid="111")
+    old["list"][0].update(name=None, item_type=None, rank_type=None)
+    old["list"][1].update(rank_type="5", name="希儿")
+    store.legacy_file.parent.mkdir(parents=True, exist_ok=True)
+    raw = put(store.legacy_file, old).read_bytes()
+    page = load_summary(store=store)
+    assert not page.issues and not store.legacy_file.exists() and page.selected.count == 3
+    stats = page.pools["11"]
+    assert (stats.total, stats.five_count, stats.five_pity, stats.fives[0].pity) == (3, 1, 1, 2)
+    assert [(r.id, r.name, r.stars) for r in stats.details] == [("1", "", 0), ("2", "希儿", 5), ("3", "三月七", 4)]
+    backup, = store.directory.glob("*.bak")
+    assert backup.read_bytes() == raw
+
+
 def test_observer_does_not_create_or_migrate(tmp_path, monkeypatch):
     store = GachaStore(layout_for(tmp_path, "legacy"))
     raw = put(store.legacy_file, data()).read_bytes()

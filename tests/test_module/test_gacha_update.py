@@ -91,6 +91,30 @@ def test_updates_select_server_uid_incremental_full_and_switch(game):
     assert store.path("111").read_bytes() == before and store.read("222")["info"]["region_time_zone"] == -5
 
 
+def test_update_keeps_saved_gaps_but_rejects_incomplete_game_rows(game, tmp_path):
+    store, server = game
+    old = data((1, 2), "111")
+    old["list"][0].update(name=None, item_type=None, rank_type=None)
+    store.directory.mkdir(parents=True, exist_ok=True)
+    put(store.path("111"), old)
+    server.fill([3, 2])
+    result = update.update_records(store)
+    assert result.success and result.added["11"] == 1
+    assert [(r["id"], r["rank_type"]) for r in store.read("111")["list"]] == [("1", ""), ("2", "4"), ("3", "4")]
+    excel = transfer.export_records(tmp_path / "gaps.xlsx", "excel", "111", store=store)
+    book = load_workbook(excel, read_only=True)
+    try:
+        assert [r[3] or "" for r in list(book.active.values)[1:]] == ["", "4", "4"]
+    finally:
+        book.close()
+    before = store.path("111").read_bytes()
+    server.fill([4, 3, 2])
+    server.rows["11"][0]["name"] = ""
+    failed = update.update_records(store)
+    assert not failed.success and "(name, id=4)" in failed.reason
+    assert store.path("111").read_bytes() == before
+
+
 @pytest.mark.parametrize("endpoint", ["getGachaLog", "getLdGachaLog"])
 def test_new_pool_entry_is_enough_for_import_update_stats_and_export(game, monkeypatch, tmp_path, endpoint):
     store, server = game

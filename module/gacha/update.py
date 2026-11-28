@@ -35,7 +35,7 @@ def update_records(store, mode="normal", progress=None):
             original = read_bytes(target)
         if original is None:
             return None
-        data = normalize(json.loads(original))
+        data = normalize(json.loads(original), saved=True)
         if data["info"]["uid"] != uid:
             raise WarpImportError(tr("文件名中的 UID 与记录中的 UID 不一致。"))
         data["list"].sort(key=lambda r: int(r["id"]))
@@ -56,7 +56,9 @@ def update_records(store, mode="normal", progress=None):
             return UpdateResult(False, uid, {}, client.error or tr("请求出错"))
         if uid is None:
             return UpdateResult(False, None, {}, tr("游戏未返回含 UID 的抽卡记录。"))
-        data = normalize(client.export_data())
+        data = normalize(client.export_data(), saved=True)
+        # Saved rows may predate the field checks; every row fetched just now must be complete.
+        normalize(dict(data, list=[row for row in data["list"] if row["id"] not in old_ids]))
         plan = plan_account(data, store.path(uid), original, "replace")
         added = dict.fromkeys(POOLS, 0)
         for row in plan.data["list"]:

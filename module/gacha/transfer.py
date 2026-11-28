@@ -119,7 +119,8 @@ def _excel(path, account):
                   key=lambda r: int(r.id))
     labels = {key: pool.label for key, pool in POOLS.items()}
     for number, row in enumerate(rows, 1):
-        sheet.append([row.time, row.name, row.item_type, str(row.stars), labels[row.pool_id], number, row.pity])
+        sheet.append([row.time, row.name, row.item_type, str(row.stars) if row.stars else "", labels[row.pool_id],
+                      number, row.pity])
     for i, cells in enumerate(sheet.iter_rows()):
         font = fonts.get(rows[i - 1].stars) if i else None
         for j, cell in enumerate(cells):

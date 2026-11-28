@@ -61,7 +61,7 @@ def _timestamp(info, fallback):
 
 @lru_cache(maxsize=12)
 def _load(path, stamp):
-    data = normalize(json.loads(path.read_bytes()), allow_unknown_pools=True)
+    data = normalize(json.loads(path.read_bytes()), allow_unknown_pools=True, saved=True)
     info = data["info"]
     if info["uid"] != path.stem:
         raise WarpImportError(tr("文件名中的 UID 与记录中的 UID 不一致。"))
@@ -142,7 +142,7 @@ class GachaStore:
                 raw = read_bytes(old)
                 if raw is None:
                     return ()
-                incoming = normalize(json.loads(raw))
+                incoming = normalize(json.loads(raw), saved=True)
                 uid = incoming["info"]["uid"]
                 target = self.path(uid)
                 plan = plan_account(incoming, target, read_bytes(target))
