@@ -1,4 +1,5 @@
 """页面按需构建：启动时只建总览，其余页面在首次访问或点开时才构造。"""
+import sys
 from unittest.mock import Mock
 
 import pytest
@@ -115,7 +116,10 @@ def test_startup_schedules_remembered_autoplot(window, monkeypatch, qtbot):
     ('external', 'power', False), ('manual', 'main', False),
     ('full', 'main', False), ('overview', 'power', False), ('shortcut', 'daily', False),
     ('tools', 'screen_test', False), ('tools', 'character_export', False),
-    ('tools', 'redemption', False), ('tools', 'mobileui_update', False), ('notify', 'notify', False),
+    ('tools', 'redemption', False),
+    pytest.param('tools', 'mobileui_update', False,
+                 marks=pytest.mark.skipif(sys.platform != 'win32', reason='触屏模式入口仅支持 Windows')),
+    ('notify', 'notify', False),
 ])
 def test_task_launch_signal_reaches_process_with_metadata(window, monkeypatch, qtbot, tmp_path, source, task_id, rotate):
     """走各个启动入口和真实 Qt 信号，只拦截最终的子进程启动。"""
