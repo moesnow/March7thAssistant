@@ -27,6 +27,8 @@ TRIANGLE_X = 1198  # 登录框号码右侧的下拉三角；展开后同一列�
 ROW_CLICK_MAX_X = 940  # 点记录行时不越过登录框中线
 
 STARS = str.maketrans({c: "*" for c in "＊∗⁎✱✲✳※٭"})
+# OCR 容易认混的字，比对账号前两边都换成同一个：邮箱里的字母 o 常被认成 0，l、i 常被认成 1，点被认成逗号。
+LOOKALIKES = str.maketrans({"o": "0", "i": "1", "l": "1", "|": "1", ",": ".", "。": "."})
 VERIFY_WORDS = ("安全验证", "滑块", "拼图", "图形验证", "人机验证", "完成验证", "依次点击", "拖动")
 CREDENTIAL_WORDS = ("手机号", "验证码", "密码", "扫码", "二维码", "注册")
 TIME_PATTERN = re.compile(r"刚刚|昨天|前天|\d+\s*(秒|分钟|小时|天|周|个月|月|年)前")
@@ -65,8 +67,12 @@ def mask_hint(value):
     raise ValueError("请照游戏登录框里显示的样子填写，例如 138******66")
 
 
+def _key(text):
+    return clean(text).translate(LOOKALIKES)
+
+
 def _pattern(hint):
-    text = clean(hint)
+    text = _key(hint)
     parts = [re.escape(part) for part in re.split(r"\*+", text) if part]
     if not parts:
         return None
@@ -74,16 +80,16 @@ def _pattern(hint):
 
 
 def same_account(hint, shown):
-    """登录框里显示的账号是不是这条提示。只比星号两边露出来的部分，不比星号个数。"""
+    """登录框里显示的账号是不是这条提示。只比星号两边露出来的部分，不比星号个数，OCR 认混的字当作相同。"""
     pattern = _pattern(hint)
-    text = EDGE.sub("", clean(shown))
+    text = EDGE.sub("", _key(shown))
     return bool(pattern and text and pattern.fullmatch(text))
 
 
 def banner_account(text):
-    """「137******20，欢迎进入游戏」里的账号部分。"""
-    head = unicodedata.normalize("NFKC", str(text or "")).split(",", 1)[0]
-    return "" if "欢迎" in head else head.strip()
+    """「137******20，欢迎进入游戏」里的账号部分。按「欢迎」切开，邮箱里的点被认成逗号也不会截断。"""
+    head = unicodedata.normalize("NFKC", str(text or "")).split("欢迎", 1)[0]
+    return head.strip().rstrip(",.、。").strip()
 
 
 @dataclass(frozen=True)

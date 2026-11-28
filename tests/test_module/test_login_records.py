@@ -160,6 +160,19 @@ def test_matching_ignores_star_count_but_needs_both_ends():
     assert banner_account("欢迎进入游戏") == ""
 
 
+def test_email_matching_tolerates_ocr_lookalikes():
+    # 用户反馈：欢迎横幅里邮箱的 .com 被认成 .c0m，进的明明是目标账号却被判成别人。
+    assert same_account("p***@example.com", "pl****e@example.c0m")
+    assert same_account("p***@example.com", "pl****e@example,com")
+    assert same_account("pl***@example.com", "p1****e@examp1e.com")
+    assert same_account("o***@example.com", "0h****e@example.com")
+    assert not same_account("p***@example.com", "pl****e@example.org")
+    assert not same_account("p***@example.com", "ql****e@example.com")
+    assert banner_account("pl****e@example.c0m，欢迎进入游戏") == "pl****e@example.c0m"
+    assert banner_account("pl****e@example,com，欢迎进入游戏") == "pl****e@example,com"
+    assert banner_account(f"{TARGET}欢迎进入游戏") == TARGET  # OCR 漏了逗号
+
+
 @pytest.mark.parametrize(("lines", "screen"), [
     (title(), "title"),
     (start_screen(), "title"),
@@ -195,6 +208,19 @@ def test_selected_record_is_entered_directly():
     game = FakeGame(screen="box", current=TARGET)
     assert run(game.switch())
     assert game.clicks == [(961, 626)]
+
+
+def test_email_record_is_entered_despite_ocr_lookalikes():
+    email = "pl****e@example.com"
+    game = FakeGame(records=((OTHER, "刚刚"), (email, "46分钟前")), valid=(email, OTHER))
+    frame = game.frame
+    # 横幅和登录框字体不同，OCR 只在横幅里把 o 认成 0。
+    game.frame = lambda: [line(item.text.replace(".com", ".c0m"), item.x, item.y, item.w, item.h)
+                          if "欢迎" in item.text else item for item in frame()]
+    switch = LoginSwitch("p***@example.com", logout=True, frame=game.frame, click=game.click,
+                         checked=game.checked, clock=lambda: game.time)
+    assert run(switch)
+    assert switch.entered and game.current == email
 
 
 def test_keep_option_is_selected_first():
