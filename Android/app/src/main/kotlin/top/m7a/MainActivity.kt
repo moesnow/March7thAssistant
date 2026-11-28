@@ -130,7 +130,9 @@ class MainActivity : ComponentActivity() {
         selectPrivilege = { controller.selectPrivilege(it) },
         requestPermission = controller::requestPermission,
         openShizuku = {
-            open(packageManager.getLaunchIntentForPackage(DeviceAccess.SHIZUKU_PACKAGE) ?: view(SHIZUKU_RELEASES))
+            open(DeviceAccess.SHIZUKU_MANAGER_PACKAGES.firstNotNullOfOrNull {
+                packageManager.getLaunchIntentForPackage(it)
+            } ?: view(SHIZUKU_RELEASES))
         },
         installShizuku = ::installShizuku,
         downloadShizuku = { open(view(SHIZUKU_RELEASES)) },
@@ -173,7 +175,7 @@ class MainActivity : ComponentActivity() {
 
     private fun installShizuku() {
         if (controller.state.value.busy || preparingShizukuInstall) return
-        if (hasPackage(DeviceAccess.SHIZUKU_PACKAGE)) {
+        if (shizukuPermission() != PermissionState.NOT_INSTALLED) {
             controller.refreshPermission()
             return
         }
@@ -191,7 +193,7 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch {
             try {
                 val apk = withContext(Dispatchers.IO) { prepareBundledShizuku(this@MainActivity) }
-                if (hasPackage(DeviceAccess.SHIZUKU_PACKAGE)) {
+                if (shizukuPermission() != PermissionState.NOT_INSTALLED) {
                     controller.refreshPermission()
                 } else if (!controller.state.value.busy) {
                     startActivity(apkInstallIntent(this@MainActivity, apk))

@@ -9,6 +9,7 @@
 
     <queries>
         <package android:name="moe.shizuku.privileged.api" />
+        <package android:name="roro.stellar.manager" />
         <package android:name="com.miHoYo.hkrpg" />
     </queries>
 

@@ -10,6 +10,7 @@ import android.os.RemoteException
 import moe.shizuku.server.IRemoteProcess
 import moe.shizuku.server.IShizukuService
 import rikka.shizuku.Shizuku
+import rikka.sui.Sui
 import java.io.Closeable
 import java.io.File
 import java.io.InputStream
@@ -83,9 +84,11 @@ internal class ShizukuAccess(
 
 /** 唯一依赖 Shizuku API 13 旧进程接口的位置。命令只包含安装目录中的 launcher 和 APK。 */
 internal fun startShizukuProcess(context: Context, recoverAudio: Boolean, trace: (String) -> Unit): Process {
-    val manager = runCatching {
-        context.packageManager.getPackageInfo(DeviceAccess.SHIZUKU_PACKAGE, 0).let { "${it.versionName} (${it.longVersionCode})" }
-    }.getOrDefault("未知")
+    val manager = if (Sui.isSui()) "Sui" else DeviceAccess.SHIZUKU_MANAGER_PACKAGES.mapNotNull { packageName ->
+        runCatching {
+            context.packageManager.getPackageInfo(packageName, 0).let { "$packageName ${it.versionName} (${it.longVersionCode})" }
+        }.getOrNull()
+    }.joinToString().ifEmpty { "未知" }
     val soc = if (Build.VERSION.SDK_INT >= 31) Build.SOC_MODEL else Build.HARDWARE
     trace("${Build.MANUFACTURER} ${Build.MODEL} (${Build.DEVICE}, $soc), Android ${Build.VERSION.RELEASE}/API ${Build.VERSION.SDK_INT}, " +
         "ROM=${Build.DISPLAY}, fingerprint=${Build.FINGERPRINT}")

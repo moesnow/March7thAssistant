@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.util.Base64
 import rikka.shizuku.Shizuku
+import rikka.sui.Sui
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
@@ -27,6 +28,25 @@ internal fun Context.hasPackage(packageName: String): Boolean = try {
     false
 }
 
+internal fun shizukuPermissionState(
+    hasProvider: () -> Boolean,
+    pingBinder: () -> Boolean = Shizuku::pingBinder,
+    isAuthorized: () -> Boolean = {
+        Shizuku.getVersion() >= 13 && Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
+    },
+): PermissionState = runCatching {
+    // Sui 没有管理 APK，其他兼容实现也不需要安装原版 Shizuku。
+    if (pingBinder()) {
+        if (isAuthorized()) PermissionState.READY else PermissionState.NOT_AUTHORIZED
+    } else {
+        if (hasProvider()) PermissionState.NOT_RUNNING else PermissionState.NOT_INSTALLED
+    }
+}.getOrDefault(PermissionState.NOT_RUNNING)
+
+internal fun Context.shizukuPermission(): PermissionState = shizukuPermissionState(
+    hasProvider = { Sui.isSui() || DeviceAccess.SHIZUKU_MANAGER_PACKAGES.any(::hasPackage) },
+)
+
 internal interface DeviceLease : Closeable {
     val port: Int
 }
@@ -40,15 +60,7 @@ internal class DeviceAccess(private val context: Context, trace: (String) -> Uni
 
     fun state(privilege: Privilege): PermissionState {
         if (privilege == Privilege.ROOT) return root.permission
-        if (!context.hasPackage(SHIZUKU_PACKAGE)) return PermissionState.NOT_INSTALLED
-        if (!Shizuku.pingBinder()) return PermissionState.NOT_RUNNING
-        return runCatching {
-            if (Shizuku.getVersion() >= 13 && Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
-                PermissionState.READY
-            } else {
-                PermissionState.NOT_AUTHORIZED
-            }
-        }.getOrDefault(PermissionState.NOT_RUNNING)
+        return context.shizukuPermission()
     }
 
     fun requestShizukuPermission() {
@@ -70,7 +82,7 @@ internal class DeviceAccess(private val context: Context, trace: (String) -> Uni
     }
 
     companion object {
-        const val SHIZUKU_PACKAGE = "moe.shizuku.privileged.api"
+        val SHIZUKU_MANAGER_PACKAGES = listOf("moe.shizuku.privileged.api", "roro.stellar.manager")
         const val GAME_PACKAGE = "com.miHoYo.hkrpg"
         const val PERMISSION_REQUEST = 1802
     }
