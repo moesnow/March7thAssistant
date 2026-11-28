@@ -1,5 +1,8 @@
 """页面按需构建：启动时只建总览，其余页面在首次访问或点开时才构造。"""
+from unittest.mock import Mock
+
 import pytest
+from PySide6.QtCore import QProcess
 from PySide6.QtWidgets import QApplication
 
 from tests.test_app.test_language_switch import window, switch_language
@@ -104,6 +107,72 @@ def test_startup_schedules_remembered_autoplot(window, monkeypatch, qtbot):
     window._finishStartup()
     qtbot.waitUntil(lambda: bool(calls), timeout=1000)
     assert calls == [True]
+
+
+@pytest.mark.parametrize('window', [{'control_backend': 'local', 'ui_profile': 'pc_1080'}], indirect=True)
+@pytest.mark.parametrize('source,task_id,rotate', [
+    ('startup', 'main', False), ('startup', 'daily', False), ('startup', 'main', True),
+    ('external', 'power', False), ('manual', 'main', False),
+    ('full', 'main', False), ('overview', 'power', False), ('shortcut', 'daily', False),
+    ('tools', 'screen_test', False), ('tools', 'character_export', False),
+    ('tools', 'redemption', False), ('tools', 'mobileui_update', False), ('notify', 'notify', False),
+])
+def test_task_launch_signal_reaches_process_with_metadata(window, monkeypatch, qtbot, tmp_path, source, task_id, rotate):
+    """走各个启动入口和真实 Qt 信号，只拦截最终的子进程启动。"""
+    from module.config import cfg
+    from tasks.base.tasks import start_task
+
+    controller = window.runController
+    launch = Mock(wraps=controller.startTask)
+    process_start = Mock()
+    monkeypatch.setattr(controller, 'startTask', launch)
+    monkeypatch.setattr(window.accountModel, 'active', lambda: rotate)
+    monkeypatch.setattr(QProcess, 'start', process_start)
+
+    if source == 'external':
+        window.handle_external_activate(task=task_id)
+        qtbot.waitUntil(lambda: launch.called, timeout=1000)
+    elif source == 'startup':
+        window.startup_task = task_id
+        window._executeStartupTask()
+    elif source == 'manual':
+        start_task(task_id)
+    elif source == 'full':
+        window.startFullTask()
+    elif source == 'overview':
+        assert window.homeInterface.model.start_task(task_id)
+    elif source == 'shortcut':
+        assert window.homeInterface.model.launch_shortcut(task_id)
+    elif source == 'notify':
+        window.settingInterface.pages['notify'].host.testNotifyCard.button.click()
+    elif source == 'tools':
+        if task_id == 'redemption':
+            from app.card.messagebox_custom import MessageBoxEditCode
+            cfg.config['redemption_code'] = ['TESTCODE']
+            monkeypatch.setattr(MessageBoxEditCode, 'exec', lambda _: True)
+        elif task_id == 'mobileui_update':
+            game_path = tmp_path / 'game.exe'
+            game_path.touch()
+            cfg.config.update(game_path=str(game_path), genshin_starRail_fps_unlocker_allow=True,
+                              genshin_starRail_fps_unlocker_path=str(tmp_path / 'missing-unlocker'))
+        page = window.toolsInterface
+        card = {'screen_test': page.screenTestCard, 'character_export': page.characterExportCard,
+                'redemption': page.redemptionCodeCard, 'mobileui_update': page.cloudTouchCard}[task_id]
+        card.button.click()
+
+    startup = source in ('startup', 'external')
+    payload = ({'program': 'self', 'args': task_id, 'trigger': 'startup', 'account': 'all'}
+               if startup else task_id)
+    launch.assert_called_once_with(payload)
+    process_start.assert_called_once()
+    arguments = process_start.call_args.args[1]
+    assert task_id in arguments
+    assert ('--startup-task' in arguments) == startup
+    assert ('--account' in arguments) == rotate
+    if rotate:
+        assert arguments[arguments.index('--account') + 1] == 'all'
+    assert controller.current_task == task_id
+    assert not any('当前后端不支持' in entry.text for entry in controller.log_entries())
 
 
 def test_lazy_pages_respect_desktop_twin_access(window):

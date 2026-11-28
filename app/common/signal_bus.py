@@ -13,7 +13,7 @@ class SignalBus(QObject):
     autostartChanged = Signal(object)  # Windows 登录启动任务发生变化
 
     # 任务相关信号
-    startTaskSignal = Signal(str)  # 启动任务信号，参数为任务命令
+    startTaskSignal = Signal(object)  # 启动任务信号，参数为任务命令或任务字典
     hotkeyChangedSignal = Signal()  # 热键配置改变信号
     uiLanguageChanged = Signal(str)  # UI 语言变更信号，参数为语言代码
 
