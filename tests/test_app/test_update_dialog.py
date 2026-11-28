@@ -189,6 +189,43 @@ class TestUpdateDialogHistory:
         dlg.deleteLater()
         parent.deleteLater()
 
+    @pytest.mark.parametrize("outcome", ["loaded", "failed"])
+    def test_short_history_releases_reserved_height(self, qapp, outcome):
+        from module.update.changelog import UpdateNotes, VersionNote
+        from app.card.messagebox_custom import MessageBoxUpdate
+        from PySide6.QtWidgets import QWidget
+
+        parent = QWidget()
+        parent.resize(1280, 736)
+        parent.show()
+        dlg = MessageBoxUpdate('发现新版本', '', parent)
+        note = '- 修复电脑版启动时未能自动执行指定任务的问题'
+        dlg.prepareHistory('v1.0', 'v2.0', note)
+        dlg.show()
+        _pump(qapp, 0.3)
+        scroll = dlg._scroll
+        try:
+            # 加载期间仍按上限预留高度
+            reserved = scroll.height()
+            reserved_widget = dlg.widget.height()
+            assert reserved == scroll.maximumHeight()
+            if outcome == "loaded":
+                dlg.setHistory(UpdateNotes((VersionNote('v2.0', note),)))
+            else:
+                dlg.setHistoryError('历史更新记录暂时无法加载，仍可正常更新')
+            _pump(qapp, 0.5)
+            # 加载结束后按内容收紧：日志完整显示，底部不留大片空白
+            assert scroll.height() < reserved
+            assert dlg.widget.height() < reserved_widget
+            assert scroll.verticalScrollBar().maximum() == 0
+            assert scroll.height() - dlg.fullHistoryLabel.geometry().bottom() <= 12
+            assert dlg.rect().contains(dlg.widget.geometry())
+            buttons_geo = dlg.buttonGroup.geometry()
+            assert dlg.widget.y() + buttons_geo.y() + buttons_geo.height() <= dlg.height()
+        finally:
+            dlg.deleteLater()
+            parent.deleteLater()
+
     def test_closed_dialog_ignores_late_success_and_failure(self, qapp):
         from module.update.changelog import UpdateNotes, VersionNote
         dlg, parent = _build_dialog(qapp, SHORT_CHANGELOG)

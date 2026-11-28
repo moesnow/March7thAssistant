@@ -1,4 +1,4 @@
-from PySide6.QtCore import QEvent, Qt, QUrl, QSize, Signal, Slot
+from PySide6.QtCore import QEasingCurve, QEvent, Qt, QUrl, QSize, QVariantAnimation, Signal, Slot
 from PySide6.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QCompleter, QSizePolicy, QWidget
 from PySide6.QtGui import QPixmap, QDesktopServices, QFont
 from qfluentwidgets import (MessageBox, LineEdit, ComboBox, EditableComboBox, DateTimeEdit,
@@ -397,6 +397,12 @@ class MessageBoxHtmlUpdate(SplitFadeDialogMixin, MessageBox):
                   + 24)
         self._scroll = build_scroll_area(content_container, host_width, host_height, chrome)
         self.textLayout.insertWidget(1, self._scroll)
+        self._scroll_max_height = self._scroll.maximumHeight()
+        self._history_settled = False
+        self._heightAnimation = QVariantAnimation(self)
+        self._heightAnimation.setDuration(180)
+        self._heightAnimation.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self._heightAnimation.valueChanged.connect(lambda value: self._scroll.setFixedHeight(int(value)))
 
     def prepareHistory(self, current: str, target: str, latest_note: str):
         self._history_target = target
@@ -409,8 +415,9 @@ class MessageBoxHtmlUpdate(SplitFadeDialogMixin, MessageBox):
             '<a href="' + html.escape(changelog_url(target), quote=True) + '">'
             + html.escape(tr("查看完整更新日志")) + '</a>'))
         self.fullHistoryLabel.show()
-        # 在打开前预留高度，补充历史记录时不移动更新卡片和底部按钮。
-        self._scroll.setFixedHeight(self._scroll.maximumHeight())
+        # 加载期间按上限预留高度，补充历史记录时不移动更新卡片和底部按钮；
+        # 加载结束（成功或失败）后再按实际内容收紧，短日志不留大片空白。
+        self._scroll.setFixedHeight(self._scroll_max_height)
         self._renderHistory()
 
     @Slot(object)
@@ -428,6 +435,7 @@ class MessageBoxHtmlUpdate(SplitFadeDialogMixin, MessageBox):
             text = ""
         self.historyStatusLabel.setText(text)
         self.historyStatusLabel.setVisible(bool(text))
+        self._history_settled = True
         self._renderHistory()
 
     @Slot(str)
@@ -435,6 +443,8 @@ class MessageBoxHtmlUpdate(SplitFadeDialogMixin, MessageBox):
         if not self._history_closed:
             self.historyStatusLabel.setText(message)
             self.historyStatusLabel.show()
+            self._history_settled = True
+            self._fitHistoryHeight()
 
     def _showMoreHistory(self):
         self._history_limit += 10
@@ -455,6 +465,33 @@ class MessageBoxHtmlUpdate(SplitFadeDialogMixin, MessageBox):
         self.contentLabel.updateGeometry()
         self._scroll.widget().layout().activate()
         self._scroll.verticalScrollBar().setValue(scroll_position)
+        if self._history_settled:
+            self._fitHistoryHeight()
+
+    def _fitHistoryHeight(self):
+        """历史记录加载结束后，滚动区按内容定高（不超过上限）；收紧时用短动画过渡。"""
+        if not self.isVisible():
+            return  # 还没显示时宽度不准，留到 showEvent 再算
+        container = self._scroll.widget()
+        layout = container.layout()
+        layout.activate()
+        width = self._scroll.viewport().width()
+        content = (layout.totalHeightForWidth(width) if layout.hasHeightForWidth()
+                   else layout.totalSizeHint().height())
+        target = min(content, self._scroll_max_height)
+        self._heightAnimation.stop()
+        current = self._scroll.height()
+        if target >= current:
+            self._scroll.setFixedHeight(target)
+            return
+        self._heightAnimation.setStartValue(current)
+        self._heightAnimation.setEndValue(target)
+        self._heightAnimation.start()
+
+    def showEvent(self, e):
+        super().showEvent(e)
+        if self._history_settled:
+            self._fitHistoryHeight()
 
     def done(self, code):
         self._history_closed = True
