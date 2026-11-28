@@ -982,6 +982,7 @@ def test_locked_session_does_not_decode_evernight_artwork(qtbot, monkeypatch, re
         assert reads == []
         assert artwork.evernight_artwork.cache_info().currsize == 0
         click_logo(window, qtbot)
+        qtbot.waitUntil(lambda: window._evey_animation is not None, timeout=5000)
         expected = sorted(('icon.ico', 'evey-floating.png',
                            'evey-decoration-folded.png', 'evey-decoration-upright.png', 'evey-decoration-wide.png'))
         assert sorted(reads) == expected
